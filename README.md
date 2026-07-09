@@ -1,9 +1,11 @@
 # the earlier name — a dark theme for ISPConfig
 
-A complete, modern dark interface for the [ISPConfig](https://www.ispconfig.org/)
-control panel: navy navigation rail, card-based content, clean tables and
-forms, and a redesigned login screen. Installed as a normal ISPConfig theme —
-**no core file is ever modified**, so it survives panel updates.
+A complete, modern interface for the [ISPConfig](https://www.ispconfig.org/)
+control panel, built on **VMware Clarity** dark design tokens: navy
+navigation rail, card-based content, Clarity icons throughout, a
+**dark/light switcher**, and a redesigned login screen. Installed as a
+normal ISPConfig theme — **no core file is ever modified**, so it survives
+panel updates.
 
 ![Dashboard](mockup/shots/dark-dashboard-desktop.png)
 
@@ -77,6 +79,13 @@ their next login.
 | Selected it, but panel still looks stock | Log out and back in; then hard-refresh (`Ctrl+Shift+R`). |
 | Reverted to default after a panel upgrade | Expected — re-run `./install.sh` (see above). |
 | Unstyled/white page | `themes/default` missing or theme dir unreadable by the web server — the installer chowns to `ispconfig:ispconfig`, which the web server must be able to read (stock setups are). |
+
+## White-labeling
+
+Replace `themes/earlier-dark/assets/images/wordmark-white.svg` with your own
+logo (white/light artwork — it sits on the navy brand band in the sidebar,
+mobile header and login card). Any aspect ratio works. Favicons live in
+`themes/earlier-dark/assets/favicon/`.
 
 ## Repo layout
 

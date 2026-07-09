@@ -39,7 +39,8 @@ interactive element derive from `#0065AB`).
    micro-header voice. Body content is 13–14px `Inter` at comfortable
    contrast (`#E3EAED` on cards).
 5. **Small radii, tight controls.** 4px controls, 8px cards, 10px modals,
-   34px control height. A console, not a marketing site.
+   36px control height (Clarity standard density). A console, not a
+   marketing site.
 6. **Token-driven.** A future light variant (or re-brand) is an alias remap
    in `tokens.css`, not a component rewrite.
 
@@ -49,7 +50,7 @@ interactive element derive from `#0065AB`).
 ┌──────────┬──────────────────────────────────────────────┐
 │  ◧ earlier  │ [☰] (  ⌕ Search………………… )        ●3  ⏻ Logout │  topbar 60px
 │──────────│──────────────────────────────────────────────│
-│ ▍Home    │  Page title 22/600                           │
+│ ▍Home    │  Page title 24/500                           │
 │  Help    │  MICRO-HEADER                                │
 │  Client  │  ┌tile┐ ┌tile┐ ┌tile┐ ┌tile┐                 │
 │  Sites   │  ┌────────── card ──────────┐                │
@@ -78,39 +79,70 @@ interactive element derive from `#0065AB`).
 
 ## 4. Component voice (dark values)
 
-- **Buttons.** Primary = `#007ACC` fill, white text — used by
-  `.formbutton-success`, `[data-submit-form]`, `.btn-primary` (Save, Add
-  new). Everything else is a ghost: transparent, 1px `rgba` border, muted
-  text, raised-surface hover. Danger = outlined `#FF674D`, tint fill on
-  hover. Inside table rows, action buttons demote to borderless icon
-  controls.
+- **Buttons.** Clarity voice: 36px tall, 12px/600 UPPERCASE at `+0.12em`.
+  Primary = `#007ACC` fill, white text — used by `.formbutton-success`,
+  `[data-submit-form]`, `.btn-primary` (Save, Add new). Everything else is a
+  ghost: transparent, 1px solid `#6A7A81` border (Clarity
+  object-border-color), raised-surface hover. Danger = outlined `#FF674D`,
+  tint fill on hover. Inside table rows, action buttons demote to borderless
+  icon controls.
 - **Inputs.** Recessed well `#1B2B32`, 1px `rgba(133,147,153,.55)` border,
   4px radius; focus = `#2EA9FF` border + 3px `rgba(46,169,255,.4)` halo.
   Native checkboxes/radios via `accent-color`.
 - **Tables.** Card-wrapped (8px radius, hairline, `overflow-x:auto`).
-  `caption` = card title bar; headers 11px caps muted; rows hairline-divided,
-  hover = faint blue wash; whole-cell links inherit text color (the row is
-  the affordance); `tr.danger` = translucent red tint + `#FFA494` text.
-- **Tabs.** Flat strip on a hairline; active = white text + 2px `#2EA9FF`
-  inset underline. No boxes.
-- **Alerts.** Translucent status tint + 3px status left bar + status-300
-  text. Same voice at login.
+  `caption` = card title bar; header band = construction-1000 (Clarity's
+  tint, darker than the card) with 11px caps muted text; cells 8×12px
+  (Clarity standard density); hover = faint blue wash; whole-cell links
+  inherit text color; `tr.danger` = translucent red tint, normal text.
+- **Tabs.** Flat strip on a hairline; active = white text + 3px `#2EA9FF`
+  inset underline (Clarity border-width-300). No boxes.
+- **Alerts.** Clarity dark anatomy: solid status surface (blue-800 /
+  green-800 / ochre-900 / red-900) + 1px status-color border, light text.
+  In light mode the surfaces remap to the Clarity 50-tints with dark text.
 - **Meters.** 18px pill track (`#1B2B32`), status-colored fill, centered
   11px white overlay label (stock markup contract).
-- **Badges.** Pill, status tint + 1px status border + status-300 text.
+- **Badges.** Solid Clarity shade fills (green-800, ochre-600 with dark
+  text, red-800/900, blue-800), 12px radius, white text elsewhere.
 - **Charts.** Chart.js draws dark axes, so canvases sit on a light "paper"
   panel (`--nz-paper`, `#E3EAED`, 8px radius) — a deliberate light island.
 - **Login.** Full-viewport `#17252B` scene with two soft radial brand glows,
   one 384px card, stacked 40px inputs, full-width primary submit; secondary
   actions are text-quiet.
 
-## 5. Typography
+## 5. Icons
 
-`Inter` (self-hosted, SIL OFL 1.1) → system stack. Body 14/1.45, secondary
-13, captions 11 caps at `+0.07em`, page title 22/600 at `-0.015em`, card
-titles 14/600, weights 400/500/600 only.
+All glyphs are official **VMware Clarity icon shapes** (`@cds/core/icon`,
+MIT), rendered via CSS masks over the stock ISPConfig markup —
+`icons.css` maps every reachable `icon-*`, `glyphicon-*` and `fa-*` class
+(32 classes, 29 shapes) to a Clarity outline shape tinted by
+`currentColor`. The legacy ispconfig icon font still loads (vendor
+dependency) but no covered glyph renders from it.
 
-## 6. Architecture (how it stays upgrade-safe)
+## 6. Dark / light switcher
+
+The topbar sun/moon control toggles `data-nz-theme` on `<html>`
+(persisted in `localStorage`, applied pre-paint by a boot snippet in both
+shells; `assets/javascripts/nz-theme.js` handles the click). Light mode is
+a **pure alias remap** in `tokens.css` using Clarity *light* values
+(`#F1F6F8` page, white cards, construction-light text ramp, 50-tint status
+surfaces) — the navy rail stays brand in both modes. No component rule
+changes per mode.
+
+## 7. White-labeling
+
+The logo is a plain file: replace
+`themes/earlier-dark/assets/images/wordmark-white.svg` with any SVG/PNG
+(white/light artwork recommended — it always sits on the navy brand
+band). Heights are fixed in CSS; width follows the file's aspect ratio.
+
+## 8. Typography
+
+`Inter` (self-hosted, SIL OFL 1.1) → system stack. Body 14/1.4286 at
+`-0.00714em` (Clarity body metrics), secondary 13, captions 11 caps at
+`+0.07em`, page title 24/500 (Clarity title), headings medium (500), card
+titles 14/600 (micro-header family), weights 400/500/600 only.
+
+## 9. Architecture (how it stays upgrade-safe)
 
 - `themes/earlier-dark/` is **self-contained**: own templates
   (`main.tpl.htm`, `topnav.tpl.htm`, `main_login.tpl.htm`), own CSS
@@ -130,12 +162,39 @@ titles 14/600, weights 400/500/600 only.
   fragments (`mockup/fragments/`), and screenshots dashboard, list, form and
   login pages at desktop + mobile.
 
-## 7. Reusing the DNA elsewhere
+## 10. Reusing the DNA elsewhere
 
 1. Copy `themes/earlier-dark/assets/stylesheets/earlier/tokens.css` verbatim.
 2. Reference `--nz-*` aliases only.
 3. Follow §3/§4 shapes. The look survives any markup because every surface,
    edge and state derives from the same three ramps.
+
+## 11. Clarity alignment & deviation register
+
+Audited token-by-token against `@cds/core` 6.17 **dark, standard density**
+(2026-07-09). Adopted directly: surface ladder roles, text hierarchy
+(color-400/300/200 roles), link/highlight = blue-400 role, selected =
+blue-900 solid, 36px controls, 24/500 title + medium headings, 8×12 table
+cells + dark header band, 3px active indicators, solid alert/badge
+anatomy, 4px control radius scale, `0 1px 2px rgba(0,0,0,.6)` shadow,
+`rgba(0,0,0,.6)` backdrop.
+
+Deliberate deviations (each for brand, anatomy, or WCAG):
+
+| Deviation | Clarity says | Why we differ |
+|---|---|---|
+| Blue ramp anchored `#0065AB` (hue 205) | hue-198 blues | Earlier brand; role mapping mirrors Clarity |
+| Page = construction-1100 | app bg = construction-1000 | 2-step card-on-page elevation (DirectAdmin anatomy) |
+| Card 8px / modal 10px / login 14px radius | 4px | card-elevation family |
+| Translucent hairlines on cards/rows | solid construction-500/400 borders | quieter data chrome |
+| 11px/600 caps micro-headers | no caps voice | frame signature |
+| Primary = blue-600 + white, darkening hover | blue-400 + black text | brand action voice; AA 4.5–6.1:1 |
+| Boxed 36px inputs | underline inputs | stock Bootstrap markup, input-groups |
+| Custom 2px accent focus ring | native `Highlight` outline | deterministic cross-browser visibility |
+| Placeholder `#82939B`, readable disabled values | construction-500 (2.9:1) | Clarity's own values fail AA |
+| Light warning-alert text | construction-900 on ochre-900 (2.07:1) | Clarity's own value fails AA |
+| `Inter` | Clarity City / Avenir Next | brand; no proprietary fonts |
+| shadow-2 / shadow-pop extensions | only `0 1px 2px` ladder | menus need lift on dark |
 
 ## Provenance & licensing
 

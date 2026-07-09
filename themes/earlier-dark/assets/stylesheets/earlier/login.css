@@ -15,12 +15,19 @@ body.nz-login {
   background:
     radial-gradient(640px 420px at 50% -8%, rgba(0, 101, 171, 0.38), transparent 68%),
     radial-gradient(900px 600px at 88% 112%, rgba(0, 144, 245, 0.10), transparent 60%),
-    var(--nz-ink-1100);
+    var(--nz-page);
   color: var(--nz-text);
   font-family: var(--nz-font);
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+:root[data-nz-theme='light'] body.nz-login {
+  background:
+    radial-gradient(640px 420px at 50% -8%, rgba(0, 101, 171, 0.14), transparent 68%),
+    radial-gradient(900px 600px at 88% 112%, rgba(0, 144, 245, 0.05), transparent 60%),
+    var(--nz-page);
 }
 
 .nzl-scene {
@@ -40,12 +47,20 @@ body.nz-login {
   border: 1px solid var(--nz-border);
   border-radius: 14px;
   box-shadow: var(--nz-shadow-2);
-  padding: 36px 32px 30px;
+  padding: 0 32px 30px;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
-.nzl-brand { margin-bottom: 10px; }
-.nzl-brand img { display: block; }
+/* navy brand band — the wordmark stays white-on-brand in both modes;
+   replace assets/images/wordmark-white.svg to white-label */
+.nzl-brand {
+  margin: 0 -32px 22px;
+  padding: 26px 32px 24px;
+  background: var(--nz-rail);
+  border-bottom: 1px solid var(--nz-rail-edge);
+}
+.nzl-brand img { display: block; height: 36px; width: auto; max-width: 100%; }
 
 .nzl-hint {
   margin: 0 0 24px;
@@ -65,7 +80,7 @@ body.nz-login {
   padding: 8px 14px;
   background: var(--nz-well);
   border: 1px solid var(--nz-border-strong);
-  border-radius: 6px;
+  border-radius: var(--nz-radius-ctl);
   color: var(--nz-text);
   font-family: var(--nz-font);
   font-size: 14px;
@@ -118,7 +133,7 @@ body.nz-login {
 .nzl-card input[type='submit'] {
   height: 40px;
   padding: 0 18px;
-  border-radius: 6px;
+  border-radius: var(--nz-radius-ctl);
   font-family: var(--nz-font);
   font-size: 13.5px;
   font-weight: 600;
@@ -165,7 +180,7 @@ body.nz-login {
   padding: 11px 14px;
   border: 0;
   border-left: 3px solid transparent;
-  border-radius: 6px;
+  border-radius: var(--nz-radius-ctl);
   font-size: 13px;
   text-shadow: none;
 }

@@ -2,6 +2,8 @@
 <html lang='en'>
 <head>
   <meta charset='utf-8' />
+  <!-- apply the stored dark/light preference before first paint -->
+  <script>try{document.documentElement.setAttribute('data-nz-theme',localStorage.getItem('nz-theme')||'dark')}catch(e){}</script>
 
   <title><tmpl_var name="company_name"><tmpl_var name="app_title"></title>
 
@@ -29,9 +31,10 @@
   <link rel='stylesheet' href='../themes/default/assets/stylesheets/font-awesome-4.7.0/css/font-awesome.min.css' />
 
   <!-- the earlier name layer -->
-  <link rel='stylesheet' href='../themes/<tmpl_var name='current_theme'>/assets/fonts/inter/inter.css?ver=2' />
-  <link rel='stylesheet' href='../themes/<tmpl_var name='current_theme'>/assets/stylesheets/earlier/tokens.css?ver=2' />
-  <link rel='stylesheet' href='../themes/<tmpl_var name='current_theme'>/assets/stylesheets/earlier/login.css?ver=2' />
+  <link rel='stylesheet' href='../themes/<tmpl_var name='current_theme'>/assets/fonts/inter/inter.css?ver=3' />
+  <link rel='stylesheet' href='../themes/<tmpl_var name='current_theme'>/assets/stylesheets/earlier/tokens.css?ver=3' />
+  <link rel='stylesheet' href='../themes/<tmpl_var name='current_theme'>/assets/stylesheets/earlier/icons.css?ver=3' />
+  <link rel='stylesheet' href='../themes/<tmpl_var name='current_theme'>/assets/stylesheets/earlier/login.css?ver=3' />
 </head>
 
 <body class='nz-login'>

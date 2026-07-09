@@ -75,8 +75,8 @@
   --nz-card:            var(--nz-ink-900);  /* panels, tables      */
   --nz-raised:          var(--nz-ink-800);  /* hover strata        */
   --nz-well:            var(--nz-ink-1000); /* inputs, meter tracks*/
-  --nz-popover:         #263A43;            /* menus, dropdowns    */
-  --nz-backdrop:        rgba(2, 8, 11, 0.62);
+  --nz-popover:         var(--nz-ink-800);  /* menus, dropdowns    */
+  --nz-backdrop:        rgba(0, 0, 0, 0.6);
 
   /* Brand rail (the navy band — Earlier identity zone) */
   --nz-rail:            var(--nz-blue-1100);
@@ -90,25 +90,25 @@
   /* Hairlines — borders are quiet; surfaces do the talking */
   --nz-border:          rgba(133, 147, 153, 0.18); /* card edges   */
   --nz-border-soft:     rgba(133, 147, 153, 0.10); /* row dividers */
-  --nz-border-strong:   rgba(133, 147, 153, 0.55); /* control edges*/
+  --nz-border-strong:   var(--nz-ink-500);  /* control edges (Clarity object-border-color) */
 
   /* Text */
   --nz-text-heading:    #FFFFFF;
   --nz-text:            var(--nz-ink-100);
-  --nz-text-secondary:  var(--nz-ink-300);
-  --nz-text-muted:      #94A5AC;  /* ≥4.5:1 on card, page AND popover */
+  --nz-text-secondary:  var(--nz-ink-200);
+  --nz-text-muted:      var(--nz-ink-300);  /* Clarity typography color-200 */
   --nz-text-disabled:   #82939B;  /* placeholders: 4.6:1 on the input well */
   --nz-text-on-action:  #FFFFFF;
 
   /* Action — blue is the only interactive colour */
-  --nz-link:            var(--nz-blue-300);
+  --nz-link:            var(--nz-blue-400);
   --nz-link-hover:      var(--nz-blue-200);
   --nz-accent:          var(--nz-blue-400);  /* indicators, active tab, checked */
   --nz-action:          var(--nz-blue-600);  /* primary fill: white text = 4.5:1 */
   --nz-action-hover:    var(--nz-blue-700);  /* hover deepens to the brand anchor (6.1:1) */
   --nz-action-active:   var(--nz-blue-800);
-  --nz-selected:        rgba(46, 169, 255, 0.10); /* selected/hover-selected surfaces */
-  --nz-selected-strong: rgba(46, 169, 255, 0.16);
+  --nz-selected:        var(--nz-blue-900);  /* Clarity interaction-background-selected */
+  --nz-selected-strong: var(--nz-blue-800);
   --nz-focus-ring:      rgba(46, 169, 255, 0.40);
 
   /* Status */
@@ -128,6 +128,27 @@
   --nz-info-text:       var(--nz-blue-300);
   --nz-info-tint:       rgba(46, 169, 255, 0.10);
 
+  /* Surface washes & edges (mode-dependent translucents) */
+  --nz-veil:            rgba(255, 255, 255, 0.03);  /* hover wash            */
+  --nz-veil-faint:      rgba(255, 255, 255, 0.015); /* zebra / filter bands  */
+  --nz-veil-head:       var(--nz-ink-1000); /* table header (Clarity tint: darker than card) */
+  --nz-row-hover:       rgba(46, 169, 255, 0.045);
+  --nz-topbar-bg:       rgba(23, 37, 43, 0.88);
+  --nz-scrollbar:       var(--nz-ink-700);
+  --nz-scrollbar-hover: var(--nz-ink-600);
+  --nz-accent-edge:     rgba(46, 169, 255, 0.45);
+  --nz-info-edge:       rgba(46, 169, 255, 0.35);
+  --nz-success-edge:    rgba(103, 202, 22, 0.35);
+  --nz-warning-edge:    rgba(255, 207, 102, 0.35);
+  --nz-danger-edge:     rgba(255, 103, 77, 0.45);
+
+  /* Alert surfaces (Clarity dark: solid status-tint panels) */
+  --nz-info-surface:     var(--nz-blue-800);
+  --nz-success-surface:  var(--nz-green-800);
+  --nz-warning-surface:  var(--nz-ochre-900);
+  --nz-danger-surface:   var(--nz-red-900);
+  --nz-alert-text:       var(--nz-ink-100);
+
   /* Charts render on a light "paper" panel (Chart.js draws dark axes) */
   --nz-paper:           var(--nz-ink-100);
 
@@ -140,10 +161,10 @@
   --nz-radius-modal:    10px;
   --nz-radius-pill:     999px;
 
-  --nz-ctl-h:           34px;
+  --nz-ctl-h:           36px;
   --nz-ctl-h-sm:        26px;
 
-  --nz-shadow-1:        0 1px 2px rgba(0, 0, 0, 0.40);
+  --nz-shadow-1:        0 1px 2px 0 rgba(0, 0, 0, 0.6);
   --nz-shadow-2:        0 4px 10px rgba(0, 0, 0, 0.35);
   --nz-shadow-pop:      0 10px 28px rgba(0, 0, 0, 0.55);
   --nz-focus-shadow:    0 0 0 3px var(--nz-focus-ring);
@@ -151,7 +172,7 @@
   --nz-font:            'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --nz-font-mono:       'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
 
-  --nz-fs-title:        22px;  /* page h1        */
+  --nz-fs-title:        24px;  /* page h1 (Clarity title 24/500) */
   --nz-fs-section:      16px;  /* h2/h3 in flow  */
   --nz-fs-cardtitle:    14px;  /* card headers   */
   --nz-fs-body:         14px;
@@ -167,4 +188,95 @@
 
   --nz-quick:           0.16s;
   --nz-ease:            cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+
+/* ============================================================
+ * LIGHT MODE — alias remap only (Clarity light values).
+ * The brand rail stays navy in both modes; everything content-
+ * side re-derives from these aliases. Toggled by nz-theme.js
+ * (data-nz-theme on <html>, persisted in localStorage).
+ * ============================================================ */
+
+:root[data-nz-theme='light'] {
+  color-scheme: light;
+
+  /* surfaces (Clarity light: app construction-25/50, containers white) */
+  --nz-page:            #F1F6F8;
+  --nz-card:            #FFFFFF;
+  --nz-raised:          #E9F0F3;
+  --nz-well:            #F6FAFB;
+  --nz-popover:         #FFFFFF;
+  --nz-backdrop:        rgba(27, 43, 50, 0.42);
+
+  /* hairlines */
+  --nz-border:          rgba(79, 97, 105, 0.20);
+  --nz-border-soft:     rgba(79, 97, 105, 0.12);
+  --nz-border-strong:   var(--nz-ink-300);  /* Clarity light interaction border */
+
+  /* text (Clarity light typography ramp) */
+  --nz-text-heading:    var(--nz-ink-1000);
+  --nz-text:            var(--nz-ink-900);
+  --nz-text-secondary:  var(--nz-ink-600);
+  --nz-text-muted:      var(--nz-ink-500);
+  --nz-text-disabled:   var(--nz-ink-400);
+
+  /* action — the brand anchor carries light mode directly */
+  --nz-link:            var(--nz-blue-700);
+  --nz-link-hover:      var(--nz-blue-800);
+  --nz-accent:          var(--nz-blue-700);
+  --nz-action:          var(--nz-blue-700);
+  --nz-action-hover:    var(--nz-blue-800);
+  --nz-action-active:   var(--nz-blue-900);
+  --nz-selected:        #E3F1FB;  /* Clarity light selected (blue-75 role) */
+  --nz-selected-strong: #CFE7F8;
+  --nz-focus-ring:      rgba(0, 101, 171, 0.35);
+
+  /* status (Clarity light: 700-family fills, 800 text, 50 tints) */
+  --nz-success:         #42810E;
+  --nz-success-text:    #366A0C;
+  --nz-success-tint:    rgba(66, 129, 14, 0.09);
+  --nz-warning:         #FFB92E;
+  --nz-warning-text:    #A36500;
+  --nz-warning-tint:    rgba(255, 185, 46, 0.14);
+  --nz-danger:          #E02200;
+  --nz-danger-text:     #C21D00;
+  --nz-danger-tint:     rgba(224, 34, 0, 0.07);
+  --nz-info:            var(--nz-blue-700);
+  --nz-info-text:       var(--nz-blue-700);
+  --nz-info-tint:       rgba(0, 101, 171, 0.08);
+
+  /* washes & edges */
+  --nz-veil:            rgba(23, 43, 50, 0.035);
+  --nz-veil-faint:      rgba(23, 43, 50, 0.02);
+  --nz-veil-head:       #F1F6F8;  /* Clarity light table header tint */
+  --nz-row-hover:       rgba(0, 101, 171, 0.05);
+  --nz-topbar-bg:       rgba(241, 246, 248, 0.88);
+  --nz-scrollbar:       var(--nz-ink-300);
+  --nz-scrollbar-hover: var(--nz-ink-400);
+  --nz-accent-edge:     rgba(0, 101, 171, 0.40);
+  --nz-info-edge:       rgba(0, 101, 171, 0.30);
+  --nz-success-edge:    rgba(66, 129, 14, 0.35);
+  --nz-warning-edge:    rgba(163, 101, 0, 0.35);
+  --nz-danger-edge:     rgba(224, 34, 0, 0.35);
+
+  /* alert surfaces: Clarity light 50-tint panels */
+  --nz-info-surface:     #E5F3FB;
+  --nz-success-surface:  #EEFCE3;
+  --nz-warning-surface:  #FFF2D6;
+  --nz-danger-surface:   #FFF2F0;
+  --nz-alert-text:       var(--nz-ink-900);
+
+  /* strong status fills (badges): Clarity light 600/700-family */
+  --nz-success-deep:     #42810E;
+  --nz-warning-deep:     #FFA600;
+  --nz-danger-deep:      #C21D00;
+
+  /* charts sit on white cards in light */
+  --nz-paper:           #FFFFFF;
+
+  /* softer elevation on light surfaces */
+  --nz-shadow-1:        0 1px 2px rgba(27, 43, 50, 0.10);
+  --nz-shadow-2:        0 4px 10px rgba(27, 43, 50, 0.10);
+  --nz-shadow-pop:      0 10px 28px rgba(27, 43, 50, 0.22);
+  --nz-focus-shadow:    0 0 0 3px var(--nz-focus-ring);
 }

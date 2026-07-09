@@ -12,7 +12,7 @@
 body.nz h1, body.nz h2, body.nz h3, body.nz h4 {
   font-family: var(--nz-font);
   color: var(--nz-text-heading);
-  font-weight: 600;
+  font-weight: 500; /* Clarity headings are medium */
 }
 
 body.nz .page-header {
@@ -45,7 +45,7 @@ body.nz .page-header p {
 /* nested content headings: modest sub-section voice (safe across all pages) */
 #pageContent h2, #pageContent h3, #pageContent h4 {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--nz-text-secondary);
   margin: 26px 0 10px;
 }
@@ -88,7 +88,7 @@ ul.modules li {
 
 ul.modules li:hover {
   background: var(--nz-raised);
-  border-color: rgba(46, 169, 255, 0.45);
+  border-color: var(--nz-accent-edge);
 }
 
 ul.modules li .icon {
@@ -113,8 +113,14 @@ ul.modules li .title {
   color: var(--nz-text);
 }
 
-/* the whole tile is the link; its text stays for screen readers */
-ul.modules li a.btn {
+/* the whole tile is the link; its text stays for screen readers.
+   Every state must stay transparent or the overlay paints a blank box over
+   the tile — the :hover/:focus selectors out-rank the generic .btn-default
+   state rules, which otherwise win on specificity. */
+body.nz ul.modules li a.btn,
+body.nz ul.modules li a.btn:hover,
+body.nz ul.modules li a.btn:focus,
+body.nz ul.modules li a.btn:active {
   position: absolute;
   inset: 0;
   z-index: 1;
@@ -140,8 +146,8 @@ ul.modules li::after {
 }
 
 /* the tile link overlay must show focus INSIDE the clipped tile */
-ul.modules li a.btn:focus,
-ul.modules li a.btn:focus-visible {
+body.nz ul.modules li a.btn:focus,
+body.nz ul.modules li a.btn:focus-visible {
   outline: none;
   box-shadow: inset 0 0 0 2px var(--nz-accent);
 }
@@ -197,7 +203,7 @@ body.nz .table > thead > tr > th {
   text-transform: uppercase;
   letter-spacing: var(--nz-track-caps);
   color: var(--nz-text-muted);
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--nz-veil-head);
   border-bottom: 1px solid var(--nz-border);
   border-top: 0;
   vertical-align: middle;
@@ -218,7 +224,7 @@ body.nz .table thead th[data-column][data-ordered] { color: var(--nz-link); }
 /* the filter row inside thead.dark */
 body.nz .table > thead > tr > td {
   padding: 8px 10px 10px;
-  background: rgba(255, 255, 255, 0.012);
+  background: var(--nz-veil-faint);
   border-bottom: 1px solid var(--nz-border);
   border-top: 0;
 }
@@ -229,7 +235,7 @@ body.nz .table > thead > tr > td .form-control {
 }
 
 body.nz .table > tbody > tr > td {
-  padding: 10px 16px;
+  padding: 8px 12px;
   border-top: 1px solid var(--nz-border-soft);
   color: var(--nz-text);
   vertical-align: middle;
@@ -240,13 +246,13 @@ body.nz .table > tbody > tr:first-child > td { border-top: 0; }
 body.nz .table > tbody > tr {
   transition: background var(--nz-quick) var(--nz-ease);
 }
-body.nz .table > tbody > tr:hover { background: rgba(46, 169, 255, 0.045); }
+body.nz .table > tbody > tr:hover { background: var(--nz-row-hover); }
 
 /* whole-cell record links inherit text colour; the row hover is the affordance */
 body.nz .table > tbody > tr > td > a:not(.btn) {
   display: block;
-  margin: -10px -16px;
-  padding: 10px 16px;
+  margin: -8px -12px;
+  padding: 8px 12px;
   color: var(--nz-text);
 }
 body.nz .table > tbody > tr > td > a:not(.btn):hover { color: var(--nz-link-hover); }
@@ -277,17 +283,17 @@ body.nz .table > tbody > tr.info    { background: var(--nz-info-tint); }
 
 /* .table-striped (backup lists): Bootstrap zebra is light #f9f9f9 */
 body.nz .table-striped > tbody > tr:nth-of-type(odd) {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--nz-veil-faint);
 }
 body.nz .table-striped > tbody > tr:nth-of-type(odd):hover {
-  background: rgba(46, 169, 255, 0.045);
+  background: var(--nz-row-hover);
 }
 
 body.nz .table > tfoot > tr > td,
 body.nz .table > tfoot > tr > th {
   padding: 10px 16px;
   border-top: 1px solid var(--nz-border);
-  background: rgba(255, 255, 255, 0.012);
+  background: var(--nz-veil-faint);
   color: var(--nz-text-secondary);
   font-weight: 500;
 }
@@ -306,11 +312,13 @@ body.nz .btn {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  height: 32px;
-  padding: 0 14px;
+  height: var(--nz-ctl-h);
+  padding: 0 16px;
   font-family: var(--nz-font);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   line-height: 1;
   border-radius: var(--nz-radius-ctl);
   border: 1px solid transparent;
@@ -370,7 +378,7 @@ body.nz .btn[data-submit-form]:active {
 body.nz .btn-danger,
 body.nz .btn.formbutton-danger {
   background: transparent;
-  border-color: rgba(255, 103, 77, 0.45);
+  border-color: var(--nz-danger-edge);
   color: var(--nz-danger-text);
 }
 
@@ -457,7 +465,7 @@ body.nz .btn.dns-record-btn.formbutton-success {
 body.nz .btn.dns-record-btn:hover,
 body.nz .btn.dns-record-btn:focus {
   background: var(--nz-selected);
-  border-color: rgba(46, 169, 255, 0.45);
+  border-color: var(--nz-accent-edge);
   color: var(--nz-link);
 }
 
@@ -690,7 +698,7 @@ body.nz .nav-tabs > li > a {
   margin: 0;
   padding: 10px 14px;
   border: 0 !important;
-  border-radius: 6px 6px 0 0;
+  border-radius: var(--nz-radius-ctl) var(--nz-radius-ctl) 0 0;
   background: transparent;
   color: var(--nz-text-muted);
   font-size: 13px;
@@ -703,7 +711,7 @@ body.nz .nav-tabs > li > a {
 
 body.nz .nav-tabs > li > a:hover,
 body.nz .nav-tabs > li > a:focus {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--nz-veil);
   color: var(--nz-text);
 }
 
@@ -713,23 +721,25 @@ body.nz .nav-tabs > li.active > a:focus {
   background: transparent !important;
   color: var(--nz-text-heading) !important;
   border: 0 !important;
-  box-shadow: inset 0 -2px 0 var(--nz-accent);
+  box-shadow: inset 0 -3px 0 var(--nz-accent);
 }
 
 body.nz .tab-content { padding-top: 22px; }
 
 /* ---------- alerts & inline status ---------- */
 
+/* Clarity dark alert anatomy: solid status surface + 1px status border.
+   Text stays light on every surface (Clarity's own dark-on-ochre warning
+   text is 2.07:1 — a documented AA-driven deviation). */
 body.nz .alert {
   position: relative;
   margin: 0 0 16px;
-  padding: 12px 16px;
-  border: 0;
-  border-left: 3px solid transparent;
-  border-radius: 6px;
+  padding: 11px 16px;
+  border: 1px solid transparent;
+  border-radius: var(--nz-radius-ctl);
   font-size: 13px;
   background: var(--nz-card);
-  color: var(--nz-text);
+  color: var(--nz-alert-text);
   text-shadow: none;
 }
 
@@ -737,28 +747,28 @@ body.nz .alert ul { margin: 4px 0 0; padding-left: 18px; }
 body.nz .alert .close { color: inherit; opacity: 0.6; text-shadow: none; }
 
 body.nz .alert-danger, body.nz #errorMsg {
-  background: var(--nz-danger-tint);
-  border-left-color: var(--nz-danger);
-  color: var(--nz-danger-text);
+  background: var(--nz-danger-surface);
+  border-color: var(--nz-danger);
+  color: var(--nz-alert-text);
 }
 
 body.nz .alert-success, body.nz #OKMsg {
-  background: var(--nz-success-tint);
-  border-left-color: var(--nz-success);
-  color: var(--nz-success-text);
+  background: var(--nz-success-surface);
+  border-color: var(--nz-success);
+  color: var(--nz-alert-text);
 }
 
 body.nz .alert-warning {
-  background: var(--nz-warning-tint);
-  border-left-color: var(--nz-warning);
-  color: var(--nz-warning-text);
+  background: var(--nz-warning-surface);
+  border-color: var(--nz-warning);
+  color: var(--nz-alert-text);
 }
 
 body.nz .alert-info,
 body.nz .alert-notification {
-  background: var(--nz-info-tint);
-  border-left-color: var(--nz-info);
-  color: var(--nz-info-text);
+  background: var(--nz-info-surface);
+  border-color: var(--nz-info);
+  color: var(--nz-alert-text);
 }
 
 body.nz .alert strong { color: inherit; }
@@ -766,8 +776,8 @@ body.nz .alert strong { color: inherit; }
 /* id-only status divs injected by ispconfig.js */
 body.nz #errorMsg:empty, body.nz #OKMsg:empty { display: none; }
 body.nz #errorMsg, body.nz #OKMsg {
-  padding: 12px 16px;
-  border-radius: 6px;
+  padding: 11px 16px;
+  border-radius: var(--nz-radius-ctl);
   margin: 0 0 16px;
 }
 
@@ -776,32 +786,21 @@ body.nz #errorMsg, body.nz #OKMsg {
 body.nz .label {
   display: inline-block;
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: 12px;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.02em;
   text-shadow: none;
 }
 
-body.nz .label-success {
-  background: var(--nz-success-tint);
-  color: var(--nz-success-text);
-  border: 1px solid rgba(103, 202, 22, 0.35);
-}
-body.nz .label-warning {
-  background: var(--nz-warning-tint);
-  color: var(--nz-warning-text);
-  border: 1px solid rgba(255, 207, 102, 0.35);
-}
-body.nz .label-danger {
-  background: var(--nz-danger-tint);
-  color: var(--nz-danger-text);
-  border: 1px solid rgba(255, 103, 77, 0.35);
-}
+/* Clarity badge fills: solid shade-family surfaces (deep tokens remap
+   per mode); warning keeps dark text on its amber fill in light mode */
+body.nz .label-success { background: var(--nz-success-deep); color: #FFFFFF; }
+body.nz .label-warning { background: var(--nz-warning-deep); color: var(--nz-alert-text); }
+body.nz .label-danger  { background: var(--nz-danger-deep); color: #FFFFFF; }
 body.nz .label-info, body.nz .label-default {
-  background: var(--nz-info-tint);
-  color: var(--nz-info-text);
-  border: 1px solid rgba(46, 169, 255, 0.35);
+  background: var(--nz-info-surface);
+  color: #FFFFFF;
 }
 
 /* ---------- pagination ---------- */
@@ -902,8 +901,8 @@ body.nz .progress-bar-striped { background-image: none; }
 /* ---------- modal (datalog + any bootstrap modal) ---------- */
 
 body.nz .modal-content {
-  background: var(--nz-popover);
-  border: 1px solid var(--nz-border);
+  background: var(--nz-card);
+  border: 1px solid rgba(0, 0, 0, 0.9); /* Clarity dark container edge */
   border-radius: var(--nz-radius-modal);
   box-shadow: var(--nz-shadow-pop);
   color: var(--nz-text);
@@ -935,8 +934,8 @@ body.nz .modal-footer {
   border-top: 1px solid var(--nz-border-soft);
 }
 
-body.nz .modal-backdrop { background: #02080B; }
-body.nz .modal-backdrop.in { opacity: 0.62; }
+body.nz .modal-backdrop { background: #000000; }
+body.nz .modal-backdrop.in { opacity: 0.6; }
 
 /* ---------- select2 (v3.5) ---------- */
 
@@ -1012,14 +1011,14 @@ body.nz .select2-container-multi.select2-container-active .select2-choices {
 
 .select2-results .select2-result-label {
   padding: 7px 10px;
-  border-radius: 6px;
+  border-radius: var(--nz-radius-ctl);
   font-size: 13px;
 }
 
 .select2-results .select2-highlighted {
   background: var(--nz-selected-strong);
   color: #FFFFFF;
-  border-radius: 6px;
+  border-radius: var(--nz-radius-ctl);
 }
 
 .select2-results .select2-no-results,
@@ -1078,7 +1077,7 @@ body.nz .select2-container-multi .select2-choices .select2-search-field input {
 
 .datetimepicker table tr td,
 .datetimepicker table tr th {
-  border-radius: 6px;
+  border-radius: var(--nz-radius-ctl);
   color: var(--nz-text);
   border: 0;
   text-shadow: none;
@@ -1127,7 +1126,7 @@ body.nz .tooltip-inner {
   background: #0B1519;
   color: var(--nz-ink-100);
   border: 1px solid var(--nz-border);
-  border-radius: 6px;
+  border-radius: var(--nz-radius-ctl);
   padding: 6px 10px;
   font-size: 12px;
   font-family: var(--nz-font);

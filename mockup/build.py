@@ -201,6 +201,14 @@ def build() -> None:
             build_dark_page(name, active, sidebar_frag, content_frag), encoding="utf-8")
     (WEBROOT / "dark-login.html").write_text(build_dark_login(), encoding="utf-8")
 
+    # light-mode variants: same pages with the switcher attribute pre-set
+    # (statically, since mockup pages ship without scripts)
+    for src, dst in (("dark-dashboard", "light-dashboard"), ("dark-login", "light-login")):
+        page = (WEBROOT / f"{src}.html").read_text(encoding="utf-8")
+        (WEBROOT / f"{dst}.html").write_text(
+            page.replace("<html lang='en'>", "<html lang='en' data-nz-theme='light'>", 1),
+            encoding="utf-8")
+
     # report stylesheet resolution for every page
     for f in sorted(WEBROOT.glob("*.html")):
         html = f.read_text(encoding="utf-8")
@@ -217,6 +225,8 @@ SHOT_MATRIX = [
     ("dark-sites", ("desktop",)),
     ("dark-form", ("desktop",)),
     ("dark-login", ("desktop", "mobile")),
+    ("light-dashboard", ("desktop",)),
+    ("light-login", ("desktop",)),
     ("default", ("desktop",)),
 ]
 
