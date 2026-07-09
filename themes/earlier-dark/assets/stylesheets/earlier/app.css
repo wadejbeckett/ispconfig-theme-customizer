@@ -112,6 +112,8 @@ body.nz #container {
   gap: 2px;
 }
 
+/* body.nz prefix: must out-rank the generic `body.nz a` link color */
+body.nz .nz-modnav-item,
 .nz-modnav-item {
   position: relative;
   display: flex;
@@ -132,21 +134,20 @@ body.nz #container {
   width: 20px;
   font-size: 17px;
   text-align: center;
-  opacity: 0.85;
 }
 
-.nz-modnav-item:hover,
-.nz-modnav-item:focus {
+body.nz .nz-modnav-item:hover,
+body.nz .nz-modnav-item:focus {
   background: var(--nz-rail-hover);
   color: var(--nz-rail-text-hover);
 }
 
-.nz-modnav-item.active {
+body.nz .nz-modnav-item.active {
   background: var(--nz-rail-active);
   color: #FFFFFF;
 }
 
-.nz-modnav-item.active .icon { opacity: 1; color: var(--nz-accent); }
+.nz-modnav-item.active .icon { color: var(--nz-accent); }
 
 /* the signature: a rounded blue current-module bar */
 .nz-modnav-item.active::before {

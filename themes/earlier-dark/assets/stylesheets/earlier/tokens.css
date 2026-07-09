@@ -81,11 +81,11 @@
   /* Brand rail (the navy band — Earlier identity zone) */
   --nz-rail:            var(--nz-blue-1100);
   --nz-rail-edge:       rgba(255, 255, 255, 0.07);
-  --nz-rail-text:       rgba(255, 255, 255, 0.70);
-  --nz-rail-text-hover: rgba(255, 255, 255, 0.92);
+  --nz-rail-text:       rgba(255, 255, 255, 0.88); /* near-white; pure white is the active state */
+  --nz-rail-text-hover: #FFFFFF;
   --nz-rail-hover:      rgba(255, 255, 255, 0.05);
   --nz-rail-active:     var(--nz-blue-1000);
-  --nz-rail-heading:    rgba(255, 255, 255, 0.55); /* 5.6:1 on rail — headers double as links */
+  --nz-rail-heading:    rgba(255, 255, 255, 0.66); /* group labels: quieter than items, ~7:1 */
 
   /* Hairlines — borders are quiet; surfaces do the talking */
   --nz-border:          rgba(133, 147, 153, 0.18); /* card edges   */
