@@ -1,0 +1,591 @@
+/* ============================================================
+ * EARLIER CONSOLE — APP FRAME
+ * ------------------------------------------------------------
+ * The shell: brand rail, topbar, content column, mobile drawer.
+ * Layout markup lives in this theme's main.tpl.htm; the module
+ * nav markup in topnav.tpl.htm. The stock module tree / news
+ * markup (header + ul > li > a) is styled generically under
+ * #sidebar. Reads semantic tokens only.
+ * ============================================================ */
+
+/* ---------- base canvas ---------- */
+
+html {
+  height: 100%;
+}
+
+body.nz {
+  margin: 0;
+  min-height: 100%;
+  background: var(--nz-page);
+  color: var(--nz-text);
+  font-family: var(--nz-font);
+  font-size: var(--nz-fs-body);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body.nz ::selection {
+  background: rgba(46, 169, 255, 0.35);
+  color: #FFFFFF;
+}
+
+/* thin dark scrollbars */
+body.nz ::-webkit-scrollbar { width: 10px; height: 10px; }
+body.nz ::-webkit-scrollbar-track { background: transparent; }
+body.nz ::-webkit-scrollbar-thumb {
+  background: var(--nz-ink-700);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+body.nz ::-webkit-scrollbar-thumb:hover { background-color: var(--nz-ink-600); }
+
+body.nz a {
+  color: var(--nz-link);
+  text-decoration: none;
+  transition: color var(--nz-quick) var(--nz-ease);
+}
+body.nz a:hover,
+body.nz a:focus {
+  color: var(--nz-link-hover);
+  text-decoration: none;
+}
+
+body.nz :focus-visible {
+  outline: 2px solid var(--nz-accent);
+  outline-offset: 2px;
+}
+
+/* ---------- frame grid ---------- */
+
+body.nz #container {
+  display: grid;
+  grid-template-columns: var(--nz-rail-w) minmax(0, 1fr);
+  min-height: 100vh;
+  /* the navy band must run the full page height even when the (sticky,
+     viewport-high) rail element ends — pages are usually taller than 100vh */
+  background: linear-gradient(90deg,
+              var(--nz-rail) 0,
+              var(--nz-rail) var(--nz-rail-w),
+              transparent var(--nz-rail-w));
+}
+
+/* ---------- brand rail ---------- */
+
+.nz-rail {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--nz-rail);
+  overflow: hidden;
+  z-index: 60;
+}
+
+.nz-brand {
+  flex: 0 0 auto;
+  height: var(--nz-topbar-h);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--nz-rail-edge);
+}
+
+.nz-brand img { display: block; }
+
+/* module navigation (markup from topnav.tpl.htm) */
+#topnav-container {
+  flex: 0 0 auto;
+  padding: 12px 12px 14px;
+}
+
+.nz-modnav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nz-modnav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 6px;
+  color: var(--nz-rail-text);
+  font-size: var(--nz-fs-secondary);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  transition: background var(--nz-quick) var(--nz-ease),
+              color var(--nz-quick) var(--nz-ease);
+}
+
+.nz-modnav-item .icon {
+  width: 20px;
+  font-size: 17px;
+  text-align: center;
+  opacity: 0.85;
+}
+
+.nz-modnav-item:hover,
+.nz-modnav-item:focus {
+  background: var(--nz-rail-hover);
+  color: var(--nz-rail-text-hover);
+}
+
+.nz-modnav-item.active {
+  background: var(--nz-rail-active);
+  color: #FFFFFF;
+}
+
+.nz-modnav-item.active .icon { opacity: 1; color: var(--nz-accent); }
+
+/* the signature: a rounded blue current-module bar */
+.nz-modnav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--nz-accent);
+}
+
+/* contextual panel: module tree, or news on the dashboard */
+#sidebar {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 4px 12px 18px;
+  border-top: 1px solid var(--nz-rail-edge);
+  scrollbar-width: thin;
+}
+
+#sidebar header {
+  font-size: var(--nz-fs-caption);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--nz-track-caps);
+  color: var(--nz-rail-heading);
+  padding: 16px 12px 6px;
+}
+
+#sidebar header a {
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
+#sidebar header a:hover { color: var(--nz-rail-text-hover); }
+
+#sidebar ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#sidebar li a {
+  display: block;
+  padding: 7px 12px;
+  border-radius: 6px;
+  color: var(--nz-rail-text);
+  font-size: var(--nz-fs-secondary);
+  line-height: 1.4;
+  transition: background var(--nz-quick) var(--nz-ease),
+              color var(--nz-quick) var(--nz-ease);
+}
+
+#sidebar li a:hover,
+#sidebar li a:focus {
+  background: var(--nz-rail-hover);
+  color: var(--nz-rail-text-hover);
+}
+
+/* stock tree wraps titles in <strong>; keep the weight calm */
+#sidebar li a strong { font-weight: 400; }
+#sidebar li a div { display: inline; }
+
+/* dashboard news: date line above the headline */
+#sidebar li a b {
+  display: block;
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--nz-rail-heading);
+  letter-spacing: 0.03em;
+  margin-bottom: 1px;
+}
+#sidebar li a br { display: none; }
+
+/* ---------- main column ---------- */
+
+.nz-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100vh;
+}
+
+.nz-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: var(--nz-topbar-h);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 var(--nz-content-pad);
+  background: rgba(23, 37, 43, 0.88);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--nz-border-soft);
+}
+
+#headerbar {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* when search is absent (admin sessions without it), keep actions right */
+#headerbar > .nz-topbar-actions { margin-left: auto; }
+
+/* --- global search: one calm command bar --- */
+
+#searchform {
+  flex: 1 1 auto;
+  max-width: 540px;
+  min-width: 0;
+  margin: 0;
+}
+#searchform > div, #searchform > div > div { min-width: 0; }
+
+#searchform .input-group {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 38px;
+  background: var(--nz-card);
+  border: 1px solid var(--nz-border);
+  border-radius: 8px;
+  transition: border-color var(--nz-quick) var(--nz-ease),
+              box-shadow var(--nz-quick) var(--nz-ease);
+}
+
+#searchform .input-group:focus-within {
+  border-color: var(--nz-accent);
+  box-shadow: var(--nz-focus-shadow);
+}
+
+#searchform .gs-container,
+#searchform .input-group > #globalsearch { /* with and without the JS wrapper */
+  flex: 1 1 auto;
+  order: 2;
+}
+
+#searchform #globalsearch,
+#searchform .form-control {
+  width: 100%;
+  height: 36px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: var(--nz-text);
+  font-size: 13px;
+  padding: 0 10px 0 0;
+}
+#searchform .form-control:focus { outline: none; box-shadow: none; }
+#searchform .form-control::placeholder { color: var(--nz-text-disabled); }
+
+#searchform .input-group-btn {
+  order: 1;
+  width: auto;
+}
+#searchform .input-group-btn .btn {
+  height: 36px;
+  padding: 0 8px 0 14px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: var(--nz-text-muted);
+  cursor: default;
+}
+#searchform .input-group-btn .btn .icon { font-size: 14px; }
+
+/* suggestion dropdowns (jquery.ispconfigsearch: gs- topbar search AND its
+   df- twin on DNS wizard / database edit pages). Positioning mechanics live
+   in base.css; the skin here must out-rank base.css's ul.*-resultbox rules. */
+.gs-container { position: relative; }
+
+body.nz ul.gs-resultbox,
+body.nz ul.df-resultbox {
+  max-height: 420px;
+  max-width: 560px;
+  overflow-y: auto;
+  padding: 6px;
+  background: var(--nz-popover);
+  border: 1px solid var(--nz-border);
+  border-radius: 8px;
+  box-shadow: var(--nz-shadow-pop);
+}
+
+body.nz #globalsearch-resultbox.gs-resultbox {
+  top: calc(100% + 8px);
+  left: -38px;   /* align with the bordered wrapper, not the inner input */
+  right: 0;
+  min-width: calc(100% + 38px);
+  max-width: none;
+}
+
+body.nz ul.gs-resultbox li,
+body.nz ul.df-resultbox li {
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--nz-text);
+  font-size: 13px;
+}
+
+body.nz ul.gs-resultbox li:hover,
+body.nz ul.df-resultbox li:hover {
+  background: var(--nz-selected-strong);
+  color: #FFFFFF;
+  cursor: pointer;
+}
+
+body.nz ul.gs-resultbox li.gs-cheader,
+body.nz ul.df-resultbox li.df-cheader {
+  font-size: var(--nz-fs-caption);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--nz-track-caps);
+  color: var(--nz-text-muted);
+  background: transparent;
+  cursor: default;
+  padding-top: 10px;
+  margin-bottom: 4px;
+}
+
+/* --- topbar actions --- */
+
+.nz-topbar-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* datalog notification: quiet blue chip (a real <button>; JS toggles inline display) */
+.notification {
+  font-family: var(--nz-font);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--nz-info-tint);
+  border: 1px solid rgba(46, 169, 255, 0.35);
+  color: var(--nz-info-text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--nz-quick) var(--nz-ease);
+}
+
+.notification:hover { background: var(--nz-selected-strong); }
+
+.notification::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--nz-accent);
+  animation: nz-pulse 2.4s var(--nz-ease) infinite;
+}
+
+@keyframes nz-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(46, 169, 255, 0.45); }
+  50%      { box-shadow: 0 0 0 5px rgba(46, 169, 255, 0.0); }
+}
+
+/* logout: a quiet session control, not an alarm */
+body.nz #logout-button {
+  height: 32px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid var(--nz-border-strong);
+  border-radius: var(--nz-radius-ctl);
+  color: var(--nz-text-secondary);
+  font-size: 12.5px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  box-shadow: none;
+  transition: background var(--nz-quick) var(--nz-ease),
+              color var(--nz-quick) var(--nz-ease),
+              border-color var(--nz-quick) var(--nz-ease);
+}
+
+body.nz #logout-button::before {
+  content: '\f011'; /* power-off */
+  font-family: FontAwesome;
+  font-size: 12px;
+  color: var(--nz-text-muted);
+  transition: color var(--nz-quick) var(--nz-ease);
+}
+
+body.nz #logout-button:hover,
+body.nz #logout-button:focus {
+  background: var(--nz-raised);
+  border-color: var(--nz-border-strong);
+  color: var(--nz-text-heading);
+}
+body.nz #logout-button:hover::before { color: var(--nz-danger); }
+
+/* ---------- content ---------- */
+
+body.nz #content {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: calc(var(--nz-content-max) + 2 * var(--nz-content-pad));
+  margin: 0 auto;
+  padding: 26px var(--nz-content-pad) 48px;
+  box-sizing: border-box;
+}
+
+body.nz #footer {
+  padding: 16px var(--nz-content-pad) 22px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--nz-text-muted);
+}
+body.nz #footer a { color: var(--nz-text-secondary); }
+body.nz #footer a:hover { color: var(--nz-link); }
+
+/* ---------- ajax load indicator (created by ispconfig.js) ---------- */
+
+#ajaxloader {
+  position: absolute;
+  z-index: 500;
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  background: var(--nz-popover);
+  border: 1px solid var(--nz-border);
+  box-shadow: var(--nz-shadow-pop);
+}
+
+#ajaxloader::after {
+  content: '';
+  position: absolute;
+  inset: 18px;
+  border-radius: 50%;
+  border: 3px solid var(--nz-selected-strong);
+  border-top-color: var(--nz-accent);
+  animation: nz-spin 0.8s linear infinite;
+}
+
+@keyframes nz-spin { to { transform: rotate(360deg); } }
+
+/* ---------- mobile drawer (pushy) ---------- */
+
+.menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: var(--nz-radius-ctl);
+  color: var(--nz-text-secondary);
+  font-size: 20px;
+  cursor: pointer;
+}
+.menu-btn:hover { background: var(--nz-raised); color: #FFFFFF; }
+
+/* small-screen brand mark (the rail is hidden there) */
+.nz-topbar-brand { display: none; flex: 0 0 auto; }
+.nz-topbar-brand img { display: block; }
+
+.pushy {
+  background: var(--nz-rail);
+  box-shadow: none;
+}
+
+.pushy ul {
+  list-style: none;
+  margin: 0;
+  padding: 10px;
+}
+
+.pushy a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 6px;
+  color: var(--nz-rail-text);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.pushy a:hover { background: var(--nz-rail-hover); color: var(--nz-rail-text-hover); }
+.pushy a.active { background: var(--nz-rail-active); color: #FFFFFF; }
+.pushy i.icon { font-size: 16px; width: 18px; text-align: center; }
+
+.pushy ul.subnavi { padding: 2px 0 4px 26px; }
+.pushy ul.subnavi a { font-weight: 400; padding: 6px 10px; }
+.pushy ul.subnavi a.subnav-header {
+  font-size: var(--nz-fs-caption);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--nz-track-caps);
+  color: var(--nz-rail-heading);
+}
+
+.site-overlay { background: var(--nz-backdrop); }
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 960px) {
+  body.nz #container { display: block; background: none; }
+  .nz-rail { display: none; }
+  .menu-btn { display: flex; }
+  .nz-topbar-brand { display: block; }
+  .nz-topbar { padding: 0 16px; gap: 12px; }
+  body.nz #content { padding: 18px 16px 40px; }
+}
+
+@media (max-width: 640px) {
+  #searchform { max-width: none; }
+  /* icon-only session control; the label stays for screen readers via width trick */
+  body.nz #logout-button { font-size: 0; gap: 0; padding: 0 11px; }
+  body.nz #logout-button::before { font-size: 14px; }
+  .nz-topbar-actions { flex-shrink: 0; }
+  .nz-topbar-brand img { width: 61px; height: 20px; }
+}
+
+/* ---------- reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  body.nz *,
+  body.nz *::before,
+  body.nz *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

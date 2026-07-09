@@ -1,0 +1,339 @@
+<!-- Real rendered ISPConfig 3.3.1p1 dashboard DOM, captured from
+     a production ISPConfig 3.3.1p1 install on 2026-07-08 with the earlier theme active.
+     Trimmed: mailbox table 81 rows -> 6, news sidebar 10 -> 4, <script> stripped.
+     Client mailbox addresses replaced with placeholders. Everything else verbatim. -->
+
+  <!-- off canvas -->
+  <nav class="pushy pushy-left"><ul><li><a href="#" class="active"><i class="icon icon icon-dashboard"></i>
+          Home
+        </a><ul class="subnavi"><li><a href="#">2026-03-09 ISPConfig 3.3.1p1 Released – Bugfix Update</a></li><li><a href="#">2026-01-22 ISPConfig 3.3.1 Released</a></li></ul></li><li><a href="#" data-capp="help"><i class="icon icon icon-help"></i>
+          Help
+        </a></li><li><a href="#" data-capp="client"><i class="icon icon icon-client"></i>
+          Client
+        </a></li><li><a href="#" data-capp="sites"><i class="icon icon icon-sites"></i>
+          Sites
+        </a></li><li><a href="#" data-capp="mail"><i class="icon icon icon-mail"></i>
+          Email
+        </a></li><li><a href="#" data-capp="dns"><i class="icon icon icon-dns"></i>
+          DNS
+        </a></li><li><a href="#" data-capp="monitor"><i class="icon icon icon-monitor"></i>
+          Monitor
+        </a></li><li><a href="#" data-capp="tools"><i class="icon icon icon-tools"></i>
+          Tools
+        </a></li><li><a href="#" data-capp="admin"><i class="icon icon icon-admin"></i>
+          System
+        </a></li></ul></nav>
+  <div class="site-overlay"></div>
+
+  <div id="container">
+    <div id="main-wrapper">
+      <div id="inner-wrapper">
+        <div class="clear">
+          <div class="left clear">
+            <!-- off canvas menu button -->
+            <div class="menu-btn left">&#9776;</div>
+            <!--LOGO-->
+          </div>
+          <div id="headerbar" class="clear">
+            <!-- logout button -->
+            <button type="button" id="logout-button" class="btn btn-sm btn-danger text-uppercase" data-load-content="login/logout.php">Logout admin</button>
+            <!-- search field -->
+            <form action="#" method="get" id="searchform" role="form">
+              <div>
+                <div>
+                  <div class="input-group">
+                    <div class="gs-container"><input id="globalsearch" type="text" class="form-control" placeholder="Search" autocomplete="off"><ul id="globalsearch-resultbox" class="gs-resultbox" style="display:none;"></ul></div>
+                    <span class="input-group-btn">
+                      <button class="btn btn-default" title="Search">
+                        <span class="icon icon-lens"></span>
+                      </button>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="notification" data-toggle="modal" data-target="#datalogModal">
+            <span class="notification_text">3</span>
+          </div>
+        </div>
+        <div id="topnav-container">    <!-- main navigation -->
+    <nav id="main-navigation" class="btn-group btn-group-justified">
+            <a href="#" class="btn btn-default active" data-icon-class="icon icon-dashboard">
+          <div class="icon icon-dashboard"></div>
+          <div class="title">Home</div>
+        </a>
+            <a href="#" class="btn btn-default " data-capp="help" data-icon-class="icon icon-help">
+          <div class="icon icon-help"></div>
+          <div class="title">Help</div>
+        </a>
+            <a href="#" class="btn btn-default " data-capp="client" data-icon-class="icon icon-client">
+          <div class="icon icon-client"></div>
+          <div class="title">Client</div>
+        </a>
+            <a href="#" class="btn btn-default " data-capp="sites" data-icon-class="icon icon-sites">
+          <div class="icon icon-sites"></div>
+          <div class="title">Sites</div>
+        </a>
+            <a href="#" class="btn btn-default " data-capp="mail" data-icon-class="icon icon-mail">
+          <div class="icon icon-mail"></div>
+          <div class="title">Email</div>
+        </a>
+            <a href="#" class="btn btn-default " data-capp="dns" data-icon-class="icon icon-dns">
+          <div class="icon icon-dns"></div>
+          <div class="title">DNS</div>
+        </a>
+            <a href="#" class="btn btn-default " data-capp="monitor" data-icon-class="icon icon-monitor">
+          <div class="icon icon-monitor"></div>
+          <div class="title">Monitor</div>
+        </a>
+            <a href="#" class="btn btn-default " data-capp="tools" data-icon-class="icon icon-tools">
+          <div class="icon icon-tools"></div>
+          <div class="title">Tools</div>
+        </a>
+            <a href="#" class="btn btn-default " data-capp="admin" data-icon-class="icon icon-admin">
+          <div class="icon icon-admin"></div>
+          <div class="title">System</div>
+        </a>
+        </nav>
+</div>        <div class="clear">
+          <!-- content -->
+          <div id="content" class="right">
+            <form method="post" action="" id="pageForm" name="pageForm" enctype="multipart/form-data" class="form-horizontal" role="form">
+                <div id="pageContent" data-startpage="dashboard/dashboard.php"><div class="page-header">
+  <h1>Welcome admin</h1>
+</div>
+
+        <h2>Available Modules</h2>
+    <div style="margin: 0 auto;">
+    <ul class="modules clear">
+            <li>
+            <div class="clear">
+              <div class="icon icon-help"></div>
+              <div class="left">
+                <div class="title">Help</div>
+              </div>
+            </div>
+            <a href="#" class="btn btn-default button" data-capp="help">Go to Help</a>
+        </li>
+            <li>
+            <div class="clear">
+              <div class="icon icon-client"></div>
+              <div class="left">
+                <div class="title">Client</div>
+              </div>
+            </div>
+            <a href="#" class="btn btn-default button" data-capp="client">Go to Client</a>
+        </li>
+            <li>
+            <div class="clear">
+              <div class="icon icon-sites"></div>
+              <div class="left">
+                <div class="title">Sites</div>
+              </div>
+            </div>
+            <a href="#" class="btn btn-default button" data-capp="sites">Go to Sites</a>
+        </li>
+            <li>
+            <div class="clear">
+              <div class="icon icon-mail"></div>
+              <div class="left">
+                <div class="title">Email</div>
+              </div>
+            </div>
+            <a href="#" class="btn btn-default button" data-capp="mail">Go to Email</a>
+        </li>
+            <li>
+            <div class="clear">
+              <div class="icon icon-dns"></div>
+              <div class="left">
+                <div class="title">DNS</div>
+              </div>
+            </div>
+            <a href="#" class="btn btn-default button" data-capp="dns">Go to DNS</a>
+        </li>
+            <li>
+            <div class="clear">
+              <div class="icon icon-monitor"></div>
+              <div class="left">
+                <div class="title">Monitor</div>
+              </div>
+            </div>
+            <a href="#" class="btn btn-default button" data-capp="monitor">Go to Monitor</a>
+        </li>
+            <li>
+            <div class="clear">
+              <div class="icon icon-tools"></div>
+              <div class="left">
+                <div class="title">Tools</div>
+              </div>
+            </div>
+            <a href="#" class="btn btn-default button" data-capp="tools">Go to Tools</a>
+        </li>
+            <li>
+            <div class="clear">
+              <div class="icon icon-admin"></div>
+              <div class="left">
+                <div class="title">System</div>
+              </div>
+            </div>
+            <a href="#" class="btn btn-default button" data-capp="admin">Go to System</a>
+        </li>
+        </ul>
+    </div>
+
+<div>
+    <div><h3>System metrics</h3></div>
+    <div style="padding-bottom:10px;"><canvas height="98" id="loadchart" style="background-color: white; display: block; box-sizing: border-box; height: 98px; width: 980px;" width="980"></canvas></div>
+    <div style="padding-bottom:10px;"><canvas height="98" id="memchart" style="background-color: white; display: block; box-sizing: border-box; height: 98px; width: 980px;" width="980"></canvas></div>
+</div>
+
+    <div class="table-wrapper">
+    <table class="table">
+      <caption>Mailbox Quota</caption>
+      <thead class="dark form-group-sm">
+        <tr>
+          <th>Email Address</th>
+          <th>Name</th>
+          <th>Used Space</th>
+          <th colspan="2">Quota</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="#" data-toggle="tooltip" data-placement="bottom" title="">accounts@example.co.za</a></td>
+          <td></td><td>2 GB</td><td>Unlimited</td><td></td>
+        </tr>
+        <tr>
+          <td><a href="#" data-toggle="tooltip" data-placement="bottom" title="">adam@example.co.za</a></td>
+          <td></td><td>1 GB</td><td>Unlimited</td><td></td>
+        </tr>
+        <tr>
+          <td><a href="#" data-toggle="tooltip" data-placement="bottom" title="">admin@example.co.za</a></td>
+          <td></td><td>55 MB</td><td>Unlimited</td><td></td>
+        </tr>
+        <tr>
+          <td><a href="#" data-toggle="tooltip" data-placement="bottom" title="">backup@example.co.za</a></td>
+          <td></td><td>1 kB</td><td>Unlimited</td><td></td>
+        </tr>
+        <tr>
+          <td><a href="#" data-toggle="tooltip" data-placement="bottom" title="">info@example.co.za</a></td>
+          <td></td><td>8 MB</td><td>Unlimited</td><td></td>
+        </tr>
+        <tr>
+          <td><a href="#" data-toggle="tooltip" data-placement="bottom" title="">sales@example.co.za</a></td>
+          <td></td><td>3 GB</td><td>Unlimited</td><td></td>
+        </tr>
+      </tbody>
+        <tfoot>
+            <tr>
+                <th></th><th></th><th>45 GB</th><th colspan="2"></th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+    <div class="table-wrapper">
+    <table class="table">
+        <caption>Account limits</caption>
+        <thead class="dark form-group-sm">
+            <tr>
+                <th class="col-md-4">&nbsp;</th>
+                <th class="col-md-3">&nbsp;</th>
+                <th class="col-md-2">&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Assigned mailbox quota</td><td>0 of Unlimited</td><td></td></tr>
+            <tr><td>Number of email domains</td><td>1 of Unlimited</td><td></td></tr>
+            <tr><td>Number of mailboxes</td><td>81 of Unlimited</td><td></td></tr>
+            <tr><td>Number of email forwarders</td><td>5 of Unlimited</td><td></td></tr>
+            <tr><td>Number of spamfilter users</td><td>82 of Unlimited</td><td></td></tr>
+            <tr><td>Number of Clients</td><td>1 of Unlimited</td><td></td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- SYNTHETIC: not on the dashboard, but these are the components a theme must get
+     right. Markup copied from ISPConfig's own module templates. -->
+<h3>Synthetic component strip (not part of the real dashboard)</h3>
+<div id="errorMsg" class="alert alert-danger" role="alert"><strong>Error:</strong> Field "Domain" is empty.</div>
+<div id="okMsg" class="alert alert-success" role="alert">Settings saved.</div>
+<div class="alert alert-info" role="alert">Informational notice.</div>
+<div class="alert alert-warning" role="alert">Warning notice.</div>
+
+<ul class="nav nav-tabs">
+  <li role="presentation" class="active"><a href="#">Domain</a></li>
+  <li role="presentation"><a href="#">Redirect</a></li>
+  <li role="presentation"><a href="#">SSL</a></li>
+  <li role="presentation"><a href="#">Statistics</a></li>
+</ul>
+
+<div class="form-group">
+  <label class="col-sm-3 control-label" for="demo_input">Domain</label>
+  <div class="col-sm-9"><input type="text" id="demo_input" class="form-control" value="example.co.za"></div>
+</div>
+<div class="form-group has-error">
+  <label class="col-sm-3 control-label" for="demo_err">IPv4 Address</label>
+  <div class="col-sm-9"><input type="text" id="demo_err" class="form-control" value="not-an-ip"></div>
+</div>
+<div class="form-group">
+  <label class="col-sm-3 control-label" for="demo_select">Design</label>
+  <div class="col-sm-9"><select name="app_theme" id="demo_select" class="form-control"><option>default</option><option selected>earlier</option></select></div>
+</div>
+<div class="form-group">
+  <div class="col-sm-9 col-sm-offset-3">
+    <label><input type="checkbox" checked> Stay logged in</label>
+  </div>
+</div>
+
+<div class="clear">
+  <button class="btn btn-default formbutton-default">Save</button>
+  <button class="btn btn-default formbutton-narrow">Cancel</button>
+  <button class="btn btn-primary">Primary</button>
+  <button class="btn btn-danger">Delete</button>
+  <span class="label label-success">active</span>
+  <span class="label label-warning">pending</span>
+  <span class="label label-danger">failed</span>
+</div>
+
+<ul class="pagination">
+  <li class="active"><a href="#">1</a></li><li><a href="#">2</a></li><li><a href="#">3</a></li>
+</ul>
+
+<div class="panel panel-default">
+  <div class="panel-heading">Panel heading</div>
+  <div class="panel-body">Panel body text.</div>
+</div>
+<!-- END SYNTHETIC -->
+
+</div>
+            </form>
+          </div>
+          <!-- news sidebar -->
+          <div id="sidebar" class="news-sidebar left"><header>Latest news</header>
+<ul>
+            <li>
+            <a href="#" target="_blank" style="margin-top:8px;padding-bottom:5px;"><b>2026-03-09</b><br>
+                ISPConfig 3.3.1p1 Released – Bugfix Update</a>
+        </li>
+            <li>
+            <a href="#" target="_blank" style="margin-top:8px;padding-bottom:5px;"><b>2026-01-22</b><br>
+                ISPConfig 3.3.1 Released</a>
+        </li>
+            <li>
+            <a href="#" target="_blank" style="margin-top:8px;padding-bottom:5px;"><b>2025-12-26</b><br>
+                ISPConfig 3.3.1 Beta 1 Released – Debian 13 Support in ISPConfig</a>
+        </li>
+            <li>
+            <a href="#" target="_blank" style="margin-top:8px;padding-bottom:5px;"><b>2025-10-08</b><br>
+                ISPConfig 3.3.0p3 Released – Security Update</a>
+        </li>
+    </ul></div>        </div>
+        <footer id="footer">
+          powered by <a href="https://www.ispconfig.org/" target="_blank">ISPConfig</a>
+        </footer>
+      </div>
+    </div>
+  </div>
+  <div id="ajaxloader" style="display: none;"></div>

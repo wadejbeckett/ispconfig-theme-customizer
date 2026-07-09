@@ -1,0 +1,207 @@
+<div class="page-header">
+  <h1>Welcome admin</h1>
+</div>
+
+        <h2>Available Modules</h2>
+    <div style="margin: 0 auto;">
+    <ul class="modules clear">
+            <li>
+            <div class="clear">
+              <div class="icon icon-help"></div>
+              <div class="left">
+                <div class="title">Help</div>
+              </div>
+            </div>
+            <a href="#" class="btn btn-default button" data-capp="help">Go to Help</a>
+        </li>
+            <li>
+            <div class="clear">
+              <div class="icon icon-client"></div>
+              <div class="left">
+                <div class="title">Client</div>
+              </div>
+            </div>
+            <a href="#" class="btn btn-default button" data-capp="client">Go to Client</a>
+        </li>
+            <li>
+            <div class="clear">
+              <div class="icon icon-sites"></div>
+              <div class="left">
+                <div class="title">Sites</div>
+              </div>
+            </div>
+            <a href="#" class="btn btn-default button" data-capp="sites">Go to Sites</a>
+        </li>
+            <li>
+            <div class="clear">
+              <div class="icon icon-mail"></div>
+              <div class="left">
+                <div class="title">Email</div>
+              </div>
+            </div>
+            <a href="#" class="btn btn-default button" data-capp="mail">Go to Email</a>
+        </li>
+            <li>
+            <div class="clear">
+              <div class="icon icon-dns"></div>
+              <div class="left">
+                <div class="title">DNS</div>
+              </div>
+            </div>
+            <a href="#" class="btn btn-default button" data-capp="dns">Go to DNS</a>
+        </li>
+            <li>
+            <div class="clear">
+              <div class="icon icon-monitor"></div>
+              <div class="left">
+                <div class="title">Monitor</div>
+              </div>
+            </div>
+            <a href="#" class="btn btn-default button" data-capp="monitor">Go to Monitor</a>
+        </li>
+            <li>
+            <div class="clear">
+              <div class="icon icon-tools"></div>
+              <div class="left">
+                <div class="title">Tools</div>
+              </div>
+            </div>
+            <a href="#" class="btn btn-default button" data-capp="tools">Go to Tools</a>
+        </li>
+            <li>
+            <div class="clear">
+              <div class="icon icon-admin"></div>
+              <div class="left">
+                <div class="title">System</div>
+              </div>
+            </div>
+            <a href="#" class="btn btn-default button" data-capp="admin">Go to System</a>
+        </li>
+        </ul>
+    </div>
+
+<div>
+    <div><h3>System metrics</h3></div>
+    <div style="padding-bottom:10px;"><canvas height="98" id="loadchart" style="background-color: white; display: block; box-sizing: border-box; height: 98px; width: 980px;" width="980"></canvas></div>
+    <div style="padding-bottom:10px;"><canvas height="98" id="memchart" style="background-color: white; display: block; box-sizing: border-box; height: 98px; width: 980px;" width="980"></canvas></div>
+</div>
+
+    <div class="table-wrapper">
+    <table class="table">
+      <caption>Mailbox Quota</caption>
+      <thead class="dark form-group-sm">
+        <tr>
+          <th>Email Address</th>
+          <th>Name</th>
+          <th>Used Space</th>
+          <th colspan="2">Quota</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="#" data-toggle="tooltip" data-placement="bottom" title="">accounts@example.co.za</a></td>
+          <td></td><td>2 GB</td><td>Unlimited</td><td></td>
+        </tr>
+        <tr>
+          <td><a href="#" data-toggle="tooltip" data-placement="bottom" title="">adam@example.co.za</a></td>
+          <td></td><td>1 GB</td><td>Unlimited</td><td></td>
+        </tr>
+        <tr>
+          <td><a href="#" data-toggle="tooltip" data-placement="bottom" title="">admin@example.co.za</a></td>
+          <td></td><td>55 MB</td><td>Unlimited</td><td></td>
+        </tr>
+        <tr>
+          <td><a href="#" data-toggle="tooltip" data-placement="bottom" title="">backup@example.co.za</a></td>
+          <td></td><td>1 kB</td><td>Unlimited</td><td></td>
+        </tr>
+        <tr>
+          <td><a href="#" data-toggle="tooltip" data-placement="bottom" title="">info@example.co.za</a></td>
+          <td></td><td>8 MB</td><td>Unlimited</td><td></td>
+        </tr>
+        <tr>
+          <td><a href="#" data-toggle="tooltip" data-placement="bottom" title="">sales@example.co.za</a></td>
+          <td></td><td>3 GB</td><td>Unlimited</td><td></td>
+        </tr>
+      </tbody>
+        <tfoot>
+            <tr>
+                <th></th><th></th><th>45 GB</th><th colspan="2"></th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+    <div class="table-wrapper">
+    <table class="table">
+        <caption>Account limits</caption>
+        <thead class="dark form-group-sm">
+            <tr>
+                <th class="col-md-4">&nbsp;</th>
+                <th class="col-md-3">&nbsp;</th>
+                <th class="col-md-2">&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Assigned mailbox quota</td><td>0 of Unlimited</td><td></td></tr>
+            <tr><td>Number of email domains</td><td>1 of Unlimited</td><td></td></tr>
+            <tr><td>Number of mailboxes</td><td>81 of Unlimited</td><td></td></tr>
+            <tr><td>Number of email forwarders</td><td>5 of Unlimited</td><td></td></tr>
+            <tr><td>Number of spamfilter users</td><td>82 of Unlimited</td><td></td></tr>
+            <tr><td>Number of Clients</td><td>1 of Unlimited</td><td></td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- SYNTHETIC: not on the dashboard, but these are the components a theme must get
+     right. Markup copied from ISPConfig's own module templates. -->
+<h3>Synthetic component strip (not part of the real dashboard)</h3>
+<div id="errorMsg" class="alert alert-danger" role="alert"><strong>Error:</strong> Field "Domain" is empty.</div>
+<div id="okMsg" class="alert alert-success" role="alert">Settings saved.</div>
+<div class="alert alert-info" role="alert">Informational notice.</div>
+<div class="alert alert-warning" role="alert">Warning notice.</div>
+
+<ul class="nav nav-tabs">
+  <li role="presentation" class="active"><a href="#">Domain</a></li>
+  <li role="presentation"><a href="#">Redirect</a></li>
+  <li role="presentation"><a href="#">SSL</a></li>
+  <li role="presentation"><a href="#">Statistics</a></li>
+</ul>
+
+<div class="form-group">
+  <label class="col-sm-3 control-label" for="demo_input">Domain</label>
+  <div class="col-sm-9"><input type="text" id="demo_input" class="form-control" value="example.co.za"></div>
+</div>
+<div class="form-group has-error">
+  <label class="col-sm-3 control-label" for="demo_err">IPv4 Address</label>
+  <div class="col-sm-9"><input type="text" id="demo_err" class="form-control" value="not-an-ip"></div>
+</div>
+<div class="form-group">
+  <label class="col-sm-3 control-label" for="demo_select">Design</label>
+  <div class="col-sm-9"><select name="app_theme" id="demo_select" class="form-control"><option>default</option><option selected>earlier</option></select></div>
+</div>
+<div class="form-group">
+  <div class="col-sm-9 col-sm-offset-3">
+    <label><input type="checkbox" checked> Stay logged in</label>
+  </div>
+</div>
+
+<div class="clear">
+  <button class="btn btn-default formbutton-default">Save</button>
+  <button class="btn btn-default formbutton-narrow">Cancel</button>
+  <button class="btn btn-primary">Primary</button>
+  <button class="btn btn-danger">Delete</button>
+  <span class="label label-success">active</span>
+  <span class="label label-warning">pending</span>
+  <span class="label label-danger">failed</span>
+</div>
+
+<ul class="pagination">
+  <li class="active"><a href="#">1</a></li><li><a href="#">2</a></li><li><a href="#">3</a></li>
+</ul>
+
+<div class="panel panel-default">
+  <div class="panel-heading">Panel heading</div>
+  <div class="panel-body">Panel body text.</div>
+</div>
+<!-- END SYNTHETIC -->
+

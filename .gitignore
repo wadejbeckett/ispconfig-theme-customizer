@@ -1,0 +1,8 @@
+.refs/
+node_modules/
+*.tgz
+.omc/
+archive/
+mockup/webroot/
+themes/earlier-dark/ispconfig_version
+themes/earlier-dark/ISPC_VERSION

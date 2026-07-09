@@ -1,0 +1,209 @@
+	<div class='page-header'>
+		<h1>Mailbox</h1>
+	</div>
+	<!-- On validation failure tabbed_form.tpl.htm renders here:
+	<div class='alert alert-danger clear'>
+		<div class='alert-label'><strong>Error:</strong></div>
+		<div class='alert-content'>
+			<ul style="list-style-type:none"><li>Email address is invalid.<br /></li></ul>
+		</div>
+	</div>
+	-->
+
+	<!-- content in tabs -->
+	<div class='content-tab-wrapper'>
+		<!-- tabs -->
+		<ul class='nav nav-tabs'>
+				<li class='active'>
+					<a href='#' onclick="return ISPConfig.changeTab('mailuser','mail/mail_user_edit.php')">
+						Mailbox
+					</a>
+					</li>
+				<li>
+					<a href='#' onclick="return ISPConfig.changeTab('autoresponder','mail/mail_user_edit.php')">
+						Autoresponder
+					</a>
+					</li>
+				<li>
+					<a href='#' onclick="return ISPConfig.changeTab('filter_records','mail/mail_user_edit.php')">
+						Mail Filter
+					</a>
+					</li>
+				<li>
+					<a href='#' onclick="return ISPConfig.changeTab('mailfilter','mail/mail_user_edit.php')">
+						Custom Rules
+					</a>
+					</li>
+				<li>
+					<a href='#' onclick="return ISPConfig.changeTab('backup','mail/mail_user_edit.php')">
+						Backup
+					</a>
+					</li>
+		</ul>
+
+		<div id="tabbox_content" class="tab-content">
+			<div class='tab-pane active fade in'>
+            <div class="form-group">
+                <label for="name" class="col-sm-3 control-label">Name</label>
+                <div class="col-sm-6"><input type="text" name="name" id="name" value="Adam Ndlovu" class="form-control" autofocus /></div><div class="col-sm-3 input-sm"> &nbsp; (Optional)
+            </div></div>
+			<div class="form-group">
+                <label class="col-sm-3 control-label"><em>*</em> Email</label>
+                <div class="col-sm-9">
+				    <div class='input-group'>
+                        <input type="text" id="email_local_part" name="email_local_part" value="adam" class="form-control" onpaste="processEmailAddressInput(this)" onchange="updateEmailDomain(this)" />
+						<span class='input-group-addon'>@</span>
+                        <div class='input-group-field'>
+							<select name="email_domain" id="email_domain" class="form-control" style="height:50px;min-width:170px;"><option value='capetowndeli.co.za' >capetowndeli.co.za</option>
+<option value='example.co.za' SELECTED>example.co.za</option>
+<option value='launchpadsa.co.za' >launchpadsa.co.za</option>
+<option value='mzansi-media.co.za' >mzansi-media.co.za</option>
+</select>
+                        </div>
+                        <div class="input-group-field">
+                          <a class="btn btn-default formbutton-narrow" href="javascript: navigator.clipboard.writeText(document.getElementById('email_local_part').value + '@' + document.getElementById('email_domain').value);" title="">
+                            <span class="fa fa-clone"></span>
+                          </a>
+                        </div>
+                    </div>
+                    Receives also mail for: adam.ndlovu@example.co.za (alias), info@example.co.za (alias)
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="password" class="col-sm-3 control-label">Password</label>
+                <div class="col-sm-9">
+				<div class="input-group">
+					<input type="password" name="password" id="password" value="" title="Click to set" class="form-control" autocomplete="off" onkeyup="pass_check(this.value);checkPassMatch('password','repeat_password');" />
+					<span class="input-group-btn">
+						<button class="btn btn-default" type="button" onclick="generatePassword('password','repeat_password');">Generate Password</button>
+					</span>
+				</div>
+				</div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">Password strength</label>
+                <div class="col-sm-9 checkbox">
+                <div id="passBar"></div>
+                <span id="passText">&nbsp;</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="repeat_password" class="col-sm-3 control-label">Repeat Password</label>
+                <div class="col-sm-9">
+                       <input type="password" name="repeat_password" id="repeat_password" value="" title="Click to set" class="form-control" autocomplete="off" onkeyup="checkPassMatch('password','repeat_password');" />
+                </div>
+            </div>
+            <div class="form-group">
+				<div class="col-sm-offset-3 col-sm-9">
+					<div id="confirmpasswordError" style="display:none;" class="confirmpassworderror">The passwords do not match.</div>
+					<div id="confirmpasswordOK" style="display:none;" class="confirmpasswordok">The passwords do match.</div>
+				</div>
+			</div>
+            <div class="form-group">
+                <label for="quota" class="col-sm-3 control-label">Quota (0 for unlimited)</label>
+                <div class="col-sm-9"><div class="input-group"><input type="text" name="quota" id="quota" value="1024" class="form-control" aria-describedby="quota-desc" /><span class="input-group-addon" id="quota-desc">MB</span></div>
+
+
+                <div class='progress'>
+                    <div class='progress-bar-striped progress-bar progress-bar-success' role='progressbar' aria-valuemin='0' aria-valuemax='100' aria-valuenow='42' style='width:42%'><span>Used: 425 MB / 42%</span>
+                    <span class='sr-only'>425 MB of 1024</span>
+                    </div>
+                 </div>
+
+              </div>
+            </div>
+            <div class="form-group">
+                <label for="name" class="col-sm-3 control-label">Send copy to</label>
+                <div class="col-sm-6"><input type="text" name="cc" id="cc" value="archive@example.co.za" class="form-control" /></div><div class="col-sm-3 input-sm"> &nbsp; (Optional) (Separate multiple email addresses with commas)
+            </div></div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">Copy during delivery</label>
+                <div class="col-sm-9">
+                    <a data-toggle="tooltip" title="Controls if mail copy is forwarded before or during delivery to mailbox."><input name="forward_in_lda" id="forward_in_lda" value="y" type="checkbox"  />
+</a>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="sender_name" class="col-sm-3 control-label">Send outgoing BCC to</label>
+                <div class="col-sm-6"><input type="text" name="sender_cc" id="sender_cc" value="" class="form-control" /></div><div class="col-sm-3 input-sm"> &nbsp; (Optional) (One email address only)
+            </div></div>
+            <div class="form-group">
+                <label for="imap_prefix" class="col-sm-3 control-label">IMAP prefix</label>
+                <div class="col-sm-6">
+                    <input type="text" name="imap_prefix" id="imap_prefix" value="" data-toggle="tooltip" title="In most cases this should be left empty.  To allow seamless per-mailbox migration of legacy systems you can specify a prefix followed by the hierarchy separator. e.g.: 'INBOX.'" class="form-control" />
+                </div><div class="col-sm-3 input-sm"> &nbsp; (Optional)</div>
+            </div>
+            <div class="form-group">
+                <label for="policy" class="col-sm-3 control-label">Spamfilter</label>
+                <div class="col-sm-9"><select name="policy" id="policy" class="form-control">
+                    <option value='0'>- Inherit domain setting -</option><option value='1' >Non-paying</option>
+<option value='5' SELECTED>Normal</option>
+<option value='7' >Permissive</option>
+<option value='6' >Trigger happy</option>
+<option value='2' >Uncensored</option>
+<option value='3' >Wants all spam</option>
+<option value='4' >Wants viruses</option>
+
+                </select></div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">Enable receiving</label>
+                <div class="col-sm-9">
+                    <a data-toggle="tooltip" title="Allows incoming mail to this address."><input name="postfix" id="postfix" value="y" type="checkbox"  CHECKED />
+</a>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">Disable sending</label>
+                <div class="col-sm-9">
+                    <a data-toggle="tooltip" title="Disables mail submission from this mail account."><input name="disablesmtp" id="disablesmtp" value="y" type="checkbox"  />
+</a>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">Disable (local) delivering</label>
+                <div class="col-sm-9">
+                    <a data-toggle="tooltip" title="Disables delivery to INBOX, and processing by mail filters and sieve scripts.  Mail forwards to 'Send copy to' address."><input name="disabledeliver" id="disabledeliver" value="y" type="checkbox"  />
+</a>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">Enable greylisting</label>
+                <div class="col-sm-9">
+                    <input name="greylisting" id="greylisting" value="y" type="checkbox"  />
+
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">Disable IMAP</label>
+                <div class="col-sm-9">
+                    <input name="disableimap" id="disableimap" value="y" type="checkbox"  />
+
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">Disable POP3</label>
+                <div class="col-sm-9">
+                    <input name="disablepop3" id="disablepop3" value="y" type="checkbox"  />
+
+                </div>
+            </div>
+
+        <input type="hidden" name="id" value="27">
+
+        <div class="clear">
+            <!-- delete button renders here when show_delete_on_forms=y:
+                <a class="btn btn-default formbutton-danger formbutton-narrow" href="javascript: ISPConfig.confirm_action('mail/mail_user_del.php?id=27&...');"><span class="icon icon-delete"></span></a> -->
+            <div class="right">
+                <button class="btn btn-default formbutton-success" type="button" value="Save" data-submit-form="pageForm" data-form-action="mail/mail_user_edit.php">Save</button>
+                <button class="btn btn-default formbutton-default" type="button" value="Cancel" data-load-content="mail/mail_user_list.php">Cancel</button>
+            </div>
+	</div>
+			</div>
+		</div>
+
+		<input type="hidden" name="_csrf_id" value="mail_user_a1b2c3d4e5f60718293a4b5c" />
+		<input type="hidden" name="_csrf_key" value="3d4f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f" />
+		<input type="hidden" name="next_tab" value="">
+		<input type="hidden" name="phpsessid" value="q1r9c2m5v0f8t3l6n4k7p2d5a8">
+	</div>
