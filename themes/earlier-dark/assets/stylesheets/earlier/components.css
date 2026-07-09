@@ -100,7 +100,7 @@ ul.modules li .icon {
   margin-bottom: 14px;
   border-radius: var(--nz-radius-card);
   background: var(--nz-selected);
-  color: var(--nz-link);
+  color: var(--nz-text-on-selected);
   font-size: 20px;
   transition: background var(--nz-quick) var(--nz-ease);
 }
@@ -176,10 +176,18 @@ ul.modules li:hover::after {
   color: var(--nz-text-heading);
 }
 
+/* each chart's wrapper div gets a real height; with Chart.js
+   maintainAspectRatio=false (set in nz-theme.js) the chart fills it crisply */
+#pageContent div:has(> canvas) {
+  height: 110px;
+  padding-bottom: 0 !important;
+  margin-bottom: 12px;
+}
+
 #pageContent canvas {
   width: 100% !important;
   max-width: 100%;
-  height: auto !important;
+  height: 100% !important;
   background: var(--nz-well) !important;
   border: 1px solid var(--nz-border-soft);
   border-radius: var(--nz-radius-ctl);
@@ -253,6 +261,13 @@ body.nz .table > thead > tr > td .form-control {
   font-size: 12.5px;
 }
 
+/* filter-row select2 fields match the 30px row */
+body.nz .table > thead td .select2-container .select2-choice {
+  height: 30px;
+  line-height: 28px;
+  font-size: 12.5px;
+}
+
 /* the apply-filter button sits IN the 30px filter row — quiet, row-height */
 body.nz .table > thead td .btn,
 body.nz .table > thead td .btn[data-submit-form],
@@ -277,6 +292,7 @@ body.nz .table > tbody > tr > td {
   border-top: 1px solid var(--nz-border-soft);
   color: var(--nz-text);
   vertical-align: middle;
+  white-space: nowrap;
 }
 
 body.nz .table > tbody > tr:first-child > td { border-top: 0; }
@@ -292,6 +308,9 @@ body.nz .table > tbody > tr > td > a:not(.btn) {
   margin: -8px -12px;
   padding: 8px 12px;
   color: var(--nz-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 body.nz .table > tbody > tr > td > a:not(.btn):hover { color: var(--nz-link-hover); }
 
@@ -481,6 +500,9 @@ body.nz .table > tbody .btn.formbutton-danger:focus {
 }
 
 body.nz .table td.text-right { white-space: nowrap; }
+
+/* bare toolbar buttons (DNS tools etc.) sit directly in #pageContent */
+#pageContent > .btn { margin: 0 8px 16px 0; }
 
 /* "add new" toolbars */
 .pnl_toolsarea,
@@ -1001,6 +1023,18 @@ body.nz .modal-backdrop.in { opacity: 0.6; }
 
 /* ---------- select2 (v3.5) ---------- */
 
+/* the select2 CONTAINER often carries .form-control / .search_limit — it is
+   a wrapper, not the field; the .select2-choice inside is the field */
+body.nz .select2-container.form-control,
+body.nz .select2-container.search_limit {
+  height: auto;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 body.nz .select2-container .select2-choice {
   height: var(--nz-ctl-h);
   line-height: calc(var(--nz-ctl-h) - 2px);
@@ -1035,6 +1069,17 @@ body.nz .select2-container .select2-choice .select2-arrow b::after {
   transform: rotate(45deg);
 }
 
+/* the per-page chip is 60px wide (inline) — keep the value visible */
+body.nz .select2-container.search_limit .select2-choice {
+  height: 28px;
+  line-height: 26px;
+  padding: 0 4px 0 9px;
+  font-size: 12px;
+}
+body.nz .select2-container.search_limit .select2-choice .select2-arrow { width: 16px; }
+body.nz .select2-container.search_limit .select2-choice .select2-chosen { margin-right: 16px; }
+body.nz .select2-container.search_limit .select2-search-choice-close { display: none; }
+
 body.nz .select2-dropdown-open .select2-choice,
 body.nz .select2-container-active .select2-choice,
 body.nz .select2-container-multi.select2-container-active .select2-choices {
@@ -1043,6 +1088,7 @@ body.nz .select2-container-multi.select2-container-active .select2-choices {
 }
 
 .select2-drop {
+  min-width: 88px;
   background: var(--nz-popover);
   border: 1px solid var(--nz-border);
   border-radius: var(--nz-radius-pop);
@@ -1203,6 +1249,27 @@ body.nz .tooltip.top .tooltip-arrow { border-top-color: var(--nz-tooltip-bg); }
   border-radius: var(--nz-radius-ctl);
   font-family: var(--nz-font);
 }
+
+/* monitor stateview: server-state cards use a status edge, not a solid slab */
+body.nz .stateview .alert {
+  background: var(--nz-card);
+  border: 1px solid var(--nz-border);
+  border-left-width: 4px;
+  color: var(--nz-text);
+  padding: 14px 16px;
+}
+body.nz .stateview .alert-success { background: var(--nz-card); border-left-color: var(--nz-success); }
+body.nz .stateview .alert-warning { background: var(--nz-card); border-left-color: var(--nz-warning); }
+body.nz .stateview .alert-danger  { background: var(--nz-card); border-left-color: var(--nz-danger); }
+body.nz .stateview .alert-info    { background: var(--nz-card); border-left-color: var(--nz-info); }
+body.nz .stateview .alert h3 {
+  margin: 0 0 4px;
+  font-size: var(--nz-fs-cardtitle);
+  font-weight: 600;
+  color: var(--nz-text-heading);
+}
+body.nz .stateview .alert p { margin: 0 0 6px; color: var(--nz-text-secondary); }
+body.nz .stateview .alert a { color: var(--nz-link); }
 
 /* ---------- monitor status blocks ---------- */
 

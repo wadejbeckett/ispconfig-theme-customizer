@@ -208,6 +208,10 @@ body.nz .nz-modnav-item.active {
 }
 
 #sidebar header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   font-size: var(--nz-fs-caption);
   font-weight: 600;
   text-transform: uppercase;
@@ -215,6 +219,38 @@ body.nz .nz-modnav-item.active {
   color: var(--nz-rail-heading);
   padding: 16px 12px 6px;
 }
+
+/* collapsible tree groups (caret injected by nz-theme.js) */
+#sidebar .nz-caret {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: var(--nz-radius-ctl);
+  cursor: pointer;
+  position: relative;
+}
+#sidebar .nz-caret::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  margin: -5px 0 0 -4px;
+  border-right: 1.6px solid var(--nz-rail-heading);
+  border-bottom: 1.6px solid var(--nz-rail-heading);
+  transform: rotate(45deg);
+  transition: transform var(--nz-quick) var(--nz-ease);
+}
+#sidebar .nz-caret:hover::after { border-color: var(--nz-rail-text-hover); }
+#sidebar .nz-caret[aria-expanded='false']::after {
+  transform: rotate(-45deg);
+  margin-top: -3px;
+}
+#sidebar ul.nz-collapsed { display: none; }
 
 #sidebar header a {
   color: inherit;

@@ -45,6 +45,9 @@
   function themeCharts() {
     if (!window.Chart || !Chart.defaults) return;
     var cs = getComputedStyle(document.body);
+    /* stock dashlets ship 30px-tall canvases; the theme gives each chart
+       wrapper a real height and lets the chart fill it */
+    Chart.defaults.maintainAspectRatio = false;
     Chart.defaults.color = cs.getPropertyValue('--nz-text-secondary').trim() || '#CBD4D8';
     Chart.defaults.borderColor = mode() === 'light'
       ? 'rgba(79, 97, 105, 0.15)' : 'rgba(133, 147, 153, 0.15)';
@@ -141,7 +144,10 @@
       var i = b.querySelector('[class*="icon-"], [class*="glyphicon-"], [class*="fa-"]');
       if (!i) return;
       var cls = Array.prototype.find.call(i.classList, function (c) { return ICON_NAMES[c]; });
-      if (cls) b.setAttribute('aria-label', ICON_NAMES[cls]);
+      if (cls) {
+        b.setAttribute('aria-label', ICON_NAMES[cls]);
+        if (!b.title) b.title = ICON_NAMES[cls];
+      }
     });
 
     /* keyboard-reachable column sorting + sort state */
@@ -152,6 +158,54 @@
       }
       var o = th.getAttribute('data-ordered');
       th.setAttribute('aria-sort', o ? (o === 'desc' ? 'descending' : 'ascending') : 'none');
+    });
+
+    /* collapsible tree groups: a caret per #sidebar section header */
+    if (scope.id === 'sidebar') {
+      scope.querySelectorAll('header').forEach(function (h) {
+        var ul = h.nextElementSibling;
+        if (!ul || ul.tagName !== 'UL' || h.querySelector('.nz-caret')) return;
+        var key = 'nz-tree:' + h.textContent.trim();
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'nz-caret';
+        btn.setAttribute('aria-label', 'Toggle section');
+        var collapsed = false;
+        try { collapsed = localStorage.getItem(key) === '1'; } catch (e) {}
+        ul.classList.toggle('nz-collapsed', collapsed);
+        btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        btn.addEventListener('click', function () {
+          var now = !ul.classList.contains('nz-collapsed');
+          ul.classList.toggle('nz-collapsed', now);
+          btn.setAttribute('aria-expanded', now ? 'false' : 'true');
+          try { localStorage.setItem(key, now ? '1' : '0'); } catch (e) {}
+        });
+        h.appendChild(btn);
+      });
+    }
+
+    /* long dashboard dashlet tables (no sortable header = not a list view)
+       collapse to 10 rows behind a "show all" toggle */
+    scope.querySelectorAll('table.table').forEach(function (tbl) {
+      if (tbl.dataset.nzCapped || tbl.querySelector('th[data-column]')) return;
+      var rows = tbl.tBodies[0] ? Array.prototype.slice.call(tbl.tBodies[0].rows) : [];
+      if (rows.length <= 12) return;
+      tbl.dataset.nzCapped = '1';
+      rows.slice(10).forEach(function (r) { r.style.display = 'none'; });
+      var tr = document.createElement('tr');
+      var td = document.createElement('td');
+      td.colSpan = rows[0].cells.length;
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'btn btn-default';
+      b.textContent = 'Show all (' + rows.length + ')';
+      b.addEventListener('click', function () {
+        rows.forEach(function (r) { r.style.display = ''; });
+        tr.remove();
+      });
+      td.appendChild(b);
+      tr.appendChild(td);
+      tbl.tBodies[0].appendChild(tr);
     });
 
     /* filter inputs inherit their column header's name */
@@ -182,6 +236,18 @@
     });
     a.classList.add('nz-active');
   });
+
+  /* the stock drawer builder nests the tree/news under the active module,
+     pushing the other modules below — reorder to match desktop */
+  if (window.ISPConfig && ISPConfig.loadPushyMenu) {
+    var origPushy = ISPConfig.loadPushyMenu;
+    ISPConfig.loadPushyMenu = function () {
+      origPushy.apply(this, arguments);
+      var nav = document.querySelector('nav.pushy');
+      var sub = nav && nav.querySelector('ul.subnavi');
+      if (nav && sub) nav.appendChild(sub);
+    };
+  }
 
   function watch(id) {
     var el = document.getElementById(id);
