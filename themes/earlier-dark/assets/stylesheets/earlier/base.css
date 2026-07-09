@@ -732,7 +732,7 @@ input[type="password"].form-control[readonly] {
 .finediff ins {
 	color: var(--nz-success-text, green);
 	background: var(--nz-success-tint, #dfd);
-	border-radius: 3px;
+	border-radius: 4px;
 	padding: 0 2px;
 	text-decoration: none;
 }
@@ -740,7 +740,7 @@ input[type="password"].form-control[readonly] {
 .finediff del {
 	color: var(--nz-danger-text, red);
 	background: var(--nz-danger-tint, #fdd);
-	border-radius: 3px;
+	border-radius: 4px;
 	padding: 0 2px;
 	text-decoration: none;
 }

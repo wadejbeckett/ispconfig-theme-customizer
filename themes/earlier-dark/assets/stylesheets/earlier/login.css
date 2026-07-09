@@ -131,12 +131,14 @@ body.nz-login {
 
 .nzl-card .btn,
 .nzl-card input[type='submit'] {
-  height: 40px;
+  height: 36px;
   padding: 0 18px;
   border-radius: var(--nz-radius-ctl);
   font-family: var(--nz-font);
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   border: 1px solid transparent;
   background-image: none;
   box-shadow: none;
@@ -178,23 +180,21 @@ body.nz-login {
 .nzl-card .alert {
   margin: 0 0 16px;
   padding: 11px 14px;
-  border: 0;
-  border-left: 3px solid transparent;
+  border: 1px solid transparent;
   border-radius: var(--nz-radius-ctl);
   font-size: 13px;
+  color: var(--nz-alert-text);
   text-shadow: none;
 }
 
 .nzl-card .alert-danger {
-  background: var(--nz-danger-tint);
-  border-left-color: var(--nz-danger);
-  color: var(--nz-danger-text);
+  background: var(--nz-danger-surface);
+  border-color: var(--nz-danger);
 }
 
 .nzl-card .alert-success {
-  background: var(--nz-success-tint);
-  border-left-color: var(--nz-success);
-  color: var(--nz-success-text);
+  background: var(--nz-success-surface);
+  border-color: var(--nz-success);
 }
 
 /* ---------- password strength (force_password_change / reset pages;
@@ -211,11 +211,11 @@ body.nz-login {
   height: 6px;
   margin: 6px 0 2px;
   background: var(--nz-well);
-  border-radius: 999px;
+  border-radius: var(--nz-radius-pill);
   overflow: hidden;
 }
 
-.nzl-card #passBar div { height: 6px; border-radius: 999px; }
+.nzl-card #passBar div { height: 6px; border-radius: var(--nz-radius-pill); }
 
 .nzl-card #passText {
   color: var(--nz-text-muted);

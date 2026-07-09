@@ -86,6 +86,7 @@
   --nz-rail-hover:      rgba(255, 255, 255, 0.05);
   --nz-rail-active:     var(--nz-blue-1000);
   --nz-rail-heading:    rgba(255, 255, 255, 0.66); /* group labels: quieter than items, ~7:1 */
+  --nz-rail-accent:     var(--nz-blue-400);  /* indicators ON the navy rail — never remapped */
 
   /* Hairlines — borders are quiet; surfaces do the talking */
   --nz-border:          rgba(133, 147, 153, 0.18); /* card edges   */
@@ -109,7 +110,11 @@
   --nz-action-active:   var(--nz-blue-800);
   --nz-selected:        var(--nz-blue-900);  /* Clarity interaction-background-selected */
   --nz-selected-strong: var(--nz-blue-800);
+  --nz-text-on-selected: #FFFFFF;
   --nz-focus-ring:      rgba(46, 169, 255, 0.40);
+  --nz-danger-ring:     rgba(255, 103, 77, 0.28);
+  --nz-selection-bg:    rgba(46, 169, 255, 0.35);
+  --nz-selection-text:  #FFFFFF;
 
   /* Status */
   --nz-success:         var(--nz-green-500);
@@ -141,6 +146,11 @@
   --nz-success-edge:    rgba(103, 202, 22, 0.35);
   --nz-warning-edge:    rgba(255, 207, 102, 0.35);
   --nz-danger-edge:     rgba(255, 103, 77, 0.45);
+  --nz-pulse-ring:      rgba(46, 169, 255, 0.45);
+  --nz-modal-edge:      rgba(0, 0, 0, 0.9);   /* Clarity dark container edge */
+  --nz-meter-edge:      transparent;          /* light mode outlines meter fills */
+  --nz-tooltip-bg:      #0B1519;              /* tooltips stay dark in both modes */
+  --nz-tooltip-text:    var(--nz-ink-100);
 
   /* Alert surfaces (Clarity dark: solid status-tint panels) */
   --nz-info-surface:     var(--nz-blue-800);
@@ -149,15 +159,13 @@
   --nz-danger-surface:   var(--nz-red-900);
   --nz-alert-text:       var(--nz-ink-100);
 
-  /* Charts render on a light "paper" panel (Chart.js draws dark axes) */
-  --nz-paper:           var(--nz-ink-100);
-
   /* ---------------------------------------------------------
    * SHAPE / SPACE / TYPE / MOTION
    * --------------------------------------------------------- */
 
   --nz-radius-ctl:      4px;   /* buttons, inputs, chips  */
   --nz-radius-card:     8px;   /* cards, tables, tiles    */
+  --nz-radius-pop:      var(--nz-radius-ctl); /* menus, dropdowns */
   --nz-radius-modal:    10px;
   --nz-radius-pill:     999px;
 
@@ -217,8 +225,8 @@
   --nz-text-heading:    var(--nz-ink-1000);
   --nz-text:            var(--nz-ink-900);
   --nz-text-secondary:  var(--nz-ink-600);
-  --nz-text-muted:      var(--nz-ink-500);
-  --nz-text-disabled:   var(--nz-ink-400);
+  --nz-text-muted:      #5F727C;  /* 5.0:1 on white, 4.6:1 on page */
+  --nz-text-disabled:   #64767F;  /* placeholders: 4.7:1 on white */
 
   /* action — the brand anchor carries light mode directly */
   --nz-link:            var(--nz-blue-700);
@@ -229,14 +237,18 @@
   --nz-action-active:   var(--nz-blue-900);
   --nz-selected:        #E3F1FB;  /* Clarity light selected (blue-75 role) */
   --nz-selected-strong: #CFE7F8;
-  --nz-focus-ring:      rgba(0, 101, 171, 0.35);
+  --nz-focus-ring:      rgba(0, 101, 171, 0.45);
+  --nz-danger-ring:     rgba(224, 34, 0, 0.25);
+  --nz-selection-bg:    #B3D9F2;
+  --nz-selection-text:  var(--nz-ink-900);
+  --nz-text-on-selected: var(--nz-ink-900);
 
   /* status (Clarity light: 700-family fills, 800 text, 50 tints) */
   --nz-success:         #42810E;
   --nz-success-text:    #366A0C;
   --nz-success-tint:    rgba(66, 129, 14, 0.09);
   --nz-warning:         #FFB92E;
-  --nz-warning-text:    #A36500;
+  --nz-warning-text:    #8A5300;  /* 5.6:1 on the warning tint */
   --nz-warning-tint:    rgba(255, 185, 46, 0.14);
   --nz-danger:          #E02200;
   --nz-danger-text:     #C21D00;
@@ -258,6 +270,9 @@
   --nz-success-edge:    rgba(66, 129, 14, 0.35);
   --nz-warning-edge:    rgba(163, 101, 0, 0.35);
   --nz-danger-edge:     rgba(224, 34, 0, 0.35);
+  --nz-pulse-ring:      rgba(0, 101, 171, 0.40);
+  --nz-modal-edge:      var(--nz-border);
+  --nz-meter-edge:      rgba(0, 0, 0, 0.15);
 
   /* alert surfaces: Clarity light 50-tint panels */
   --nz-info-surface:     #E5F3FB;
@@ -270,9 +285,6 @@
   --nz-success-deep:     #42810E;
   --nz-warning-deep:     #FFA600;
   --nz-danger-deep:      #C21D00;
-
-  /* charts sit on white cards in light */
-  --nz-paper:           #FFFFFF;
 
   /* softer elevation on light surfaces */
   --nz-shadow-1:        0 1px 2px rgba(27, 43, 50, 0.10);

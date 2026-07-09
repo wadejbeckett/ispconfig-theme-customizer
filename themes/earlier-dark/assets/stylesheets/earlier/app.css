@@ -29,8 +29,8 @@ body.nz {
 }
 
 body.nz ::selection {
-  background: rgba(46, 169, 255, 0.35);
-  color: #FFFFFF;
+  background: var(--nz-selection-bg);
+  color: var(--nz-selection-text);
 }
 
 /* thin dark scrollbars */
@@ -38,7 +38,7 @@ body.nz ::-webkit-scrollbar { width: 10px; height: 10px; }
 body.nz ::-webkit-scrollbar-track { background: transparent; }
 body.nz ::-webkit-scrollbar-thumb {
   background: var(--nz-scrollbar);
-  border-radius: 999px;
+  border-radius: var(--nz-radius-pill);
   border: 2px solid transparent;
   background-clip: content-box;
 }
@@ -58,6 +58,42 @@ body.nz a:focus {
 body.nz :focus-visible {
   outline: 2px solid var(--nz-accent);
   outline-offset: 2px;
+}
+
+/* on navy chrome the (mode-remapped) accent can vanish — use the rail accent */
+.nz-rail :focus-visible,
+.pushy :focus-visible,
+.nz-topbar-brand:focus-visible {
+  outline-color: var(--nz-rail-accent);
+}
+
+/* skip link: first tab stop, visible only on focus */
+.nz-skip {
+  position: absolute;
+  left: 12px;
+  top: -48px;
+  z-index: 200;
+  padding: 8px 14px;
+  background: var(--nz-action);
+  color: var(--nz-text-on-action);
+  border-radius: var(--nz-radius-ctl);
+  font-size: 13px;
+  font-weight: 600;
+  transition: top var(--nz-quick) var(--nz-ease);
+}
+.nz-skip:focus { top: 12px; color: var(--nz-text-on-action); }
+
+/* visually hidden, announced */
+.nz-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ---------- frame grid ---------- */
@@ -83,7 +119,8 @@ body.nz #container {
   display: flex;
   flex-direction: column;
   background: var(--nz-rail);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   z-index: 60;
 }
 
@@ -147,7 +184,7 @@ body.nz .nz-modnav-item.active {
   color: #FFFFFF;
 }
 
-.nz-modnav-item.active .icon { color: var(--nz-accent); }
+.nz-modnav-item.active .icon { color: var(--nz-rail-accent); }
 
 /* the signature: a rounded blue current-module bar */
 .nz-modnav-item.active::before {
@@ -157,8 +194,8 @@ body.nz .nz-modnav-item.active {
   top: 8px;
   bottom: 8px;
   width: 3px;
-  border-radius: 999px;
-  background: var(--nz-accent);
+  border-radius: var(--nz-radius-pill);
+  background: var(--nz-rail-accent);
 }
 
 /* contextual panel: module tree, or news on the dashboard */
@@ -208,6 +245,13 @@ body.nz .nz-modnav-item.active {
 #sidebar li a:focus {
   background: var(--nz-rail-hover);
   color: var(--nz-rail-text-hover);
+}
+
+/* current page in the tree (marked by nz-theme.js) */
+#sidebar li a.nz-active {
+  background: var(--nz-rail-active);
+  color: #FFFFFF;
+  box-shadow: inset 3px 0 0 var(--nz-rail-accent);
 }
 
 /* stock tree wraps titles in <strong>; keep the weight calm */
@@ -336,7 +380,7 @@ body.nz ul.df-resultbox {
   padding: 6px;
   background: var(--nz-popover);
   border: 1px solid var(--nz-border);
-  border-radius: var(--nz-radius-ctl);
+  border-radius: var(--nz-radius-pop);
   box-shadow: var(--nz-shadow-pop);
 }
 
@@ -360,7 +404,7 @@ body.nz ul.df-resultbox li {
 body.nz ul.gs-resultbox li:hover,
 body.nz ul.df-resultbox li:hover {
   background: var(--nz-selected-strong);
-  color: #FFFFFF;
+  color: var(--nz-text-on-selected);
   cursor: pointer;
 }
 
@@ -375,6 +419,46 @@ body.nz ul.df-resultbox li.df-cheader {
   cursor: default;
   padding-top: 10px;
   margin-bottom: 4px;
+}
+
+/* keyboard hint chip (nz-theme.js binds Ctrl/Cmd+K and '/') */
+#searchform .input-group::after {
+  content: 'Ctrl K';
+  order: 3;
+  flex: 0 0 auto;
+  margin-right: 8px;
+  padding: 2px 7px;
+  border: 1px solid var(--nz-border);
+  border-radius: var(--nz-radius-ctl);
+  color: var(--nz-text-muted);
+  font-family: var(--nz-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+}
+#searchform .input-group:focus-within::after { visibility: hidden; }
+
+/* thin activity bar during AJAX loads (html.nz-loading via nz-theme.js) */
+.nz-topbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--nz-accent), transparent);
+  background-size: 40% 100%;
+  background-repeat: no-repeat;
+  opacity: 0;
+  pointer-events: none;
+}
+html.nz-loading .nz-topbar::after {
+  opacity: 1;
+  animation: nz-indeterminate 1.1s linear infinite;
+}
+@keyframes nz-indeterminate {
+  from { background-position: -40% 0; }
+  to   { background-position: 140% 0; }
 }
 
 /* --- topbar actions --- */
@@ -392,9 +476,9 @@ body.nz ul.df-resultbox li.df-cheader {
   display: flex;
   align-items: center;
   gap: 7px;
-  height: 30px;
+  height: 32px;
   padding: 0 12px;
-  border-radius: 999px;
+  border-radius: var(--nz-radius-pill);
   background: var(--nz-info-tint);
   border: 1px solid var(--nz-info-edge);
   color: var(--nz-info-text);
@@ -416,22 +500,39 @@ body.nz ul.df-resultbox li.df-cheader {
 }
 
 @keyframes nz-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(46, 169, 255, 0.45); }
-  50%      { box-shadow: 0 0 0 5px rgba(46, 169, 255, 0.0); }
+  0%, 100% { box-shadow: 0 0 0 0 var(--nz-pulse-ring); }
+  50%      { box-shadow: 0 0 0 5px transparent; }
 }
+
+/* who am I — quiet identity chip beside the session control */
+.nz-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--nz-border);
+  border-radius: var(--nz-radius-pill);
+  color: var(--nz-text-secondary);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.nz-user .icon { font-size: 13px; color: var(--nz-text-muted); }
 
 /* logout: a quiet session control, not an alarm */
 body.nz #logout-button {
   height: 32px;
-  padding: 0 14px;
+  width: 34px;
+  padding: 0;
+  justify-content: center;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 0;
   background: transparent;
   border: 1px solid var(--nz-border-strong);
   border-radius: var(--nz-radius-ctl);
   color: var(--nz-text-secondary);
-  font-size: 12.5px;
+  font-size: 0; /* icon-only; the text keeps its accessible name */
   font-weight: 500;
   text-transform: none;
   letter-spacing: 0;
@@ -442,9 +543,9 @@ body.nz #logout-button {
 }
 
 body.nz #logout-button::before {
-  content: '\f011'; /* power-off */
+  content: '\f011'; /* power-off (icons.css re-masks this to the Clarity shape) */
   font-family: FontAwesome;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--nz-text-muted);
   transition: color var(--nz-quick) var(--nz-ease);
 }
@@ -562,7 +663,7 @@ body.nz #footer a:hover { color: var(--nz-link); }
   font-size: 20px;
   cursor: pointer;
 }
-.menu-btn:hover { background: var(--nz-raised); color: #FFFFFF; }
+.menu-btn:hover { background: var(--nz-raised); color: var(--nz-text-heading); }
 
 /* small-screen brand mark (the rail is hidden there); the navy chip keeps
    the white wordmark legible in light mode too */
@@ -578,7 +679,11 @@ body.nz #footer a:hover { color: var(--nz-link); }
 .pushy {
   background: var(--nz-rail);
   box-shadow: none;
+  /* closed drawer is offscreen but still focusable — remove it properly */
+  visibility: hidden;
+  transition: transform 0.2s var(--nz-ease), visibility 0s linear 0.2s;
 }
+.pushy.pushy-open { visibility: visible; transition-delay: 0s, 0s; }
 
 .pushy ul {
   list-style: none;
@@ -627,10 +732,9 @@ body.nz #footer a:hover { color: var(--nz-link); }
 
 @media (max-width: 640px) {
   #searchform { max-width: none; }
-  /* icon-only session control; the label stays for screen readers via width trick */
-  body.nz #logout-button { font-size: 0; gap: 0; padding: 0 11px; }
-  body.nz #logout-button::before { font-size: 14px; }
   .nz-topbar-actions { flex-shrink: 0; }
+  .nz-user { display: none; } /* identity lives in the drawer context on phones */
+  #searchform .input-group::after { display: none; }
   .nz-topbar-brand img { height: 16px; }
 }
 

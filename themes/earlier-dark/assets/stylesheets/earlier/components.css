@@ -98,7 +98,7 @@ ul.modules li .icon {
   width: 42px;
   height: 42px;
   margin-bottom: 14px;
-  border-radius: 9px;
+  border-radius: var(--nz-radius-card);
   background: var(--nz-selected);
   color: var(--nz-link);
   font-size: 20px;
@@ -157,13 +157,32 @@ ul.modules li:hover::after {
   transform: translateX(2px);
 }
 
-/* dashboard charts draw dark axes — a framed light "paper" card, so the
-   light island reads intentional next to the dark cards */
-#pageContent canvas {
-  background: var(--nz-paper) !important;
+/* metrics dashlet: one titled card with inset chart wells. Chart colors
+   follow the theme via nz-theme.js (Chart.defaults from the tokens). */
+#pageContent > div:has(canvas) {
+  background: var(--nz-card);
   border: 1px solid var(--nz-border);
   border-radius: var(--nz-radius-card);
   box-shadow: var(--nz-shadow-1);
+  padding: 14px 16px 8px;
+  margin: 0 0 20px;
+}
+
+/* the dashlet title joins the card as its caption */
+#pageContent > div:has(canvas) h3 {
+  margin: 0 0 12px;
+  font-size: var(--nz-fs-cardtitle);
+  font-weight: 600;
+  color: var(--nz-text-heading);
+}
+
+#pageContent canvas {
+  width: 100% !important;
+  max-width: 100%;
+  height: auto !important;
+  background: var(--nz-well) !important;
+  border: 1px solid var(--nz-border-soft);
+  border-radius: var(--nz-radius-ctl);
 }
 
 /* ---------- cards & tables ---------- */
@@ -223,7 +242,7 @@ body.nz .table thead th[data-column][data-ordered] { color: var(--nz-link); }
 
 /* the filter row inside thead.dark */
 body.nz .table > thead > tr > td {
-  padding: 8px 10px 10px;
+  padding: 8px 12px 10px;
   background: var(--nz-veil-faint);
   border-bottom: 1px solid var(--nz-border);
   border-top: 0;
@@ -232,6 +251,25 @@ body.nz .table > thead > tr > td {
 body.nz .table > thead > tr > td .form-control {
   height: 30px;
   font-size: 12.5px;
+}
+
+/* the apply-filter button sits IN the 30px filter row — quiet, row-height */
+body.nz .table > thead td .btn,
+body.nz .table > thead td .btn[data-submit-form],
+body.nz .table > thead td .btn.formbutton-success,
+body.nz .table > thead td .btn.formbutton-default {
+  height: 30px;
+  min-width: 30px;
+  padding: 0 8px;
+  background: transparent;
+  border: 1px solid var(--nz-border-strong);
+  color: var(--nz-text-secondary);
+}
+body.nz .table > thead td .btn:hover,
+body.nz .table > thead td .btn:focus {
+  background: var(--nz-selected);
+  border-color: var(--nz-accent-edge);
+  color: var(--nz-text-on-selected);
 }
 
 body.nz .table > tbody > tr > td {
@@ -267,6 +305,9 @@ body.nz .table > tbody > tr.danger:hover > td {
   color: var(--nz-text);
   box-shadow: none;
 }
+body.nz .table > tbody > tr.danger > td:first-child {
+  box-shadow: inset 3px 0 0 var(--nz-danger);
+}
 body.nz .table > tbody > tr.danger > td > a:not(.btn) { color: var(--nz-text); }
 
 /* other Bootstrap contextual row/cell fills that would paint light on dark */
@@ -291,7 +332,7 @@ body.nz .table-striped > tbody > tr:nth-of-type(odd):hover {
 
 body.nz .table > tfoot > tr > td,
 body.nz .table > tfoot > tr > th {
-  padding: 10px 16px;
+  padding: 10px 12px;
   border-top: 1px solid var(--nz-border);
   background: var(--nz-veil-faint);
   color: var(--nz-text-secondary);
@@ -406,8 +447,10 @@ body.nz .btn.disabled {
    quieter and tighter — their extra class out-ranks this base rule, so the
    two stay separate rules (merging them would repaint the variants). */
 body.nz .table > tbody .btn {
-  height: 26px;
-  min-width: 26px;
+  height: var(--nz-ctl-h-sm);
+  min-width: var(--nz-ctl-h-sm);
+  font-size: 11px;
+  letter-spacing: 0.08em;
   padding: 0 8px;
   background: transparent;
   border-color: transparent;
@@ -449,15 +492,34 @@ body.nz .table td.text-right { white-space: nowrap; }
 #pageContent form .clear .btn,
 #pageContent .buttonHolder .btn { margin-right: 8px; }
 
-#pageContent form .clear:has(> .right):not(:first-child) {
-  border-top: 1px solid var(--nz-border-soft);
-  padding-top: 16px;
+/* form action footer: sticky, separated, primary in the power position.
+   (#pageContent lives INSIDE form#pageForm — no form descendant here.) */
+body.nz #pageContent .clear:has(> .right) {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flow-root;
   margin-top: 22px;
+  padding: 12px 0;
+  border-top: 1px solid var(--nz-border);
+  background: var(--nz-page);
 }
+
+body.nz #pageContent .clear > .right {
+  float: right;
+  display: flex;
+  flex-direction: row-reverse; /* primary outermost, like the login card */
+  gap: 8px;
+}
+body.nz #pageContent .clear > .right .btn { margin-right: 0; }
 
 /* DNS record-type strip: 21 buttons — a picker, not 21 primary actions */
 body.nz .btn.dns-record-btn,
 body.nz .btn.dns-record-btn.formbutton-success {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
   background: transparent;
   border: 1px solid var(--nz-border-strong);
   color: var(--nz-text-secondary);
@@ -626,7 +688,7 @@ body.nz .control-label:after { content: ''; }
 body.nz .has-error .form-control { border-color: var(--nz-danger); }
 body.nz .has-error .form-control:focus {
   border-color: var(--nz-danger);
-  box-shadow: 0 0 0 3px rgba(255, 103, 77, 0.28);
+  box-shadow: 0 0 0 3px var(--nz-danger-ring);
 }
 body.nz .has-error .control-label { color: var(--nz-danger-text); }
 
@@ -672,8 +734,8 @@ body.nz .input-group-btn:last-child > .btn {
 }
 
 /* password strength (structure in base.css) */
-#passBar { background: var(--nz-well); border-radius: 999px; }
-#passBar div { background: var(--nz-success); border-radius: 999px; }
+#passBar { background: var(--nz-well); border-radius: var(--nz-radius-pill); }
+#passBar div { background: var(--nz-success); border-radius: var(--nz-radius-pill); }
 #passText { color: var(--nz-text-muted); font-size: 11px; }
 .confirmpassworderror { color: var(--nz-danger-text); font-size: 12px; }
 .confirmpasswordok { color: var(--nz-success-text); font-size: 12px; }
@@ -858,7 +920,7 @@ body.nz .progress {
   height: 18px;
   margin: 6px 0;
   background: var(--nz-well);
-  border-radius: 999px;
+  border-radius: var(--nz-radius-pill);
   box-shadow: none;
   overflow: hidden;
 }
@@ -874,7 +936,7 @@ body.nz .progress span {
   line-height: 16px;
   margin-top: 1px;
   padding: 0 9px;
-  border-radius: 999px;
+  border-radius: var(--nz-radius-pill);
   background: rgba(2, 8, 11, 0.55);
   font-size: 11px;
   font-weight: 600;
@@ -888,8 +950,8 @@ body.nz .progress-bar {
   line-height: 18px;
   background-color: var(--nz-accent);
   background-image: none;
-  box-shadow: none;
-  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px var(--nz-meter-edge);
+  border-radius: var(--nz-radius-pill);
   transition: width 0.4s var(--nz-ease);
 }
 
@@ -902,7 +964,7 @@ body.nz .progress-bar-striped { background-image: none; }
 
 body.nz .modal-content {
   background: var(--nz-card);
-  border: 1px solid rgba(0, 0, 0, 0.9); /* Clarity dark container edge */
+  border: 1px solid var(--nz-modal-edge);
   border-radius: var(--nz-radius-modal);
   box-shadow: var(--nz-shadow-pop);
   color: var(--nz-text);
@@ -920,7 +982,7 @@ body.nz .modal-title {
 }
 
 body.nz .modal-header .close {
-  color: #FFFFFF;
+  color: var(--nz-text-heading);
   opacity: 0.5;
   text-shadow: none;
 }
@@ -983,7 +1045,7 @@ body.nz .select2-container-multi.select2-container-active .select2-choices {
 .select2-drop {
   background: var(--nz-popover);
   border: 1px solid var(--nz-border);
-  border-radius: 8px;
+  border-radius: var(--nz-radius-pop);
   box-shadow: var(--nz-shadow-pop);
   color: var(--nz-text);
   margin-top: 6px;
@@ -1017,7 +1079,7 @@ body.nz .select2-container-multi.select2-container-active .select2-choices {
 
 .select2-results .select2-highlighted {
   background: var(--nz-selected-strong);
-  color: #FFFFFF;
+  color: var(--nz-text-on-selected);
   border-radius: var(--nz-radius-ctl);
 }
 
@@ -1062,7 +1124,7 @@ body.nz .select2-container-multi .select2-choices .select2-search-field input {
 .datetimepicker.dropdown-menu {
   background: var(--nz-popover);
   border: 1px solid var(--nz-border);
-  border-radius: 8px;
+  border-radius: var(--nz-radius-pop);
   box-shadow: var(--nz-shadow-pop);
   color: var(--nz-text);
   font-family: var(--nz-font);
@@ -1123,8 +1185,8 @@ body.nz .select2-container-multi .select2-choices .select2-search-field input {
 /* ---------- tooltips ---------- */
 
 body.nz .tooltip-inner {
-  background: #0B1519;
-  color: var(--nz-ink-100);
+  background: var(--nz-tooltip-bg);
+  color: var(--nz-tooltip-text);
   border: 1px solid var(--nz-border);
   border-radius: var(--nz-radius-ctl);
   padding: 6px 10px;
@@ -1132,13 +1194,13 @@ body.nz .tooltip-inner {
   font-family: var(--nz-font);
 }
 
-body.nz .tooltip.bottom .tooltip-arrow { border-bottom-color: #0B1519; }
-body.nz .tooltip.top .tooltip-arrow { border-top-color: #0B1519; }
+body.nz .tooltip.bottom .tooltip-arrow { border-bottom-color: var(--nz-tooltip-bg); }
+body.nz .tooltip.top .tooltip-arrow { border-top-color: var(--nz-tooltip-bg); }
 
 .tipsy-inner {
-  background: #0B1519;
-  color: var(--nz-ink-100);
-  border-radius: 6px;
+  background: var(--nz-tooltip-bg);
+  color: var(--nz-tooltip-text);
+  border-radius: var(--nz-radius-ctl);
   font-family: var(--nz-font);
 }
 
@@ -1165,7 +1227,7 @@ body.nz hr { border-color: var(--nz-border-soft); }
 body.nz code, body.nz pre {
   font-family: var(--nz-font-mono);
   background: var(--nz-well);
-  color: var(--nz-ink-200);
+  color: var(--nz-text-secondary);
   border: 1px solid var(--nz-border-soft);
   border-radius: 4px;
 }
