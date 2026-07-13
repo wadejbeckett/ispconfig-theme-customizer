@@ -24,6 +24,7 @@ panel updates.
 ## Install
 
 ```bash
+cd /opt                                  # somewhere the web server can read — NOT /root
 git clone https://github.com/wadejbeckett/earlier-console.git
 cd earlier-console
 ./install.sh /usr/local/ispconfig        # your ISPConfig root, if different
@@ -31,22 +32,32 @@ cd earlier-console
 
 That's it. The installer symlinks the theme into
 `interface/web/themes/earlier-dark` and stamps the version-gate files ISPConfig
-requires. Use `./install.sh --copy` instead if you prefer real files over a
-symlink (e.g. the clone won't stay on the server).
+requires. Because it's a symlink, the panel reads the theme **from your
+clone** — so the clone (and every parent directory) must be readable by the
+web server; `/root` is not, which is why the example uses `/opt`. Use
+`./install.sh --copy` instead if you prefer real files over a symlink (then
+the clone can live anywhere, and needn't stay on the server).
+
+Multiserver setups: install only on the server that serves the ISPConfig web
+interface (the master/panel server) — slave servers need nothing.
 
 **Then switch your user to it:** log into the panel → *Tools → User
 Settings → Design → `earlier-dark` → Save* → **log out and back in** (ISPConfig
 applies the theme at login), and hard-refresh the browser (`Ctrl+Shift+R`).
 
-**Login screen + system-wide default (optional):** edit
-`interface/lib/config.inc.php` and set
+**Login screen + system-wide default (optional):** set
 
 ```php
 $conf['theme'] = 'earlier-dark';
 ```
 
-This one line is update-safe and controls the login page and the default for
-new users. Nothing else needs changing.
+in **both** `interface/lib/config.inc.php` **and** `server/lib/config.inc.php`
+(each has the line, default `'default'`). The interface one takes effect
+immediately and controls the login page plus the default for new users. The
+server one is what makes it stick: ISPConfig updates regenerate both config
+files and carry the theme value forward from the **server** config — set only
+the interface one and the login screen quietly reverts at the next panel
+update.
 
 ## After an ISPConfig upgrade
 
@@ -62,6 +73,10 @@ cd earlier-console && ./install.sh /usr/local/ispconfig
 `themes/earlier-dark/BUILT-AGAINST.txt` — it lists the three templates to re-diff
 against stock.)
 
+If you installed with `--copy`, re-clone anywhere and re-run **with `--copy`
+again** — re-running without it converts your install into a symlink pointing
+at the new clone.
+
 ## Uninstall
 
 ```bash
@@ -69,7 +84,8 @@ rm -rf /usr/local/ispconfig/interface/web/themes/earlier-dark
 ```
 
 Users who had it selected are automatically reset to the default theme at
-their next login.
+their next login. If you set `$conf['theme'] = 'earlier-dark'` in the config
+files, change it back to `'default'` in both.
 
 ## Troubleshooting
 
@@ -78,7 +94,8 @@ their next login.
 | Theme not in the Design dropdown | Version stamp missing or stale — re-run `./install.sh`. |
 | Selected it, but panel still looks stock | Log out and back in; then hard-refresh (`Ctrl+Shift+R`). |
 | Reverted to default after a panel upgrade | Expected — re-run `./install.sh` (see above). |
-| Unstyled/white page | `themes/default` missing or theme dir unreadable by the web server — the installer chowns to `ispconfig:ispconfig`, which the web server must be able to read (stock setups are). |
+| Login screen / system default reverted after a panel upgrade | You set `$conf['theme']` only in `interface/lib/config.inc.php` — updates regenerate it. Set it in `server/lib/config.inc.php` too (see Install). |
+| Unstyled/white page | For symlink installs: the clone and **every parent directory** must be readable/traversable by the panel's web server — a clone under `/root` serves nothing. Move it (e.g. `/opt`) or reinstall with `--copy`. Also check `themes/default` still exists (vendor assets load from it). |
 
 ## White-labeling
 
@@ -91,16 +108,59 @@ mobile header and login card). Any aspect ratio works. Favicons live in
 
 | Path | What |
 |---|---|
-| `themes/earlier-dark/` | The theme: 3 templates + 5 stylesheets + fonts/brand assets. |
+| `themes/earlier-dark/` | The theme: 3 templates + 6 stylesheets + fonts/brand assets. |
 | `themes/earlier-dark/BUILT-AGAINST.txt` | Exactly what is overridden and why it's upgrade-safe. |
 | `install.sh` | Installer (symlink or copy + version stamping). |
 | `DESIGN.md` | The design language — tokens, surfaces, component rules. |
 | `mockup/` | Offline dev harness: renders the real templates with sample content and screenshots them (`python3 build.py --shoot`, needs Playwright **and** a local ISPConfig source checkout at `.refs/ispconfig3/` for the stock vendor assets). Not needed to install. |
 
+## Contributing
+
+Bug reports, fixes, and ideas are welcome — see
+[CONTRIBUTING.md](CONTRIBUTING.md) for how the theme is put together, the
+ground rules that keep it update-proof, and how to test a change. Use the
+issue templates; they ask for exactly what makes a theme bug diagnosable.
+
+## Support this project
+
+the earlier name is free and MIT-licensed. If it saves you time and you'd like to
+say thanks, donations are taken in Monero:
+
+```text
+44BtMn9izxH8mK2yFbSdY6Di7TNobkLbnHdZ6gZQjukCME5vsNhtPRtH4TcVkDHKHLhSpAJbsjv8gCdYuSZVMpXgMkUC1hV
+```
+
+Code is just as welcome as coin — see [Contributing](#contributing) above.
+
+### Support ISPConfig itself
+
+This theme only exists because [ISPConfig](https://www.ispconfig.org/) does.
+The project takes no direct donations; the way its developers ask to be
+supported is:
+
+- **Buy the [ISPConfig manual](https://www.ispconfig.org/documentation/user-manual/)** (€5) or a
+  [HowtoForge subscription](https://www.howtoforge.com/download-the-ispconfig-3-manual)
+  that includes it — the project's own README names this as the way to fund
+  development.
+- Need paid help? [ISPConfig Business Support](https://www.ispconfig.org/get-support/)
+  is run by the core team's official partner.
+- Their commercial tools fund the free panel:
+  [ISPProtect](https://www.ispprotect.com/) (malware scanning) and the
+  [Migration Tool](https://www.ispconfig.org/add-ons/ispconfig-migration-tool/)
+  (imports from Plesk/cPanel/Confixx and older ISPConfig).
+- Contribute upstream: code and bug reports at
+  [git.ispconfig.org](https://git.ispconfig.org/ispconfig/ispconfig3), help
+  other users at the [HowtoForge forum](https://forum.howtoforge.com/).
+
 ## Licensing
 
-- Theme: MIT.
+- Theme: [MIT](LICENSE).
 - Surface/status values derived from VMware **Clarity** (`@cds/core`, MIT);
   frame anatomy informed by DirectAdmin Evolution (reference only, nothing copied).
-- **Inter** font — SIL OFL 1.1, self-hosted.
+- **Inter** font — [SIL OFL 1.1](themes/earlier-dark/assets/fonts/inter/LICENSE.txt), self-hosted.
 - ISPConfig is BSD-licensed; this theme ships no ISPConfig code and modifies none.
+
+---
+
+Part of the [ISPConfig Toolkit](https://github.com/wadejbeckett/ispconfig-toolkit) —
+a growing collection of ISPConfig modules and tools.

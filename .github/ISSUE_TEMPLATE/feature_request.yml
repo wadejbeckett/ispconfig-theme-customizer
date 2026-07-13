@@ -1,0 +1,21 @@
+name: Feature request
+description: An idea to improve the theme
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's the problem or friction today?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: What would you like to see instead?
+    validations:
+      required: true
+  - type: textarea
+    id: refs
+    attributes:
+      label: References
+      description: Screenshots, other panels that do it well, or Clarity components to borrow from.

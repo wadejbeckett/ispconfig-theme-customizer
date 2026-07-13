@@ -1,0 +1,52 @@
+name: Bug report
+description: Something in the theme looks or behaves wrong
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report! One quick check first: switch back to the stock `default`
+        theme and try again. If the problem is still there, it's an ISPConfig panel issue —
+        please take it to the [ISPConfig bugtracker](https://git.ispconfig.org/ispconfig/ispconfig3/-/issues)
+        or the [HowtoForge forum](https://forum.howtoforge.com/) instead.
+  - type: input
+    id: ispconfig-version
+    attributes:
+      label: ISPConfig version
+      placeholder: "3.3.1p1"
+    validations:
+      required: true
+  - type: input
+    id: theme-version
+    attributes:
+      label: Theme version or commit
+      placeholder: "v1.0.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Theme mode
+      options:
+        - Dark
+        - Light
+        - Both
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and OS
+      placeholder: "Firefox 140 on Ubuntu 24.04"
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened, and what did you expect?
+      description: A screenshot is worth a thousand words — drag one in.
+    validations:
+      required: true
+  - type: textarea
+    id: console
+    attributes:
+      label: Browser console errors (F12 → Console), if any
+      render: text

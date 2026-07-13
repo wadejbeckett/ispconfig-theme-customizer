@@ -118,8 +118,29 @@ for T in $THEMES; do
   fi
 done
 
-if id -u ispconfig >/dev/null 2>&1; then
+if [ "$MODE" = "copy" ] && id -u ispconfig >/dev/null 2>&1; then
+  # copy mode only: chown -R on a symlink argument does not follow it, and the
+  # clone's own ownership is not ours to change
   for T in $THEMES; do chown -R ispconfig:ispconfig "$THEMES_DIR/$T" 2>/dev/null || true; done
+fi
+
+if [ "$MODE" = "symlink" ]; then
+  # The web server reads the theme THROUGH the symlink, so every ancestor of
+  # this clone must be traversable by it. A clone under /root (mode 700) serves
+  # nothing — and fails with no error here.
+  p="$ROOT"
+  while [ "$p" != "/" ]; do
+    o="$(stat -c '%a' "$p" 2>/dev/null || echo 7)"; o="${o: -1}"
+    if [ $(( o % 2 )) -eq 0 ]; then
+      echo "WARNING: $p is not world-traversable (others have no 'x' bit)." >&2
+      echo "         The panel's web server likely cannot read the symlinked theme" >&2
+      echo "         from here (classic case: a clone under /root)." >&2
+      echo "         Move the clone somewhere readable (e.g. /opt/earlier-console)" >&2
+      echo "         and re-run, or install with --copy instead." >&2
+      break
+    fi
+    p="$(dirname "$p")"
+  done
 fi
 
 cat <<'EOF'
@@ -128,13 +149,17 @@ Done. Next steps:
 
   1. Per user:    Tools > User Settings > Design > select "earlier-dark" > Save,
                   then LOG OUT AND BACK IN (the theme is applied at login).
-  2. System wide + login screen — set in interface/lib/config.inc.php (update-safe):
+  2. System wide + login screen — set in BOTH config files:
 
        $conf['theme'] = 'earlier-dark';
 
-     (server/lib/config.inc.php's theme does NOT affect the web UI — interface only.)
+     interface/lib/config.inc.php   takes effect immediately (login page +
+                                    default for new users)
+     server/lib/config.inc.php      makes it survive ISPConfig updates — the
+                                    updater regenerates both configs and carries
+                                    the theme forward from the SERVER config
 
-  3. Hard-refresh the browser (Ctrl+Shift+R) — the CSS is cache-busted with ?ver=2.
+  3. Hard-refresh the browser (Ctrl+Shift+R) so the new CSS is picked up.
 
 After a MAJOR ISPConfig upgrade, re-run this script so ispconfig_version is
 re-stamped to the new ISPC_APP_VERSION (otherwise the theme silently reverts to
