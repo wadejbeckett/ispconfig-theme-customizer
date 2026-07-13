@@ -42,21 +42,92 @@
 
   /* ---------- 2. Chart.js follows the tokens ---------- */
 
+  function hexAlpha(hex, a) {
+    var m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+    if (!m) return 'rgba(46, 169, 255, ' + a + ')';
+    var n = parseInt(m[1], 16);
+    return 'rgba(' + (n >> 16) + ', ' + ((n >> 8) & 255) + ', ' + (n & 255) + ', ' + a + ')';
+  }
+
+  function chartPalette() {
+    var cs = getComputedStyle(document.body);
+    var accent = cs.getPropertyValue('--nz-accent').trim() || '#2EA9FF';
+    return {
+      text: cs.getPropertyValue('--nz-text-secondary').trim() || '#CBD4D8',
+      grid: mode() === 'light'
+        ? 'rgba(79, 97, 105, 0.15)' : 'rgba(133, 147, 153, 0.15)',
+      accent: accent,
+      fill: hexAlpha(accent, 0.16),
+      font: cs.getPropertyValue('--nz-font').trim() || 'Inter, sans-serif'
+    };
+  }
+
+  /* Stock dashlet charts hardcode their colors inline (metrics.htm), so
+     global Chart.defaults can't reach them: a teal line, and a legend swatch
+     painted WHITE to hide it against stock's white canvas — on our dark
+     canvas that hack becomes a floating white square. Retheme each chart's
+     config as it is created (plugin), and again on mode toggle. */
+  var STOCK_LINE = 'rgb(75, 192, 192)';
+
+  function themeChartConfig(config, canvas) {
+    var p = chartPalette();
+    var o = config.options = config.options || {};
+    o.color = p.text;
+    Object.keys(o.scales || {}).forEach(function (k) {
+      var s = o.scales[k] || (o.scales[k] = {});
+      s.ticks = Object.assign({}, s.ticks, { color: p.text });
+      s.grid = Object.assign({}, s.grid, { color: p.grid });
+      s.border = Object.assign({}, s.border, { color: p.grid });
+    });
+    var labels = o.plugins && o.plugins.legend && o.plugins.legend.labels;
+    if (labels && labels.generateLabels) {   /* the white-swatch hack */
+      delete labels.generateLabels;
+      labels.boxWidth = 0;
+      labels.boxHeight = 0;
+    }
+    if (labels) labels.color = p.text;
+    ((config.data && config.data.datasets) || []).forEach(function (ds) {
+      if (ds.borderColor === STOCK_LINE) {
+        ds.borderColor = p.accent;
+        ds.backgroundColor = p.fill;
+        ds.pointBackgroundColor = p.accent;
+      }
+    });
+    /* the canvas carries an inline white background in stock markup; the
+       stylesheet well wins anyway, but don't leave it lying around */
+    if (canvas && canvas.style.backgroundColor) canvas.style.backgroundColor = '';
+  }
+
   function themeCharts() {
     if (!window.Chart || !Chart.defaults) return;
-    var cs = getComputedStyle(document.body);
+    var p = chartPalette();
     /* stock dashlets ship 30px-tall canvases; the theme gives each chart
        wrapper a real height and lets the chart fill it */
     Chart.defaults.maintainAspectRatio = false;
-    Chart.defaults.color = cs.getPropertyValue('--nz-text-secondary').trim() || '#CBD4D8';
-    Chart.defaults.borderColor = mode() === 'light'
-      ? 'rgba(79, 97, 105, 0.15)' : 'rgba(133, 147, 153, 0.15)';
+    Chart.defaults.color = p.text;
+    Chart.defaults.borderColor = p.grid;
     if (Chart.defaults.font) {
-      Chart.defaults.font.family = cs.getPropertyValue('--nz-font').trim() || 'Inter, sans-serif';
+      Chart.defaults.font.family = p.font;
       Chart.defaults.font.size = 11;
     }
-    /* charts already on screen keep their colors until the next page load —
-       acceptable: dashboards re-render on every navigation */
+    if (!themeCharts.plugged && Chart.register) {
+      Chart.register({
+        id: 'nzTheme',
+        beforeInit: function (chart) { themeChartConfig(chart.config, chart.canvas); }
+      });
+      themeCharts.plugged = true;
+    }
+    /* charts already on screen follow a mode toggle immediately */
+    if (Chart.instances) {
+      Object.keys(Chart.instances).forEach(function (k) {
+        var c = Chart.instances[k];
+        if (!c || !c.config) return;
+        try {
+          themeChartConfig(c.config, c.canvas);
+          c.update('none');
+        } catch (e) { /* a chart mid-teardown is not ours to update */ }
+      });
+    }
   }
 
   /* ---------- 3. mobile drawer ---------- */
@@ -225,6 +296,15 @@
       e.preventDefault();
       e.target.click();
     }
+  });
+
+  /* copy-to-clipboard cells: flash the icon as confirmation (the copying
+     itself is stock behavior, bound to clicks on the cell outside its link) */
+  document.addEventListener('click', function (e) {
+    var td = e.target.closest && e.target.closest('.copy-to-clipboard');
+    if (!td || (e.target.closest && e.target.closest('a'))) return;
+    td.classList.add('nz-copied');
+    setTimeout(function () { td.classList.remove('nz-copied'); }, 1200);
   });
 
   /* mark the current page in the sidebar tree */

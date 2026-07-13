@@ -302,17 +302,48 @@ body.nz .table > tbody > tr {
 }
 body.nz .table > tbody > tr:hover { background: var(--nz-row-hover); }
 
-/* whole-cell record links inherit text colour; the row hover is the affordance */
+/* cell record links inherit text colour; the row hover is the affordance */
 body.nz .table > tbody > tr > td > a:not(.btn) {
+  color: var(--nz-text);
+}
+/* a cell whose only element is its link becomes a whole-cell link and
+   ellipsizes; cells composed of several links ("monthly / 1") or a
+   copy-to-clipboard value stay inline so they render on one line */
+body.nz .table > tbody > tr > td > a:not(.btn):only-child:not(.copy-to-clipboard-icon-helper) {
   display: block;
   margin: -8px -12px;
   padding: 8px 12px;
-  color: var(--nz-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 body.nz .table > tbody > tr > td > a:not(.btn):hover { color: var(--nz-link-hover); }
+
+/* copy-to-clipboard cells: clicking anywhere in the cell EXCEPT the record
+   link copies (stock contract) — give that area the cursor, and give the
+   icon real size instead of the ported 0.6em FontAwesome scale */
+body.nz td.copy-to-clipboard { cursor: copy; }
+body.nz td.copy-to-clipboard .copy-to-clipboard-icon-helper {
+  max-width: calc(100% - 26px);
+  overflow: hidden;
+  vertical-align: middle;
+}
+body.nz .copy-to-clipboard-icon::after {
+  font-size: inherit;
+  width: 15px;
+  height: 15px;
+  position: static;
+  float: none;
+  vertical-align: -3px;
+  margin-left: 8px;
+  background-color: var(--nz-accent);
+}
+/* the confirmation flash (nz-theme.js toggles .nz-copied on click) */
+body.nz .copy-to-clipboard-icon.nz-copied::after {
+  background-color: var(--nz-success);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cpath d='M13.72 27.69 3.29 17.27l1.42-1.42 9 9L31.29 7.29l1.42 1.42Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cpath d='M13.72 27.69 3.29 17.27l1.42-1.42 9 9L31.29 7.29l1.42 1.42Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
 
 /* inactive/warning records (neutralise Bootstrap's light-theme td fills);
    the tint marks the row — text stays legible normal, not all-red */
