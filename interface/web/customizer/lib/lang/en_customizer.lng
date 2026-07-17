@@ -3,9 +3,9 @@ $wb['customizer_title'] = 'Branding';
 $wb['customizer_desc_txt'] = 'Brand this control panel as your own. Settings are stored in ISPConfig and survive panel and theme updates. A brand-aware theme (such as the Clarity theme) applies the colours; the logo and panel name also apply to the stock theme.';
 
 $wb['logo_head_txt'] = 'Logo';
-$wb['logo_txt'] = 'Upload a logo';
-$wb['logo_hint_txt'] = 'PNG, SVG, JPEG, GIF or WebP, under 45 KB. Light artwork works best — it sits on the dark sidebar and login band.';
-$wb['upload_txt'] = 'Upload';
+$wb['logo_txt'] = 'Logo file';
+$wb['logo_hint_txt'] = 'Choose a file, then click "Upload logo" — the logo uploads on its own, separately from the Save button at the bottom. PNG, SVG, JPEG, GIF or WebP, under 45 KB. Light artwork works best — it sits on the dark sidebar and login band.';
+$wb['upload_txt'] = 'Upload logo';
 $wb['logo_remove_txt'] = 'Remove';
 $wb['used_logo_txt'] = 'Current logo';
 $wb['no_logo_set_txt'] = 'No custom logo set — the theme shows its own default.';

@@ -25,6 +25,12 @@ if(!$app->auth->is_admin()) die('Allowed for administrators only.');
 $app->uses('tpl,tform,tform_actions');
 $app->load('tform_actions');
 
+//* Single-tab form: pin the active tab in the session BEFORE onLoad(). On a save
+//* POST the framework calls getSQL(getCurrentTab()) before our onUpdateSave(), and
+//* getCurrentTab() reads $_SESSION['s']['form']['tab']; if that is empty (fresh
+//* session, or set by another form), tform_base hits count(null) and fatals on PHP 8.
+$_SESSION['s']['form']['tab'] = 'branding';
+
 class page_action extends tform_actions {
 
     /* the keys this module owns in each INI section */
