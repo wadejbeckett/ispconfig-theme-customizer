@@ -1,0 +1,56 @@
+<!-- QA-only page: NOT the real dashboard. One of every component a theme
+     must get right, markup copied from ISPConfig's own module templates, so a
+     single screenshot exercises alerts, tabs, forms, buttons, badges,
+     pagination and panels. Never referenced by the README or any release. -->
+<div class="page-header">
+  <h1>Component reference</h1>
+</div>
+
+<div id="errorMsg" class="alert alert-danger" role="alert"><strong>Error:</strong> Field "Domain" is empty.</div>
+<div id="okMsg" class="alert alert-success" role="alert">Settings saved.</div>
+<div class="alert alert-info" role="alert">Informational notice.</div>
+<div class="alert alert-warning" role="alert">Warning notice.</div>
+
+<ul class="nav nav-tabs">
+  <li role="presentation" class="active"><a href="#">Domain</a></li>
+  <li role="presentation"><a href="#">Redirect</a></li>
+  <li role="presentation"><a href="#">SSL</a></li>
+  <li role="presentation"><a href="#">Statistics</a></li>
+</ul>
+
+<div class="form-group">
+  <label class="col-sm-3 control-label" for="demo_input">Domain</label>
+  <div class="col-sm-9"><input type="text" id="demo_input" class="form-control" value="example.co.za"></div>
+</div>
+<div class="form-group has-error">
+  <label class="col-sm-3 control-label" for="demo_err">IPv4 Address</label>
+  <div class="col-sm-9"><input type="text" id="demo_err" class="form-control" value="not-an-ip"></div>
+</div>
+<div class="form-group">
+  <label class="col-sm-3 control-label" for="demo_select">Design</label>
+  <div class="col-sm-9"><select name="app_theme" id="demo_select" class="form-control"><option>default</option><option selected>earlier-dark</option></select></div>
+</div>
+<div class="form-group">
+  <div class="col-sm-9 col-sm-offset-3">
+    <label><input type="checkbox" checked> Stay logged in</label>
+  </div>
+</div>
+
+<div class="clear">
+  <button class="btn btn-default formbutton-default">Save</button>
+  <button class="btn btn-default formbutton-narrow">Cancel</button>
+  <button class="btn btn-primary">Primary</button>
+  <button class="btn btn-danger">Delete</button>
+  <span class="label label-success">active</span>
+  <span class="label label-warning">pending</span>
+  <span class="label label-danger">failed</span>
+</div>
+
+<ul class="pagination">
+  <li class="active"><a href="#">1</a></li><li><a href="#">2</a></li><li><a href="#">3</a></li>
+</ul>
+
+<div class="panel panel-default">
+  <div class="panel-heading">Panel heading</div>
+  <div class="panel-body">Panel body text.</div>
+</div>

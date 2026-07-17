@@ -114,10 +114,55 @@ BASE_VARS = {
 }
 
 DARK_PAGES = {  # name -> (active module, sidebar fragment, pageContent fragment)
-    "dark-dashboard": ("dashboard", "news.html", "dashboard.html"),
-    "dark-sites":     ("sites", "sidenav-sites.html", "sites-list.html"),
-    "dark-form":      ("mail", "sidenav-mail.html", "mail-user-form.html"),
+    "dark-dashboard":  ("dashboard", "news.html", "dashboard.html"),
+    "dark-sites":      ("sites", "sidenav-sites.html", "sites-list.html"),
+    "dark-form":       ("mail", "sidenav-mail.html", "mail-user-form.html"),
+    "dark-components": ("dashboard", "news.html", "components.html"),
 }
+
+# The metrics dashlet renders through <canvas>, so the harness (which strips
+# all <script> to avoid 404s from missing ISPConfig core JS) can't draw it.
+# For the dashboard page we re-inject a controlled bootstrap: real Chart.js,
+# the SHIPPED nz-theme.js (so the screenshot proves the actual chart plugin),
+# and the stock createChart verbatim — animation off for a deterministic shot.
+CHART_BOOTSTRAP = """
+<script src='js/chartjs/chart.umd.js'></script>
+<script src='themes/earlier-dark/assets/javascripts/nz-theme.js'></script>
+<script>
+Chart.defaults.animation = false;
+document.addEventListener('DOMContentLoaded', function () {
+  var L = ['','','','','','','','','','','',''];
+  createChart('loadchart', 'Server load (1 min)', L,
+              [0.42,0.55,0.48,0.71,0.62,0.90,1.15,0.88,0.64,0.70,0.52,0.61]);
+  createChart('memchart', 'Memory usage (%)', L,
+              [38,41,40,45,52,58,71,64,60,55,47,49]);
+});
+function createChart(chartname, label, labels, data) {
+    var ctx = document.getElementById(chartname).getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: { labels: labels, datasets: [{
+            label: label, data: data, borderWidth: 1, tension: 0.4,
+            cubicInterpolationMode: 'default',
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)', fill: true }] },
+        options: {
+            scales: { x: { display: false }, y: { beginAtZero: true } },
+            plugins: { legend: { labels: { generateLabels: function(chart) {
+                return chart.data.datasets.map(function(dataset, i) {
+                    return { text: dataset.label, fillStyle: 'white',
+                        hidden: !chart.isDatasetVisible(i), strokeStyle: 'white',
+                        pointStyle: 'white', lineWidth: dataset.borderWidth,
+                        datasetIndex: i };
+                });
+            } } } }
+        }
+    });
+}
+</script>
+"""
+
+PAGE_SCRIPTS = {"dark-dashboard": CHART_BOOTSTRAP}
 
 
 def nav_top(active: str):
@@ -158,7 +203,13 @@ def build_dark_page(name: str, active: str, sidebar_frag: str, content_frag: str
     # the datalog chip is JS-toggled at runtime; show it in the static shot
     page = page.replace('class="notification" data-toggle="modal" data-target="#datalogModal" style="display: none;"',
                         'class="notification" data-toggle="modal" data-target="#datalogModal"', 1)
-    return fix_paths(strip_scripts(page))
+    # strip the shell's scripts (missing core JS), then re-inject only the
+    # controlled per-page bootstrap (e.g. the chart renderer for the dashboard)
+    page = strip_scripts(page)
+    extra = PAGE_SCRIPTS.get(name, "")
+    if extra:
+        page = page.replace("</body>", extra + "\n</body>", 1)
+    return fix_paths(page)
 
 
 def build_dark_login() -> str:
@@ -188,6 +239,8 @@ def build() -> None:
     (WEBROOT / "themes").mkdir(parents=True)
     (WEBROOT / "themes/default").symlink_to(STOCK / "themes/default")
     (WEBROOT / "themes/earlier-dark").symlink_to(DARK)
+    # vendor JS (Chart.js) for the pages that re-inject a controlled bootstrap
+    (WEBROOT / "js").symlink_to(STOCK / "js")
 
     # stock baseline for comparison
     body = strip_scripts((HERE / "body.html").read_text(encoding="utf-8"))
@@ -224,6 +277,7 @@ SHOT_MATRIX = [
     ("dark-dashboard", ("desktop", "mobile")),
     ("dark-sites", ("desktop",)),
     ("dark-form", ("desktop",)),
+    ("dark-components", ("desktop",)),  # QA gallery, not a marketing shot
     ("dark-login", ("desktop", "mobile")),
     ("light-dashboard", ("desktop",)),
     ("light-login", ("desktop",)),
