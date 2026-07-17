@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='utf-8' />
+  <!-- apply the stored dark/light preference before first paint -->
+  <script>try{document.documentElement.setAttribute('data-nz-theme',localStorage.getItem('nz-theme')||'dark')}catch(e){}</script>
+
+  <title><tmpl_var name="company_name"><tmpl_var name="app_title"></title>
+
+  <meta name='viewport' content='width=device-width, user-scalable=yes'>
+  <meta name='description' lang='en' content='' />
+  <meta name='keywords' lang='en' content='' />
+
+ <link rel='apple-touch-icon' sizes='180x180' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/apple-touch-icon.png'>
+ <link rel='icon' type='image/png' sizes='32x32' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/favicon-32x32.png'>
+ <link rel='icon' type='image/png' sizes='16x16' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/favicon-16x16.png'>
+ <link rel='manifest' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/site.webmanifest'>
+ <link rel='mask-icon' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/safari-pinned-tab.svg' color='#0065AB'>
+ <link rel='shortcut icon' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/favicon.ico'>
+ <meta name='msapplication-TileColor' content='#01243D'>
+ <meta name='msapplication-config' content='/themes/<tmpl_var name='current_theme'>/assets/favicon/browserconfig.xml'>
+ <meta name='theme-color' content='#01243D'>
+
+  <!-- functional vendor CSS from the stock theme; the stock skin (ispconfig.css,
+       theme.min.css, login.css) is deliberately not loaded -->
+  <link rel='stylesheet' href='../themes/default/assets/stylesheets/bootstrap.min.css' />
+  <link rel='stylesheet' href='../themes/default/assets/stylesheets/fonts.min.css' />
+  <link rel='stylesheet' href='../themes/default/assets/stylesheets/bootstrap-datetimepicker.min.css' />
+  <link rel='stylesheet' href='../themes/default/assets/stylesheets/select2.css' />
+  <link rel='stylesheet' href='../themes/default/assets/stylesheets/select2-bootstrap.css' />
+  <link rel='stylesheet' href='../themes/default/assets/stylesheets/font-awesome-4.7.0/css/font-awesome.min.css' />
+
+  <!-- Clarity Theme for ISPConfig layer -->
+  <link rel='stylesheet' href='../themes/<tmpl_var name='current_theme'>/assets/fonts/inter/inter.css?ver=4' />
+  <link rel='stylesheet' href='../themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/tokens.css?ver=4' />
+  <link rel='stylesheet' href='../themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/icons.css?ver=4' />
+  <link rel='stylesheet' href='../themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/login.css?ver=4' />
+</head>
+
+<body class='nz-login'>
+  <div class='nzl-scene'>
+    <main class='nzl-card' aria-label='Sign in'>
+      <div class='nzl-brand'>
+        <img src='../themes/<tmpl_var name='current_theme'>/assets/images/wordmark-white.svg' alt='ISPConfig' width='122' height='40'>
+      </div>
+      <p class='nzl-hint'>Sign in to your control panel</p>
+      <tmpl_dyninclude name="content_tpl">
+      <div class='nzl-custom'><small><tmpl_var name="custom_login"></small></div>
+    </main>
+    <footer class='nzl-footer'>
+      powered by <a href="<tmpl_var name="app_link">" target="_blank" rel="noopener"><tmpl_var name="app_title"></a>
+    </footer>
+  </div>
+
+  <script type="text/javascript" src="../js/jquery.min.js"></script>
+  <script src='../themes/default/assets/javascripts/bootstrap.min.js'></script>
+  <script src='../themes/default/assets/javascripts/bootstrap-datetimepicker.min.js'></script>
+  <script src='../themes/default/assets/javascripts/ispconfig.js'></script>
+  <script src='../themes/default/assets/javascripts/modernizr.custom.min.js'></script>
+  <script src='../js/select2/select2.min.js'></script>
+  <script src='../js/scrigo.js.php'></script>
+  <tmpl_loop name="js_d_includes">
+	<script type="text/javascript" src="../js/js.d/<tmpl_var name='file'>"></script>
+  </tmpl_loop>
+</body>
+
+</html>

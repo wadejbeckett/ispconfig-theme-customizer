@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Monochrome mask icon (Safari pinned tab); tinted by the link tag's color. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <g fill="#000000">
+    <rect x="120" y="150" width="64" height="212" rx="16"/>
+    <rect x="212" y="168" width="180" height="36" rx="12"/>
+    <rect x="212" y="238" width="180" height="36" rx="12"/>
+    <rect x="212" y="308" width="128" height="36" rx="12"/>
+  </g>
+</svg>

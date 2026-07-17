@@ -12,4 +12,4 @@
 - [ ] New tokens have a light-mode value in the remap block (`--nz-rail-accent` excepted — never remap it)
 - [ ] Checked in dark **and** light mode
 - [ ] Checked the mobile drawer, if the change touches the frame
-- [ ] No ISPConfig core file is modified; the contracts in `themes/earlier-dark/BUILT-AGAINST.txt` still hold
+- [ ] No ISPConfig core file is modified; the contracts in `themes/clarity/BUILT-AGAINST.txt` still hold

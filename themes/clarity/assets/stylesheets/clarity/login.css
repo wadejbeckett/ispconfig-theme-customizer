@@ -1,0 +1,257 @@
+/* ============================================================
+ * CLARITY THEME FOR ISPCONFIG — LOGIN
+ * ------------------------------------------------------------
+ * Self-contained: the login shell loads only tokens.css + this
+ * file (plus vendor bootstrap), so the small set of components
+ * that appear on login/otp/password-reset pages is skinned here.
+ * ============================================================ */
+
+html, body.nz-login {
+  height: 100%;
+  margin: 0;
+}
+
+body.nz-login {
+  background:
+    radial-gradient(640px 420px at 50% -8%, rgba(0, 101, 171, 0.38), transparent 68%),
+    radial-gradient(900px 600px at 88% 112%, rgba(0, 144, 245, 0.10), transparent 60%),
+    var(--nz-page);
+  color: var(--nz-text);
+  font-family: var(--nz-font);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root[data-nz-theme='light'] body.nz-login {
+  background:
+    radial-gradient(640px 420px at 50% -8%, rgba(0, 101, 171, 0.14), transparent 68%),
+    radial-gradient(900px 600px at 88% 112%, rgba(0, 144, 245, 0.05), transparent 60%),
+    var(--nz-page);
+}
+
+.nzl-scene {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  box-sizing: border-box;
+}
+
+.nzl-card {
+  width: 100%;
+  max-width: 384px;
+  background: var(--nz-card);
+  border: 1px solid var(--nz-border);
+  border-radius: 14px;
+  box-shadow: var(--nz-shadow-2);
+  padding: 0 32px 30px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* navy brand band — the wordmark stays white-on-brand in both modes;
+   replace assets/images/wordmark-white.svg to white-label */
+.nzl-brand {
+  margin: 0 -32px 22px;
+  padding: 26px 32px 24px;
+  background: var(--nz-rail);
+  border-bottom: 1px solid var(--nz-rail-edge);
+}
+.nzl-brand img { display: block; height: 36px; width: auto; max-width: 100%; }
+
+.nzl-hint {
+  margin: 0 0 24px;
+  color: var(--nz-text-muted);
+  font-size: 13px;
+}
+
+/* ---------- the injected login form ---------- */
+
+.nzl-card fieldset { border: 0; margin: 0; padding: 0; }
+
+.nzl-card .form-group { margin: 0 0 12px; }
+
+.nzl-card .form-control {
+  width: 100%;
+  height: 40px;
+  padding: 8px 14px;
+  background: var(--nz-well);
+  border: 1px solid var(--nz-border-strong);
+  border-radius: var(--nz-radius-ctl);
+  color: var(--nz-text);
+  font-family: var(--nz-font);
+  font-size: 14px;
+  box-shadow: none;
+  transition: border-color var(--nz-quick) var(--nz-ease),
+              box-shadow var(--nz-quick) var(--nz-ease);
+}
+
+.nzl-card .form-control:focus {
+  border-color: var(--nz-accent);
+  box-shadow: var(--nz-focus-shadow);
+  outline: none;
+}
+
+.nzl-card .form-control::placeholder { color: var(--nz-text-disabled); }
+
+.nzl-card .checkbox {
+  margin: 14px 0 4px;
+}
+
+.nzl-card .checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--nz-text-secondary);
+  font-size: 13px;
+  font-weight: 400;
+  padding-left: 0;
+}
+
+.nzl-card input[type='checkbox'] {
+  accent-color: var(--nz-accent);
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  position: static;
+}
+
+/* button row: stock wraps buttons in div.right */
+.nzl-card .right {
+  float: none;
+  display: flex;
+  flex-direction: row-reverse;   /* submit first visually, on the right */
+  gap: 10px;
+  align-items: center;
+  margin-top: 22px;
+}
+
+.nzl-card .btn,
+.nzl-card input[type='submit'] {
+  height: 36px;
+  padding: 0 18px;
+  border-radius: var(--nz-radius-ctl);
+  font-family: var(--nz-font);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  background-image: none;
+  box-shadow: none;
+  text-shadow: none;
+  transition: background var(--nz-quick) var(--nz-ease),
+              color var(--nz-quick) var(--nz-ease);
+}
+
+/* the sign-in submit is the one primary action */
+.nzl-card input[type='submit'].formbutton-default,
+.nzl-card input[type='submit'] {
+  flex: 1 1 auto;
+  background: var(--nz-action);
+  color: var(--nz-text-on-action);
+}
+
+.nzl-card input[type='submit']:hover,
+.nzl-card input[type='submit']:focus {
+  background: var(--nz-action-hover);
+  color: var(--nz-text-on-action);
+}
+
+/* secondary actions (password lost, back) read as quiet links */
+.nzl-card button.btn {
+  background: transparent;
+  border-color: transparent;
+  color: var(--nz-text-secondary);
+  font-weight: 500;
+}
+
+.nzl-card button.btn:hover,
+.nzl-card button.btn:focus {
+  color: var(--nz-link);
+  background: transparent;
+}
+
+/* ---------- alerts on login/otp/reset ---------- */
+
+.nzl-card .alert {
+  margin: 0 0 16px;
+  padding: 11px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--nz-radius-ctl);
+  font-size: 13px;
+  color: var(--nz-alert-text);
+  text-shadow: none;
+}
+
+.nzl-card .alert-danger {
+  background: var(--nz-danger-surface);
+  border-color: var(--nz-danger);
+}
+
+.nzl-card .alert-success {
+  background: var(--nz-success-surface);
+  border-color: var(--nz-success);
+}
+
+/* ---------- password strength (force_password_change / reset pages;
+     scrigo.js injects the fill div with inline color+width) ---------- */
+
+.nzl-card #passBar,
+.nzl-card #passText {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.nzl-card #passBar {
+  width: 100%;
+  height: 6px;
+  margin: 6px 0 2px;
+  background: var(--nz-well);
+  border-radius: var(--nz-radius-pill);
+  overflow: hidden;
+}
+
+.nzl-card #passBar div { height: 6px; border-radius: var(--nz-radius-pill); }
+
+.nzl-card #passText {
+  color: var(--nz-text-muted);
+  font-size: 11px;
+}
+
+.confirmpassworderror { color: var(--nz-danger-text); font-size: 12px; }
+.confirmpasswordok { color: var(--nz-success-text); font-size: 12px; }
+
+/* ---------- fine print ---------- */
+
+.nzl-custom {
+  margin-top: 18px;
+  text-align: center;
+  color: var(--nz-text-muted);
+  font-size: 12px;
+}
+.nzl-custom:empty, .nzl-custom small:empty { display: none; }
+
+.nzl-footer {
+  margin-top: 22px;
+  font-size: 12px;
+  color: var(--nz-text-muted);
+}
+
+.nzl-footer a { color: var(--nz-text-secondary); text-decoration: none; }
+.nzl-footer a:hover { color: var(--nz-link); }
+
+body.nz-login :focus-visible {
+  outline: 2px solid var(--nz-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.nz-login *, body.nz-login *::before, body.nz-login *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

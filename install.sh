@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# the earlier name (earlier-dark) — ISPConfig theme deploy helper.
-# Installs the theme by symlinking (default) or copying themes/earlier-dark
+# Clarity Theme for ISPConfig (clarity) — ISPConfig theme deploy helper.
+# Installs the theme by symlinking (default) or copying themes/clarity
 # into an ISPConfig install, and stamps the theme's `ispconfig_version`
 # file to EXACTLY match the install's ISPC_APP_VERSION.
 # Touches NOTHING in ISPConfig core.
@@ -37,25 +37,25 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 THEMES_DIR="$ISPC_ROOT/interface/web/themes"
 CONF="$ISPC_ROOT/interface/lib/config.inc.php"
 
-# earlier-dark = "the earlier name" — fully self-contained (own templates incl.
+# clarity = "Clarity Theme for ISPConfig" — fully self-contained (own templates incl.
 # topnav.tpl.htm + own CSS/fonts/images); it needs only the stock 'default'
 # theme for vendor CSS/JS.
-THEMES="earlier-dark"
+THEMES="clarity"
 
-echo "Earlier theme installer"
+echo "Clarity theme installer"
 echo "  source : $ROOT/themes"
 echo "  themes : $THEMES"
 echo "  target : $THEMES_DIR"
 echo "  mode   : $MODE"
 echo
 
-[ -d "$ROOT/themes/earlier-dark" ] || { echo "ERROR: source theme not found at $ROOT/themes/earlier-dark" >&2; exit 1; }
+[ -d "$ROOT/themes/clarity" ] || { echo "ERROR: source theme not found at $ROOT/themes/clarity" >&2; exit 1; }
 if [ ! -d "$THEMES_DIR" ]; then
   echo "ERROR: $THEMES_DIR not found — is ISPCONFIG_ROOT correct?" >&2
   echo "       pass it explicitly, e.g.  ./install.sh /usr/local/ispconfig" >&2
   exit 1
 fi
-[ -d "$THEMES_DIR/default" ] || { echo "ERROR: $THEMES_DIR/default missing — the earlier name inherits vendor assets from it." >&2; exit 1; }
+[ -d "$THEMES_DIR/default" ] || { echo "ERROR: $THEMES_DIR/default missing — Clarity Theme for ISPConfig inherits vendor assets from it." >&2; exit 1; }
 
 # --- detect ISPC_APP_VERSION from the install -------------------------------
 VERSION=""
@@ -135,7 +135,7 @@ if [ "$MODE" = "symlink" ]; then
       echo "WARNING: $p is not world-traversable (others have no 'x' bit)." >&2
       echo "         The panel's web server likely cannot read the symlinked theme" >&2
       echo "         from here (classic case: a clone under /root)." >&2
-      echo "         Move the clone somewhere readable (e.g. /opt/earlier-console)" >&2
+      echo "         Move the clone somewhere readable (e.g. /opt/clarity-theme-ispconfig)" >&2
       echo "         and re-run, or install with --copy instead." >&2
       break
     fi
@@ -147,11 +147,11 @@ cat <<'EOF'
 
 Done. Next steps:
 
-  1. Per user:    Tools > User Settings > Design > select "earlier-dark" > Save,
+  1. Per user:    Tools > User Settings > Design > select "clarity" > Save,
                   then LOG OUT AND BACK IN (the theme is applied at login).
   2. System wide + login screen — set in BOTH config files:
 
-       $conf['theme'] = 'earlier-dark';
+       $conf['theme'] = 'clarity';
 
      interface/lib/config.inc.php   takes effect immediately (login page +
                                     default for new users)

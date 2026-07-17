@@ -1,4 +1,4 @@
-# the earlier name — a dark theme for ISPConfig
+# Clarity Theme for ISPConfig — a dark theme for ISPConfig
 
 A complete, modern interface for the [ISPConfig](https://www.ispconfig.org/)
 control panel, built on **VMware Clarity** dark design tokens: navy
@@ -18,20 +18,20 @@ panel updates.
 - ISPConfig **3.3** (built and verified against 3.3.1p1; 3.2 may work but is
   untested)
 - Root shell access to the panel server
-- The stock `default` theme still present (it always is — the earlier name loads
+- The stock `default` theme still present (it always is — Clarity Theme for ISPConfig loads
   its vendor CSS/JS from there)
 
 ## Install
 
 ```bash
 cd /opt                                  # somewhere the web server can read — NOT /root
-git clone https://github.com/wadejbeckett/earlier-console.git
-cd earlier-console
+git clone https://github.com/wadejbeckett/clarity-theme-ispconfig.git
+cd clarity-theme-ispconfig
 ./install.sh /usr/local/ispconfig        # your ISPConfig root, if different
 ```
 
 That's it. The installer symlinks the theme into
-`interface/web/themes/earlier-dark` and stamps the version-gate files ISPConfig
+`interface/web/themes/clarity` and stamps the version-gate files ISPConfig
 requires. Because it's a symlink, the panel reads the theme **from your
 clone** — so the clone (and every parent directory) must be readable by the
 web server; `/root` is not, which is why the example uses `/opt`. Use
@@ -42,13 +42,13 @@ Multiserver setups: install only on the server that serves the ISPConfig web
 interface (the master/panel server) — slave servers need nothing.
 
 **Then switch your user to it:** log into the panel → *Tools → User
-Settings → Design → `earlier-dark` → Save* → **log out and back in** (ISPConfig
+Settings → Design → `clarity` → Save* → **log out and back in** (ISPConfig
 applies the theme at login), and hard-refresh the browser (`Ctrl+Shift+R`).
 
 **Login screen + system-wide default (optional):** set
 
 ```php
-$conf['theme'] = 'earlier-dark';
+$conf['theme'] = 'clarity';
 ```
 
 in **both** `interface/lib/config.inc.php` **and** `server/lib/config.inc.php`
@@ -66,11 +66,11 @@ ISPConfig silently reverts users to the `default` theme unless the theme's
 panel upgrade:
 
 ```bash
-cd earlier-console && ./install.sh /usr/local/ispconfig
+cd clarity-theme-ispconfig && ./install.sh /usr/local/ispconfig
 ```
 
 (re-stamps the version files; on a **major** upgrade also check
-`themes/earlier-dark/BUILT-AGAINST.txt` — it lists the three templates to re-diff
+`themes/clarity/BUILT-AGAINST.txt` — it lists the three templates to re-diff
 against stock.)
 
 If you installed with `--copy`, re-clone anywhere and re-run **with `--copy`
@@ -80,11 +80,11 @@ at the new clone.
 ## Uninstall
 
 ```bash
-rm -rf /usr/local/ispconfig/interface/web/themes/earlier-dark
+rm -rf /usr/local/ispconfig/interface/web/themes/clarity
 ```
 
 Users who had it selected are automatically reset to the default theme at
-their next login. If you set `$conf['theme'] = 'earlier-dark'` in the config
+their next login. If you set `$conf['theme'] = 'clarity'` in the config
 files, change it back to `'default'` in both.
 
 ## Troubleshooting
@@ -99,17 +99,21 @@ files, change it back to `'default'` in both.
 
 ## White-labeling
 
-Replace `themes/earlier-dark/assets/images/wordmark-white.svg` with your own
-logo (white/light artwork — it sits on the navy brand band in the sidebar,
-mobile header and login card). Any aspect ratio works. Favicons live in
-`themes/earlier-dark/assets/favicon/`.
+The theme ships with neutral **ISPConfig** default branding — no third-party
+marks — so it's ready to use as-is or to brand for any organisation. Two
+single-touch swaps are all it takes, no CSS or template edits:
+
+- **Wordmark** — replace `themes/clarity/assets/images/wordmark-white.svg`
+  with your own logo (white/light artwork — it sits on the navy brand band in
+  the sidebar, mobile header, and login card). Any aspect ratio works.
+- **Favicons** — drop your own set into `themes/clarity/assets/favicon/`.
 
 ## Repo layout
 
 | Path | What |
 |---|---|
-| `themes/earlier-dark/` | The theme: 3 templates + 6 stylesheets + fonts/brand assets. |
-| `themes/earlier-dark/BUILT-AGAINST.txt` | Exactly what is overridden and why it's upgrade-safe. |
+| `themes/clarity/` | The theme: 3 templates + 6 stylesheets + fonts/brand assets. |
+| `themes/clarity/BUILT-AGAINST.txt` | Exactly what is overridden and why it's upgrade-safe. |
 | `install.sh` | Installer (symlink or copy + version stamping). |
 | `DESIGN.md` | The design language — tokens, surfaces, component rules. |
 | `mockup/` | Offline dev harness: renders the real templates with sample content and screenshots them (`python3 build.py --shoot`, needs Playwright **and** a local ISPConfig source checkout at `.refs/ispconfig3/` for the stock vendor assets). Not needed to install. |
@@ -123,7 +127,7 @@ issue templates; they ask for exactly what makes a theme bug diagnosable.
 
 ## Support this project
 
-the earlier name is free and MIT-licensed. If it saves you time and you'd like to
+Clarity Theme for ISPConfig is free and MIT-licensed. If it saves you time and you'd like to
 say thanks, donations are taken in Monero:
 
 ```text
@@ -157,10 +161,20 @@ supported is:
 - Theme: [MIT](LICENSE).
 - Surface/status values derived from VMware **Clarity** (`@cds/core`, MIT);
   frame anatomy informed by DirectAdmin Evolution (reference only, nothing copied).
-- **Inter** font — [SIL OFL 1.1](themes/earlier-dark/assets/fonts/inter/LICENSE.txt), self-hosted.
+- **Inter** font — [SIL OFL 1.1](themes/clarity/assets/fonts/inter/LICENSE.txt), self-hosted.
 - ISPConfig is BSD-licensed; this theme ships no ISPConfig code and modifies none.
 
+### Notices
+
+- Not affiliated with, or endorsed by, VMware. This theme is built using the
+  open-source Clarity design system tokens (`@cds/core`, MIT).
+- Not affiliated with, or endorsed by, the ISPConfig project. ISPConfig is a
+  trademark of its respective owner; this is an independent, third-party theme.
+
 ---
+
+Maintained by [Wade Beckett](https://github.com/wadejbeckett) as an independent,
+open-source project — contributions welcome from anyone.
 
 Part of the [ISPConfig Toolkit](https://github.com/wadejbeckett/ispconfig-toolkit) —
 a growing collection of ISPConfig modules and tools.

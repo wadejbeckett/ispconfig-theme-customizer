@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render ISPConfig pages under the the earlier name dark theme (and the stock
+"""Render ISPConfig pages under the Clarity Theme for ISPConfig dark theme (and the stock
 default baseline), entirely locally.
 
 For the dark theme this is NOT a hand-written page: the theme's own
@@ -22,7 +22,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
 STOCK = REPO / ".refs/ispconfig3/interface/web"
-DARK = REPO / "themes/earlier-dark"
+DARK = REPO / "themes/clarity"
 FRAG = HERE / "fragments"
 WEBROOT = HERE / "webroot"
 SHOTS = HERE / "shots"
@@ -31,7 +31,7 @@ LOGO_DEFAULT = ("<div id='logo' style=\"background: url(themes/default/assets/im
                 "no-repeat;width:148px;height:40px\"><a href='#'></a></div>")
 
 # ---------------------------------------------------------------------------
-# mini vlibTemplate engine (the subset the earlier-dark templates use)
+# mini vlibTemplate engine (the subset the clarity templates use)
 # ---------------------------------------------------------------------------
 
 _IF_RE = re.compile(
@@ -95,7 +95,7 @@ MODULES = [  # (title, module, icon)
 
 BASE_VARS = {
     "company_name": "", "app_title": "ISPConfig", "app_link": "#",
-    "current_theme": "earlier-dark",
+    "current_theme": "clarity",
     "logged_in": "y", "cpuser": "admin", "usertype": "normaluser",
     "logout_txt": "Logout", "startpage": "dashboard/dashboard.php",
     "datalog_changes_count": "3",
@@ -127,7 +127,7 @@ DARK_PAGES = {  # name -> (active module, sidebar fragment, pageContent fragment
 # and the stock createChart verbatim — animation off for a deterministic shot.
 CHART_BOOTSTRAP = """
 <script src='js/chartjs/chart.umd.js'></script>
-<script src='themes/earlier-dark/assets/javascripts/nz-theme.js'></script>
+<script src='themes/clarity/assets/javascripts/nz-theme.js'></script>
 <script>
 Chart.defaults.animation = false;
 document.addEventListener('DOMContentLoaded', function () {
@@ -238,7 +238,7 @@ def build() -> None:
         shutil.rmtree(WEBROOT)
     (WEBROOT / "themes").mkdir(parents=True)
     (WEBROOT / "themes/default").symlink_to(STOCK / "themes/default")
-    (WEBROOT / "themes/earlier-dark").symlink_to(DARK)
+    (WEBROOT / "themes/clarity").symlink_to(DARK)
     # vendor JS (Chart.js) for the pages that re-inject a controlled bootstrap
     (WEBROOT / "js").symlink_to(STOCK / "js")
 
@@ -248,7 +248,7 @@ def build() -> None:
     page = f"{head}\n<body>\n{body.replace('<!--LOGO-->', LOGO_DEFAULT)}\n</body>\n</html>\n"
     (WEBROOT / "default.html").write_text(page, encoding="utf-8")
 
-    # earlier-dark: real shell render
+    # clarity: real shell render
     for name, (active, sidebar_frag, content_frag) in DARK_PAGES.items():
         (WEBROOT / f"{name}.html").write_text(
             build_dark_page(name, active, sidebar_frag, content_frag), encoding="utf-8")

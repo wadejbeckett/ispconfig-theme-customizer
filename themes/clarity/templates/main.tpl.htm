@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='utf-8' />
+  <!-- apply the stored dark/light preference before first paint -->
+  <script>try{document.documentElement.setAttribute('data-nz-theme',localStorage.getItem('nz-theme')||'dark')}catch(e){}</script>
+
+  <title><tmpl_var name="company_name"><tmpl_var name="app_title"></title>
+
+  <meta name='viewport' content='width=device-width, user-scalable=yes'>
+  <meta name='description' lang='en' content='' />
+  <meta name='keywords' lang='en' content='' />
+  <meta name='robots' content='noindex, nofollow' />
+
+  <!-- Clarity Theme for ISPConfig: favicons resolve from this theme's own assets -->
+  <link rel='apple-touch-icon' sizes='180x180' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/apple-touch-icon.png'>
+  <link rel='icon' type='image/png' sizes='32x32' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/favicon-32x32.png'>
+  <link rel='icon' type='image/png' sizes='16x16' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/favicon-16x16.png'>
+  <link rel='manifest' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/site.webmanifest'>
+  <link rel='mask-icon' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/safari-pinned-tab.svg' color='#0065AB'>
+  <link rel='shortcut icon' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/favicon.ico'>
+  <meta name='msapplication-TileColor' content='#01243D'>
+  <meta name='msapplication-config' content='/themes/<tmpl_var name='current_theme'>/assets/favicon/browserconfig.xml'>
+  <meta name='theme-color' content='#01243D'>
+
+  <!-- Functional vendor CSS inherited from the stock 'default' theme (assets have no
+       per-theme fallback, so we point at it explicitly and never duplicate it).
+       DELIBERATELY NOT LOADED: ispconfig.css, themes/default/theme.min.css,
+       responsive.min.css, login.css — the stock skin. Clarity Theme for ISPConfig replaces them. -->
+  <link rel='stylesheet' href='themes/default/assets/stylesheets/bootstrap.min.css' />
+  <link rel='stylesheet' href='themes/default/assets/stylesheets/fonts.min.css' />
+  <link rel='stylesheet' href='themes/default/assets/stylesheets/pushy.min.css' />
+  <link rel='stylesheet' href='themes/default/assets/stylesheets/bootstrap-datetimepicker.min.css' />
+  <link rel='stylesheet' href='themes/default/assets/stylesheets/select2.css' />
+  <link rel='stylesheet' href='themes/default/assets/stylesheets/select2-bootstrap.css' />
+  <link rel='stylesheet' href='themes/default/assets/stylesheets/font-awesome-4.7.0/css/font-awesome.min.css' />
+  <link rel='stylesheet' href='themes/default/assets/stylesheets/bootstrap-icons.min.css' />
+
+  <!-- Clarity Theme for ISPConfig layer (loaded last so it owns the cascade) -->
+  <link rel='stylesheet' href='themes/<tmpl_var name='current_theme'>/assets/fonts/inter/inter.css?ver=4' />
+  <link rel='stylesheet' href='themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/tokens.css?ver=4' />
+  <link rel='stylesheet' href='themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/icons.css?ver=4' />
+  <link rel='stylesheet' href='themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/base.css?ver=4' />
+  <link rel='stylesheet' href='themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/app.css?ver=4' />
+  <link rel='stylesheet' href='themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/components.css?ver=5' />
+</head>
+
+<body class='nz'>
+  <a class='nz-skip' href='#content'>Skip to content</a>
+  <!-- off-canvas drawer (mobile) — pushy.js contract: .pushy + .site-overlay + .menu-btn + #container must exist at DOM-ready -->
+  <nav class='pushy pushy-left' id='nz-drawer' aria-label='Mobile navigation'></nav>
+  <div class='site-overlay'></div>
+
+  <div id='container'>
+    <!-- ============ brand rail ============ -->
+    <aside class='nz-rail' aria-label='Sidebar'>
+      <div class='nz-brand'>
+        <div id='logo'><a href='#' aria-label='ISPConfig'><img src='themes/<tmpl_var name='current_theme'>/assets/images/wordmark-white.svg' alt='ISPConfig' width='79' height='26'></a></div>
+      </div>
+      <tmpl_if name='logged_in' value='y'><div id='topnav-container'>
+      </div></tmpl_if>
+      <!-- contextual panel: module tree, or news on the dashboard -->
+      <tmpl_if name='logged_in' value='y'><div id='sidebar' class='nz-context'>
+      </div></tmpl_if>
+    </aside>
+
+    <!-- ============ main column ============ -->
+    <div class='nz-main'>
+      <header class='nz-topbar'>
+        <button type='button' class='menu-btn' aria-label='Menu' aria-expanded='false' aria-controls='nz-drawer'>&#9776;</button>
+        <a class='nz-topbar-brand' href='#' aria-label='ISPConfig'><img src='themes/<tmpl_var name='current_theme'>/assets/images/wordmark-white.svg' alt='ISPConfig' width='67' height='22'></a>
+        <div id='headerbar'>
+          <tmpl_if name="cpuser">
+			<tmpl_if name='usertype' op='==' value='normaluser'>
+				<!-- global search -->
+				<form action='#' method='get' id='searchform' role='form'>
+				  <div>
+					<div>
+					  <div class='input-group'>
+						<input id='globalsearch' type='text' class='form-control' placeholder='{tmpl_var name="globalsearch_searchfield_watermark_txt"}' />
+						<span class='input-group-btn'>
+              <button class='btn btn-default' title='{tmpl_var name="globalsearch_searchfield_watermark_txt"}'>
+							<span class='icon icon-lens'></span>
+						  </button>
+						</span>
+					  </div>
+					</div>
+				  </div>
+				</form>
+			</tmpl_if>
+          </tmpl_if>
+          <div class='nz-topbar-actions'>
+            <button type='button' class='nz-theme-toggle' aria-pressed='false' aria-label='Switch to light theme' title='Switch theme'></button>
+            <button type="button" class="notification" data-toggle="modal" data-target="#datalogModal" style="display: none;" aria-live="polite">
+	            <span class="nz-sr">Pending changes: </span><span class="notification_text">{tmpl_var name="datalog_changes_count"}</span>
+            </button>
+            <tmpl_if name="cpuser">
+				<span class='nz-user'><span class='icon icon-client' aria-hidden='true'></span><tmpl_var name="cpuser"></span>
+				<button type='button' id='logout-button' class='btn btn-sm btn-danger text-uppercase' data-load-content="login/logout.php"><tmpl_var name="logout_txt"> <tmpl_var name="cpuser"></button>
+            </tmpl_if>
+          </div>
+        </div>
+      </header>
+
+		<!-- Datalogstatus Modal -->
+		<div id="datalogModal" class="modal fade" role="dialog" tabindex="-1" aria-labelledby="datalogModalLabel">
+		  <div class="modal-dialog">
+		    <div class="modal-content">
+		      <div class="modal-header">
+		        <button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>
+		        <h4 class="modal-title" id="datalogModalLabel">{tmpl_var name="datalog_changes_txt"}</h4>
+		      </div>
+		      <div class="modal-body">
+		        <ul>
+			    <tmpl_loop name="datalog_changes">
+			        <li><strong>{tmpl_var name="text"}:</strong> {tmpl_var name="count"}</li>
+			    </tmpl_loop>
+			    </ul>
+		      </div>
+		      <div class="modal-footer">
+		        <button type="button" class="btn btn-default" data-dismiss="modal">{tmpl_var name="datalog_changes_close_txt"}</button>
+		      </div>
+		    </div>
+		  </div>
+		</div>
+		<!-- END Datalogstatus Modal -->
+
+      <!-- content (a <main>; ispconfig.js only needs the #content id) -->
+      <main id='content'>
+		<noscript>This page needs JavaScript to be enabled.</noscript>
+		<form method="post" action="" id="pageForm" name="pageForm" enctype="multipart/form-data" class='form-horizontal' role='form'>
+			<div id="pageContent" data-startpage="{tmpl_var name="startpage"}"><!-- AJAX CONTENT --></div>
+		</form>
+      </main>
+
+      <footer id='footer'>
+        powered by <a href="<tmpl_var name="app_link">" target="_blank"><tmpl_var name="app_title"></a>
+      </footer>
+    </div>
+  </div>
+
+  <script type="text/javascript" src="js/jquery.min.js"></script>
+  <script src='themes/default/assets/javascripts/bootstrap.min.js'></script>
+  <script src='themes/default/assets/javascripts/bootstrap-datetimepicker.min.js'></script>
+  <script src='themes/default/assets/javascripts/ispconfig.js'></script>
+  <script src='themes/default/assets/javascripts/modernizr.custom.min.js'></script>
+  <script src='themes/default/assets/javascripts/pushy.min.js'></script>
+  <script src='themes/default/assets/javascripts/responsive.min.js'></script>
+  <script src='js/select2/select2.min.js'></script>
+  <script src='js/scrigo.js.php'></script>
+  <script type="text/javascript" src="js/jquery.ispconfigsearch.js"></script>
+  <script type="text/javascript" src="js/jquery.tipsy.js"></script>
+  <script src="js/chartjs/chart.umd.js"></script>
+  <script src='themes/<tmpl_var name='current_theme'>/assets/javascripts/nz-theme.js?ver=5'></script>
+  <tmpl_loop name="js_d_includes">
+	<script type="text/javascript" src="js/js.d/<tmpl_var name='file'>"></script>
+  </tmpl_loop>
+  <script>
+  <!--
+	ISPConfig.tabChangeDiscard = '<tmpl_var name="tabchange_discard_enabled">';
+	ISPConfig.tabChangeWarning = '<tmpl_var name="tabchange_warning_enabled">';
+	ISPConfig.tabChangeWarningTxt = '<tmpl_var name="global_tabchange_warning_txt">';
+	ISPConfig.tabChangeDiscardTxt = '<tmpl_var name="global_tabchange_discard_txt">';
+
+	<tmpl_if name="use_loadindicator" value="y">ISPConfig.setOption('useLoadIndicator', true);</tmpl_if>
+	<tmpl_if name="use_combobox" value="y">ISPConfig.setOption('useComboBox', true);</tmpl_if>
+
+	$(document).ready(function() {
+		$('#globalsearch').ispconfigSearch({
+			dataSrc: '/dashboard/ajax_get_json.php?type=globalsearch',
+			resultsLimit: '$ <tmpl_var name="globalsearch_resultslimit_of_txt"> % <tmpl_var name="globalsearch_resultslimit_results_txt">',
+			noResultsText: '<tmpl_var name="globalsearch_noresults_text_txt">',
+			noResultsLimit: '<tmpl_var name="globalsearch_noresults_limit_txt">',
+			searchFieldWatermark: '<tmpl_var name="globalsearch_searchfield_watermark_txt">',
+			resultBoxPosition: ''
+		});
+
+    ISPConfig.loadInitContent();
+
+	});
+  //-->
+  </script>
+</body>
+
+</html>
