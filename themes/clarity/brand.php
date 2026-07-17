@@ -75,7 +75,10 @@ header('Content-Type: text/css; charset=utf-8');
 /* ---- revalidation: cheap ETag so accent/logo changes bust cache ---- */
 $etag = '"' . md5(serialize($branding) . '|' . md5($custom_logo)) . '"';
 header('ETag: ' . $etag);
-header('Cache-Control: private, no-cache, max-age=0, must-revalidate');
+// Cache briefly so this isn't a blocking round-trip on every full page load;
+// the branding is global (same for everyone), and a saved change appears within
+// max-age or on a hard refresh (Ctrl+Shift+R).
+header('Cache-Control: public, max-age=60');
 if (isset($_SERVER['HTTP_IF_NONE_MATCH']) && trim($_SERVER['HTTP_IF_NONE_MATCH']) === $etag) {
     http_response_code(304);
     exit;
