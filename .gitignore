@@ -1,0 +1,7 @@
+# editor / agent / vcs state — never ship into a served module directory
+.omc/
+.remember/
+.claude/
+node_modules/
+*.log
+.DS_Store

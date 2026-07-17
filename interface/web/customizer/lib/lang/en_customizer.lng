@@ -1,0 +1,42 @@
+<?php
+$wb['customizer_title'] = 'Branding';
+$wb['customizer_desc_txt'] = 'Brand this control panel as your own. Settings are stored in ISPConfig and survive panel and theme updates. A brand-aware theme (such as the Clarity theme) applies the colours; the logo and panel name also apply to the stock theme.';
+
+$wb['logo_head_txt'] = 'Logo';
+$wb['logo_txt'] = 'Upload a logo';
+$wb['logo_hint_txt'] = 'PNG, SVG, JPEG, GIF or WebP, under 45 KB. Light artwork works best — it sits on the dark sidebar and login band.';
+$wb['upload_txt'] = 'Upload';
+$wb['logo_remove_txt'] = 'Remove';
+$wb['used_logo_txt'] = 'Current logo';
+$wb['no_logo_set_txt'] = 'No custom logo set — the theme shows its own default.';
+
+$wb['brand_head_txt'] = 'Name & colours';
+$wb['company_name_txt'] = 'Panel name';
+$wb['company_name_hint_txt'] = 'Shown in the browser title and footer.';
+$wb['accent_hex_txt'] = 'Accent colour';
+$wb['rail_hex_txt'] = 'Sidebar colour';
+$wb['login_bg_txt'] = 'Login background';
+$wb['colour_hint_txt'] = 'Hex value like #0065AB. Leave blank to keep the theme default.';
+
+$wb['login_head_txt'] = 'Login screen';
+$wb['custom_login_text_txt'] = 'Login footnote text';
+$wb['custom_login_link_txt'] = 'Login footnote link';
+
+$wb['credits_head_txt'] = 'Attribution';
+$wb['credits_hint_txt'] = 'These control the optional courtesy lines in the footer. The open-source licence notices in the source and documentation are always kept — turning a line off never removes them.';
+$wb['show_ispconfig_credit_txt'] = 'Show "powered by ISPConfig"';
+$wb['show_theme_credit_txt'] = 'Show the theme credit';
+
+$wb['accent_hex_error_regex'] = 'Accent colour must be a hex value like #0065AB.';
+$wb['rail_hex_error_regex'] = 'Sidebar colour must be a hex value like #01243D.';
+$wb['login_bg_error_regex'] = 'Login background must be a hex value like #17252B.';
+$wb['login_link_error_regex'] = 'The login footnote link must start with http:// or https://.';
+
+$wb['logo_uploaded_txt'] = 'Logo updated.';
+$wb['logo_removed_txt'] = 'Logo removed.';
+$wb['logo_bad_type_txt'] = 'Unsupported image type. Use PNG, SVG, JPEG, GIF or WebP.';
+$wb['logo_too_large_txt'] = 'That image is too large. Keep it under 45 KB — an SVG or an optimised PNG works best.';
+$wb['no_file_uploaded_error'] = 'No file was selected.';
+
+$wb['btn_save_txt'] = 'Save';
+$wb['btn_cancel_txt'] = 'Cancel';

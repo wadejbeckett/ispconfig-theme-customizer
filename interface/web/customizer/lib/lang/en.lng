@@ -1,0 +1,6 @@
+<?php
+$wb['top_menu_customizer'] = 'Customizer';
+$wb['White-label'] = 'White-label';
+$wb['Branding'] = 'Branding';
+// resolved via $app->lng() in customizer_edit.php (the module lng is auto-loaded there)
+$wb['no_logo_set_txt'] = 'No custom logo set — the theme shows its own default.';

@@ -1,0 +1,121 @@
+<div class="page-header">
+  <h1><tmpl_var name="customizer_title"> &mdash; <tmpl_var name="customizer_desc_txt"></h1>
+</div>
+
+<tmpl_if name="msg">
+  <div id="OKMsg" class="alert alert-success clear"><tmpl_var name="msg"></div>
+</tmpl_if>
+<tmpl_if name="error">
+  <div id="errorMsg" class="alert alert-danger clear"><tmpl_var name="error"></div>
+</tmpl_if>
+
+<fieldset>
+  <legend>{tmpl_var name='logo_head_txt'}</legend>
+
+  <div class="form-group">
+    <label class="col-sm-3 control-label">{tmpl_var name='used_logo_txt'}</label>
+    <div class="col-sm-9" id="used_logo">{tmpl_var name='used_logo'}</div>
+  </div>
+  <div class="form-group">
+    <label for="file" class="col-sm-3 control-label">{tmpl_var name='logo_txt'}</label>
+    <div class="col-sm-6 col-text">
+      <input name="file" id="file" size="30" type="file" class="fileUpload" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" />
+      <p class="help-block">{tmpl_var name='logo_hint_txt'}</p>
+    </div>
+    <div class="col-sm-3">
+      <button class="btn btn-default formbutton-success" type="button" data-submit-form="pageForm" data-form-action="customizer/logo_upload.php" data-form-upload="true">{tmpl_var name='upload_txt'}</button>
+      <a href="javascript:void(0);" class="btn btn-default" data-load-content="customizer/logo_delete.php">{tmpl_var name='logo_remove_txt'}</a>
+    </div>
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend>{tmpl_var name='brand_head_txt'}</legend>
+
+  <div class="form-group">
+    <label for="company_name" class="col-sm-3 control-label">{tmpl_var name='company_name_txt'}</label>
+    <div class="col-sm-9">
+      <input type="text" name="company_name" id="company_name" value="{tmpl_var name='company_name'}" class="form-control" />
+      <p class="help-block">{tmpl_var name='company_name_hint_txt'}</p>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="accent_hex" class="col-sm-3 control-label">{tmpl_var name='accent_hex_txt'}</label>
+    <div class="col-sm-9">
+      <input type="text" name="accent_hex" id="accent_hex" value="{tmpl_var name='accent_hex'}" class="form-control nz-hexfield" placeholder="#0065AB" />
+      <input type="color" id="accent_hex_pick" value="#0065AB" class="nz-hexpick" aria-label="Pick accent colour" />
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="rail_hex" class="col-sm-3 control-label">{tmpl_var name='rail_hex_txt'}</label>
+    <div class="col-sm-9">
+      <input type="text" name="rail_hex" id="rail_hex" value="{tmpl_var name='rail_hex'}" class="form-control nz-hexfield" placeholder="#01243D" />
+      <input type="color" id="rail_hex_pick" value="#01243D" class="nz-hexpick" aria-label="Pick sidebar colour" />
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="login_bg" class="col-sm-3 control-label">{tmpl_var name='login_bg_txt'}</label>
+    <div class="col-sm-9">
+      <input type="text" name="login_bg" id="login_bg" value="{tmpl_var name='login_bg'}" class="form-control nz-hexfield" placeholder="#17252B" />
+      <input type="color" id="login_bg_pick" value="#17252B" class="nz-hexpick" aria-label="Pick login background colour" />
+      <p class="help-block">{tmpl_var name='colour_hint_txt'}</p>
+    </div>
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend>{tmpl_var name='login_head_txt'}</legend>
+
+  <div class="form-group">
+    <label for="custom_login_text" class="col-sm-3 control-label">{tmpl_var name='custom_login_text_txt'}</label>
+    <div class="col-sm-9"><input type="text" name="custom_login_text" id="custom_login_text" value="{tmpl_var name='custom_login_text'}" class="form-control" /></div>
+  </div>
+  <div class="form-group">
+    <label for="custom_login_link" class="col-sm-3 control-label">{tmpl_var name='custom_login_link_txt'}</label>
+    <div class="col-sm-9"><input type="text" name="custom_login_link" id="custom_login_link" value="{tmpl_var name='custom_login_link'}" class="form-control" placeholder="https://" /></div>
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend>{tmpl_var name='credits_head_txt'}</legend>
+
+  <div class="form-group">
+    <label class="col-sm-3 control-label">{tmpl_var name='show_ispconfig_credit_txt'}</label>
+    <div class="col-sm-9">{tmpl_var name='show_ispconfig_credit'}</div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label">{tmpl_var name='show_theme_credit_txt'}</label>
+    <div class="col-sm-9">{tmpl_var name='show_theme_credit'}</div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-9 col-sm-offset-3"><p class="help-block">{tmpl_var name='credits_hint_txt'}</p></div>
+  </div>
+</fieldset>
+
+<input type="hidden" name="id" value="{tmpl_var name='id'}" />
+
+<div class="clear">
+  <div class="right">
+    <button class="btn btn-default formbutton-success" type="button" data-submit-form="pageForm" data-form-action="customizer/customizer_edit.php">{tmpl_var name='btn_save_txt'}</button>
+    <button class="btn btn-default formbutton-default" type="button" data-load-content="dashboard/dashboard.php">{tmpl_var name='btn_cancel_txt'}</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  function sync(txtId, pickId) {
+    var t = document.getElementById(txtId), p = document.getElementById(pickId);
+    if (!t || !p) return;
+    var re = /^#[0-9A-Fa-f]{6}$/;
+    if (re.test(t.value)) p.value = t.value;
+    p.addEventListener('input', function () { t.value = p.value.toUpperCase(); });
+    t.addEventListener('input', function () { if (re.test(t.value)) p.value = t.value; });
+  }
+  sync('accent_hex', 'accent_hex_pick');
+  sync('rail_hex', 'rail_hex_pick');
+  sync('login_bg', 'login_bg_pick');
+})();
+</script>
