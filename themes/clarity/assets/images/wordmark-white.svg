@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Default neutral wordmark for the Clarity Theme for ISPConfig.
+     Plain "ISPConfig" text so the theme ships with neutral branding out of
+     the box. White artwork sits on the navy brand band. White-labellers
+     replace this single file (see README - White-labeling). -->
+<svg xmlns="http://www.w3.org/2000/svg" width="584" height="191.55" viewBox="0 0 584 191.55">
+  <text x="292" y="98" text-anchor="middle" dominant-baseline="central"
+        textLength="520" lengthAdjust="spacingAndGlyphs"
+        font-family="Inter, 'Helvetica Neue', Arial, sans-serif"
+        font-weight="700" font-size="120" fill="#ffffff">ISPConfig</text>
+</svg>

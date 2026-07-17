@@ -1,4 +1,4 @@
-# Contributing to the earlier name
+# Contributing to Clarity Theme for ISPConfig
 
 Bug reports, fixes, and ideas are all welcome. This page is the practical
 guide; the design language itself (tokens, surfaces, component rules) lives in
@@ -23,22 +23,22 @@ and one JS file, loaded in this order:
 
 | File | Role |
 |---|---|
-| `themes/earlier-dark/templates/` | `main.tpl.htm` (app frame), `topnav.tpl.htm` (module rail), `main_login.tpl.htm` (login scene) — the only templates overridden; everything else falls back to `themes/default`. |
-| `assets/stylesheets/earlier/tokens.css` | **The design DNA.** Every color, radius, and shadow as a semantic `--nz-*` token. Dark values at `:root`, light mode as a pure remap block on `:root[data-nz-theme='light']`. |
-| `assets/stylesheets/earlier/icons.css` | Clarity icon shapes as CSS `mask` data-URIs, tinted by `currentColor`. Generated file — edit with care. |
-| `assets/stylesheets/earlier/base.css` | Functional port of stock `ispconfig.css` — layout/behavior rules the panel's JS depends on, none of its looks. |
-| `assets/stylesheets/earlier/app.css` | The frame: rail, topbar, sidebar, drawer, login-adjacent chrome. |
-| `assets/stylesheets/earlier/components.css` | Everything inside the content pane: tables, forms, buttons, alerts, tabs, select2, datetimepicker, charts. |
-| `assets/stylesheets/earlier/login.css` | The login scene — loaded only by `main_login.tpl.htm` (with `tokens.css`), not by the app frame. |
+| `themes/clarity/templates/` | `main.tpl.htm` (app frame), `topnav.tpl.htm` (module rail), `main_login.tpl.htm` (login scene) — the only templates overridden; everything else falls back to `themes/default`. |
+| `assets/stylesheets/clarity/tokens.css` | **The design DNA.** Every color, radius, and shadow as a semantic `--nz-*` token. Dark values at `:root`, light mode as a pure remap block on `:root[data-nz-theme='light']`. |
+| `assets/stylesheets/clarity/icons.css` | Clarity icon shapes as CSS `mask` data-URIs, tinted by `currentColor`. Generated file — edit with care. |
+| `assets/stylesheets/clarity/base.css` | Functional port of stock `ispconfig.css` — layout/behavior rules the panel's JS depends on, none of its looks. |
+| `assets/stylesheets/clarity/app.css` | The frame: rail, topbar, sidebar, drawer, login-adjacent chrome. |
+| `assets/stylesheets/clarity/components.css` | Everything inside the content pane: tables, forms, buttons, alerts, tabs, select2, datetimepicker, charts. |
+| `assets/stylesheets/clarity/login.css` | The login scene — loaded only by `main_login.tpl.htm` (with `tokens.css`), not by the app frame. |
 | `assets/javascripts/nz-theme.js` | Progressive enhancement only: theme switcher, Chart.js theming, drawer/search/a11y behavior. The panel works with it absent. |
 
-`themes/earlier-dark/BUILT-AGAINST.txt` records exactly which stock contracts the
+`themes/clarity/BUILT-AGAINST.txt` records exactly which stock contracts the
 theme relies on — read it before touching a template.
 
 ## Ground rules (what keeps it update-proof)
 
 1. **Never modify an ISPConfig core file.** Everything ships inside
-   `themes/earlier-dark/`; the one sanctioned exception is the documented
+   `themes/clarity/`; the one sanctioned exception is the documented
    `$conf['theme']` line users set themselves.
 2. **Components read only semantic tokens.** No hard-coded colors outside
    `tokens.css`. Need a new color? Add a token.
@@ -59,8 +59,8 @@ theme relies on — read it before touching a template.
 ## Developing and testing a change
 
 ```bash
-git clone https://github.com/wadejbeckett/earlier-console.git
-cd earlier-console
+git clone https://github.com/wadejbeckett/clarity-theme-ispconfig.git
+cd clarity-theme-ispconfig
 ./install.sh /usr/local/ispconfig     # on a TEST panel, not production
 ```
 

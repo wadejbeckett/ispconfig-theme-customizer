@@ -1,0 +1,294 @@
+/* ============================================================
+ * CLARITY THEME FOR ISPCONFIG — DESIGN TOKENS (v2, dark-first)
+ * ------------------------------------------------------------
+ * The portable DNA of the Clarity interface. Self-contained; no
+ * build step, no dependencies. Every component rule in this
+ * theme reads ONLY the semantic aliases (--nz-*) below — never
+ * a ramp step, never a raw hex.
+ *
+ * Provenance:
+ *   - Surface temperature + status hues: VMware Clarity dark
+ *     (@cds/core 6.17 theme.dark.css, MIT) — the "construction"
+ *     blue-grey ramp, hue 198.
+ *   - Frame anatomy + elevation strategy: DirectAdmin Evolution
+ *     dark (surface-lightness ladder + 1px hairlines, deep navy
+ *     brand rail).
+ *   - Brand blue #0065AB — the ramp is re-anchored on it
+ *     (hue ~205), so the console is unmistakably its own, not a
+ *     Clarity clone.
+ * ============================================================ */
+
+:root {
+
+  /* dark-native form controls, scrollbars and autofill */
+  color-scheme: dark;
+
+  /* ---------------------------------------------------------
+   * RAMPS (reference layer — components must not read these)
+   * --------------------------------------------------------- */
+
+  /* blue ramp, anchored on brand #0065AB (blue-700) */
+  --nz-blue-100:  #BDE4FF;
+  --nz-blue-200:  #8FD1FF;
+  --nz-blue-300:  #66C0FF;
+  --nz-blue-400:  #2EA9FF;
+  --nz-blue-500:  #0090F5;
+  --nz-blue-600:  #007ACC;
+  --nz-blue-700:  #0065AB;   /* brand anchor */
+  --nz-blue-800:  #00518A;
+  --nz-blue-900:  #003F6B;
+  --nz-blue-1000: #002D4D;
+  --nz-blue-1100: #01243D;   /* rail navy */
+  --nz-blue-1200: #021B2E;
+
+  /* Construction neutrals (Clarity dark surface ramp, hue 198) */
+  --nz-ink-100:  #E3EAED;
+  --nz-ink-200:  #CBD4D8;
+  --nz-ink-300:  #AEB8BC;
+  --nz-ink-400:  #859399;
+  --nz-ink-500:  #6A7A81;
+  --nz-ink-600:  #4F6169;
+  --nz-ink-700:  #3A4D55;
+  --nz-ink-800:  #2D4048;
+  --nz-ink-900:  #21333B;
+  --nz-ink-1000: #1B2B32;
+  --nz-ink-1100: #17252B;
+
+  /* Status (Clarity dark values) */
+  --nz-green-300: #86E935;
+  --nz-green-500: #67CA16;
+  --nz-green-800: #366A0C;
+  --nz-ochre-300: #FFDB8F;
+  --nz-ochre-400: #FFCF66;
+  --nz-ochre-900: #8A5300;
+  --nz-red-300:   #FFA494;
+  --nz-red-400:   #FF816B;
+  --nz-red-500:   #FF674D;
+  --nz-red-900:   #8F1500;
+
+  /* ---------------------------------------------------------
+   * SEMANTIC ALIASES (the component contract)
+   * --------------------------------------------------------- */
+
+  /* Surfaces — elevation is a lightness ladder, not shadows */
+  --nz-page:            var(--nz-ink-1100); /* app background      */
+  --nz-card:            var(--nz-ink-900);  /* panels, tables      */
+  --nz-raised:          var(--nz-ink-800);  /* hover strata        */
+  --nz-well:            var(--nz-ink-1000); /* inputs, meter tracks*/
+  --nz-popover:         var(--nz-ink-800);  /* menus, dropdowns    */
+  --nz-backdrop:        rgba(0, 0, 0, 0.6);
+
+  /* Brand rail (the navy band — brand identity zone) */
+  --nz-rail:            var(--nz-blue-1100);
+  --nz-rail-edge:       rgba(255, 255, 255, 0.07);
+  --nz-rail-text:       rgba(255, 255, 255, 0.88); /* near-white; pure white is the active state */
+  --nz-rail-text-hover: #FFFFFF;
+  --nz-rail-hover:      rgba(255, 255, 255, 0.05);
+  --nz-rail-active:     var(--nz-blue-1000);
+  --nz-rail-heading:    rgba(255, 255, 255, 0.66); /* group labels: quieter than items, ~7:1 */
+  --nz-rail-accent:     var(--nz-blue-400);  /* indicators ON the navy rail — never remapped */
+
+  /* Hairlines — borders are quiet; surfaces do the talking */
+  --nz-border:          rgba(133, 147, 153, 0.18); /* card edges   */
+  --nz-border-soft:     rgba(133, 147, 153, 0.10); /* row dividers */
+  --nz-border-strong:   var(--nz-ink-500);  /* control edges (Clarity object-border-color) */
+
+  /* Text */
+  --nz-text-heading:    #FFFFFF;
+  --nz-text:            var(--nz-ink-100);
+  --nz-text-secondary:  var(--nz-ink-200);
+  --nz-text-muted:      var(--nz-ink-300);  /* Clarity typography color-200 */
+  --nz-text-disabled:   #82939B;  /* placeholders: 4.6:1 on the input well */
+  --nz-text-on-action:  #FFFFFF;
+
+  /* Action — blue is the only interactive colour */
+  --nz-link:            var(--nz-blue-400);
+  --nz-link-hover:      var(--nz-blue-200);
+  --nz-accent:          var(--nz-blue-400);  /* indicators, active tab, checked */
+  --nz-action:          var(--nz-blue-600);  /* primary fill: white text = 4.5:1 */
+  --nz-action-hover:    var(--nz-blue-700);  /* hover deepens to the brand anchor (6.1:1) */
+  --nz-action-active:   var(--nz-blue-800);
+  --nz-selected:        var(--nz-blue-900);  /* Clarity interaction-background-selected */
+  --nz-selected-strong: var(--nz-blue-800);
+  --nz-text-on-selected: #FFFFFF;
+  --nz-focus-ring:      rgba(46, 169, 255, 0.40);
+  --nz-danger-ring:     rgba(255, 103, 77, 0.28);
+  --nz-selection-bg:    rgba(46, 169, 255, 0.35);
+  --nz-selection-text:  #FFFFFF;
+
+  /* Status */
+  --nz-success:         var(--nz-green-500);
+  --nz-success-text:    var(--nz-green-300);
+  --nz-success-tint:    rgba(103, 202, 22, 0.10);
+  --nz-success-deep:    var(--nz-green-800);
+  --nz-warning:         var(--nz-ochre-400);
+  --nz-warning-text:    var(--nz-ochre-300);
+  --nz-warning-tint:    rgba(255, 207, 102, 0.09);
+  --nz-warning-deep:    var(--nz-ochre-900);
+  --nz-danger:          var(--nz-red-500);
+  --nz-danger-text:     var(--nz-red-300);
+  --nz-danger-tint:     rgba(255, 103, 77, 0.10);
+  --nz-danger-deep:     var(--nz-red-900);
+  --nz-info:            var(--nz-blue-400);
+  --nz-info-text:       var(--nz-blue-300);
+  --nz-info-tint:       rgba(46, 169, 255, 0.10);
+
+  /* Surface washes & edges (mode-dependent translucents) */
+  --nz-veil:            rgba(255, 255, 255, 0.03);  /* hover wash            */
+  --nz-veil-faint:      rgba(255, 255, 255, 0.015); /* zebra / filter bands  */
+  --nz-veil-head:       var(--nz-ink-1000); /* table header (Clarity tint: darker than card) */
+  --nz-row-hover:       rgba(46, 169, 255, 0.045);
+  --nz-topbar-bg:       rgba(23, 37, 43, 0.88);
+  --nz-scrollbar:       var(--nz-ink-700);
+  --nz-scrollbar-hover: var(--nz-ink-600);
+  --nz-accent-edge:     rgba(46, 169, 255, 0.45);
+  --nz-info-edge:       rgba(46, 169, 255, 0.35);
+  --nz-success-edge:    rgba(103, 202, 22, 0.35);
+  --nz-warning-edge:    rgba(255, 207, 102, 0.35);
+  --nz-danger-edge:     rgba(255, 103, 77, 0.45);
+  --nz-pulse-ring:      rgba(46, 169, 255, 0.45);
+  --nz-modal-edge:      rgba(0, 0, 0, 0.9);   /* Clarity dark container edge */
+  --nz-meter-edge:      transparent;          /* light mode outlines meter fills */
+  --nz-tooltip-bg:      #0B1519;              /* tooltips stay dark in both modes */
+  --nz-tooltip-text:    var(--nz-ink-100);
+
+  /* Alert surfaces (Clarity dark: solid status-tint panels) */
+  --nz-info-surface:     var(--nz-blue-800);
+  --nz-success-surface:  var(--nz-green-800);
+  --nz-warning-surface:  var(--nz-ochre-900);
+  --nz-danger-surface:   var(--nz-red-900);
+  --nz-alert-text:       var(--nz-ink-100);
+
+  /* ---------------------------------------------------------
+   * SHAPE / SPACE / TYPE / MOTION
+   * --------------------------------------------------------- */
+
+  --nz-radius-ctl:      4px;   /* buttons, inputs, chips  */
+  --nz-radius-card:     8px;   /* cards, tables, tiles    */
+  --nz-radius-pop:      var(--nz-radius-ctl); /* menus, dropdowns */
+  --nz-radius-modal:    10px;
+  --nz-radius-pill:     999px;
+
+  --nz-ctl-h:           36px;
+  --nz-ctl-h-sm:        26px;
+
+  --nz-shadow-1:        0 1px 2px 0 rgba(0, 0, 0, 0.6);
+  --nz-shadow-2:        0 4px 10px rgba(0, 0, 0, 0.35);
+  --nz-shadow-pop:      0 10px 28px rgba(0, 0, 0, 0.55);
+  --nz-focus-shadow:    0 0 0 3px var(--nz-focus-ring);
+
+  --nz-font:            'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --nz-font-mono:       'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+
+  --nz-fs-title:        24px;  /* page h1 (Clarity title 24/500) */
+  --nz-fs-section:      16px;  /* h2/h3 in flow  */
+  --nz-fs-cardtitle:    14px;  /* card headers   */
+  --nz-fs-body:         14px;
+  --nz-fs-secondary:    13px;  /* tables, nav    */
+  --nz-fs-caption:      11px;  /* micro-headers  */
+
+  --nz-track-caps:      0.07em; /* uppercase micro-header tracking */
+
+  --nz-rail-w:          248px;
+  --nz-topbar-h:        60px;
+  --nz-content-max:     1240px;
+  --nz-content-pad:     28px;
+
+  --nz-quick:           0.16s;
+  --nz-ease:            cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+
+/* ============================================================
+ * LIGHT MODE — alias remap only (Clarity light values).
+ * The brand rail stays navy in both modes; everything content-
+ * side re-derives from these aliases. Toggled by nz-theme.js
+ * (data-nz-theme on <html>, persisted in localStorage).
+ * ============================================================ */
+
+:root[data-nz-theme='light'] {
+  color-scheme: light;
+
+  /* surfaces (Clarity light: app construction-25/50, containers white) */
+  --nz-page:            #F1F6F8;
+  --nz-card:            #FFFFFF;
+  --nz-raised:          #E9F0F3;
+  --nz-well:            #F6FAFB;
+  --nz-popover:         #FFFFFF;
+  --nz-backdrop:        rgba(27, 43, 50, 0.42);
+
+  /* hairlines */
+  --nz-border:          rgba(79, 97, 105, 0.20);
+  --nz-border-soft:     rgba(79, 97, 105, 0.12);
+  --nz-border-strong:   var(--nz-ink-300);  /* Clarity light interaction border */
+
+  /* text (Clarity light typography ramp) */
+  --nz-text-heading:    var(--nz-ink-1000);
+  --nz-text:            var(--nz-ink-900);
+  --nz-text-secondary:  var(--nz-ink-600);
+  --nz-text-muted:      #5F727C;  /* 5.0:1 on white, 4.6:1 on page */
+  --nz-text-disabled:   #64767F;  /* placeholders: 4.7:1 on white */
+
+  /* action — the brand anchor carries light mode directly */
+  --nz-link:            var(--nz-blue-700);
+  --nz-link-hover:      var(--nz-blue-800);
+  --nz-accent:          var(--nz-blue-700);
+  --nz-action:          var(--nz-blue-700);
+  --nz-action-hover:    var(--nz-blue-800);
+  --nz-action-active:   var(--nz-blue-900);
+  --nz-selected:        #E3F1FB;  /* Clarity light selected (blue-75 role) */
+  --nz-selected-strong: #CFE7F8;
+  --nz-focus-ring:      rgba(0, 101, 171, 0.45);
+  --nz-danger-ring:     rgba(224, 34, 0, 0.25);
+  --nz-selection-bg:    #B3D9F2;
+  --nz-selection-text:  var(--nz-ink-900);
+  --nz-text-on-selected: var(--nz-ink-900);
+
+  /* status (Clarity light: 700-family fills, 800 text, 50 tints) */
+  --nz-success:         #42810E;
+  --nz-success-text:    #366A0C;
+  --nz-success-tint:    rgba(66, 129, 14, 0.09);
+  --nz-warning:         #FFB92E;
+  --nz-warning-text:    #8A5300;  /* 5.6:1 on the warning tint */
+  --nz-warning-tint:    rgba(255, 185, 46, 0.14);
+  --nz-danger:          #E02200;
+  --nz-danger-text:     #C21D00;
+  --nz-danger-tint:     rgba(224, 34, 0, 0.07);
+  --nz-info:            var(--nz-blue-700);
+  --nz-info-text:       var(--nz-blue-700);
+  --nz-info-tint:       rgba(0, 101, 171, 0.08);
+
+  /* washes & edges */
+  --nz-veil:            rgba(23, 43, 50, 0.035);
+  --nz-veil-faint:      rgba(23, 43, 50, 0.02);
+  --nz-veil-head:       #F1F6F8;  /* Clarity light table header tint */
+  --nz-row-hover:       rgba(0, 101, 171, 0.05);
+  --nz-topbar-bg:       rgba(241, 246, 248, 0.88);
+  --nz-scrollbar:       var(--nz-ink-300);
+  --nz-scrollbar-hover: var(--nz-ink-400);
+  --nz-accent-edge:     rgba(0, 101, 171, 0.40);
+  --nz-info-edge:       rgba(0, 101, 171, 0.30);
+  --nz-success-edge:    rgba(66, 129, 14, 0.35);
+  --nz-warning-edge:    rgba(163, 101, 0, 0.35);
+  --nz-danger-edge:     rgba(224, 34, 0, 0.35);
+  --nz-pulse-ring:      rgba(0, 101, 171, 0.40);
+  --nz-modal-edge:      var(--nz-border);
+  --nz-meter-edge:      rgba(0, 0, 0, 0.15);
+
+  /* alert surfaces: Clarity light 50-tint panels */
+  --nz-info-surface:     #E5F3FB;
+  --nz-success-surface:  #EEFCE3;
+  --nz-warning-surface:  #FFF2D6;
+  --nz-danger-surface:   #FFF2F0;
+  --nz-alert-text:       var(--nz-ink-900);
+
+  /* strong status fills (badges): Clarity light 600/700-family */
+  --nz-success-deep:     #42810E;
+  --nz-warning-deep:     #FFA600;
+  --nz-danger-deep:      #C21D00;
+
+  /* softer elevation on light surfaces */
+  --nz-shadow-1:        0 1px 2px rgba(27, 43, 50, 0.10);
+  --nz-shadow-2:        0 4px 10px rgba(27, 43, 50, 0.10);
+  --nz-shadow-pop:      0 10px 28px rgba(27, 43, 50, 0.22);
+  --nz-focus-shadow:    0 0 0 3px var(--nz-focus-ring);
+}

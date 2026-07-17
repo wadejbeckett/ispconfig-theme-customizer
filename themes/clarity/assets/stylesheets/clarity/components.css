@@ -1,0 +1,1368 @@
+/* ============================================================
+ * CLARITY THEME FOR ISPCONFIG — COMPONENTS
+ * ------------------------------------------------------------
+ * Re-skins the stock ISPConfig content markup (Bootstrap 3 era)
+ * from zero: typography, cards/tables, forms, tabs, buttons,
+ * alerts, badges, pagination, select2, datetimepicker, modal,
+ * dashboard dashlets. Reads semantic tokens only.
+ * ============================================================ */
+
+/* ---------- typography ---------- */
+
+body.nz h1, body.nz h2, body.nz h3, body.nz h4 {
+  font-family: var(--nz-font);
+  color: var(--nz-text-heading);
+  font-weight: 500; /* Clarity headings are medium */
+}
+
+body.nz .page-header {
+  margin: 2px 0 22px;
+  padding: 0;
+  border-bottom: 0;
+}
+
+body.nz .page-header h1 {
+  margin: 0;
+  font-size: var(--nz-fs-title);
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+}
+
+body.nz .page-header p {
+  margin: 6px 0 0;
+  color: var(--nz-text-muted);
+  font-size: 13px;
+}
+
+/* bare h1s (APS pages etc.) get the page-title voice, not Bootstrap's 36px */
+#pageContent h1 {
+  font-size: var(--nz-fs-title);
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  margin: 2px 0 18px;
+}
+
+/* nested content headings: modest sub-section voice (safe across all pages) */
+#pageContent h2, #pageContent h3, #pageContent h4 {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--nz-text-secondary);
+  margin: 26px 0 10px;
+}
+
+/* the dashboard's own section headers (direct children) keep the uppercase
+   micro-header voice of the frame */
+#pageContent > h2,
+#pageContent > h3 {
+  font-size: var(--nz-fs-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--nz-track-caps);
+  color: var(--nz-text-muted);
+  margin: 30px 0 12px;
+}
+
+#pageContent > h2:first-child,
+#pageContent > h3:first-child { margin-top: 0; }
+
+/* ---------- dashboard: module tiles ---------- */
+
+ul.modules {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+ul.modules li {
+  position: relative;
+  background: var(--nz-card);
+  border: 1px solid var(--nz-border);
+  border-radius: var(--nz-radius-card);
+  padding: 18px 16px 16px;
+  overflow: hidden;
+  transition: background var(--nz-quick) var(--nz-ease),
+              border-color var(--nz-quick) var(--nz-ease);
+}
+
+ul.modules li:hover {
+  background: var(--nz-raised);
+  border-color: var(--nz-accent-edge);
+}
+
+ul.modules li .icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  margin-bottom: 14px;
+  border-radius: var(--nz-radius-card);
+  background: var(--nz-selected);
+  color: var(--nz-text-on-selected);
+  font-size: 20px;
+  transition: background var(--nz-quick) var(--nz-ease);
+}
+
+ul.modules li:hover .icon { background: var(--nz-selected-strong); }
+
+ul.modules li .title {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--nz-text);
+}
+
+/* the whole tile is the link; its text stays for screen readers.
+   Every state must stay transparent or the overlay paints a blank box over
+   the tile — the :hover/:focus selectors out-rank the generic .btn-default
+   state rules, which otherwise win on specificity. */
+body.nz ul.modules li a.btn,
+body.nz ul.modules li a.btn:hover,
+body.nz ul.modules li a.btn:focus,
+body.nz ul.modules li a.btn:active {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  height: auto;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: var(--nz-radius-card);
+  font-size: 0;
+  color: transparent;
+  box-shadow: none;
+}
+
+ul.modules li::after {
+  content: '\2192';
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  font-size: 14px;
+  color: var(--nz-ink-400);
+  transition: color var(--nz-quick) var(--nz-ease),
+              transform var(--nz-quick) var(--nz-ease);
+}
+
+/* the tile link overlay must show focus INSIDE the clipped tile */
+body.nz ul.modules li a.btn:focus,
+body.nz ul.modules li a.btn:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--nz-accent);
+}
+
+ul.modules li:hover::after {
+  color: var(--nz-accent);
+  transform: translateX(2px);
+}
+
+/* metrics dashlet: one titled card with inset chart wells. Chart colors
+   follow the theme via nz-theme.js (Chart.defaults from the tokens). */
+#pageContent > div:has(canvas) {
+  background: var(--nz-card);
+  border: 1px solid var(--nz-border);
+  border-radius: var(--nz-radius-card);
+  box-shadow: var(--nz-shadow-1);
+  padding: 14px 16px 8px;
+  margin: 0 0 20px;
+}
+
+/* the dashlet title joins the card as its caption */
+#pageContent > div:has(canvas) h3 {
+  margin: 0 0 12px;
+  font-size: var(--nz-fs-cardtitle);
+  font-weight: 600;
+  color: var(--nz-text-heading);
+}
+
+/* each chart's wrapper div gets a real height; with Chart.js
+   maintainAspectRatio=false (set in nz-theme.js) the chart fills it crisply */
+#pageContent div:has(> canvas) {
+  height: 110px;
+  padding-bottom: 0 !important;
+  margin-bottom: 12px;
+}
+
+#pageContent canvas {
+  width: 100% !important;
+  max-width: 100%;
+  height: 100% !important;
+  background: var(--nz-well) !important;
+  border: 1px solid var(--nz-border-soft);
+  border-radius: var(--nz-radius-ctl);
+}
+
+/* ---------- cards & tables ---------- */
+
+.table-wrapper {
+  background: var(--nz-card);
+  border: 1px solid var(--nz-border);
+  border-radius: var(--nz-radius-card);
+  box-shadow: var(--nz-shadow-1);
+  margin: 0 0 20px;
+  overflow-x: auto;
+}
+
+.table-wrapper .table { margin: 0; }
+
+body.nz .table {
+  width: 100%;
+  font-size: var(--nz-fs-secondary);
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+body.nz .table caption {
+  caption-side: top;
+  text-align: left;
+  padding: 14px 16px 12px;
+  font-size: var(--nz-fs-cardtitle);
+  font-weight: 600;
+  color: var(--nz-text-heading);
+  border-bottom: 1px solid var(--nz-border-soft);
+}
+
+body.nz .table > thead > tr > th {
+  padding: 10px 12px;
+  font-size: var(--nz-fs-caption);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--nz-track-caps);
+  color: var(--nz-text-muted);
+  background: var(--nz-veil-head);
+  border-bottom: 1px solid var(--nz-border);
+  border-top: 0;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* sortable headers (glyph mechanics live in base.css; keep the glyph beside
+   its label instead of pinned to the far cell edge) */
+body.nz .table thead th[data-column] { cursor: pointer; }
+body.nz .table thead th[data-column]:before {
+  position: static;
+  margin-right: 4px;
+  opacity: 0.7;
+}
+body.nz .table thead th[data-column]:hover { color: var(--nz-text-secondary); }
+body.nz .table thead th[data-column][data-ordered] { color: var(--nz-link); }
+
+/* the filter row inside thead.dark */
+body.nz .table > thead > tr > td {
+  padding: 8px 12px 10px;
+  background: var(--nz-veil-faint);
+  border-bottom: 1px solid var(--nz-border);
+  border-top: 0;
+}
+
+body.nz .table > thead > tr > td .form-control {
+  height: 30px;
+  font-size: 12.5px;
+}
+
+/* filter-row select2 fields match the 30px row */
+body.nz .table > thead td .select2-container .select2-choice {
+  height: 30px;
+  line-height: 28px;
+  font-size: 12.5px;
+}
+
+/* the apply-filter button sits IN the 30px filter row — quiet, row-height */
+body.nz .table > thead td .btn,
+body.nz .table > thead td .btn[data-submit-form],
+body.nz .table > thead td .btn.formbutton-success,
+body.nz .table > thead td .btn.formbutton-default {
+  height: 30px;
+  min-width: 30px;
+  padding: 0 8px;
+  background: transparent;
+  border: 1px solid var(--nz-border-strong);
+  color: var(--nz-text-secondary);
+}
+body.nz .table > thead td .btn:hover,
+body.nz .table > thead td .btn:focus {
+  background: var(--nz-selected);
+  border-color: var(--nz-accent-edge);
+  color: var(--nz-text-on-selected);
+}
+
+body.nz .table > tbody > tr > td {
+  padding: 8px 12px;
+  border-top: 1px solid var(--nz-border-soft);
+  color: var(--nz-text);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+body.nz .table > tbody > tr:first-child > td { border-top: 0; }
+
+body.nz .table > tbody > tr {
+  transition: background var(--nz-quick) var(--nz-ease);
+}
+body.nz .table > tbody > tr:hover { background: var(--nz-row-hover); }
+
+/* cell record links inherit text colour; the row hover is the affordance */
+body.nz .table > tbody > tr > td > a:not(.btn) {
+  color: var(--nz-text);
+}
+/* a cell whose only element is its link becomes a whole-cell link and
+   ellipsizes; cells composed of several links ("monthly / 1") or a
+   copy-to-clipboard value stay inline so they render on one line */
+body.nz .table > tbody > tr > td > a:not(.btn):only-child:not(.copy-to-clipboard-icon-helper) {
+  display: block;
+  margin: -8px -12px;
+  padding: 8px 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body.nz .table > tbody > tr > td > a:not(.btn):hover { color: var(--nz-link-hover); }
+
+/* copy-to-clipboard cells: clicking anywhere in the cell EXCEPT the record
+   link copies (stock contract) — give that area the cursor, and give the
+   icon real size instead of the ported 0.6em FontAwesome scale */
+body.nz td.copy-to-clipboard { cursor: copy; }
+body.nz td.copy-to-clipboard .copy-to-clipboard-icon-helper {
+  max-width: calc(100% - 26px);
+  overflow: hidden;
+  vertical-align: middle;
+}
+body.nz .copy-to-clipboard-icon::after {
+  font-size: inherit;
+  width: 15px;
+  height: 15px;
+  position: static;
+  float: none;
+  vertical-align: -3px;
+  margin-left: 8px;
+  background-color: var(--nz-accent);
+}
+/* the confirmation flash (nz-theme.js toggles .nz-copied on click) */
+body.nz .copy-to-clipboard-icon.nz-copied::after {
+  background-color: var(--nz-success);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cpath d='M13.72 27.69 3.29 17.27l1.42-1.42 9 9L31.29 7.29l1.42 1.42Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cpath d='M13.72 27.69 3.29 17.27l1.42-1.42 9 9L31.29 7.29l1.42 1.42Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* inactive/warning records (neutralise Bootstrap's light-theme td fills);
+   the tint marks the row — text stays legible normal, not all-red */
+body.nz .table > tbody > tr.danger,
+body.nz .table > tbody > tr.danger:hover { background: var(--nz-danger-tint); }
+body.nz .table > tbody > tr.danger > td,
+body.nz .table > tbody > tr.danger:hover > td {
+  background: transparent;
+  color: var(--nz-text);
+  box-shadow: none;
+}
+body.nz .table > tbody > tr.danger > td:first-child {
+  box-shadow: inset 3px 0 0 var(--nz-danger);
+}
+body.nz .table > tbody > tr.danger > td > a:not(.btn) { color: var(--nz-text); }
+
+/* other Bootstrap contextual row/cell fills that would paint light on dark */
+body.nz .table > tbody > tr.active > td,
+body.nz .table > tbody > tr.success > td,
+body.nz .table > tbody > tr.info > td,
+body.nz .table > tbody > tr.warning > td,
+body.nz .table > tbody > td.active, body.nz .table > tbody > td.success,
+body.nz .table > tbody > td.info, body.nz .table > tbody > td.warning,
+body.nz .table > tbody > td.danger { background: transparent; }
+body.nz .table > tbody > tr.warning { background: var(--nz-warning-tint); }
+body.nz .table > tbody > tr.success { background: var(--nz-success-tint); }
+body.nz .table > tbody > tr.info    { background: var(--nz-info-tint); }
+
+/* .table-striped (backup lists): Bootstrap zebra is light #f9f9f9 */
+body.nz .table-striped > tbody > tr:nth-of-type(odd) {
+  background: var(--nz-veil-faint);
+}
+body.nz .table-striped > tbody > tr:nth-of-type(odd):hover {
+  background: var(--nz-row-hover);
+}
+
+body.nz .table > tfoot > tr > td,
+body.nz .table > tfoot > tr > th {
+  padding: 10px 12px;
+  border-top: 1px solid var(--nz-border);
+  background: var(--nz-veil-faint);
+  color: var(--nz-text-secondary);
+  font-weight: 500;
+}
+
+/* no-results row */
+body.nz .table tr.tbl_row_noresults td {
+  padding: 26px 16px;
+  text-align: center;
+  color: var(--nz-text-muted);
+}
+
+/* ---------- buttons ---------- */
+
+body.nz .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: var(--nz-ctl-h);
+  padding: 0 16px;
+  font-family: var(--nz-font);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1;
+  border-radius: var(--nz-radius-ctl);
+  border: 1px solid transparent;
+  background-image: none;
+  box-shadow: none;
+  text-shadow: none;
+  transition: background var(--nz-quick) var(--nz-ease),
+              border-color var(--nz-quick) var(--nz-ease),
+              color var(--nz-quick) var(--nz-ease);
+}
+
+body.nz .btn:active { box-shadow: none; }
+body.nz .btn .icon { font-size: 13px; }
+
+/* secondary (ghost) — the default voice */
+body.nz .btn-default {
+  background: transparent;
+  border-color: var(--nz-border-strong);
+  color: var(--nz-text-secondary);
+}
+
+body.nz .btn-default:hover,
+body.nz .btn-default:focus,
+body.nz .btn-default:active {
+  background: var(--nz-raised);
+  border-color: var(--nz-border-strong);
+  color: var(--nz-text-heading);
+}
+
+/* primary — blue is the action. In stock markup the main action is
+   .formbutton-success (Save / Add new) or anything that submits the form;
+   .formbutton-default is the secondary voice (Cancel, filter, etc.). */
+body.nz .btn-primary,
+body.nz .btn.formbutton-success,
+body.nz .btn[data-submit-form] {
+  background: var(--nz-action);
+  border-color: transparent;
+  color: var(--nz-text-on-action);
+}
+
+body.nz .btn-primary:hover, body.nz .btn-primary:focus,
+body.nz .btn.formbutton-success:hover, body.nz .btn.formbutton-success:focus,
+body.nz .btn[data-submit-form]:hover, body.nz .btn[data-submit-form]:focus {
+  background: var(--nz-action-hover);
+  border-color: transparent;
+  color: var(--nz-text-on-action);
+}
+
+body.nz .btn-primary:active,
+body.nz .btn.formbutton-success:active,
+body.nz .btn[data-submit-form]:active {
+  background: var(--nz-action-active);
+  color: var(--nz-text-on-action);
+}
+
+/* danger — outlined; destructive stays deliberate */
+body.nz .btn-danger,
+body.nz .btn.formbutton-danger {
+  background: transparent;
+  border-color: var(--nz-danger-edge);
+  color: var(--nz-danger-text);
+}
+
+body.nz .btn-danger:hover, body.nz .btn-danger:focus,
+body.nz .btn.formbutton-danger:hover, body.nz .btn.formbutton-danger:focus {
+  background: var(--nz-danger-tint);
+  border-color: var(--nz-danger);
+  color: var(--nz-danger-text);
+}
+
+/* icon-only / compact */
+body.nz .btn.formbutton-narrow {
+  min-width: 32px;
+  padding: 0 10px;
+}
+
+body.nz .btn[disabled],
+body.nz .btn.disabled {
+  opacity: 0.45;
+  box-shadow: none;
+}
+
+/* list-row action buttons: quiet icon controls, not a wall of buttons.
+   Plain buttons carry the base voice; the submit/success variants sit
+   quieter and tighter — their extra class out-ranks this base rule, so the
+   two stay separate rules (merging them would repaint the variants). */
+body.nz .table > tbody .btn {
+  height: var(--nz-ctl-h-sm);
+  min-width: var(--nz-ctl-h-sm);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 0 8px;
+  background: transparent;
+  border-color: transparent;
+  color: var(--nz-text-secondary);
+}
+
+body.nz .table > tbody .btn.formbutton-default,
+body.nz .table > tbody .btn.formbutton-success,
+body.nz .table > tbody .btn[data-submit-form] {
+  padding: 0 6px;
+  color: var(--nz-text-muted);
+}
+
+body.nz .table > tbody .btn:hover,
+body.nz .table > tbody .btn:focus {
+  background: var(--nz-raised);
+  border-color: transparent;
+  color: var(--nz-text-heading);
+}
+
+body.nz .table > tbody .btn.formbutton-danger {
+  color: var(--nz-text-secondary);
+}
+body.nz .table > tbody .btn.formbutton-danger:hover,
+body.nz .table > tbody .btn.formbutton-danger:focus {
+  background: var(--nz-danger-tint);
+  color: var(--nz-danger-text);
+}
+
+body.nz .table td.text-right { white-space: nowrap; }
+
+/* bare toolbar buttons (DNS tools etc.) sit directly in #pageContent */
+#pageContent > .btn { margin: 0 8px 16px 0; }
+
+/* "add new" toolbars */
+.pnl_toolsarea,
+.buttons.topbuttons { margin: 0 0 16px; }
+.pnl_toolsarea fieldset { border: 0; margin: 0; padding: 0; }
+.buttons.topbuttons .btn { margin: 0 6px 6px 0; }
+
+/* bottom button bars in forms — read as a footer bar */
+#pageContent form .clear .btn,
+#pageContent .buttonHolder .btn { margin-right: 8px; }
+
+/* form action footer: sticky, separated, primary in the power position.
+   (#pageContent lives INSIDE form#pageForm — no form descendant here.) */
+body.nz #pageContent .clear:has(> .right) {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flow-root;
+  margin-top: 22px;
+  padding: 12px 0;
+  border-top: 1px solid var(--nz-border);
+  background: var(--nz-page);
+}
+
+body.nz #pageContent .clear > .right {
+  float: right;
+  display: flex;
+  flex-direction: row-reverse; /* primary outermost, like the login card */
+  gap: 8px;
+}
+body.nz #pageContent .clear > .right .btn { margin-right: 0; }
+
+/* DNS record-type strip: 21 buttons — a picker, not 21 primary actions */
+body.nz .btn.dns-record-btn,
+body.nz .btn.dns-record-btn.formbutton-success {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  background: transparent;
+  border: 1px solid var(--nz-border-strong);
+  color: var(--nz-text-secondary);
+}
+body.nz .btn.dns-record-btn:hover,
+body.nz .btn.dns-record-btn:focus {
+  background: var(--nz-selected);
+  border-color: var(--nz-accent-edge);
+  color: var(--nz-link);
+}
+
+/* the "pending changes" info wrapper on list pages is an empty husk once its
+   .statusMsg is hidden — remove the artifact (monitor pages are unaffected) */
+body.nz .pnl_toolsarea .systemmonitor-state.state-info { display: none; }
+
+/* inline-styled light boxes in stock templates (donate dashlet, dns-ca notice):
+   keep them light, give them readable dark text and a sane frame */
+body.nz #pageContent [style*='background-color:#FFFFFF'],
+body.nz #pageContent [style*='background-color: #FFFFFF'],
+body.nz #pageContent [style*='background:pink'],
+body.nz #pageContent [style*='background: pink'] {
+  color: #21333B;
+  border-radius: var(--nz-radius-card);
+}
+body.nz #pageContent [style*='background-color:#FFFFFF'] h1,
+body.nz #pageContent [style*='background-color:#FFFFFF'] h2,
+body.nz #pageContent [style*='background-color:#FFFFFF'] h3,
+body.nz #pageContent [style*='background-color:#FFFFFF'] h4 {
+  color: #17252B;
+}
+body.nz #pageContent [style*='background:pink'],
+body.nz #pageContent [style*='background: pink'] {
+  color: #8F1500;
+  padding: 12px 16px;
+}
+
+/* inline color:black labels (ftp stats filter row) on the dark thead */
+body.nz .table thead [style*='color:black'],
+body.nz .table thead [style*='color: black'] {
+  color: var(--nz-text-secondary) !important;
+}
+
+/* ---------- forms ---------- */
+
+body.nz .form-control {
+  height: var(--nz-ctl-h);
+  padding: 6px 12px;
+  background: var(--nz-well);
+  border: 1px solid var(--nz-border-strong);
+  border-radius: var(--nz-radius-ctl);
+  color: var(--nz-text);
+  font-family: var(--nz-font);
+  font-size: 13px;
+  box-shadow: none;
+  transition: border-color var(--nz-quick) var(--nz-ease),
+              box-shadow var(--nz-quick) var(--nz-ease);
+}
+
+body.nz .form-control:focus {
+  border-color: var(--nz-accent);
+  box-shadow: var(--nz-focus-shadow);
+  outline: none;
+}
+
+body.nz .form-control::placeholder { color: var(--nz-text-disabled); }
+
+body.nz .form-control[disabled],
+body.nz .form-control[readonly] {
+  background: var(--nz-card);
+  color: var(--nz-text-secondary); /* real values must stay readable */
+  cursor: not-allowed;
+}
+
+/* Chrome/WebKit autofill would paint the wells light */
+body.nz input:-webkit-autofill,
+body.nz input:-webkit-autofill:hover,
+body.nz input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--nz-well) inset;
+  -webkit-text-fill-color: var(--nz-text);
+  caret-color: var(--nz-text);
+}
+
+body.nz textarea.form-control {
+  height: auto;
+  min-height: 92px;
+  line-height: 1.5;
+}
+
+body.nz select.form-control {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23859399' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+}
+
+body.nz select[multiple].form-control {
+  height: auto;
+  background-image: none;
+  padding-right: 12px;
+}
+
+/* bare selects the server emits without .form-control (per-page search_limit
+   in list headers, plugin listviews) */
+body.nz #pageContent select:not(.form-control) {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 26px;
+  padding: 2px 24px 2px 8px;
+  background-color: var(--nz-well);
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23859399' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  border: 1px solid var(--nz-border-strong);
+  border-radius: var(--nz-radius-ctl);
+  color: var(--nz-text);
+  font-family: var(--nz-font);
+  font-size: 12px;
+}
+
+/* stock mail/xmpp templates put inline height:50px on the @-group's addon
+   and select — force the control rhythm back */
+body.nz .form-group .input-group > .form-control,
+body.nz .form-group .input-group .input-group-addon,
+body.nz .form-group .input-group select.form-control,
+body.nz .form-group .input-group .input-group-btn > .btn {
+  height: var(--nz-ctl-h) !important;
+}
+
+/* the dashlet "Account limits" table ships a header row of three &nbsp; cells
+   (col-md-4/3/2) — an empty band under the caption; hide that exact signature */
+body.nz .table > thead > tr:has(> th.col-md-4 + th.col-md-3 + th.col-md-2) {
+  display: none;
+}
+
+body.nz .form-group { margin-bottom: 14px; }
+
+/* a consistent right edge: cap free-width controls in horizontal forms
+   (list-filter cells live in thead.form-group-sm, so they are unaffected) */
+body.nz .form-horizontal .form-group .form-control,
+body.nz .form-horizontal .form-group .input-group,
+body.nz .form-horizontal .form-group .progress,
+body.nz .form-horizontal .form-group .select2-container {
+  max-width: 720px;
+}
+body.nz .form-horizontal .form-group .input-group .form-control { max-width: none; }
+
+body.nz .control-label,
+body.nz label {
+  font-weight: 500;
+  color: var(--nz-text-secondary);
+  font-size: 13px;
+}
+
+body.nz .form-horizontal .control-label {
+  text-align: left;
+  padding-top: 8px;
+}
+
+/* base.css ports the stock ":" label suffix; the fresh design drops it */
+body.nz .control-label:after { content: ''; }
+
+/* validation */
+body.nz .has-error .form-control { border-color: var(--nz-danger); }
+body.nz .has-error .form-control:focus {
+  border-color: var(--nz-danger);
+  box-shadow: 0 0 0 3px var(--nz-danger-ring);
+}
+body.nz .has-error .control-label { color: var(--nz-danger-text); }
+
+/* checkboxes / radios — native, accent-tinted */
+body.nz input[type='checkbox'],
+body.nz input[type='radio'] {
+  accent-color: var(--nz-accent);
+  width: 16px;
+  height: 16px;
+}
+
+body.nz .checkbox label,
+body.nz .inlineLabel,
+body.nz label.inlineLabel {
+  font-weight: 400;
+  color: var(--nz-text);
+  margin-right: 14px;
+}
+
+/* input-group attachments (e.g. Generate password, "@", unit suffixes) */
+body.nz .input-group .form-control { z-index: auto; }
+body.nz .input-group-addon {
+  background: var(--nz-raised);
+  border: 1px solid var(--nz-border-strong);
+  color: var(--nz-text-secondary);
+  font-size: 12.5px;
+}
+body.nz .input-group-btn .btn {
+  height: var(--nz-ctl-h);
+  background: var(--nz-raised);
+  border: 1px solid var(--nz-border-strong);
+  color: var(--nz-text-secondary);
+}
+body.nz .input-group-btn .btn:hover { color: var(--nz-text-heading); }
+body.nz .input-group .form-control:first-child {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+body.nz .input-group-btn:last-child > .btn {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  margin-left: -1px;
+}
+
+/* password strength (structure in base.css) */
+#passBar { background: var(--nz-well); border-radius: var(--nz-radius-pill); }
+#passBar div { background: var(--nz-success); border-radius: var(--nz-radius-pill); }
+#passText { color: var(--nz-text-muted); font-size: 11px; }
+.confirmpassworderror { color: var(--nz-danger-text); font-size: 12px; }
+.confirmpasswordok { color: var(--nz-success-text); font-size: 12px; }
+
+/* ---------- tabs (tabbed edit forms) ---------- */
+
+body.nz .nav-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin: 0;
+  padding: 0 2px;
+  border-bottom: 1px solid var(--nz-border);
+}
+
+body.nz .nav-tabs > li {
+  float: none;
+  margin-bottom: -1px;
+}
+
+body.nz .nav-tabs > li > a {
+  margin: 0;
+  padding: 10px 14px;
+  border: 0 !important;
+  border-radius: var(--nz-radius-ctl) var(--nz-radius-ctl) 0 0;
+  background: transparent;
+  color: var(--nz-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  transition: color var(--nz-quick) var(--nz-ease),
+              background var(--nz-quick) var(--nz-ease),
+              box-shadow var(--nz-quick) var(--nz-ease);
+}
+
+body.nz .nav-tabs > li > a:hover,
+body.nz .nav-tabs > li > a:focus {
+  background: var(--nz-veil);
+  color: var(--nz-text);
+}
+
+body.nz .nav-tabs > li.active > a,
+body.nz .nav-tabs > li.active > a:hover,
+body.nz .nav-tabs > li.active > a:focus {
+  background: transparent !important;
+  color: var(--nz-text-heading) !important;
+  border: 0 !important;
+  box-shadow: inset 0 -3px 0 var(--nz-accent);
+}
+
+body.nz .tab-content { padding-top: 22px; }
+
+/* ---------- alerts & inline status ---------- */
+
+/* Clarity dark alert anatomy: solid status surface + 1px status border.
+   Text stays light on every surface (Clarity's own dark-on-ochre warning
+   text is 2.07:1 — a documented AA-driven deviation). */
+body.nz .alert {
+  position: relative;
+  margin: 0 0 16px;
+  padding: 11px 16px;
+  border: 1px solid transparent;
+  border-radius: var(--nz-radius-ctl);
+  font-size: 13px;
+  background: var(--nz-card);
+  color: var(--nz-alert-text);
+  text-shadow: none;
+}
+
+body.nz .alert ul { margin: 4px 0 0; padding-left: 18px; }
+body.nz .alert .close { color: inherit; opacity: 0.6; text-shadow: none; }
+
+body.nz .alert-danger, body.nz #errorMsg {
+  background: var(--nz-danger-surface);
+  border-color: var(--nz-danger);
+  color: var(--nz-alert-text);
+}
+
+body.nz .alert-success, body.nz #OKMsg {
+  background: var(--nz-success-surface);
+  border-color: var(--nz-success);
+  color: var(--nz-alert-text);
+}
+
+body.nz .alert-warning {
+  background: var(--nz-warning-surface);
+  border-color: var(--nz-warning);
+  color: var(--nz-alert-text);
+}
+
+body.nz .alert-info,
+body.nz .alert-notification {
+  background: var(--nz-info-surface);
+  border-color: var(--nz-info);
+  color: var(--nz-alert-text);
+}
+
+body.nz .alert strong { color: inherit; }
+
+/* id-only status divs injected by ispconfig.js */
+body.nz #errorMsg:empty, body.nz #OKMsg:empty { display: none; }
+body.nz #errorMsg, body.nz #OKMsg {
+  padding: 11px 16px;
+  border-radius: var(--nz-radius-ctl);
+  margin: 0 0 16px;
+}
+
+/* ---------- badges / labels ---------- */
+
+body.nz .label {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-shadow: none;
+}
+
+/* Clarity badge fills: solid shade-family surfaces (deep tokens remap
+   per mode); warning keeps dark text on its amber fill in light mode */
+body.nz .label-success { background: var(--nz-success-deep); color: #FFFFFF; }
+body.nz .label-warning { background: var(--nz-warning-deep); color: var(--nz-alert-text); }
+body.nz .label-danger  { background: var(--nz-danger-deep); color: #FFFFFF; }
+body.nz .label-info, body.nz .label-default {
+  background: var(--nz-info-surface);
+  color: #FFFFFF;
+}
+
+/* ---------- pagination ---------- */
+
+body.nz .pagination {
+  display: inline-flex;
+  gap: 4px;
+  margin: 4px 0;
+}
+
+body.nz .pagination > li > a,
+body.nz .pagination > li > span {
+  float: none;
+  height: 28px;
+  min-width: 28px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  background: transparent;
+  border: 1px solid var(--nz-border);
+  border-radius: var(--nz-radius-ctl) !important;
+  color: var(--nz-text-secondary);
+  font-size: 12.5px;
+}
+
+body.nz .pagination > li > a:hover {
+  background: var(--nz-raised);
+  border-color: var(--nz-border-strong);
+  color: var(--nz-text-heading);
+}
+
+body.nz .pagination > li.active > a,
+body.nz .pagination > li.active > a:hover,
+body.nz .pagination > li.active > span {
+  background: var(--nz-action);
+  border-color: transparent;
+  color: var(--nz-text-on-action);
+}
+
+body.nz .pagination > li.disabled > a,
+body.nz .pagination > li.disabled > span {
+  opacity: 0.55;
+  background: transparent;
+  border-color: transparent; /* ellipses/disabled arrows are not buttons */
+  color: var(--nz-text-muted);
+}
+
+/* ---------- progress meters ---------- */
+
+/* stock markup overlays a centred label <span> inside the bar (mechanics in
+   base.css), so the meter stays tall enough to carry its text */
+body.nz .progress {
+  height: 18px;
+  margin: 6px 0;
+  background: var(--nz-well);
+  border-radius: var(--nz-radius-pill);
+  box-shadow: none;
+  overflow: hidden;
+}
+
+/* the overlay label lives INSIDE .progress-bar in stock markup; base.css
+   positions it across the whole track. A translucent dark backplate keeps
+   white text ≥5.9:1 over every fill colour AND the empty track. */
+body.nz .progress span {
+  left: 50%;
+  transform: translateX(-50%);
+  width: auto;
+  max-width: 100%;
+  line-height: 16px;
+  margin-top: 1px;
+  padding: 0 9px;
+  border-radius: var(--nz-radius-pill);
+  background: rgba(2, 8, 11, 0.55);
+  font-size: 11px;
+  font-weight: 600;
+  color: #FFFFFF;
+  white-space: nowrap;
+}
+
+/* vendor bootstrap sets 12px/20px white on .progress-bar itself */
+body.nz .progress-bar {
+  font-size: 11px;
+  line-height: 18px;
+  background-color: var(--nz-accent);
+  background-image: none;
+  box-shadow: inset 0 0 0 1px var(--nz-meter-edge);
+  border-radius: var(--nz-radius-pill);
+  transition: width 0.4s var(--nz-ease);
+}
+
+body.nz .progress-bar-success { background-color: var(--nz-success); }
+body.nz .progress-bar-warning { background-color: var(--nz-warning); }
+body.nz .progress-bar-danger  { background-color: var(--nz-danger); }
+body.nz .progress-bar-striped { background-image: none; }
+
+/* ---------- modal (datalog + any bootstrap modal) ---------- */
+
+body.nz .modal-content {
+  background: var(--nz-card);
+  border: 1px solid var(--nz-modal-edge);
+  border-radius: var(--nz-radius-modal);
+  box-shadow: var(--nz-shadow-pop);
+  color: var(--nz-text);
+}
+
+body.nz .modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--nz-border-soft);
+}
+
+body.nz .modal-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--nz-text-heading);
+}
+
+body.nz .modal-header .close {
+  color: var(--nz-text-heading);
+  opacity: 0.5;
+  text-shadow: none;
+}
+body.nz .modal-header .close:hover { opacity: 0.9; }
+
+body.nz .modal-body { padding: 18px 20px; }
+body.nz .modal-body ul { margin: 0; padding-left: 18px; }
+
+body.nz .modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--nz-border-soft);
+}
+
+body.nz .modal-backdrop { background: #000000; }
+body.nz .modal-backdrop.in { opacity: 0.6; }
+
+/* ---------- select2 (v3.5) ---------- */
+
+/* the select2 CONTAINER often carries .form-control / .search_limit — it is
+   a wrapper, not the field; the .select2-choice inside is the field */
+body.nz .select2-container.form-control,
+body.nz .select2-container.search_limit {
+  height: auto;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body.nz .select2-container .select2-choice {
+  height: var(--nz-ctl-h);
+  line-height: calc(var(--nz-ctl-h) - 2px);
+  padding: 0 12px;
+  background: var(--nz-well);
+  background-image: none;
+  border: 1px solid var(--nz-border-strong);
+  border-radius: var(--nz-radius-ctl);
+  color: var(--nz-text);
+  box-shadow: none;
+  font-size: 13px;
+}
+
+body.nz .select2-container .select2-choice .select2-chosen { color: var(--nz-text); }
+
+body.nz .select2-container .select2-choice .select2-arrow {
+  background: transparent;
+  border-left: 0;
+  width: 26px;
+}
+body.nz .select2-container .select2-choice .select2-arrow b { background: none; position: relative; }
+body.nz .select2-container .select2-choice .select2-arrow b::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -6px 0 0 -8px;
+  border-right: 1.6px solid var(--nz-ink-400);
+  border-bottom: 1.6px solid var(--nz-ink-400);
+  transform: rotate(45deg);
+}
+
+/* the per-page chip is 60px wide (inline) — keep the value visible */
+body.nz .select2-container.search_limit .select2-choice {
+  height: 28px;
+  line-height: 26px;
+  padding: 0 4px 0 9px;
+  font-size: 12px;
+}
+body.nz .select2-container.search_limit .select2-choice .select2-arrow { width: 16px; }
+body.nz .select2-container.search_limit .select2-choice .select2-chosen { margin-right: 16px; }
+body.nz .select2-container.search_limit .select2-search-choice-close { display: none; }
+
+body.nz .select2-dropdown-open .select2-choice,
+body.nz .select2-container-active .select2-choice,
+body.nz .select2-container-multi.select2-container-active .select2-choices {
+  border-color: var(--nz-accent);
+  box-shadow: var(--nz-focus-shadow);
+}
+
+.select2-drop {
+  min-width: 88px;
+  background: var(--nz-popover);
+  border: 1px solid var(--nz-border);
+  border-radius: var(--nz-radius-pop);
+  box-shadow: var(--nz-shadow-pop);
+  color: var(--nz-text);
+  margin-top: 6px;
+}
+
+.select2-drop.select2-drop-above { margin-top: 0; margin-bottom: 6px; }
+
+.select2-search { padding: 8px; }
+.select2-search input {
+  height: 30px;
+  background: var(--nz-well) !important;
+  border: 1px solid var(--nz-border-strong);
+  border-radius: var(--nz-radius-ctl);
+  color: var(--nz-text);
+  font-family: var(--nz-font);
+  font-size: 13px;
+}
+
+.select2-results {
+  margin: 4px;
+  padding: 0;
+  background: transparent;
+  color: var(--nz-text);
+}
+
+.select2-results .select2-result-label {
+  padding: 7px 10px;
+  border-radius: var(--nz-radius-ctl);
+  font-size: 13px;
+}
+
+.select2-results .select2-highlighted {
+  background: var(--nz-selected-strong);
+  color: var(--nz-text-on-selected);
+  border-radius: var(--nz-radius-ctl);
+}
+
+.select2-results .select2-no-results,
+.select2-results .select2-searching {
+  background: transparent;
+  color: var(--nz-text-muted);
+  padding: 8px 10px;
+}
+
+body.nz .select2-container-multi .select2-choices {
+  background: var(--nz-well) !important;
+  background-image: none !important;
+  border: 1px solid var(--nz-border-strong);
+  border-radius: var(--nz-radius-ctl);
+  box-shadow: none;
+  min-height: var(--nz-ctl-h);
+  padding: 2px 4px;
+}
+
+body.nz .select2-container-multi .select2-choices .select2-search-choice {
+  background: var(--nz-raised);
+  background-image: none;
+  border: 1px solid var(--nz-border);
+  border-radius: 4px;
+  box-shadow: none;
+  color: var(--nz-text);
+  padding: 4px 8px 4px 22px;
+  margin: 4px;
+  font-size: 12.5px;
+}
+
+body.nz .select2-container-multi .select2-choices .select2-search-field input {
+  color: var(--nz-text);
+  font-family: var(--nz-font);
+}
+
+/* ---------- datetimepicker (smalot bootstrap-datetimepicker: builds
+     <div class="datetimepicker datetimepicker-dropdown-* dropdown-menu">
+     appended to <body> — so no body.nz scope on the panel itself) ---------- */
+
+.datetimepicker.dropdown-menu {
+  background: var(--nz-popover);
+  border: 1px solid var(--nz-border);
+  border-radius: var(--nz-radius-pop);
+  box-shadow: var(--nz-shadow-pop);
+  color: var(--nz-text);
+  font-family: var(--nz-font);
+  padding: 6px;
+}
+
+/* kill the light-theme caret triangles */
+.datetimepicker.dropdown-menu:before,
+.datetimepicker.dropdown-menu:after { display: none; }
+
+.datetimepicker table { background: transparent; }
+
+.datetimepicker table tr td,
+.datetimepicker table tr th {
+  border-radius: var(--nz-radius-ctl);
+  color: var(--nz-text);
+  border: 0;
+  text-shadow: none;
+}
+
+.datetimepicker table tr th.dow,
+.datetimepicker table tr th.switch { color: var(--nz-text-muted); }
+
+.datetimepicker table tr td.day:hover,
+.datetimepicker table tr th.prev:hover,
+.datetimepicker table tr th.next:hover,
+.datetimepicker table tr th.switch:hover,
+.datetimepicker table tr td span:hover {
+  background: var(--nz-raised);
+  background-image: none;
+}
+
+.datetimepicker table tr td.active,
+.datetimepicker table tr td.active:hover,
+.datetimepicker table tr td.active.disabled,
+.datetimepicker table tr td span.active,
+.datetimepicker table tr td span.active:hover {
+  background: var(--nz-action);
+  background-image: none;
+  color: var(--nz-text-on-action);
+  text-shadow: none;
+  border: 0;
+}
+
+.datetimepicker table tr td.today,
+.datetimepicker table tr td.today:hover {
+  background: var(--nz-selected-strong);
+  background-image: none;
+  color: var(--nz-text);
+}
+
+.datetimepicker table tr td.old,
+.datetimepicker table tr td.new { color: var(--nz-text-muted); }
+
+.datetimepicker table tr td.disabled,
+.datetimepicker table tr td span.disabled { color: var(--nz-text-disabled); }
+
+/* ---------- tooltips ---------- */
+
+body.nz .tooltip-inner {
+  background: var(--nz-tooltip-bg);
+  color: var(--nz-tooltip-text);
+  border: 1px solid var(--nz-border);
+  border-radius: var(--nz-radius-ctl);
+  padding: 6px 10px;
+  font-size: 12px;
+  font-family: var(--nz-font);
+}
+
+body.nz .tooltip.bottom .tooltip-arrow { border-bottom-color: var(--nz-tooltip-bg); }
+body.nz .tooltip.top .tooltip-arrow { border-top-color: var(--nz-tooltip-bg); }
+
+.tipsy-inner {
+  background: var(--nz-tooltip-bg);
+  color: var(--nz-tooltip-text);
+  border-radius: var(--nz-radius-ctl);
+  font-family: var(--nz-font);
+}
+
+/* monitor stateview: server-state cards use a status edge, not a solid slab */
+body.nz .stateview .alert {
+  background: var(--nz-card);
+  border: 1px solid var(--nz-border);
+  border-left-width: 4px;
+  color: var(--nz-text);
+  padding: 14px 16px;
+}
+body.nz .stateview .alert-success { background: var(--nz-card); border-left-color: var(--nz-success); }
+body.nz .stateview .alert-warning { background: var(--nz-card); border-left-color: var(--nz-warning); }
+body.nz .stateview .alert-danger  { background: var(--nz-card); border-left-color: var(--nz-danger); }
+body.nz .stateview .alert-info    { background: var(--nz-card); border-left-color: var(--nz-info); }
+body.nz .stateview .alert h3 {
+  margin: 0 0 4px;
+  font-size: var(--nz-fs-cardtitle);
+  font-weight: 600;
+  color: var(--nz-text-heading);
+}
+body.nz .stateview .alert p { margin: 0 0 6px; color: var(--nz-text-secondary); }
+body.nz .stateview .alert a { color: var(--nz-link); }
+
+/* ---------- monitor status blocks ---------- */
+
+body.nz .systemmonitor-state {
+  border-radius: var(--nz-radius-card);
+  border: 1px solid var(--nz-border);
+  background: var(--nz-card);
+  padding: 14px 16px;
+  margin: 0 0 14px;
+}
+
+body.nz .systemmonitor-state.state-ok      { border-left: 3px solid var(--nz-success); }
+body.nz .systemmonitor-state.state-info    { border-left: 3px solid var(--nz-info); }
+body.nz .systemmonitor-state.state-warning { border-left: 3px solid var(--nz-warning); background: var(--nz-warning-tint); }
+body.nz .systemmonitor-state.state-error,
+body.nz .systemmonitor-state.state-critical { border-left: 3px solid var(--nz-danger); background: var(--nz-danger-tint); }
+
+/* ---------- misc content furniture ---------- */
+
+body.nz hr { border-color: var(--nz-border-soft); }
+
+body.nz code, body.nz pre {
+  font-family: var(--nz-font-mono);
+  background: var(--nz-well);
+  color: var(--nz-text-secondary);
+  border: 1px solid var(--nz-border-soft);
+  border-radius: 4px;
+}
+
+body.nz .panel,
+body.nz .panel-default {
+  background: var(--nz-card);
+  border: 1px solid var(--nz-border);
+  border-radius: var(--nz-radius-card);
+  box-shadow: var(--nz-shadow-1);
+}
+
+body.nz .panel-default > .panel-heading {
+  background: transparent;
+  border-bottom: 1px solid var(--nz-border-soft);
+  color: var(--nz-text-heading);
+  font-weight: 600;
+  font-size: var(--nz-fs-cardtitle);
+  border-radius: var(--nz-radius-card) var(--nz-radius-card) 0 0;
+}
+
+body.nz .panel-body { color: var(--nz-text); }
+
+/* legacy wells / fieldsets that occasionally appear */
+body.nz .well {
+  background: var(--nz-card);
+  border: 1px solid var(--nz-border);
+  border-radius: var(--nz-radius-card);
+  box-shadow: none;
+}
+
+body.nz legend {
+  font-size: var(--nz-fs-caption);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--nz-track-caps);
+  color: var(--nz-text-muted);
+  border-bottom: 1px solid var(--nz-border-soft);
+  padding-bottom: 6px;
+}

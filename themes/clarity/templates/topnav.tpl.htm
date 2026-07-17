@@ -1,0 +1,14 @@
+	<!-- Clarity Theme for ISPConfig module navigation (vertical rail).
+	     Contract preserved from stock topnav.tpl.htm:
+	       - <nav id='main-navigation'> wrapper (responsive.js reads it)
+	       - one <a> per module carrying data-capp (except active),
+	         data-icon-class, and the 'active' class — ispconfig.js click
+	         delegates and the pushy mobile clone depend on exactly these. -->
+	<nav id='main-navigation' class='nz-modnav' aria-label='Modules'>
+    <tmpl_loop name="nav_top">
+		<a href="#" class="nz-modnav-item <tmpl_if name="active">active"<tmpl_else>" data-capp="<tmpl_var name='module'>"</tmpl_if> data-icon-class="<tmpl_var name='icon'>">
+		  <span class="{tmpl_var name='icon'}"></span>
+		  <span class="title"><tmpl_var name="title"></span>
+		</a>
+    </tmpl_loop>
+	</nav>

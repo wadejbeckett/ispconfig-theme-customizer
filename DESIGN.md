@@ -1,11 +1,11 @@
-# the earlier name — Design Language
+# Clarity Theme for ISPConfig — Design Language
 
-**the earlier name** (`themes/earlier-dark/`) is a ground-up dark interface for
+**Clarity Theme for ISPConfig** (`themes/clarity/`) is a ground-up dark interface for
 ISPConfig: DirectAdmin-Evolution frame anatomy fused with VMware Clarity's
-dark surface system, anchored on the Earlier brand blue **`#0065AB`**.
+dark surface system, anchored on the brand blue **`#0065AB`**.
 
 The single source of truth is
-**`themes/earlier-dark/assets/stylesheets/earlier/tokens.css`** — a self-contained
+**`themes/clarity/assets/stylesheets/clarity/tokens.css`** — a self-contained
 `:root { --nz-* }` block, no build step. Components read **semantic aliases
 only** (`--nz-card`, `--nz-action`, …), never ramp steps, never raw hex.
 
@@ -17,11 +17,11 @@ only** (`--nz-card`, `--nz-action`, …), never ramp steps, never raw hex.
 |---|---|---|
 | Surface temperature | VMware Clarity dark (`@cds/core` 6.17 `theme.dark.css`, MIT) | the "construction" blue-grey ramp (hue 198): page `#17252B`, card `#21333B`, raised `#2D4048`, well `#1B2B32`; status hues (green 500/800, ochre 400/900, red 500/900) |
 | Frame anatomy & elevation | DirectAdmin Evolution dark (live demo, tokens extracted 2026-07-08) | deep-navy brand band on the left, elevation as a surface-lightness ladder + 1px hairlines (not shadows), big calm search bar, uppercase micro-headers, small radii |
-| Brand | Earlier `#0065AB` | the whole blue ramp is re-anchored on it (hue ~205); the rail navy `#01243D` is its 1100 step, the dark action blue `#2EA9FF` its 400 step |
+| Brand | `#0065AB` | the whole blue ramp is re-anchored on it (hue ~205); the rail navy `#01243D` is its 1100 step, the dark action blue `#2EA9FF` its 400 step |
 
 Clarity dark and DirectAdmin Evolution read as one family — desaturated dark
-blue-grey surfaces with a light action blue. the earlier name sits deliberately in
-that family while staying unmistakably Earlier (the navy rail and every
+blue-grey surfaces with a light action blue. Clarity Theme for ISPConfig sits deliberately in
+that family while staying unmistakably its own (the navy rail and every
 interactive element derive from `#0065AB`).
 
 ## 2. Principles
@@ -48,7 +48,7 @@ interactive element derive from `#0065AB`).
 
 ```
 ┌──────────┬──────────────────────────────────────────────┐
-│  ◧ earlier  │ [☰] (  ⌕ Search………………… )        ●3  ⏻ Logout │  topbar 60px
+│  ◧ logo  │ [☰] (  ⌕ Search………………… )        ●3  ⏻ Logout │  topbar 60px
 │──────────│──────────────────────────────────────────────│
 │ ▍Home    │  Page title 24/500                           │
 │  Help    │  MICRO-HEADER                                │
@@ -131,7 +131,7 @@ changes per mode.
 ## 7. White-labeling
 
 The logo is a plain file: replace
-`themes/earlier-dark/assets/images/wordmark-white.svg` with any SVG/PNG
+`themes/clarity/assets/images/wordmark-white.svg` with any SVG/PNG
 (white/light artwork recommended — it always sits on the navy brand
 band). Heights are fixed in CSS; width follows the file's aspect ratio.
 
@@ -144,7 +144,7 @@ titles 14/600 (micro-header family), weights 400/500/600 only.
 
 ## 9. Architecture (how it stays upgrade-safe)
 
-- `themes/earlier-dark/` is **self-contained**: own templates
+- `themes/clarity/` is **self-contained**: own templates
   (`main.tpl.htm`, `topnav.tpl.htm`, `main_login.tpl.htm`), own CSS
   (`tokens.css` → `base.css` → `app.css` → `components.css`, login pages:
   `tokens.css` → `login.css`), own fonts/favicons/logo.
@@ -154,7 +154,7 @@ titles 14/600 (micro-header family), weights 400/500/600 only.
   **not loaded**; their functional subset (flags sprite, sort-glyph
   mechanics, float utilities, overlay-label meters, …) is ported into
   `base.css` (function only, no skin).
-- Every stock JS contract is honored — see `themes/earlier-dark/BUILT-AGAINST.txt`
+- Every stock JS contract is honored — see `themes/clarity/BUILT-AGAINST.txt`
   for the full list and the `ispconfig_version` gating rules (stamped by
   `install.sh`).
 - Validation harness: `mockup/build.py` renders the theme's real templates
@@ -164,7 +164,7 @@ titles 14/600 (micro-header family), weights 400/500/600 only.
 
 ## 10. Reusing the DNA elsewhere
 
-1. Copy `themes/earlier-dark/assets/stylesheets/earlier/tokens.css` verbatim.
+1. Copy `themes/clarity/assets/stylesheets/clarity/tokens.css` verbatim.
 2. Reference `--nz-*` aliases only.
 3. Follow §3/§4 shapes. The look survives any markup because every surface,
    edge and state derives from the same three ramps.
@@ -183,7 +183,7 @@ Deliberate deviations (each for brand, anatomy, or WCAG):
 
 | Deviation | Clarity says | Why we differ |
 |---|---|---|
-| Blue ramp anchored `#0065AB` (hue 205) | hue-198 blues | Earlier brand; role mapping mirrors Clarity |
+| Blue ramp anchored `#0065AB` (hue 205) | hue-198 blues | Brand blue; role mapping mirrors Clarity |
 | Page = construction-1100 | app bg = construction-1000 | 2-step card-on-page elevation (DirectAdmin anatomy) |
 | Card 8px / modal 10px / login 14px radius | 4px | card-elevation family |
 | Translucent hairlines on cards/rows | solid construction-500/400 borders | quieter data chrome |

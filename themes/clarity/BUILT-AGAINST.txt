@@ -1,0 +1,47 @@
+CLARITY THEME FOR ISPCONFIG (clarity v2) — build provenance
+==============================================
+
+Built against ISPConfig 3.3.1p1 (derived from the ISPConfig develop tree,
+c84a1bd, whose stock shell templates were verified byte-identical to a
+production 3.3.1p1 install on 2026-07-08).
+
+WHAT THIS THEME OVERRIDES (all upgrade-safe, no core modification):
+  templates/main.tpl.htm        - complete app-frame rewrite (brand rail +
+                                  topbar + content column). Preserves every
+                                  JS contract of the stock shell: #container/
+                                  .pushy/.site-overlay/.menu-btn (pushy.js),
+                                  #topnav-container + #sidebar (nav.php AJAX
+                                  sinks), #content, form#pageForm[name] >
+                                  #pageContent[data-startpage], .notification
+                                  (inline display:none) + #datalogModal, the
+                                  #globalsearch init block, and the full stock
+                                  template-variable set (see the research notes
+                                  in DESIGN.md).
+  templates/topnav.tpl.htm      - module nav re-markup for the vertical rail.
+                                  Keeps <nav id='main-navigation'> and per-item
+                                  data-capp / data-icon-class / active class —
+                                  the exact attributes ispconfig.js delegates
+                                  and responsive.js's pushy clone read.
+  templates/main_login.tpl.htm  - fresh login scene (renders the stock
+                                  login/templates/*.htm content unchanged via
+                                  tmpl_dyninclude).
+  sidenav.tpl.htm is NOT overridden - the stock tree markup is styled
+                                  generically under #sidebar.
+
+VENDOR DEPENDENCIES (loaded from themes/default — theme assets have NO
+fallback, so these explicit paths must exist):
+  bootstrap.min.css, fonts.min.css (ispconfig icon font), pushy.min.css,
+  bootstrap-datetimepicker.min.css, select2.css, select2-bootstrap.css,
+  font-awesome-4.7.0/, bootstrap-icons.min.css, and all stock JS
+  (bootstrap, ispconfig.js, modernizr, pushy, responsive, datetimepicker).
+DELIBERATELY NOT LOADED (replaced by this theme's CSS):
+  ispconfig.css, themes/default/theme.min.css, responsive.min.css, login.css.
+  Their functional subset (flags sprite, sort-glyph mechanics, float
+  utilities, etc.) is ported into assets/stylesheets/clarity/base.css.
+
+THE ispconfig_version FILE IS REQUIRED — and is install-specific.
+ISPConfig gates themes by an EXACT match of ISPC_APP_VERSION under two
+filenames (ispconfig_version gates login + user pickers; ISPC_VERSION gates
+the admin default-settings picker). ../../install.sh stamps both; re-run it
+after every ISPConfig upgrade, and re-diff the overridden templates against
+the new stock ones (main.tpl.htm, topnav.tpl.htm, main_login.tpl.htm).
