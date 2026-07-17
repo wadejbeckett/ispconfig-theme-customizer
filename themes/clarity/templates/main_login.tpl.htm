@@ -35,6 +35,10 @@
   <link rel='stylesheet' href='../themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/tokens.css?ver=4' />
   <link rel='stylesheet' href='../themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/icons.css?ver=4' />
   <link rel='stylesheet' href='../themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/login.css?ver=4' />
+
+  <!-- host branding overrides, read from ISPConfig's sys_ini (logo/accent/login).
+       Absolute path so it resolves from /login/; empty no-op when nothing is set. -->
+  <link rel='stylesheet' href='/themes/<tmpl_var name='current_theme'>/brand.php'>
 </head>
 
 <body class='nz-login'>
@@ -48,7 +52,8 @@
       <div class='nzl-custom'><small><tmpl_var name="custom_login"></small></div>
     </main>
     <footer class='nzl-footer'>
-      powered by <a href="<tmpl_var name="app_link">" target="_blank" rel="noopener"><tmpl_var name="app_title"></a>
+      <span class='nz-credit-ispconfig'>powered by <a href="<tmpl_var name="app_link">" target="_blank" rel="noopener"><tmpl_var name="app_title"></a></span>
+      <span class='nz-credit-theme'> &middot; <a href="https://github.com/wadejbeckett/clarity-theme-ispconfig" target="_blank" rel="noopener">Clarity theme</a></span>
     </footer>
   </div>
 

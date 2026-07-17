@@ -43,6 +43,10 @@
   <link rel='stylesheet' href='themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/base.css?ver=4' />
   <link rel='stylesheet' href='themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/app.css?ver=4' />
   <link rel='stylesheet' href='themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/components.css?ver=5' />
+
+  <!-- host branding overrides, read from ISPConfig's sys_ini (logo/accent/login/credits).
+       Loaded last so it owns the cascade; an empty no-op when nothing is set. -->
+  <link rel='stylesheet' href='/themes/<tmpl_var name='current_theme'>/brand.php'>
 </head>
 
 <body class='nz'>
@@ -134,7 +138,8 @@
       </main>
 
       <footer id='footer'>
-        powered by <a href="<tmpl_var name="app_link">" target="_blank"><tmpl_var name="app_title"></a>
+        <span class='nz-credit-ispconfig'>powered by <a href="<tmpl_var name="app_link">" target="_blank" rel="noopener"><tmpl_var name="app_title"></a></span>
+        <span class='nz-credit-theme'> &middot; <a href="https://github.com/wadejbeckett/clarity-theme-ispconfig" target="_blank" rel="noopener">Clarity theme</a></span>
       </footer>
     </div>
   </div>

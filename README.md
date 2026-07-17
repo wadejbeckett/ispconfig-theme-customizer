@@ -100,12 +100,37 @@ files, change it back to `'default'` in both.
 ## White-labeling
 
 The theme ships with neutral **ISPConfig** default branding — no third-party
-marks — so it's ready to use as-is or to brand for any organisation. Two
-single-touch swaps are all it takes, no CSS or template edits:
+marks — so it's ready to use as-is or to brand for any organisation.
+
+### From the panel (recommended) — the Customizer
+
+Clarity is **brand-aware**: it reads a small set of values from ISPConfig's own
+database and re-skins itself to match — your logo, an accent colour, the sidebar
+colour, the login background, the panel name, and whether the footer credit lines
+show. Set them all from an admin page by installing
+[ispconfig-customizer](https://github.com/wadejbeckett/ispconfig-customizer), the
+standalone branding module. Nothing to edit; the values survive theme and panel
+updates.
+
+> **Logo:** the theme honours ISPConfig's native `sys_ini.custom_logo` field, so
+> a custom logo shows with no theme edit. Note that the *stock* panel's built-in
+> logo uploader is currently non-functional, so in practice you set the logo with
+> the Customizer (which provides a working uploader). When no custom logo is set,
+> the theme shows its own neutral wordmark.
+
+The values Clarity reads are the shared **brand-token contract** documented in the
+Customizer's README — the same contract any theme can adopt. Clarity's reader is
+`themes/clarity/brand.php`: a small, read-only, pre-auth stylesheet endpoint you
+can use as a reference implementation.
+
+### By file (no module needed)
+
+You can also brand it with two file swaps — no CSS or template edits:
 
 - **Wordmark** — replace `themes/clarity/assets/images/wordmark-white.svg`
   with your own logo (white/light artwork — it sits on the navy brand band in
-  the sidebar, mobile header, and login card). Any aspect ratio works.
+  the sidebar, mobile header, and login card). Any aspect ratio works. (A logo
+  set via the Customizer / native field overrides this.)
 - **Favicons** — drop your own set into `themes/clarity/assets/favicon/`.
 
 ## Repo layout
@@ -113,6 +138,7 @@ single-touch swaps are all it takes, no CSS or template edits:
 | Path | What |
 |---|---|
 | `themes/clarity/` | The theme: 3 templates + 6 stylesheets + fonts/brand assets. |
+| `themes/clarity/brand.php` | Brand-token reader: a read-only, pre-auth stylesheet endpoint that applies host branding (logo/accent/login/credits) from `sys_ini`. A no-op when nothing is set. |
 | `themes/clarity/BUILT-AGAINST.txt` | Exactly what is overridden and why it's upgrade-safe. |
 | `install.sh` | Installer (symlink or copy + version stamping). |
 | `DESIGN.md` | The design language — tokens, surfaces, component rules. |
