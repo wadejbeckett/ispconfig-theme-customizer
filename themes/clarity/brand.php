@@ -34,6 +34,7 @@ header('Content-Type: text/css; charset=utf-8');
 /* ---- read the contract (direct, minimal, side-effect-free) ---- */
 $branding    = array();
 $custom_logo = '';
+$read_ok     = false; // true only when the sys_ini read actually succeeded
 
 $config_inc = __DIR__ . '/../../../lib/config.inc.php'; // interface/lib/config.inc.php
 if (is_readable($config_inc)) {
@@ -51,8 +52,10 @@ if (is_readable($config_inc)) {
             if ($mysqli && !$mysqli->connect_errno) {
                 @$mysqli->set_charset('utf8mb4');
                 if ($res = @$mysqli->query('SELECT config, custom_logo FROM sys_ini WHERE sysini_id = 1')) {
+                    $read_ok = true;
                     if ($row = $res->fetch_assoc()) {
-                        $branding    = brand_parse_ini_section((string)$row['config'], 'branding');
+                        $parsed      = brand_parse_config((string)$row['config']);
+                        $branding    = (isset($parsed['branding']) && is_array($parsed['branding'])) ? $parsed['branding'] : array();
                         $custom_logo = (string)$row['custom_logo'];
                     }
                 }
@@ -64,6 +67,7 @@ if (is_readable($config_inc)) {
             // any DB fault -> emit empty CSS; never leak an error on this pre-auth route
             $branding    = array();
             $custom_logo = '';
+            $read_ok     = false;
         }
     }
 }
@@ -72,16 +76,23 @@ if (is_readable($config_inc)) {
 // and browsers reject a standards-mode stylesheet whose type isn't text/css.
 header('Content-Type: text/css; charset=utf-8');
 
-/* ---- revalidation: cheap ETag so accent/logo changes bust cache ---- */
-$etag = '"' . md5(serialize($branding) . '|' . md5($custom_logo)) . '"';
-header('ETag: ' . $etag);
-// Cache briefly so this isn't a blocking round-trip on every full page load;
-// the branding is global (same for everyone), and a saved change appears within
-// max-age or on a hard refresh (Ctrl+Shift+R).
-header('Cache-Control: public, max-age=60');
-if (isset($_SERVER['HTTP_IF_NONE_MATCH']) && trim($_SERVER['HTTP_IF_NONE_MATCH']) === $etag) {
-    http_response_code(304);
-    exit;
+/* ---- caching ----------------------------------------------------------------
+ * On a good read, cache briefly (with an ETag) so this isn't a blocking round-
+ * trip on every full page load; the branding is global, so a saved change
+ * appears within max-age or on a hard refresh. 'private' keeps it out of shared
+ * / reverse-proxy caches. On a DB fault we still emit an (empty) sheet but must
+ * NOT cache it — otherwise a transient outage would blank the host's branding
+ * for the whole max-age window even after the DB recovers. */
+if ($read_ok) {
+    $etag = '"' . md5(serialize($branding) . '|' . md5($custom_logo)) . '"';
+    header('ETag: ' . $etag);
+    header('Cache-Control: private, max-age=30');
+    if (isset($_SERVER['HTTP_IF_NONE_MATCH']) && trim($_SERVER['HTTP_IF_NONE_MATCH']) === $etag) {
+        http_response_code(304);
+        exit;
+    }
+} else {
+    header('Cache-Control: no-store');
 }
 
 /* ---- resolve + validate the contract values ---- */
@@ -112,8 +123,7 @@ if ($accent !== '') {
     $base   = brand_shade($accent, 34); // ~ blue-700
 
     if ($rail !== '') {
-        $root .= "  --nz-rail: {$rail};\n";
-        $root .= '  --nz-rail-active: ' . brand_shade($rail, 15) . ";\n";
+        $root .= brand_rail_vars($rail);
     }
     $root .= '  --nz-focus-ring: '   . brand_rgba($bright, 0.40) . ";\n";
     $root .= '  --nz-selection-bg: ' . brand_rgba($bright, 0.35) . ";\n";
@@ -140,7 +150,7 @@ if ($accent !== '') {
     $css   .= ":root[data-nz-theme='light'] {\n{$light}}\n";
 } elseif ($rail !== '') {
     // rail set without an accent — just the navy band
-    $css .= ":root {\n  --nz-rail: {$rail};\n  --nz-rail-active: " . brand_shade($rail, 15) . ";\n}\n";
+    $css .= ":root {\n" . brand_rail_vars($rail) . "}\n";
 }
 
 /* ---- login background ---- */
@@ -168,7 +178,9 @@ if ($custom_logo !== '' && preg_match('#^data:image/[a-z0-9.+-]+;base64,[A-Za-z0
 }
 
 /* ---- attribution courtesy lines (source license notices are untouched) ---- */
-if (!$show_ispc)  { $css .= ".nz-credit-ispconfig { display: none; }\n"; }
+// hide the ' · ' separator together with the ISPConfig credit, so the theme
+// credit never renders with an orphaned leading middot
+if (!$show_ispc)  { $css .= ".nz-credit-ispconfig, .nz-credit-sep { display: none; }\n"; }
 if (!$show_theme) { $css .= ".nz-credit-theme { display: none; }\n"; }
 
 echo $css;
@@ -177,20 +189,31 @@ echo $css;
  * Helpers — pure, dependency-free.
  * ============================================================ */
 
-/** Extract one INI section's scalar key/values, robust to the rest of the blob. */
-function brand_parse_ini_section($config, $section)
+/**
+ * Parse the whole sys_ini config blob with ISPConfig's own INI reader, so this
+ * reader can never drift from the customizer's writer (which serialises with the
+ * same framework class). ini_parser.inc.php is a pure, dependency-free class —
+ * safe to require on this pre-auth path. Falls back to '' if it's ever missing.
+ */
+function brand_parse_config($config)
 {
-    $out = array();
-    $pattern = '/^\[' . preg_quote($section, '/') . '\]\s*$(.*?)(?=^\[|\z)/ms';
-    if (!preg_match($pattern, $config, $m)) {
-        return $out;
-    }
-    foreach (preg_split('/\r?\n/', $m[1]) as $line) {
-        if (preg_match('/^\s*([A-Za-z0-9_]+)\s*=\s*(.*?)\s*$/', $line, $kv)) {
-            $out[strtolower($kv[1])] = $kv[2];
+    $parser_file = __DIR__ . '/../../../lib/classes/ini_parser.inc.php';
+    if (is_readable($parser_file)) {
+        require_once $parser_file;
+        if (class_exists('ini_parser')) {
+            $p   = new ini_parser();
+            $out = $p->parse_ini_string(stripslashes($config));
+            return is_array($out) ? $out : array();
         }
     }
-    return $out;
+    return array();
+}
+
+/** The two rail custom-properties, emitted identically wherever rail is set. */
+function brand_rail_vars($rail)
+{
+    return "  --nz-rail: {$rail};\n" .
+           '  --nz-rail-active: ' . brand_shade($rail, 15) . ";\n";
 }
 
 /** Return a validated #rrggbb value from the branding array, or '' if absent/invalid. */
