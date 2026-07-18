@@ -16,6 +16,7 @@ $tform_def_file = "form/customizer.tform.php";
 
 require_once '../../lib/config.inc.php';
 require_once '../../lib/app.inc.php';
+require_once __DIR__ . '/lib/preview.inc.php';
 
 //* admin-only
 $app->auth->check_module_permissions('customizer');
@@ -30,6 +31,12 @@ $app->load('tform_actions');
 //* getCurrentTab() reads $_SESSION['s']['form']['tab']; if that is empty (fresh
 //* session, or set by another form), tform_base hits count(null) and fatals on PHP 8.
 $_SESSION['s']['form']['tab'] = 'branding';
+
+//* Singleton settings form backed by sys_ini row 1. Force id=1 so a request
+//* without ?id=1 (a bookmark, a manual URL) is always treated as an EDIT, never
+//* an INSERT — the framework's insert path would build a bogus INSERT into
+//* sys_ini using form-field names as columns and die with a raw SQL error.
+$_GET['id'] = $_POST['id'] = $_REQUEST['id'] = 1;
 
 class page_action extends tform_actions {
 
@@ -111,12 +118,8 @@ class page_action extends tform_actions {
     private function render_logo_preview() {
         global $app;
         $sys_ini = $app->db->queryOneRecord("SELECT custom_logo FROM sys_ini WHERE sysini_id = 1");
-        $logo = (is_array($sys_ini) && isset($sys_ini['custom_logo'])) ? (string)$sys_ini['custom_logo'] : '';
-        //* only render a value that is a real image data-URI (defence-in-depth vs a tampered column)
-        if($logo !== '' && preg_match('#^data:image/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$#i', $logo)) {
-            return '<img src="' . $logo . '" alt="" style="max-height:48px;max-width:220px;background:#01243D;padding:6px 12px;border-radius:4px" />';
-        }
-        return '<em>' . $app->lng('no_logo_set_txt') . '</em>';
+        $logo = (is_array($sys_ini) && isset($sys_ini['custom_logo'])) ? $sys_ini['custom_logo'] : '';
+        return customizer_logo_preview_html($logo, $app->lng('no_logo_set_txt'));
     }
 }
 

@@ -92,8 +92,15 @@ $form["tabs"]['branding'] = array(
         'custom_login_link' => array(
             'datatype' => 'VARCHAR',
             'formtype' => 'TEXT',
+            'filters'  => array(
+                0 => array('event' => 'SAVE', 'type' => 'STRIPTAGS'),
+                1 => array('event' => 'SAVE', 'type' => 'STRIPNL'),
+            ),
+            //* core login/index.php renders this unescaped inside <a href="...">, so the
+            //* value must not contain a quote/space/angle-bracket that could break out of
+            //* the attribute. Anchored, and no attribute-breaking chars allowed.
             'validators' => array(
-                0 => array('type' => 'REGEX', 'regex' => '/^(http|https):\/\/.*|^$/', 'errmsg' => 'login_link_error_regex'),
+                0 => array('type' => 'REGEX', 'regex' => '/^(https?:\/\/[^\s"\'<>]+)?$/', 'errmsg' => 'login_link_error_regex'),
             ),
             'default' => '',
             'value'   => ''

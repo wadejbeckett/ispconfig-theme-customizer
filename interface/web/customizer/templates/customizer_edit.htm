@@ -19,12 +19,12 @@
   <div class="form-group">
     <label for="file" class="col-sm-3 control-label">{tmpl_var name='logo_txt'}</label>
     <div class="col-sm-6 col-text">
-      <input name="file" id="file" size="30" type="file" class="fileUpload" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" />
+      <input name="file" id="file" size="30" type="file" class="fileUpload" accept="image/png,image/jpeg,image/gif,image/webp" />
       <p class="help-block">{tmpl_var name='logo_hint_txt'}</p>
     </div>
     <div class="col-sm-3">
       <button class="btn btn-default formbutton-success" type="button" data-submit-form="pageForm" data-form-action="customizer/logo_upload.php" data-form-upload="true">{tmpl_var name='upload_txt'}</button>
-      <a href="javascript:void(0);" class="btn btn-default" data-load-content="customizer/logo_delete.php">{tmpl_var name='logo_remove_txt'}</a>
+      <a href="javascript:void(0);" class="btn btn-default" id="nz-logo-remove">{tmpl_var name='logo_remove_txt'}</a>
     </div>
   </div>
 </fieldset>
@@ -117,5 +117,19 @@
   sync('accent_hex', 'accent_hex_pick');
   sync('rail_hex', 'rail_hex_pick');
   sync('login_bg', 'login_bg_pick');
+
+  // Remove-logo: send the page's CSRF token as query params so logo_delete.php
+  // can enforce csrf_token_check('GET') (loadContent issues a same-origin XHR).
+  var rm = document.getElementById('nz-logo-remove');
+  if (rm && window.ISPConfig && typeof ISPConfig.loadContent === 'function') {
+    rm.addEventListener('click', function () {
+      var idf = document.querySelector('#pageForm input[name="_csrf_id"]');
+      var keyf = document.querySelector('#pageForm input[name="_csrf_key"]');
+      ISPConfig.loadContent('customizer/logo_delete.php', {
+        _csrf_id: idf ? idf.value : '',
+        _csrf_key: keyf ? keyf.value : ''
+      });
+    });
+  }
 })();
 </script>

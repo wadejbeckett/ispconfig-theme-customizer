@@ -15,8 +15,11 @@ change it, ship it, brand it — for yourself or your clients — no strings.
 
 ## What it does
 
-- **Logo** — upload once; it replaces the panel logo everywhere (sidebar, mobile
-  header, login). Stored in ISPConfig's native `custom_logo` field.
+- **Logo** — upload once (PNG, JPEG, GIF or WebP, under 45 KB); it replaces the
+  panel logo everywhere (sidebar, mobile header, login). Stored in ISPConfig's
+  native `custom_logo` field. SVG isn't accepted: ISPConfig's stock login page
+  measures the logo with `getimagesizefromstring()`, which can't read SVG and
+  warns on every login — an optimised PNG or WebP avoids that.
 - **Panel name** — the name shown in the browser title and footer.
 - **Accent colour / sidebar colour / login background** — pick a hex; a
   brand-aware theme re-skins itself to match, in both dark and light modes.

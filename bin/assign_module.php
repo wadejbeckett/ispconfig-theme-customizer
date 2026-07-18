@@ -21,10 +21,20 @@ if(!isset($conf) || !is_array($conf) || empty($conf['db_host'])) {
     exit(1);
 }
 
+//* PHP 8.1+ makes mysqli throw by default; turn that off so the connect_errno /
+//* error-return idiom below stays live and we can report failures cleanly.
+if(function_exists('mysqli_report')) {
+    mysqli_report(MYSQLI_REPORT_OFF);
+}
+
 $port = isset($conf['db_port']) ? (int)$conf['db_port'] : 3306;
-$m = @new mysqli($conf['db_host'], $conf['db_user'], $conf['db_password'], $conf['db_database'], $port);
-if($m->connect_errno) {
-    fwrite(STDERR, "ERROR: database connection failed: " . $m->connect_error . "\n");
+try {
+    $m = @new mysqli($conf['db_host'], $conf['db_user'], $conf['db_password'], $conf['db_database'], $port);
+} catch(\Throwable $e) {
+    $m = false;
+}
+if(!$m || $m->connect_errno) {
+    fwrite(STDERR, "ERROR: database connection failed" . ($m ? ": " . $m->connect_error : "") . "\n");
     exit(1);
 }
 

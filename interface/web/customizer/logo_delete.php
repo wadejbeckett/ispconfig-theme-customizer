@@ -24,6 +24,11 @@ if(!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQU
     die('Direct access not allowed.');
 }
 
+//* require a valid CSRF token too (defence in depth; matches ISPConfig's own
+//* delete flow, which enforces csrf_token_check('GET')). The editor's Remove
+//* control passes the page's token as _csrf_id/_csrf_key query params.
+$app->auth->csrf_token_check('GET');
+
 if($conf['demo_mode'] != true) {
     $app->db->query("UPDATE sys_ini SET custom_logo = '' WHERE sysini_id = 1");
 }

@@ -4,11 +4,12 @@ $wb['customizer_desc_txt'] = 'Brand this control panel as your own. Settings are
 
 $wb['logo_head_txt'] = 'Logo';
 $wb['logo_txt'] = 'Logo file';
-$wb['logo_hint_txt'] = 'Choose a file, then click "Upload logo" — the logo uploads on its own, separately from the Save button at the bottom. PNG, SVG, JPEG, GIF or WebP, under 45 KB. Light artwork works best — it sits on the dark sidebar and login band.';
+$wb['logo_hint_txt'] = 'Choose a file, then click "Upload logo" — the logo uploads on its own, separately from the Save button at the bottom. PNG, JPEG, GIF or WebP, under 45 KB. Light artwork works best — it sits on the dark sidebar and login band.';
 $wb['upload_txt'] = 'Upload logo';
 $wb['logo_remove_txt'] = 'Remove';
 $wb['used_logo_txt'] = 'Current logo';
-$wb['no_logo_set_txt'] = 'No custom logo set — the theme shows its own default.';
+// no_logo_set_txt is resolved via $app->lng(), which reads lib/lang/en.lng — the
+// copy that used to live here was dead (this file feeds the tform wordbook only).
 
 $wb['brand_head_txt'] = 'Name & colours';
 $wb['company_name_txt'] = 'Panel name';
@@ -34,9 +35,11 @@ $wb['login_link_error_regex'] = 'The login footnote link must start with http://
 
 $wb['logo_uploaded_txt'] = 'Logo updated.';
 $wb['logo_removed_txt'] = 'Logo removed.';
-$wb['logo_bad_type_txt'] = 'Unsupported image type. Use PNG, SVG, JPEG, GIF or WebP.';
-$wb['logo_too_large_txt'] = 'That image is too large. Keep it under 45 KB — an SVG or an optimised PNG works best.';
+$wb['logo_bad_type_txt'] = 'Unsupported image type. Use PNG, JPEG, GIF or WebP.';
+$wb['logo_too_large_txt'] = 'That image is too large. Keep it under 45 KB — an optimised PNG or WebP works best.';
 $wb['no_file_uploaded_error'] = 'No file was selected.';
+$wb['upload_failed_txt'] = 'The upload did not complete. Please try again.';
+$wb['demo_mode_txt'] = 'This function is disabled in demo mode.';
 
 $wb['btn_save_txt'] = 'Save';
 $wb['btn_cancel_txt'] = 'Cancel';

@@ -11,18 +11,30 @@
  * Validates MIME + size, writes a data-URI into sys_ini.custom_logo, and
  * re-renders form.tpl.htm so the response carries #OKMsg/#errorMsg plus a
  * fresh CSRF token pair (which submitUploadForm scrapes back into the page).
+ * The success #OKMsg also embeds the new thumbnail, because the uploader
+ * driver only re-applies #OKMsg/#errorMsg — never the #used_logo element.
  */
 
 require_once '../../lib/config.inc.php';
 require_once '../../lib/app.inc.php';
+require_once __DIR__ . '/lib/preview.inc.php';
 
 //* admin-only
 $app->auth->check_module_permissions('customizer');
 $app->auth->check_security_permissions('admin_allow_system_config');
 if(!$app->auth->is_admin()) die('Allowed for administrators only.');
 
+//* A POST body larger than post_max_size arrives with $_POST and $_FILES both
+//* empty (only Content-Length survives). The CSRF token then can't be present,
+//* so csrf_token_check() would die with a misleading "CSRF blocked" message —
+//* detect the overflow first and report it as an oversize file instead.
+$post_overflow = ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && empty($_FILES)
+    && isset($_SERVER['CONTENT_LENGTH']) && (int)$_SERVER['CONTENT_LENGTH'] > 0);
+
 //* reject forged cross-site posts (halts on failure)
-$app->auth->csrf_token_check('POST');
+if(!$post_overflow) {
+    $app->auth->csrf_token_check('POST');
+}
 
 $app->uses('tpl');
 $app->tpl->newTemplate("form.tpl.htm");
@@ -39,56 +51,73 @@ $error = array();
 
 $max_raw = 45000; // bytes of raw image; base64 (~x1.37) must fit the ~64 KB TEXT column
 $allowed = array(
-    'image/png'     => true,
-    'image/jpeg'    => true,
-    'image/gif'     => true,
-    'image/webp'    => true,
-    'image/svg+xml' => true,
+    'image/png'  => true,
+    'image/jpeg' => true,
+    'image/gif'  => true,
+    'image/webp' => true,
+    // NOTE: SVG is intentionally NOT accepted. Core login/index.php feeds
+    // custom_logo to getimagesizefromstring(), which returns false for SVG and
+    // then warns + mis-sizes the stock-theme logo on every login render.
 );
 
-if(isset($_FILES['file']['name']) && is_uploaded_file($_FILES['file']['tmp_name'])) {
-    $data = file_get_contents($_FILES['file']['tmp_name']);
-    $size = strlen($data);
+$data_uri  = null; // set to the stored value on a successful upload
+$upload_ok = false;
 
-    $mime = '';
-    if(function_exists('finfo_open')) {
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        if($finfo) {
-            $mime = (string)finfo_file($finfo, $_FILES['file']['tmp_name']);
-            finfo_close($finfo);
-        }
-    }
-    //* SVG is often sniffed as text/xml or plain text — confirm by content
-    if(($mime === 'text/plain' || $mime === 'text/xml' || $mime === 'application/xml' || $mime === '')
-        && preg_match('/<svg[\s>]/i', substr($data, 0, 1024))) {
-        $mime = 'image/svg+xml';
-    }
-
-    if(!isset($allowed[$mime])) {
-        $error[] = $app->lng('logo_bad_type_txt');
-    } elseif($size <= 0 || $size > $max_raw) {
-        $error[] = $app->lng('logo_too_large_txt');
-    } else {
-        $data_uri = 'data:' . $mime . ';base64,' . base64_encode($data);
-        //* direct UPDATE (not datalogUpdate) — a 48 KB blob has no place in sys_datalog
-        if($conf['demo_mode'] != true) {
-            $app->db->query("UPDATE sys_ini SET custom_logo = ? WHERE sysini_id = 1", $data_uri);
-            $msg[] = $app->lng('logo_uploaded_txt');
-        }
-    }
-} elseif(isset($_FILES['file']['name'])) {
-    $error[] = $app->lng('no_file_uploaded_error');
+if($post_overflow) {
+    $error[] = $app->lng('logo_too_large_txt');
 } else {
-    $error[] = $app->lng('no_file_uploaded_error');
+    //* map PHP's own upload error before touching the file
+    $err = isset($_FILES['file']['error']) ? $_FILES['file']['error'] : UPLOAD_ERR_NO_FILE;
+
+    if($err === UPLOAD_ERR_INI_SIZE || $err === UPLOAD_ERR_FORM_SIZE) {
+        $error[] = $app->lng('logo_too_large_txt');
+    } elseif($err === UPLOAD_ERR_NO_FILE || !isset($_FILES['file']['name']) || $_FILES['file']['name'] === '') {
+        $error[] = $app->lng('no_file_uploaded_error');
+    } elseif($err !== UPLOAD_ERR_OK || !is_uploaded_file($_FILES['file']['tmp_name'])) {
+        $error[] = $app->lng('upload_failed_txt');
+    } else {
+        $data = file_get_contents($_FILES['file']['tmp_name']);
+        $size = strlen($data);
+
+        $mime = '';
+        if(function_exists('finfo_open')) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            if($finfo) {
+                $mime = (string)finfo_file($finfo, $_FILES['file']['tmp_name']);
+                finfo_close($finfo);
+            }
+        }
+
+        if(!isset($allowed[$mime])) {
+            $error[] = $app->lng('logo_bad_type_txt');
+        } elseif($size <= 0 || $size > $max_raw) {
+            $error[] = $app->lng('logo_too_large_txt');
+        } elseif($conf['demo_mode'] == true) {
+            $error[] = $app->lng('demo_mode_txt');
+        } else {
+            $data_uri = 'data:' . $mime . ';base64,' . base64_encode($data);
+            //* direct UPDATE (not datalogUpdate) — a 48 KB blob has no place in sys_datalog
+            $app->db->query("UPDATE sys_ini SET custom_logo = ? WHERE sysini_id = 1", $data_uri);
+            $upload_ok = true;
+        }
+    }
 }
 
-//* refreshed preview — only render a value that is a real image data-URI
-$sys_ini = $app->db->queryOneRecord("SELECT custom_logo FROM sys_ini WHERE sysini_id = 1");
-$logo_val = (is_array($sys_ini) && isset($sys_ini['custom_logo'])) ? (string)$sys_ini['custom_logo'] : '';
-if($logo_val !== '' && preg_match('#^data:image/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$#i', $logo_val)) {
-    $app->tpl->setVar('used_logo', '<img src="' . $logo_val . '" alt="" style="max-height:48px;max-width:220px;background:#01243D;padding:6px 12px;border-radius:4px" />');
+//* Preview: on success use the value we just wrote (no redundant re-read);
+//* otherwise reflect whatever is currently stored.
+if($data_uri !== null) {
+    $current_logo = $data_uri;
 } else {
-    $app->tpl->setVar('used_logo', '<em>' . $app->lng('no_logo_set_txt') . '</em>');
+    $row = $app->db->queryOneRecord("SELECT custom_logo FROM sys_ini WHERE sysini_id = 1");
+    $current_logo = (is_array($row) && isset($row['custom_logo'])) ? (string)$row['custom_logo'] : '';
+}
+$preview = customizer_logo_preview_html($current_logo, $app->lng('no_logo_set_txt'));
+$app->tpl->setVar('used_logo', $preview);
+
+//* The iframe driver re-applies only #OKMsg/#errorMsg, so put the confirmation
+//* thumbnail inside the success message — that's what the admin actually sees.
+if($upload_ok) {
+    $msg[] = $app->lng('logo_uploaded_txt') . '<br />' . $preview;
 }
 
 $app->tpl->setVar('msg',   count($msg)   > 0 ? implode('<br />', $msg)   : '');
