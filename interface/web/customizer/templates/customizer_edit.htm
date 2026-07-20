@@ -1,12 +1,25 @@
 <div class="page-header">
-  <h1><tmpl_var name="customizer_title"> &mdash; <tmpl_var name="customizer_desc_txt"></h1>
+  <h1>{tmpl_var name='page_head_txt'}</h1>
+  <p>{tmpl_var name='customizer_desc_txt'}</p>
 </div>
 
-<tmpl_if name="msg">
-  <div id="OKMsg" class="alert alert-success clear"><tmpl_var name="msg"></div>
+<style>
+  /* keep the hex field and its colour swatch on one line (form-control is a
+     100%-width block in both the stock theme and Clarity) */
+  #pageContent input.nz-hexfield { display: inline-block; width: 9em; vertical-align: middle; }
+  #pageContent input.nz-hexpick  { height: 36px; width: 48px; padding: 2px 3px; margin-left: 8px;
+                                   vertical-align: middle; border: 0; background: none; cursor: pointer; }
+</style>
+
+<!-- Upload feedback only (logo_upload.php's iframe response — the uploader
+     driver scrapes #OKMsg/#errorMsg out of it). Deliberately NOT named msg/error:
+     the tabbed_form wrapper renders those vars itself, so reusing the names
+     would show every save/validation banner twice. -->
+<tmpl_if name="upload_msg">
+  <div id="OKMsg" class="alert alert-success clear"><tmpl_var name="upload_msg"></div>
 </tmpl_if>
-<tmpl_if name="error">
-  <div id="errorMsg" class="alert alert-danger clear"><tmpl_var name="error"></div>
+<tmpl_if name="upload_error">
+  <div id="errorMsg" class="alert alert-danger clear"><tmpl_var name="upload_error"></div>
 </tmpl_if>
 
 <fieldset>
@@ -23,7 +36,11 @@
       <p class="help-block">{tmpl_var name='logo_hint_txt'}</p>
     </div>
     <div class="col-sm-3">
-      <button class="btn btn-default formbutton-success" type="button" data-submit-form="pageForm" data-form-action="customizer/logo_upload.php" data-form-upload="true">{tmpl_var name='upload_txt'}</button>
+      <!-- no formbutton-success here: the stock Enter-key handler clicks EVERY
+           .tab-content button.formbutton-success, and triggering Upload alongside
+           Save fires an empty upload whose POST can consume the single-use CSRF
+           token before the save request is checked -->
+      <button class="btn btn-default" type="button" data-submit-form="pageForm" data-form-action="customizer/logo_upload.php" data-form-upload="true">{tmpl_var name='upload_txt'}</button>
       <a href="javascript:void(0);" class="btn btn-default" id="nz-logo-remove">{tmpl_var name='logo_remove_txt'}</a>
     </div>
   </div>
@@ -111,8 +128,19 @@
     if (!t || !p) return;
     var re = /^#[0-9A-Fa-f]{6}$/;
     if (re.test(t.value)) p.value = t.value;
-    p.addEventListener('input', function () { t.value = p.value.toUpperCase(); });
+    // 'input' alone is NOT enough: Firefox's native colour dialog only fires
+    // 'change' when it closes, so a picker-chosen colour never reached the
+    // named text field and every save posted an empty value.
+    function fromPick() { t.value = p.value.toUpperCase(); }
+    p.addEventListener('input', fromPick);
+    p.addEventListener('change', fromPick);
     t.addEventListener('input', function () { if (re.test(t.value)) p.value = t.value; });
+    // tolerate a pasted colour without the leading '#'
+    t.addEventListener('blur', function () {
+      var v = t.value.trim();
+      if (/^[0-9A-Fa-f]{6}$/.test(v)) v = '#' + v;
+      if (re.test(v)) { v = v.toUpperCase(); t.value = v; p.value = v; }
+    });
   }
   sync('accent_hex', 'accent_hex_pick');
   sync('rail_hex', 'rail_hex_pick');

@@ -76,7 +76,28 @@ class page_action extends tform_actions {
     function onShowEnd() {
         global $app;
         $app->tpl->setVar('used_logo', $this->render_logo_preview());
+        //* the post-save redirect appends msg=saved (see list_default in the form
+        //* definition) — without this banner a successful save is indistinguishable
+        //* from a silently failed one
+        if(isset($_GET['msg']) && $_GET['msg'] === 'saved' && $app->tform->errorMessage == '') {
+            $app->tpl->setVar('msg', $app->tform->lng('settings_saved_txt'));
+        }
         parent::onShowEnd();
+    }
+
+    //* Runs before the framework validates the POST. Users paste colours without
+    //* the leading '#' (and colour pickers hand back lowercase) — normalise here
+    //* so the REGEX validators accept what any reasonable person types.
+    function onBeforeUpdate() {
+        foreach(array('accent_hex', 'rail_hex', 'login_bg') as $k) {
+            if(isset($this->dataRecord[$k]) && is_string($this->dataRecord[$k])) {
+                $v = trim($this->dataRecord[$k]);
+                if(preg_match('/^[0-9A-Fa-f]{6}$/', $v)) $v = '#' . $v;
+                if(preg_match('/^#[0-9A-Fa-f]{6}$/', $v)) $v = strtoupper($v);
+                $this->dataRecord[$k] = $v;
+            }
+        }
+        parent::onBeforeUpdate();
     }
 
     function onUpdateSave($sql) {

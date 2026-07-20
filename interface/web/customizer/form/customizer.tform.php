@@ -14,15 +14,22 @@
  * The logo lives in the sys_ini.custom_logo column (handled by logo_upload.php).
  */
 
-$form["title"]        = "customizer_title";
-$form["description"]  = "customizer_desc_txt";
+//* Both empty ON PURPOSE: tform_base builds form_hint from title + description
+//* and the stock tabbed_form wrapper renders that INSIDE a <h1> above the tab
+//* strip (the description at heading size was the "text size is weird" bug).
+//* With an empty form_hint the wrapper header is suppressed and the page header
+//* in templates/customizer_edit.htm is the single source of title + description.
+$form["title"]        = "";
+$form["description"]  = "";
 $form["name"]         = "customizer";
 $form["action"]       = "customizer_edit.php";
 $form["db_table"]     = "sys_ini";
 $form["db_table_idx"] = "sysini_id";
 $form["db_history"]   = "no";
 $form["tab_default"]  = "branding";
-$form["list_default"] = "customizer_edit.php?id=1";
+//* after a save the framework redirects here; msg=saved makes the page show a
+//* confirmation banner (there is no list view for this singleton form)
+$form["list_default"] = "customizer_edit.php?id=1&msg=saved";
 $form["auth"]         = 'yes';
 
 $form["auth_preset"]["userid"]     = 0;

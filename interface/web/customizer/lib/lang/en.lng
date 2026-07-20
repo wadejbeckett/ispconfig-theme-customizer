@@ -1,5 +1,5 @@
 <?php
-$wb['top_menu_customizer'] = 'Customizer';
+$wb['top_menu_customizer'] = 'Branding';
 $wb['White-label'] = 'White-label';
 $wb['Branding'] = 'Branding';
 // resolved via $app->lng() in customizer_edit.php (the module lng is auto-loaded there)

@@ -120,8 +120,11 @@ if($upload_ok) {
     $msg[] = $app->lng('logo_uploaded_txt') . '<br />' . $preview;
 }
 
-$app->tpl->setVar('msg',   count($msg)   > 0 ? implode('<br />', $msg)   : '');
-$app->tpl->setVar('error', count($error) > 0 ? implode('<br />', $error) : '');
+//* upload_msg/upload_error, NOT msg/error: the content template keys its
+//* #OKMsg/#errorMsg blocks on these so the tabbed_form wrapper (which renders
+//* msg/error itself) can't double-display banners on the interactive page
+$app->tpl->setVar('upload_msg',   count($msg)   > 0 ? implode('<br />', $msg)   : '');
+$app->tpl->setVar('upload_error', count($error) > 0 ? implode('<br />', $error) : '');
 
 //* mint a fresh token for the next upload/save (submitUploadForm scrapes these)
 $csrf = $app->auth->csrf_token_get('customizer');

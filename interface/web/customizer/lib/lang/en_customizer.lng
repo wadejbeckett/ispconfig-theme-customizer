@@ -1,6 +1,8 @@
 <?php
 $wb['customizer_title'] = 'Branding';
-$wb['customizer_desc_txt'] = 'Brand this control panel as your own. Settings are stored in ISPConfig and survive panel and theme updates. A brand-aware theme (such as the Clarity theme) applies the colours; the logo and panel name also apply to the stock theme.';
+$wb['page_head_txt'] = 'Customizer';
+$wb['customizer_desc_txt'] = 'Brand this control panel as your own — the logo, name and colours are stored in ISPConfig and survive panel and theme updates.';
+$wb['settings_saved_txt'] = 'Settings saved. Colour changes appear after a full page refresh (F5).';
 
 $wb['logo_head_txt'] = 'Logo';
 $wb['logo_txt'] = 'Logo file';

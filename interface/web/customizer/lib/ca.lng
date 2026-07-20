@@ -2,6 +2,6 @@
 // Module-level strings. nav.php loads web/<module>/lib/<lang>.lng (this file) to
 // translate the TOP-menu title on every page, so top_menu_customizer must live
 // here — not only in lib/lang/en.lng (which is auto-loaded only inside the module).
-$wb['top_menu_customizer'] = 'Customizer';
+$wb['top_menu_customizer'] = 'Branding';
 $wb['White-label'] = 'White-label';
 $wb['Branding'] = 'Branding';
