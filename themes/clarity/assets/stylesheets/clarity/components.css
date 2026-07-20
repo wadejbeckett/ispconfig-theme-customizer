@@ -1366,3 +1366,13 @@ body.nz legend {
   border-bottom: 1px solid var(--nz-border-soft);
   padding-bottom: 6px;
 }
+
+/* bootstrap's .help-block (form hints under inputs) — Clarity doesn't load
+   bootstrap, so without this rule hints render at full body size */
+body.nz .help-block {
+  display: block;
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--nz-text-muted);
+}
