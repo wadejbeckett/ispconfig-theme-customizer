@@ -11,6 +11,8 @@
  *
  * Contract consumed (sys_ini, global row sysini_id = 1):
  *   custom_logo  column           -> logo (data URI), via CSS content:
+ *   config [branding] logo_url    -> logo by reference (root-relative path or
+ *                                    https URL); wins over custom_logo
  *   config [branding] accent_hex  -> re-hues the blue ramp + accents
  *   config [branding] rail_hex    -> the navy brand rail
  *   config [branding] login_bg    -> login-screen background base
@@ -168,13 +170,25 @@ if ($accent !== '' || $login_bg !== '') {
             "    {$base};\n}\n";
 }
 
-/* ---- logo: override the shipped wordmark with the host's custom_logo ---- */
-if ($custom_logo !== '' && preg_match('#^data:image/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$#i', $custom_logo)) {
+/* ---- logo: override the shipped wordmark ---- */
+// Source precedence: [branding] logo_url (a file the admin references — a
+// root-relative path, or an https URL) wins over the uploaded custom_logo
+// data URI. Both are validated with anchored character-class regexes so no
+// value can break out of the CSS url("...") context (no quotes, parens,
+// whitespace, angle brackets, or backslashes can pass).
+$logo_src = '';
+if (isset($branding['logo_url']) && is_string($branding['logo_url'])
+    && preg_match('#^(https://[^\s"\'<>()\\\\]+|/[^\s"\'<>()\\\\]+)$#', $branding['logo_url'])) {
+    $logo_src = $branding['logo_url'];
+} elseif ($custom_logo !== '' && preg_match('#^data:image/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$#i', $custom_logo)) {
+    $logo_src = $custom_logo;
+}
+if ($logo_src !== '') {
     // both dimensions auto + a max box -> the logo keeps its aspect ratio and fits,
     // for any width (the base rules pin a fixed height, which would distort wide logos).
-    $css .= "#logo img { content: url(\"{$custom_logo}\"); height: auto; width: auto; max-height: 26px; max-width: 180px; }\n";
-    $css .= ".nz-topbar-brand img { content: url(\"{$custom_logo}\"); height: auto; width: auto; max-height: 18px; max-width: 120px; }\n";
-    $css .= ".nzl-brand img { content: url(\"{$custom_logo}\"); height: auto; width: auto; max-height: 36px; max-width: 100%; }\n";
+    $css .= "#logo img { content: url(\"{$logo_src}\"); height: auto; width: auto; max-height: 26px; max-width: 180px; }\n";
+    $css .= ".nz-topbar-brand img { content: url(\"{$logo_src}\"); height: auto; width: auto; max-height: 18px; max-width: 120px; }\n";
+    $css .= ".nzl-brand img { content: url(\"{$logo_src}\"); height: auto; width: auto; max-height: 36px; max-width: 100%; }\n";
 }
 
 /* ---- attribution courtesy lines (source license notices are untouched) ---- */

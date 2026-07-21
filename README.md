@@ -115,8 +115,10 @@ updates.
 > **Logo:** the theme honours ISPConfig's native `sys_ini.custom_logo` field, so
 > a custom logo shows with no theme edit. Note that the *stock* panel's built-in
 > logo uploader is currently non-functional, so in practice you set the logo with
-> the Customizer (which provides a working uploader). When no custom logo is set,
-> the theme shows its own neutral wordmark.
+> the Customizer (which provides a working uploader). The Customizer's
+> `logo_url` override (a root-relative path or https URL in `[branding]`) takes
+> precedence over the uploaded logo when set. When neither is set, the theme
+> shows its own neutral wordmark.
 
 The values Clarity reads are the shared **brand-token contract** documented in the
 Customizer's README — the same contract any theme can adopt. Clarity's reader is
