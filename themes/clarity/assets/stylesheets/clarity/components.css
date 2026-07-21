@@ -1415,3 +1415,22 @@ body.nz .help-block {
   line-height: 1.45;
   color: var(--nz-text-muted);
 }
+
+/* ============================================================
+ * v2.2 LUMINOUS — consistency pass.
+ * The grammar allows glow on exactly four things; outside the
+ * login beam and chart fills, these are the other two.
+ * ============================================================ */
+
+@media (prefers-reduced-motion: no-preference) {
+  body.nz .btn.formbutton-success { transition: background var(--nz-quick) var(--nz-ease), box-shadow 0.2s var(--nz-ease); }
+}
+
+body.nz .btn.formbutton-success:hover,
+body.nz .btn.formbutton-success:focus-visible {
+  box-shadow: 0 0 0 1px var(--nz-glow-ring), 0 4px 18px var(--nz-glow-soft);
+}
+
+/* elevated surfaces pick up the glass light edge */
+body.nz .modal-content { box-shadow: var(--nz-shadow-pop), inset 0 1px 0 var(--nz-glass-edge); }
+body.nz .select2-drop  { box-shadow: var(--nz-shadow-pop), inset 0 1px 0 var(--nz-glass-edge); }

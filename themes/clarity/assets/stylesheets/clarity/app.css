@@ -784,3 +784,9 @@ body.nz #footer a:hover { color: var(--nz-link); }
     transition: none !important;
   }
 }
+
+/* v2.2 luminous: the active-module bar carries a quiet halo (rail-accent is
+   mode-stable, so this reads on the navy rail in both modes) */
+.nz-modnav-item.active::before {
+  box-shadow: 0 0 12px 1px color-mix(in srgb, var(--nz-rail-accent) 45%, transparent);
+}
