@@ -59,8 +59,20 @@ Pass your ISPConfig root if it isn't the default:
 > live somewhere world-traversable (e.g. `/opt`, not `/root`). The installer warns
 > you if it doesn't. Use `--copy` to avoid this entirely.
 
-To remove it: delete `interface/web/customizer` from your ISPConfig install and
-untick the module for your admin user. Your branding values remain in `sys_ini`.
+To remove it, run the uninstaller:
+
+```bash
+sudo ./uninstall.sh                    # removes the module + unassigns it from ALL users
+sudo ./uninstall.sh --purge-branding   # ...and also wipes every stored branding value
+```
+
+It removes `interface/web/customizer`, strips `customizer` from every user's
+module list (the installer assigns it to every admin account, and admins may
+have assigned it further), and resets any start-module that pointed at it. By
+default your branding values **survive** in `sys_ini` — reinstall-friendly, and
+the panel name / login text stay editable under *System > Interface Config*.
+`--purge-branding` drops the `[branding]` section, blanks the panel name /
+login text / login link, and clears the logo. ISPConfig core is never touched.
 
 ## Brand-token contract
 
