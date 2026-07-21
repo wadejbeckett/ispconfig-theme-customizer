@@ -6,6 +6,11 @@
   <script>try{document.documentElement.setAttribute('data-nz-theme',localStorage.getItem('nz-theme')||'dark')}catch(e){}</script>
 
   <title><tmpl_var name="company_name"><tmpl_var name="app_title"></title>
+  <!-- White-label: core bakes "Name :: " into company_name and the template
+       appends the product name, so a branded panel read "Name :: ISPConfig".
+       When a panel name is set, it IS the title; unbranded panels keep the
+       product name. (The template engine has no string ops — trim here.) -->
+  <script>(function(){var m=document.title.match(/^(.+?)\s*::\s*/);if(m)document.title=m[1];})();</script>
 
   <meta name='viewport' content='width=device-width, user-scalable=yes'>
   <meta name='description' lang='en' content='' />

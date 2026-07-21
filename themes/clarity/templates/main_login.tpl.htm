@@ -6,6 +6,9 @@
   <script>try{document.documentElement.setAttribute('data-nz-theme',localStorage.getItem('nz-theme')||'dark')}catch(e){}</script>
 
   <title><tmpl_var name="company_name"><tmpl_var name="app_title"></title>
+  <!-- White-label: same trim as main.tpl.htm — a set panel name replaces the
+       product name in the tab instead of prefixing it. -->
+  <script>(function(){var m=document.title.match(/^(.+?)\s*::\s*/);if(m)document.title=m[1];})();</script>
 
   <meta name='viewport' content='width=device-width, user-scalable=yes'>
   <meta name='description' lang='en' content='' />
