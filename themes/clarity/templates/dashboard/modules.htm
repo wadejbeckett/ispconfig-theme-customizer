@@ -1,0 +1,17 @@
+<!-- Clarity override of dashlets/templates/modules.htm (v2.2 luminous).
+     Contract pinned in BUILT-AGAINST.txt: available_modules_txt; loop modules
+     (modules_icon, modules_title, modules_name, go_to_txt). The launcher keeps
+     the stock click contract: an <a data-capp='<module>'> per module. The big
+     tile grid becomes one row of chips — the dashboard's job is status, not
+     duplicate navigation. -->
+	<h2 class='nz-launcher-title'>{tmpl_var name='available_modules_txt'}</h2>
+	<ul class='modules nz-launcher clear'>
+	<tmpl_loop name='modules'>
+		<li>
+			<a href='#' data-capp='{tmpl_var name="modules_name"}' title='{tmpl_var name="go_to_txt"} {tmpl_var name="modules_title"}'>
+				<span class='{tmpl_var name="modules_icon"}'></span>
+				<span class='nz-launcher-label'>{tmpl_var name='modules_title'}</span>
+			</a>
+		</li>
+	</tmpl_loop>
+	</ul>

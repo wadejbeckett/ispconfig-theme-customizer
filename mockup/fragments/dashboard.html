@@ -1,92 +1,92 @@
-<div class="page-header">
-  <h1>Welcome admin</h1>
+<div class="page-header nz-dash-head">
+  <div class="nz-dash-head-row">
+    <h1>Welcome admin</h1>
+    <span class="nz-dash-date" id="nz-dash-date">Tuesday, 21 July</span>
+  </div>
+  <div class="nz-dash-chips" id="nz-dash-chips"></div>
 </div>
 
-        <h2>Available Modules</h2>
-    <div style="margin: 0 auto;">
-    <ul class="modules clear">
+    <h2 class="nz-launcher-title">Available Modules</h2>
+    <ul class="modules nz-launcher clear">
             <li>
-            <div class="clear">
-              <div class="icon icon-help"></div>
-              <div class="left">
-                <div class="title">Help</div>
-              </div>
-            </div>
-            <a href="#" class="btn btn-default button" data-capp="help">Go to Help</a>
+            <a href="#" data-capp="help" title="Go to Help">
+                <span class="icon icon-help"></span>
+                <span class="nz-launcher-label">Help</span>
+            </a>
         </li>
             <li>
-            <div class="clear">
-              <div class="icon icon-client"></div>
-              <div class="left">
-                <div class="title">Client</div>
-              </div>
-            </div>
-            <a href="#" class="btn btn-default button" data-capp="client">Go to Client</a>
+            <a href="#" data-capp="client" title="Go to Client">
+                <span class="icon icon-client"></span>
+                <span class="nz-launcher-label">Client</span>
+            </a>
         </li>
             <li>
-            <div class="clear">
-              <div class="icon icon-sites"></div>
-              <div class="left">
-                <div class="title">Sites</div>
-              </div>
-            </div>
-            <a href="#" class="btn btn-default button" data-capp="sites">Go to Sites</a>
+            <a href="#" data-capp="sites" title="Go to Sites">
+                <span class="icon icon-sites"></span>
+                <span class="nz-launcher-label">Sites</span>
+            </a>
         </li>
             <li>
-            <div class="clear">
-              <div class="icon icon-mail"></div>
-              <div class="left">
-                <div class="title">Email</div>
-              </div>
-            </div>
-            <a href="#" class="btn btn-default button" data-capp="mail">Go to Email</a>
+            <a href="#" data-capp="mail" title="Go to Email">
+                <span class="icon icon-mail"></span>
+                <span class="nz-launcher-label">Email</span>
+            </a>
         </li>
             <li>
-            <div class="clear">
-              <div class="icon icon-dns"></div>
-              <div class="left">
-                <div class="title">DNS</div>
-              </div>
-            </div>
-            <a href="#" class="btn btn-default button" data-capp="dns">Go to DNS</a>
+            <a href="#" data-capp="dns" title="Go to DNS">
+                <span class="icon icon-dns"></span>
+                <span class="nz-launcher-label">DNS</span>
+            </a>
         </li>
             <li>
-            <div class="clear">
-              <div class="icon icon-monitor"></div>
-              <div class="left">
-                <div class="title">Monitor</div>
-              </div>
-            </div>
-            <a href="#" class="btn btn-default button" data-capp="monitor">Go to Monitor</a>
+            <a href="#" data-capp="monitor" title="Go to Monitor">
+                <span class="icon icon-monitor"></span>
+                <span class="nz-launcher-label">Monitor</span>
+            </a>
         </li>
             <li>
-            <div class="clear">
-              <div class="icon icon-tools"></div>
-              <div class="left">
-                <div class="title">Tools</div>
-              </div>
-            </div>
-            <a href="#" class="btn btn-default button" data-capp="tools">Go to Tools</a>
+            <a href="#" data-capp="tools" title="Go to Tools">
+                <span class="icon icon-tools"></span>
+                <span class="nz-launcher-label">Tools</span>
+            </a>
         </li>
             <li>
-            <div class="clear">
-              <div class="icon icon-admin"></div>
-              <div class="left">
-                <div class="title">System</div>
-              </div>
-            </div>
-            <a href="#" class="btn btn-default button" data-capp="admin">Go to System</a>
+            <a href="#" data-capp="admin" title="Go to System">
+                <span class="icon icon-admin"></span>
+                <span class="nz-launcher-label">System</span>
+            </a>
         </li>
-        </ul>
+            <li>
+            <a href="#" data-capp="customizer" title="Go to Branding">
+                <span class="icon icon-tools"></span>
+                <span class="nz-launcher-label">Branding</span>
+            </a>
+        </li>
+    </ul>
+
+<div class="nz-statwrap">
+    <h3 class="nz-statwrap-title">System metrics</h3>
+    <div class="nz-statgrid">
+        <div class="nz-statcard">
+            <header><span class="nz-statcard-label">Server load (1 min)</span><span class="nz-statcard-value" id="nz-stat-loadchart">&mdash;</span></header>
+            <div class="nz-statcard-chart"><canvas id="loadchart"></canvas></div>
+        </div>
+        <div class="nz-statcard">
+            <header><span class="nz-statcard-label">Memory usage %</span><span class="nz-statcard-value" id="nz-stat-memchart">&mdash;</span></header>
+            <div class="nz-statcard-chart"><canvas id="memchart"></canvas></div>
+        </div>
+        <div class="nz-statcard">
+            <header><span class="nz-statcard-label">Network In/kB</span><span class="nz-statcard-value" id="nz-stat-rxchart">&mdash;</span></header>
+            <div class="nz-statcard-chart"><canvas id="rxchart"></canvas></div>
+        </div>
+        <div class="nz-statcard">
+            <header><span class="nz-statcard-label">Network Out/kB</span><span class="nz-statcard-value" id="nz-stat-txchart">&mdash;</span></header>
+            <div class="nz-statcard-chart"><canvas id="txchart"></canvas></div>
+        </div>
     </div>
-
-<div>
-    <div><h3>System metrics</h3></div>
-    <div style="padding-bottom:10px;"><canvas height="30" id="loadchart" style="background-color: white;"></canvas></div>
-    <div style="padding-bottom:10px;"><canvas height="30" id="memchart" style="background-color: white;"></canvas></div>
 </div>
 
-    <div class="table-wrapper">
+<div class="table-wrapper">
     <table class="table">
       <caption>Mailbox Quota</caption>
       <thead class="dark form-group-sm">

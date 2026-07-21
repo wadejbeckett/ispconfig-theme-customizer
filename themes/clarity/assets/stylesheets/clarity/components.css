@@ -64,133 +64,172 @@ body.nz .page-header p {
 #pageContent > h2:first-child,
 #pageContent > h3:first-child { margin-top: 0; }
 
-/* ---------- dashboard: module tiles ---------- */
+/* ---------- dashboard (v2.2 luminous): header band, launcher, stat grid ---------- */
 
-ul.modules {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 12px;
-  margin: 0 0 8px;
+.nz-dash-head { margin-bottom: 18px; }
+
+.nz-dash-head-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.nz-dash-date {
+  color: var(--nz-text-muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.nz-dash-date:empty { display: none; }
+
+.nz-dash-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.nz-dash-chips:empty { display: none; }
+
+.nz-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 11px;
+  border: 1px solid var(--nz-glass-edge);
+  border-radius: var(--nz-radius-pill);
+  background: var(--nz-glass-fill);
+  color: var(--nz-text);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.nz-chip-k {
+  color: var(--nz-text-muted);
+  font-weight: 500;
+}
+
+/* launcher: one quiet row of module chips (the dashboard's job is status,
+   not duplicate navigation) */
+.nz-launcher-title {
+  font-size: var(--nz-fs-caption);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--nz-track-caps);
+  color: var(--nz-text-muted);
+  margin: 0 0 10px;
+}
+
+ul.nz-launcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 22px;
   padding: 0;
   list-style: none;
 }
 
-ul.modules li {
-  position: relative;
+ul.nz-launcher li { margin: 0; }
+
+ul.nz-launcher li a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px 8px 10px;
   background: var(--nz-card);
   border: 1px solid var(--nz-border);
-  border-radius: var(--nz-radius-card);
-  padding: 18px 16px 16px;
-  overflow: hidden;
-  transition: background var(--nz-quick) var(--nz-ease),
-              border-color var(--nz-quick) var(--nz-ease);
+  border-radius: var(--nz-radius-pill);
+  color: var(--nz-text);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: border-color var(--nz-quick) var(--nz-ease),
+              background var(--nz-quick) var(--nz-ease),
+              box-shadow var(--nz-quick) var(--nz-ease);
 }
 
-ul.modules li:hover {
+ul.nz-launcher li a:hover,
+ul.nz-launcher li a:focus-visible {
   background: var(--nz-raised);
   border-color: var(--nz-accent-edge);
+  box-shadow: 0 0 0 1px var(--nz-glow-ring);
 }
 
-ul.modules li .icon {
+ul.nz-launcher li a .icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
-  margin-bottom: 14px;
-  border-radius: var(--nz-radius-card);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
   background: var(--nz-selected);
   color: var(--nz-text-on-selected);
-  font-size: 20px;
-  transition: background var(--nz-quick) var(--nz-ease);
+  font-size: 13px;
 }
 
-ul.modules li:hover .icon { background: var(--nz-selected-strong); }
+/* stat grid: four instrument cards, headline numeral = the series' last point */
+.nz-statwrap { margin-bottom: 22px; }
 
-ul.modules li .title {
-  font-size: 13.5px;
-  font-weight: 500;
-  color: var(--nz-text);
+.nz-statwrap-title {
+  font-size: var(--nz-fs-caption);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--nz-track-caps);
+  color: var(--nz-text-muted);
+  margin: 0 0 10px;
 }
 
-/* the whole tile is the link; its text stays for screen readers.
-   Every state must stay transparent or the overlay paints a blank box over
-   the tile — the :hover/:focus selectors out-rank the generic .btn-default
-   state rules, which otherwise win on specificity. */
-body.nz ul.modules li a.btn,
-body.nz ul.modules li a.btn:hover,
-body.nz ul.modules li a.btn:focus,
-body.nz ul.modules li a.btn:active {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  height: auto;
-  padding: 0;
-  background: none;
-  border: 0;
-  border-radius: var(--nz-radius-card);
-  font-size: 0;
-  color: transparent;
-  box-shadow: none;
+.nz-statgrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);   /* a deliberate 2×2 — no orphan card */
+  gap: 14px;
 }
 
-ul.modules li::after {
-  content: '\2192';
-  position: absolute;
-  right: 14px;
-  bottom: 12px;
-  font-size: 14px;
-  color: var(--nz-ink-400);
-  transition: color var(--nz-quick) var(--nz-ease),
-              transform var(--nz-quick) var(--nz-ease);
+@media (max-width: 900px) {
+  .nz-statgrid { grid-template-columns: 1fr; }
 }
 
-/* the tile link overlay must show focus INSIDE the clipped tile */
-body.nz ul.modules li a.btn:focus,
-body.nz ul.modules li a.btn:focus-visible {
-  outline: none;
-  box-shadow: inset 0 0 0 2px var(--nz-accent);
-}
-
-ul.modules li:hover::after {
-  color: var(--nz-accent);
-  transform: translateX(2px);
-}
-
-/* metrics dashlet: one titled card with inset chart wells. Chart colors
-   follow the theme via nz-theme.js (Chart.defaults from the tokens). */
-#pageContent > div:has(canvas) {
+.nz-statcard {
   background: var(--nz-card);
   border: 1px solid var(--nz-border);
   border-radius: var(--nz-radius-card);
-  box-shadow: var(--nz-shadow-1);
-  padding: 14px 16px 8px;
-  margin: 0 0 20px;
+  box-shadow: inset 0 1px 0 var(--nz-glass-edge);
+  padding: 14px 16px 10px;
+  min-width: 0;
 }
 
-/* the dashlet title joins the card as its caption */
-#pageContent > div:has(canvas) h3 {
-  margin: 0 0 12px;
-  font-size: var(--nz-fs-cardtitle);
-  font-weight: 600;
+.nz-statcard header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.nz-statcard-label {
+  color: var(--nz-text-muted);
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nz-statcard-value {
   color: var(--nz-text-heading);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
-/* each chart's wrapper div gets a real height; with Chart.js
-   maintainAspectRatio=false (set in nz-theme.js) the chart fills it crisply */
-#pageContent div:has(> canvas) {
-  height: 110px;
-  padding-bottom: 0 !important;
-  margin-bottom: 12px;
+.nz-statcard-chart {
+  position: relative;
+  height: 120px;   /* Chart.js maintainAspectRatio:false needs a sized box */
 }
 
-#pageContent canvas {
-  width: 100% !important;
-  max-width: 100%;
-  height: 100% !important;
-  background: var(--nz-well) !important;
-  border: 1px solid var(--nz-border-soft);
-  border-radius: var(--nz-radius-ctl);
+@media (max-width: 640px) {
+  .nz-statgrid { grid-template-columns: 1fr; }
+  .nz-statcard-chart { height: 100px; }
 }
 
 /* ---------- cards & tables ---------- */

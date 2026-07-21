@@ -1,0 +1,85 @@
+<!-- Clarity override of dashlets/templates/metrics.htm (v2.2 luminous).
+     Contract pinned in BUILT-AGAINST.txt: label_chart_title, label,
+     {load,mem,rx,tx}chart_label, {load,mem,rx,tx}chart_data; canvas ids
+     loadchart/memchart/rxchart/txchart (nz-theme.js re-theming + the stock
+     dashlet JS both key on those ids). The four stacked strips become a 2x2
+     grid of stat cards; the headline numeral is the series' latest point —
+     the same data the chart draws, no invented values. Colors come from the
+     nz-theme.js chart plugin, not this file. -->
+<div class='nz-statwrap'>
+    <h3 class='nz-statwrap-title'>{tmpl_var name="label_chart_title"}</h3>
+    <div class='nz-statgrid'>
+        <div class='nz-statcard'>
+            <header><span class='nz-statcard-label'>{tmpl_var name="loadchart_label"}</span><span class='nz-statcard-value' id='nz-stat-loadchart'>&mdash;</span></header>
+            <div class='nz-statcard-chart'><canvas id="loadchart"></canvas></div>
+        </div>
+        <div class='nz-statcard'>
+            <header><span class='nz-statcard-label'>{tmpl_var name="memchart_label"}</span><span class='nz-statcard-value' id='nz-stat-memchart'>&mdash;</span></header>
+            <div class='nz-statcard-chart'><canvas id="memchart"></canvas></div>
+        </div>
+        <div class='nz-statcard'>
+            <header><span class='nz-statcard-label'>{tmpl_var name="rxchart_label"}</span><span class='nz-statcard-value' id='nz-stat-rxchart'>&mdash;</span></header>
+            <div class='nz-statcard-chart'><canvas id="rxchart"></canvas></div>
+        </div>
+        <div class='nz-statcard'>
+            <header><span class='nz-statcard-label'>{tmpl_var name="txchart_label"}</span><span class='nz-statcard-value' id='nz-stat-txchart'>&mdash;</span></header>
+            <div class='nz-statcard-chart'><canvas id="txchart"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    createChart('loadchart', '{tmpl_var name="loadchart_label"}', [{tmpl_var name='label'}], [{tmpl_var name='loadchart_data'}]);
+    createChart('memchart', '{tmpl_var name="memchart_label"}', [{tmpl_var name='label'}], [{tmpl_var name='memchart_data'}]);
+    createChart('rxchart', '{tmpl_var name="rxchart_label"}', [{tmpl_var name='label'}], [{tmpl_var name='rxchart_data'}]);
+    createChart('txchart', '{tmpl_var name="txchart_label"}', [{tmpl_var name='label'}], [{tmpl_var name='txchart_data'}]);
+
+    function nzStatFmt(n) {
+        n = Number(n);
+        if (!isFinite(n)) return '—';
+        return Math.abs(n) >= 100 ? String(Math.round(n)) : String(Math.round(n * 10) / 10);
+    }
+
+    function createChart(chartname, label, labels, data) {
+        var el = document.getElementById(chartname);
+        if (!el) return;
+        var last = data.length ? data[data.length - 1] : null;
+        var v = document.getElementById('nz-stat-' + chartname);
+        if (v && last !== null) v.textContent = nzStatFmt(last);
+        var chips = document.getElementById('nz-dash-chips');
+        var chipNames = { loadchart: 'Load', memchart: 'Memory', rxchart: 'Net in', txchart: 'Net out' };
+        if (chips && last !== null && chipNames[chartname]) {
+            var chip = document.createElement('span');
+            chip.className = 'nz-chip';
+            var k = document.createElement('span');
+            k.className = 'nz-chip-k';
+            k.textContent = chipNames[chartname];
+            chip.appendChild(k);
+            chip.appendChild(document.createTextNode(nzStatFmt(last)));
+            chips.appendChild(chip);
+        }
+        new Chart(el.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: label,
+                    data: data,
+                    borderWidth: 1.5,
+                    tension: 0.35,
+                    pointRadius: 0,
+                    pointHoverRadius: 3,
+                    fill: true
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                scales: {
+                    x: { display: false },
+                    y: { beginAtZero: true, ticks: { maxTicksLimit: 4 } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+</script>

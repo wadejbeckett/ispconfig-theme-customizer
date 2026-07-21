@@ -68,6 +68,23 @@
      canvas that hack becomes a floating white square. Retheme each chart's
      config as it is created (plugin), and again on mode toggle. */
   var STOCK_LINE = 'rgb(75, 192, 192)';
+  var STOCK_FILL = 'rgba(75, 192, 192, 0.2)';
+
+  /* v2.2 luminous: area fills are a vertical accent gradient (28%→2% dark,
+     18%→2% light — the same ratios as the --nz-chart-fill-* tokens; canvas
+     gradients can't consume color-mix() vars, so they are re-derived from the
+     accent hex here). Scriptable, so each chart rebuilds it for its own area. */
+  function nzAreaGradient(ctx) {
+    var chart = ctx.chart;
+    var area = chart.chartArea;
+    if (!area) return 'transparent';
+    var p = chartPalette();
+    var top = mode() === 'light' ? 0.18 : 0.28;
+    var g = chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
+    g.addColorStop(0, hexAlpha(p.accent, top));
+    g.addColorStop(1, hexAlpha(p.accent, 0.02));
+    return g;
+  }
 
   function themeChartConfig(config, canvas) {
     var p = chartPalette();
@@ -87,10 +104,22 @@
     }
     if (labels) labels.color = p.text;
     ((config.data && config.data.datasets) || []).forEach(function (ds) {
-      if (ds.borderColor === STOCK_LINE) {
+      var isLine = (config.type === 'line') || ds.type === 'line';
+      /* stock teal AND colorless datasets (the v2.2 metrics cards ship no
+         colors on purpose) both take the accent voice */
+      if (ds.borderColor === STOCK_LINE || ds.borderColor == null) {
         ds.borderColor = p.accent;
-        ds.backgroundColor = p.fill;
         ds.pointBackgroundColor = p.accent;
+        if (ds.fill) {
+          ds.backgroundColor = nzAreaGradient;
+        } else if (ds.backgroundColor == null || ds.backgroundColor === STOCK_FILL) {
+          ds.backgroundColor = ds.fill == null ? p.fill : nzAreaGradient;
+        }
+      }
+      if (isLine) {
+        if (ds.borderWidth == null || ds.borderWidth === 1) ds.borderWidth = 1.5;
+        if (ds.pointRadius == null) { ds.pointRadius = 0; ds.pointHoverRadius = 3; }
+        if (ds.tension == null) ds.tension = 0.35;
       }
     });
     /* the canvas carries an inline white background in stock markup; the

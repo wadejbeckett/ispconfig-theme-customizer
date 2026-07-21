@@ -45,3 +45,17 @@ filenames (ispconfig_version gates login + user pickers; ISPC_VERSION gates
 the admin default-settings picker). ../../install.sh stamps both; re-run it
 after every ISPConfig upgrade, and re-diff the overridden templates against
 the new stock ones (main.tpl.htm, topnav.tpl.htm, main_login.tpl.htm).
+
+--- v2.2 dashlet template overrides (templates/dashboard/, added 2026-07-21) ---
+dashboard.htm   <- interface/web/dashboard/templates/dashboard.htm (3.3.1p1)
+                   vars: welcome_user; loops error|warning|info (error_msg|warning_msg|info_msg);
+                   loops leftcol|rightcol (content); keeps the three message_ack.php
+                   alert-close GET handlers verbatim.
+modules.htm     <- interface/web/dashboard/dashlets/templates/modules.htm (3.3.1p1)
+                   vars: available_modules_txt; loop modules (modules_icon, modules_title,
+                   modules_name, go_to_txt). Click contract: <a data-capp='<name>'>.
+metrics.htm     <- interface/web/dashboard/dashlets/templates/metrics.htm (3.3.1p1)
+                   vars: label_chart_title, label, loadchart_label|_data, memchart_label|_data,
+                   rxchart_label|_data, txchart_label|_data. Canvas ids loadchart|memchart|
+                   rxchart|txchart preserved (nz-theme.js re-theme + stock JS key on them).
+On ISPConfig upgrade: diff these three stock files against the pins above before re-stamping.

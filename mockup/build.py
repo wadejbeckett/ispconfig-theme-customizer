@@ -134,28 +134,47 @@ document.addEventListener('DOMContentLoaded', function () {
   var L = ['','','','','','','','','','','',''];
   createChart('loadchart', 'Server load (1 min)', L,
               [0.42,0.55,0.48,0.71,0.62,0.90,1.15,0.88,0.64,0.70,0.52,0.61]);
-  createChart('memchart', 'Memory usage (%)', L,
+  createChart('memchart', 'Memory usage %', L,
               [38,41,40,45,52,58,71,64,60,55,47,49]);
+  createChart('rxchart', 'Network In/kB', L,
+              [3.2,2.8,4.1,3.6,8.4,12.7,9.2,5.5,4.8,6.1,5.2,4.4]);
+  createChart('txchart', 'Network Out/kB', L,
+              [1.1,0.9,1.4,1.2,2.9,4.2,3.1,1.8,1.5,2.0,1.7,1.5]);
 });
+// mirrors themes/clarity/templates/dashboard/metrics.htm — keep in sync
+function nzStatFmt(n) {
+    n = Number(n);
+    if (!isFinite(n)) return '—';
+    return Math.abs(n) >= 100 ? String(Math.round(n)) : String(Math.round(n * 10) / 10);
+}
 function createChart(chartname, label, labels, data) {
-    var ctx = document.getElementById(chartname).getContext('2d');
-    new Chart(ctx, {
+    var el = document.getElementById(chartname);
+    if (!el) return;
+    var last = data.length ? data[data.length - 1] : null;
+    var v = document.getElementById('nz-stat-' + chartname);
+    if (v && last !== null) v.textContent = nzStatFmt(last);
+    var chips = document.getElementById('nz-dash-chips');
+    var chipNames = { loadchart: 'Load', memchart: 'Memory', rxchart: 'Net in', txchart: 'Net out' };
+    if (chips && last !== null && chipNames[chartname]) {
+        var chip = document.createElement('span');
+        chip.className = 'nz-chip';
+        var k = document.createElement('span');
+        k.className = 'nz-chip-k';
+        k.textContent = chipNames[chartname];
+        chip.appendChild(k);
+        chip.appendChild(document.createTextNode(nzStatFmt(last)));
+        chips.appendChild(chip);
+    }
+    new Chart(el.getContext('2d'), {
         type: 'line',
         data: { labels: labels, datasets: [{
-            label: label, data: data, borderWidth: 1, tension: 0.4,
-            cubicInterpolationMode: 'default',
-            borderColor: 'rgb(75, 192, 192)',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)', fill: true }] },
+            label: label, data: data, borderWidth: 1.5, tension: 0.35,
+            pointRadius: 0, pointHoverRadius: 3, fill: true }] },
         options: {
-            scales: { x: { display: false }, y: { beginAtZero: true } },
-            plugins: { legend: { labels: { generateLabels: function(chart) {
-                return chart.data.datasets.map(function(dataset, i) {
-                    return { text: dataset.label, fillStyle: 'white',
-                        hidden: !chart.isDatasetVisible(i), strokeStyle: 'white',
-                        pointStyle: 'white', lineWidth: dataset.borderWidth,
-                        datasetIndex: i };
-                });
-            } } } }
+            maintainAspectRatio: false,
+            scales: { x: { display: false },
+                      y: { beginAtZero: true, ticks: { maxTicksLimit: 4 } } },
+            plugins: { legend: { display: false } }
         }
     });
 }
