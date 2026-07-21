@@ -41,12 +41,21 @@
       <p class="help-block">{tmpl_var name='logo_hint_txt'}</p>
     </div>
     <div class="col-sm-3">
-      <!-- no formbutton-success here: the stock Enter-key handler clicks EVERY
-           .tab-content button.formbutton-success, and triggering Upload alongside
-           Save fires an empty upload whose POST can consume the single-use CSRF
-           token before the save request is checked -->
-      <button class="btn btn-default" type="button" data-submit-form="pageForm" data-form-action="customizer/logo_upload.php" data-form-upload="true">{tmpl_var name='upload_txt'}</button>
+      <!-- Not wired to the stock iframe uploader (no data-submit-form /
+           data-form-upload, no formbutton-success): the page-render CSRF token
+           it depends on can be silently lost to ISPConfig's lock-free session
+           store, and the stock Enter-key handler must not trigger uploads.
+           The fetch flow below mints its own token at click time instead. -->
+      <button class="btn btn-default" type="button" id="nz-logo-upload">{tmpl_var name='upload_txt'}</button>
       <a href="javascript:void(0);" class="btn btn-default" id="nz-logo-remove">{tmpl_var name='logo_remove_txt'}</a>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="logo_url" class="col-sm-3 control-label">{tmpl_var name='logo_url_txt'}</label>
+    <div class="col-sm-9">
+      <input type="text" name="logo_url" id="logo_url" value="{tmpl_var name='logo_url'}" class="form-control" placeholder="/themes/custom/logo.svg" />
+      <p class="help-block">{tmpl_var name='logo_url_hint_txt'}</p>
     </div>
   </div>
 </fieldset>
@@ -167,6 +176,48 @@
     new MutationObserver(relocate)
       .observe(document.getElementById('pageForm') || document.body, { childList: true, subtree: true });
     relocate();
+  }
+
+  // Upload: two-step fetch. Step 1 mints a FRESH CSRF pair (the page-render
+  // token can be silently erased by ISPConfig's lock-free REPLACE-based session
+  // store when concurrent requests race the render — the classic random "CSRF
+  // attempt blocked"). Step 2 posts the file with that pair, then applies the
+  // response's messages, logo preview, and replacement tokens to the page.
+  var upBtn = document.getElementById('nz-logo-upload');
+  if (upBtn && window.fetch && window.FormData && window.DOMParser) {
+    upBtn.addEventListener('click', function () {
+      var fileInput = document.getElementById('file');
+      var slot = document.getElementById('nz-msg-slot');
+      upBtn.disabled = true;
+      fetch('customizer/logo_upload.php', { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (tok) {
+          var fd = new FormData();
+          fd.append('_csrf_id', tok.csrf_id);
+          fd.append('_csrf_key', tok.csrf_key);
+          if (fileInput && fileInput.files.length > 0) fd.append('file', fileInput.files[0]);
+          return fetch('customizer/logo_upload.php', { method: 'POST', body: fd, credentials: 'same-origin' });
+        })
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+          var doc = new DOMParser().parseFromString(html, 'text/html');
+          if (slot) {
+            slot.innerHTML = '';
+            ['errorMsg', 'OKMsg'].forEach(function (id) {
+              var m = doc.getElementById(id);
+              if (m) slot.appendChild(m);
+            });
+            slot.scrollIntoView({ block: 'nearest' });
+          }
+          var freshPrev = doc.getElementById('used_logo');
+          var curPrev = document.getElementById('used_logo');
+          if (freshPrev && curPrev) curPrev.innerHTML = freshPrev.innerHTML;
+        })
+        .catch(function () {
+          if (slot) slot.innerHTML = '<div id="errorMsg" class="alert alert-danger clear">Upload failed — network error.</div>';
+        })
+        .then(function () { upBtn.disabled = false; });
+    });
   }
 
   // Remove-logo: send the page's CSRF token as query params so logo_delete.php

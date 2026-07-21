@@ -41,7 +41,7 @@ $_GET['id'] = $_POST['id'] = $_REQUEST['id'] = 1;
 class page_action extends tform_actions {
 
     /* the keys this module owns in each INI section */
-    private $branding_keys = array('accent_hex', 'rail_hex', 'login_bg', 'show_ispconfig_credit', 'show_theme_credit');
+    private $branding_keys = array('logo_url', 'accent_hex', 'rail_hex', 'login_bg', 'show_ispconfig_credit', 'show_theme_credit');
     private $misc_keys      = array('company_name', 'custom_login_text', 'custom_login_link');
 
     function onShowEdit() {
@@ -57,6 +57,7 @@ class page_action extends tform_actions {
 
             $this->dataRecord = array(
                 'company_name'          => isset($misc['company_name']) ? $misc['company_name'] : '',
+                'logo_url'              => isset($branding['logo_url']) ? $branding['logo_url'] : '',
                 'accent_hex'            => isset($branding['accent_hex']) ? $branding['accent_hex'] : '',
                 'rail_hex'              => isset($branding['rail_hex']) ? $branding['rail_hex'] : '',
                 'login_bg'              => isset($branding['login_bg']) ? $branding['login_bg'] : '',

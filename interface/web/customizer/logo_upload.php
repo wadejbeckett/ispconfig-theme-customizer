@@ -24,6 +24,26 @@ $app->auth->check_module_permissions('customizer');
 $app->auth->check_security_permissions('admin_allow_system_config');
 if(!$app->auth->is_admin()) die('Allowed for administrators only.');
 
+//* Token minting for the fetch()-based uploader. ISPConfig's DB session store
+//* has no locking (read = SELECT, write = REPLACE, last writer wins), so a
+//* single-use CSRF token minted during the page render can be silently erased
+//* by any concurrent session-writing request in the page-load burst (capp.php,
+//* keepalive, login boot). The template therefore requests a FRESH pair here,
+//* alone and immediately before the upload POST, shrinking the race window
+//* from minutes to milliseconds. Same-origin JS only: the X-Requested-With
+//* header cannot be attached cross-origin without a CORS preflight, and the
+//* response is unreadable cross-origin anyway.
+if($_SERVER['REQUEST_METHOD'] === 'GET') {
+    if(!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest') {
+        die('Bad request.');
+    }
+    $csrf = $app->auth->csrf_token_get('customizer');
+    header('Content-Type: application/json');
+    header('Cache-Control: no-store');
+    echo json_encode(array('csrf_id' => $csrf['csrf_id'], 'csrf_key' => $csrf['csrf_key']));
+    exit;
+}
+
 //* A POST body larger than post_max_size arrives with $_POST and $_FILES both
 //* empty (only Content-Length survives). The CSRF token then can't be present,
 //* so csrf_token_check() would die with a misleading "CSRF blocked" message —

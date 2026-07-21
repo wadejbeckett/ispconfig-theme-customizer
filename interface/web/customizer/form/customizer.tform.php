@@ -55,6 +55,20 @@ $form["tabs"]['branding'] = array(
             'value'   => ''
         ),
 
+        'logo_url' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'TEXT',
+            //* consumed inside a CSS url("...") by brand-aware themes: forbid
+            //* every character that could break out of that context. Only a
+            //* root-relative path or an https URL (no http: an https panel
+            //* would hit mixed-content blocking anyway).
+            'validators' => array(
+                0 => array('type' => 'REGEX', 'regex' => '/^(https:\/\/[^\s"\'<>()\\\\]+|\/[^\s"\'<>()\\\\]+)?$/', 'errmsg' => 'logo_url_error_regex'),
+            ),
+            'default' => '',
+            'value'   => ''
+        ),
+
         'accent_hex' => array(
             'datatype' => 'VARCHAR',
             'formtype' => 'TEXT',

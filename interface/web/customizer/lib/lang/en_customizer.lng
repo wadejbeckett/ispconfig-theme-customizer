@@ -8,6 +8,9 @@ $wb['logo_head_txt'] = 'Logo';
 $wb['logo_txt'] = 'Logo file';
 $wb['logo_hint_txt'] = 'Choose a file, then click "Upload logo" — the logo uploads on its own, separately from the Save button at the bottom. SVG, PNG, JPEG, GIF or WebP, under 45 KB. Light artwork works best — it sits on the dark sidebar and login band.';
 $wb['upload_txt'] = 'Upload logo';
+$wb['logo_url_txt'] = 'Logo URL / path (override)';
+$wb['logo_url_hint_txt'] = 'Optional. A root-relative path (recommended — e.g. /themes/custom/logo.svg for a file you placed on the server) or an https:// URL. When set, brand-aware themes use it instead of the uploaded logo; the stock theme and the login page always use the uploaded one. SVG or a 2x PNG around 500&times;160 works best (it displays about 26px tall). A remote URL ties your login page to that host and reveals visitor IPs to it — prefer a local path.';
+$wb['logo_url_error_regex'] = 'The logo override must be a root-relative path (/…) or an https:// URL, without spaces, quotes, brackets or parentheses.';
 $wb['logo_remove_txt'] = 'Remove';
 $wb['used_logo_txt'] = 'Current logo';
 // no_logo_set_txt is resolved via $app->lng(), which reads lib/lang/en.lng — the

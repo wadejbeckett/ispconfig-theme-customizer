@@ -73,6 +73,7 @@ each other's code — they communicate only through these keys in ISPConfig's
 | Brand intent | Where | Key | Format |
 |---|---|---|---|
 | Logo | `sys_ini.custom_logo` column | *(the column)* | `data:image/…;base64,…` (≤ ~45 KB raw) |
+| Logo by reference | `sys_ini.config` → `[branding]` | `logo_url` | root-relative path (`/…`) or `https://` URL; no spaces/quotes/brackets/parens; wins over `custom_logo` in brand-aware themes; ignored by the stock theme and login |
 | Panel / product name | `sys_ini.config` → `[misc]` | `company_name` | text |
 | Login footnote text | `sys_ini.config` → `[misc]` | `custom_login_text` | text |
 | Login footnote link | `sys_ini.config` → `[misc]` | `custom_login_link` | `http(s)://…` |
