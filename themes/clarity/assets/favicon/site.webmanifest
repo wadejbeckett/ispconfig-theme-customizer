@@ -1,6 +1,6 @@
 {
-  "name": "ISPConfig",
-  "short_name": "ISPConfig",
+  "name": "Control Panel",
+  "short_name": "Panel",
   "icons": [
     {
       "src": "favicon-32x32.png",

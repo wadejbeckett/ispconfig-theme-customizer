@@ -80,12 +80,17 @@ at the new clone.
 ## Uninstall
 
 ```bash
-rm -rf /usr/local/ispconfig/interface/web/themes/clarity
+sudo ./uninstall.sh --reset-users
 ```
 
-Users who had it selected are automatically reset to the default theme at
-their next login. If you set `$conf['theme'] = 'clarity'` in the config
-files, change it back to `'default'` in both.
+This removes the theme directory and resets `sys_user.app_theme` for users who
+had Clarity selected. The reset matters: ISPConfig only falls back to the
+default theme at *session* level — it never heals the stored column, so
+without `--reset-users` affected users see a "theme not compatible" error
+banner at every login. If you set `$conf['theme'] = 'clarity'` in the config
+files, change it back to `'default'` in both yourself — the uninstaller
+deliberately never edits ISPConfig config (it reminds you if the line is still
+set).
 
 ## Troubleshooting
 
