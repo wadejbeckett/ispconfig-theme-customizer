@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    name: PHP lint + asset-version consistency + shell
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, mysqli
+
+      - name: PHP syntax (theme endpoints + bin scripts)
+        run: |
+          set -e
+          for f in themes/clarity/brand.php themes/clarity/title.php; do php -l "$f"; done
+          find bin -name '*.php' -print0 2>/dev/null | while IFS= read -r -d '' f; do php -l "$f"; done
+
+      - name: Cache-buster consistency
+        # every ?ver= in a shell template must match — a mismatched bump ships
+        # stale CSS/JS to browsers holding the old version (a real past bug)
+        run: |
+          set -e
+          for tpl in themes/clarity/templates/main.tpl.htm themes/clarity/templates/main_login.tpl.htm; do
+            vers=$(grep -oE '\?ver=[0-9]+' "$tpl" | sort -u)
+            count=$(printf '%s\n' "$vers" | grep -c . || true)
+            if [ "$count" -ne 1 ]; then
+              echo "::error file=$tpl::inconsistent asset versions: $(printf '%s ' $vers)"
+              exit 1
+            fi
+            echo "$tpl: $vers"
+          done
+
+      - name: Dashlet override contracts are recorded
+        # every theme-side dashlet override must be pinned in BUILT-AGAINST.txt
+        run: |
+          set -e
+          for ov in themes/clarity/templates/dashboard/*.htm; do
+            base=$(basename "$ov")
+            if ! grep -q "$base" themes/clarity/BUILT-AGAINST.txt; then
+              echo "::error file=$ov::override $base is not documented in BUILT-AGAINST.txt"
+              exit 1
+            fi
+          done
+          echo "all dashlet overrides documented"
+
+      - name: Shell syntax
+        run: |
+          for f in install.sh uninstall.sh; do bash -n "$f"; done
