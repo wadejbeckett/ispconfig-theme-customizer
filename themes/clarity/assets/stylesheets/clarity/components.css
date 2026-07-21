@@ -232,6 +232,39 @@ ul.nz-launcher li a .icon {
   .nz-statcard-chart { height: 100px; }
 }
 
+/* stock chart-strip pages (monitor show_sys_state shares the exact markup the
+   old metrics dashlet used: bare divs with 30px canvases). Card + REAL wrapper
+   heights — with maintainAspectRatio:false a heightless parent collapses the
+   chart to a ribbon. :not() keeps the v2.2 statcards on their own anatomy.
+   (These rules previously lived in the dashlet section and were lost in the
+   v2.2 restructure — the monitor regression.) */
+#pageContent > div:not(.nz-statwrap):has(canvas) {
+  background: var(--nz-card);
+  border: 1px solid var(--nz-border);
+  border-radius: var(--nz-radius-card);
+  box-shadow: var(--nz-shadow-1);
+  padding: 14px 16px 8px;
+  margin: 0 0 20px;
+}
+
+#pageContent > div:not(.nz-statwrap):has(canvas) h3 {
+  margin: 0 0 12px;
+  font-size: var(--nz-fs-cardtitle);
+  font-weight: 600;
+  color: var(--nz-text-heading);
+}
+
+#pageContent div:not(.nz-statcard-chart):has(> canvas) {
+  height: 110px;
+  padding-bottom: 0 !important;
+  margin-bottom: 12px;
+}
+
+#pageContent canvas {
+  width: 100% !important;
+  max-width: 100%;
+}
+
 /* ---------- cards & tables ---------- */
 
 .table-wrapper {
@@ -1434,3 +1467,48 @@ body.nz .btn.formbutton-success:focus-visible {
 /* elevated surfaces pick up the glass light edge */
 body.nz .modal-content { box-shadow: var(--nz-shadow-pop), inset 0 1px 0 var(--nz-glass-edge); }
 body.nz .select2-drop  { box-shadow: var(--nz-shadow-pop), inset 0 1px 0 var(--nz-glass-edge); }
+
+/* ---------- client / template editors: pnl_formsarea + limits accordion ----------
+   Stock wraps these tabs in .panel_client > .pnl_formsarea with no spacing of
+   its own, and the Limits tab nests a Bootstrap accordion this theme never
+   skinned: flush fields and naked panels. */
+
+body.nz .pnl_formsarea { padding: 6px 2px 0; }
+
+body.nz .pnl_formsarea fieldset.inlineLabels > .form-group { margin-bottom: 14px; }
+
+body.nz .panel-group { margin: 20px 0 6px; }
+
+body.nz .panel-group .panel-default {
+  background: var(--nz-card);
+  border: 1px solid var(--nz-border);
+  border-radius: var(--nz-radius-card);
+  box-shadow: none;
+  margin-top: 0;
+}
+
+body.nz .panel-group .panel + .panel { margin-top: 10px; }
+
+body.nz .panel-group .panel-heading {
+  padding: 0;
+  background: var(--nz-veil-head);
+  border-bottom: 1px solid var(--nz-border-soft);
+  border-radius: var(--nz-radius-card) var(--nz-radius-card) 0 0;
+}
+
+body.nz .panel-group .panel-title a {
+  display: block;
+  padding: 11px 16px;
+  color: var(--nz-text);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+body.nz .panel-group .panel-title a.collapsed { color: var(--nz-text-secondary); }
+body.nz .panel-group .panel-title a:hover { color: var(--nz-link); }
+
+body.nz .panel-group .panel-body {
+  padding: 18px 16px 8px;
+  border-top: 0;
+}

@@ -119,9 +119,16 @@
       if (isLine) {
         if (ds.borderWidth == null || ds.borderWidth === 1) ds.borderWidth = 1.5;
         if (ds.pointRadius == null) { ds.pointRadius = 0; ds.pointHoverRadius = 3; }
+        /* invisible points need a generous hit area or tooltips become
+           practically unreachable */
+        if (ds.pointHitRadius == null) ds.pointHitRadius = 12;
         if (ds.tension == null) ds.tension = 0.35;
       }
     });
+    /* hover anywhere on the x-axis shows the tooltip — with 0-radius points,
+       the Chart.js default (nearest + intersect:true) demands pixel-perfect
+       aim on an invisible dot */
+    if (o.interaction == null) o.interaction = { mode: 'index', intersect: false };
     /* the canvas carries an inline white background in stock markup; the
        stylesheet well wins anyway, but don't leave it lying around */
     if (canvas && canvas.style.backgroundColor) canvas.style.backgroundColor = '';
@@ -298,10 +305,14 @@
       var b = document.createElement('button');
       b.type = 'button';
       b.className = 'btn btn-default';
-      b.textContent = 'Show all (' + rows.length + ')';
+      var expanded = false;
+      var labelAll = 'Show all (' + rows.length + ')';
+      b.textContent = labelAll;
       b.addEventListener('click', function () {
-        rows.forEach(function (r) { r.style.display = ''; });
-        tr.remove();
+        expanded = !expanded;
+        rows.slice(10).forEach(function (r) { r.style.display = expanded ? '' : 'none'; });
+        b.textContent = expanded ? 'Show less' : labelAll;
+        if (!expanded) tbl.scrollIntoView({ block: 'nearest' });
       });
       td.appendChild(b);
       tr.appendChild(td);
