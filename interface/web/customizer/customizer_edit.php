@@ -41,7 +41,7 @@ $_GET['id'] = $_POST['id'] = $_REQUEST['id'] = 1;
 class page_action extends tform_actions {
 
     /* the keys this module owns in each INI section */
-    private $branding_keys = array('logo_url', 'accent_hex', 'rail_hex', 'login_bg', 'show_ispconfig_credit', 'show_theme_credit');
+    private $branding_keys = array('logo_url', 'accent_hex', 'rail_hex', 'login_bg', 'show_ispconfig_credit', 'show_theme_credit', 'show_version');
     private $misc_keys      = array('company_name', 'custom_login_text', 'custom_login_link');
 
     function onShowEdit() {
@@ -66,6 +66,7 @@ class page_action extends tform_actions {
                 // default ON: only an explicit '0' means hidden
                 'show_ispconfig_credit' => (isset($branding['show_ispconfig_credit']) && $branding['show_ispconfig_credit'] === '0') ? '0' : '1',
                 'show_theme_credit'     => (isset($branding['show_theme_credit']) && $branding['show_theme_credit'] === '0') ? '0' : '1',
+                'show_version'          => (isset($branding['show_version']) && $branding['show_version'] === '0') ? '0' : '1',
                 // derived, not stored: checked while ANY per-role news feed URL is set
                 'show_news_feed'        => ((isset($misc['dashboard_atom_url_admin']) && $misc['dashboard_atom_url_admin'] !== '')
                                          || (isset($misc['dashboard_atom_url_reseller']) && $misc['dashboard_atom_url_reseller'] !== '')

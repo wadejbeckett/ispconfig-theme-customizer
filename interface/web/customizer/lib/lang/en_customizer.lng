@@ -32,6 +32,8 @@ $wb['credits_head_txt'] = 'Attribution';
 $wb['credits_hint_txt'] = 'These control the optional courtesy lines in the footer. The open-source licence notices in the source and documentation are always kept — turning a line off never removes them.';
 $wb['show_ispconfig_credit_txt'] = 'Show "powered by ISPConfig"';
 $wb['show_theme_credit_txt'] = 'Show the theme credit';
+$wb['show_version_txt'] = 'Show the software version';
+$wb['show_version_hint_txt'] = 'The "About ISPConfig" section and version line under Help. Hiding it applies to every admin — including you — so demos stay clean (a brand-aware theme hides it visually; the page itself stays reachable by direct URL).';
 $wb['show_news_feed_txt'] = 'Show the news feed';
 $wb['show_news_feed_hint_txt'] = 'The "Latest news" sidebar on the dashboard (the ISPConfig project feed by default). Turning it off hides it for every role; turning it back on restores the default feed but keeps any custom feed URLs you set under System > Interface Config. Users see the change at their next login.';
 

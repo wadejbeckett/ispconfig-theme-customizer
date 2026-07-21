@@ -153,5 +153,12 @@ $form["tabs"]['branding'] = array(
             'value'    => array(0 => '0', 1 => '1')
         ),
 
+        'show_version' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'CHECKBOX',
+            'default'  => '1',
+            'value'    => array(0 => '0', 1 => '1')
+        ),
+
     )
 );
