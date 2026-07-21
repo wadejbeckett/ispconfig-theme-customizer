@@ -272,6 +272,9 @@
       scope.querySelectorAll('header').forEach(function (h) {
         var ul = h.nextElementSibling;
         if (!ul || ul.tagName !== 'UL' || h.querySelector('.nz-caret')) return;
+        /* a header with no text is an empty section shell (e.g. the news
+           panel with the feed switched off) — hide it, never caret it */
+        if (!h.textContent.trim()) { h.style.display = 'none'; return; }
         var key = 'nz-tree:' + h.textContent.trim();
         var btn = document.createElement('button');
         btn.type = 'button';

@@ -18,6 +18,9 @@
  *   config [branding] login_bg    -> login-screen background base
  *   config [branding] show_ispconfig_credit (0/1) -> footer courtesy line
  *   config [branding] show_theme_credit     (0/1) -> footer courtesy line
+ *   config [branding] show_version (0/1)    -> 0 hides Help's version surfaces
+ *   config [misc] company_name              -> text wordmark when no logo set;
+ *                                              alt/failover text via title.php
  *
  * Design constraints:
  *   - Pre-auth safe: the login screen links this file, so it must
@@ -34,9 +37,10 @@
 header('Content-Type: text/css; charset=utf-8');
 
 /* ---- read the contract (direct, minimal, side-effect-free) ---- */
-$branding    = array();
-$custom_logo = '';
-$read_ok     = false; // true only when the sys_ini read actually succeeded
+$branding     = array();
+$custom_logo  = '';
+$company_name = '';
+$read_ok      = false; // true only when the sys_ini read actually succeeded
 
 $config_inc = __DIR__ . '/../../../lib/config.inc.php'; // interface/lib/config.inc.php
 if (is_readable($config_inc)) {
@@ -58,6 +62,12 @@ if (is_readable($config_inc)) {
                     if ($row = $res->fetch_assoc()) {
                         $parsed      = brand_parse_config((string)$row['config']);
                         $branding    = (isset($parsed['branding']) && is_array($parsed['branding'])) ? $parsed['branding'] : array();
+                        if (isset($parsed['misc']['company_name']) && is_string($parsed['misc']['company_name'])) {
+                            // used only inside a CSS string context (text wordmark
+                            // fallback) — strip everything that could escape it
+                            $company_name = trim(preg_replace('/["\\\\\r\n<>]/', '', $parsed['misc']['company_name']));
+                            if (strlen($company_name) > 40) $company_name = substr($company_name, 0, 40);
+                        }
                         $custom_logo = (string)$row['custom_logo'];
                     }
                 }
@@ -67,9 +77,10 @@ if (is_readable($config_inc)) {
             }
         } catch (\Throwable $e) {
             // any DB fault -> emit empty CSS; never leak an error on this pre-auth route
-            $branding    = array();
-            $custom_logo = '';
-            $read_ok     = false;
+            $branding     = array();
+            $custom_logo  = '';
+            $company_name = '';
+            $read_ok      = false;
         }
     }
 }
@@ -86,7 +97,7 @@ header('Content-Type: text/css; charset=utf-8');
  * NOT cache it — otherwise a transient outage would blank the host's branding
  * for the whole max-age window even after the DB recovers. */
 if ($read_ok) {
-    $etag = '"' . md5(serialize($branding) . '|' . md5($custom_logo)) . '"';
+    $etag = '"' . md5(serialize($branding) . '|' . md5($custom_logo) . '|' . $company_name) . '"';
     header('ETag: ' . $etag);
     header('Cache-Control: private, max-age=30');
     if (isset($_SERVER['HTTP_IF_NONE_MATCH']) && trim($_SERVER['HTTP_IF_NONE_MATCH']) === $etag) {
@@ -194,6 +205,20 @@ if ($logo_src !== '') {
     // custom logos keep their own colours in light mode: undo the theme's
     // ink-darkening of the shipped wordmark, add a soft halo for legibility
     $css .= ":root[data-nz-theme='light'] .nzl-brand img { filter: drop-shadow(0 1px 6px rgba(2, 26, 43, 0.35)); }\n";
+    // mask the content swap: on a hard refresh the SHIPPED wordmark paints for
+    // a frame or two before the custom image decodes — a white-label leak. The
+    // brand slots start invisible and fade in once the swap has had its beat.
+    $css .= "@keyframes nzBrandIn { to { opacity: 1; } }\n";
+    $css .= "#logo img, .nz-topbar-brand img, .nzl-brand img { opacity: 0; animation: nzBrandIn 0.18s ease 0.05s forwards; }\n";
+} elseif ($company_name !== '') {
+    // no logo uploaded/referenced, but the panel is named: the NAME becomes the
+    // wordmark (CSS text content on the brand slots). Rail/topbar are navy in
+    // both modes -> white text; the login slot inherits the theme's light-mode
+    // ink filter, which correctly darkens this text too.
+    $css .= "#logo img, .nz-topbar-brand img, .nzl-brand img { content: \"{$company_name}\"; "
+          . "font: 600 15px/1.3 'Inter', -apple-system, sans-serif; color: #fff; "
+          . "white-space: nowrap; letter-spacing: 0.01em; }\n";
+    $css .= ".nzl-brand img { font-size: 19px; }\n";
 }
 
 /* ---- attribution courtesy lines (source license notices are untouched) ---- */
@@ -201,6 +226,17 @@ if ($logo_src !== '') {
 // credit never renders with an orphaned leading middot
 if (!$show_ispc)  { $css .= ".nz-credit-ispconfig, .nz-credit-sep { display: none; }\n"; }
 if (!$show_theme) { $css .= ".nz-credit-theme { display: none; }\n"; }
+
+/* ---- software version visibility (demo/white-label mode) ---- */
+// [branding] show_version = 0 hides Help's version surfaces for EVERY user,
+// including the operator (CSS cannot see roles): the sidebar "About ISPConfig"
+// section with its Version item, and the version line itself — p.frmTextHead
+// is used by help/version.php alone across the whole 3.3.1p1 interface.
+if (isset($branding['show_version']) && $branding['show_version'] === '0') {
+    $css .= "#sidebar li#help_version, #sidebar ul:has(> li#help_version), "
+          . "#sidebar header:has(+ ul > li#help_version) { display: none; }\n";
+    $css .= "#pageContent p.frmTextHead { display: none; }\n";
+}
 
 echo $css;
 

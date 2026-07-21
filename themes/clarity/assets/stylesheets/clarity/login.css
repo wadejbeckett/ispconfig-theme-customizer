@@ -327,3 +327,7 @@ body.nz-login :focus-visible {
     transition: none !important;
   }
 }
+
+/* text-wordmark failover on the login scene (injected by title.php) */
+.nzl-brand .nz-wordmark-text { font-size: 19px; color: #fff; }
+:root[data-nz-theme='light'] .nzl-brand .nz-wordmark-text { color: var(--nz-ink-1000, #17252B); }

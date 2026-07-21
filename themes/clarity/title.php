@@ -66,7 +66,20 @@ if ($read_ok) {
 }
 
 if ($company !== '') {
-    echo 'document.title=' . json_encode($company, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) . ';';
+    $name_js = json_encode($company, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+    echo 'document.title=' . $name_js . ';' . "\n";
+    // Brand-slot failover: the wordmark <img> elements get the panel name as
+    // alt text (assistive tech + broken-image state say the BRAND, never the
+    // product), and if the slot's own src fails to load it is replaced by a
+    // styled text wordmark (.nz-wordmark-text, themed in app.css/login.css).
+    echo '(function(){var n=' . $name_js . ';'
+       . 'function arm(){document.querySelectorAll("#logo img,.nz-topbar-brand img,.nzl-brand img").forEach(function(img){'
+       . 'img.alt=n;'
+       . 'img.addEventListener("error",function(){var s=document.createElement("span");s.className="nz-wordmark-text";s.textContent=n;img.replaceWith(s);});'
+       . 'if(img.complete&&img.naturalWidth===0){var s=document.createElement("span");s.className="nz-wordmark-text";s.textContent=n;img.replaceWith(s);}'
+       . '});}'
+       . 'if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",arm);}else{arm();}'
+       . '})();';
 } else {
     echo '/* no panel name set — stock title kept */';
 }
