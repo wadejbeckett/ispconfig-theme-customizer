@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    name: PHP lint + language parity + shell
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, mysqli
+
+      - name: PHP syntax (source + language files)
+        run: |
+          set -e
+          find interface bin -name '*.php' -print0 | while IFS= read -r -d '' f; do php -l "$f"; done
+          find interface -name '*.lng' -print0 | while IFS= read -r -d '' f; do php -l "$f"; done
+
+      - name: Language key parity
+        run: php .github/scripts/lang_check.php
+
+      - name: Shell syntax
+        run: |
+          for f in install.sh uninstall.sh; do bash -n "$f"; done

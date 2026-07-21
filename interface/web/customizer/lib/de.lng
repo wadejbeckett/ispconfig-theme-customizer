@@ -3,5 +3,5 @@
 // translate the TOP-menu title on every page, so top_menu_customizer must live
 // here — not only in lib/lang/en.lng (which is auto-loaded only inside the module).
 $wb['top_menu_customizer'] = 'Branding';
-$wb['White-label'] = 'White-label';
+$wb['White-label'] = 'White-Label';
 $wb['Branding'] = 'Branding';
