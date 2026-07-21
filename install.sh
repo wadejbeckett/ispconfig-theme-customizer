@@ -29,6 +29,7 @@ for arg in "$@"; do
   case "$arg" in
     --copy) MODE="copy" ;;
     -h|--help) grep '^#' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -*) echo "ERROR: unknown option: $arg" >&2; exit 2 ;;
     *) ISPC_ROOT="$arg" ;;
   esac
 done

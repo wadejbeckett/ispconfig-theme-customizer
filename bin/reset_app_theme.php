@@ -38,8 +38,17 @@ if(!$m || $m->connect_errno) {
     exit(1);
 }
 
+//* MYSQLI_REPORT_OFF means prepare() returns false instead of throwing —
+//* guard it or the next line fatals mid-uninstall with no useful message
 $stmt = $m->prepare("UPDATE sys_user SET app_theme = 'default' WHERE app_theme = 'clarity'");
-$stmt->execute();
+if(!$stmt) {
+    fwrite(STDERR, "ERROR: prepare failed: " . $m->error . "\n");
+    exit(1);
+}
+if(!$stmt->execute()) {
+    fwrite(STDERR, "ERROR: update failed: " . $stmt->error . "\n");
+    exit(1);
+}
 $n = $stmt->affected_rows;
 $stmt->close();
 

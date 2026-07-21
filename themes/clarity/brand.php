@@ -178,7 +178,9 @@ if ($accent !== '' || $login_bg !== '') {
 // whitespace, angle brackets, or backslashes can pass).
 $logo_src = '';
 if (isset($branding['logo_url']) && is_string($branding['logo_url'])
-    && preg_match('#^(https://[^\s"\'<>()\\\\]+|/[^\s"\'<>()\\\\]+)$#', $branding['logo_url'])) {
+    // (?!/) rejects protocol-relative "//host/..." — that is a REMOTE url in
+    // disguise; writer-side validation matches, this is reader-side parity
+    && preg_match('#^(https://[^\s"\'<>()\\\\]+|/(?!/)[^\s"\'<>()\\\\]+)$#', $branding['logo_url'])) {
     $logo_src = $branding['logo_url'];
 } elseif ($custom_logo !== '' && preg_match('#^data:image/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$#i', $custom_logo)) {
     $logo_src = $custom_logo;
