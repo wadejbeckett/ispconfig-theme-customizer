@@ -3,6 +3,11 @@
   <p>{tmpl_var name='customizer_desc_txt'}</p>
 </div>
 
+<!-- upload feedback lands here: ispconfig.js injects the iframe response's
+     #OKMsg/#errorMsg near the BOTTOM of the form (before input[name=id]) where
+     nobody sees it — the observer script below relocates it into this slot -->
+<div id="nz-msg-slot"></div>
+
 <style>
   /* keep the hex field and its colour swatch on one line (form-control is a
      100%-width block in both the stock theme and Clarity) */
@@ -32,7 +37,7 @@
   <div class="form-group">
     <label for="file" class="col-sm-3 control-label">{tmpl_var name='logo_txt'}</label>
     <div class="col-sm-6 col-text">
-      <input name="file" id="file" size="30" type="file" class="fileUpload" accept="image/png,image/jpeg,image/gif,image/webp" />
+      <input name="file" id="file" size="30" type="file" class="fileUpload" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,.svg" />
       <p class="help-block">{tmpl_var name='logo_hint_txt'}</p>
     </div>
     <div class="col-sm-3">
@@ -145,6 +150,24 @@
   sync('accent_hex', 'accent_hex_pick');
   sync('rail_hex', 'rail_hex_pick');
   sync('login_bg', 'login_bg_pick');
+
+  // The iframe uploader injects #OKMsg/#errorMsg just above the hidden id input
+  // at the bottom of the form, off-screen on this page — pull any injected
+  // message up into the slot under the page header, where the admin is looking.
+  var slot = document.getElementById('nz-msg-slot');
+  if (slot && window.MutationObserver) {
+    var relocate = function () {
+      var moved = false;
+      ['errorMsg', 'OKMsg'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el && el.parentNode !== slot) { slot.appendChild(el); moved = true; }
+      });
+      if (moved) slot.scrollIntoView({ block: 'nearest' });
+    };
+    new MutationObserver(relocate)
+      .observe(document.getElementById('pageForm') || document.body, { childList: true, subtree: true });
+    relocate();
+  }
 
   // Remove-logo: send the page's CSRF token as query params so logo_delete.php
   // can enforce csrf_token_check('GET') (loadContent issues a same-origin XHR).

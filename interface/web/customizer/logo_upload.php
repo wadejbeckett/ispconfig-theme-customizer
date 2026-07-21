@@ -55,10 +55,25 @@ $allowed = array(
     'image/jpeg' => true,
     'image/gif'  => true,
     'image/webp' => true,
-    // NOTE: SVG is intentionally NOT accepted. Core login/index.php feeds
-    // custom_logo to getimagesizefromstring(), which returns false for SVG and
-    // then warns + mis-sizes the stock-theme logo on every login render.
+    // image/svg+xml is accepted via customizer_svg_ok() below, not this map:
+    // finfo mislabels prolog-less SVGs (text/xml, text/plain, even text/html),
+    // so SVG detection is by strict XML validation instead of MIME string.
 );
+
+//* Accept an SVG only if it is well-formed XML with an <svg> root and contains
+//* none of the constructs that could execute or fetch anything when re-served:
+//* scripts, foreignObject, event-handler attributes, javascript: URLs, or XML
+//* entity declarations (DOCTYPE itself is fine — editors like Inkscape emit it).
+//* Admin-only endpoint, so this is defence-in-depth, not a sandbox.
+function customizer_svg_ok($raw) {
+    if(stripos($raw, '<svg') === false) return false;
+    if(preg_match('/<script|<foreignObject|<!ENTITY|javascript\s*:|\son[a-z]+\s*=/i', $raw)) return false;
+    $prev = libxml_use_internal_errors(true);
+    $doc = simplexml_load_string($raw, 'SimpleXMLElement', LIBXML_NONET);
+    libxml_use_internal_errors($prev);
+    if($doc === false) return false;
+    return strtolower($doc->getName()) === 'svg';
+}
 
 $data_uri  = null; // set to the stored value on a successful upload
 $upload_ok = false;
@@ -86,6 +101,15 @@ if($post_overflow) {
                 $mime = (string)finfo_file($finfo, $_FILES['file']['tmp_name']);
                 finfo_close($finfo);
             }
+        }
+
+        //* SVG lane: finfo's label is unreliable for SVG, so any XML-ish/texty
+        //* verdict gets one chance to prove itself against the strict validator
+        if(!isset($allowed[$mime])
+            && in_array($mime, array('image/svg+xml', 'text/xml', 'application/xml', 'text/plain', 'text/html'), true)
+            && customizer_svg_ok($data)) {
+            $mime = 'image/svg+xml';
+            $allowed[$mime] = true;
         }
 
         if(!isset($allowed[$mime])) {
