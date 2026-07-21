@@ -66,6 +66,10 @@ class page_action extends tform_actions {
                 // default ON: only an explicit '0' means hidden
                 'show_ispconfig_credit' => (isset($branding['show_ispconfig_credit']) && $branding['show_ispconfig_credit'] === '0') ? '0' : '1',
                 'show_theme_credit'     => (isset($branding['show_theme_credit']) && $branding['show_theme_credit'] === '0') ? '0' : '1',
+                // derived, not stored: checked while ANY per-role news feed URL is set
+                'show_news_feed'        => ((isset($misc['dashboard_atom_url_admin']) && $misc['dashboard_atom_url_admin'] !== '')
+                                         || (isset($misc['dashboard_atom_url_reseller']) && $misc['dashboard_atom_url_reseller'] !== '')
+                                         || (isset($misc['dashboard_atom_url_client']) && $misc['dashboard_atom_url_client'] !== '')) ? '1' : '0',
             );
         }
 
@@ -129,6 +133,20 @@ class page_action extends tform_actions {
         }
         foreach($this->misc_keys as $k) {
             $config['misc'][$k] = isset($clean[$k]) ? $clean[$k] : '';
+        }
+
+        //* News feed toggle -> the three stock per-role [misc] atom keys.
+        //* Off blanks all three (core hides the sidebar feed on empty URL);
+        //* on restores the default feed ONLY where a key is empty, so custom
+        //* feed URLs set in System > Interface Config survive the round-trip.
+        $atom_keys = array('dashboard_atom_url_admin', 'dashboard_atom_url_reseller', 'dashboard_atom_url_client');
+        $show_news = isset($clean['show_news_feed']) ? $clean['show_news_feed'] : '1';
+        foreach($atom_keys as $k) {
+            if($show_news === '0') {
+                $config['misc'][$k] = '';
+            } elseif(!isset($config['misc'][$k]) || $config['misc'][$k] === '') {
+                $config['misc'][$k] = 'https://www.ispconfig.org/atom';
+            }
         }
 
         $config_str = $app->ini_parser->get_ini_string($config);

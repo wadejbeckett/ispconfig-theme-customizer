@@ -136,6 +136,16 @@ $form["tabs"]['branding'] = array(
             'value'    => array(0 => '0', 1 => '1')
         ),
 
+        //* not stored under this name: maps onto the three stock [misc]
+        //* dashboard_atom_url_* keys in onUpdateSave (off = blank all three,
+        //* on = restore the default feed only where a key is empty)
+        'show_news_feed' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'CHECKBOX',
+            'default'  => '1',
+            'value'    => array(0 => '0', 1 => '1')
+        ),
+
         'show_theme_credit' => array(
             'datatype' => 'VARCHAR',
             'formtype' => 'CHECKBOX',
