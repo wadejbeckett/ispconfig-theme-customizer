@@ -147,11 +147,18 @@ ul.nz-launcher li a {
               box-shadow var(--nz-quick) var(--nz-ease);
 }
 
+/* no glow here on purpose: the luminous grammar reserves glow for four
+   surfaces (login horizon, primary hover, active rail marker, chart fills) —
+   background + border + icon intensify carry the launcher hover */
 ul.nz-launcher li a:hover,
 ul.nz-launcher li a:focus-visible {
   background: var(--nz-raised);
   border-color: var(--nz-accent-edge);
-  box-shadow: 0 0 0 1px var(--nz-glow-ring);
+}
+
+ul.nz-launcher li a:hover .icon,
+ul.nz-launcher li a:focus-visible .icon {
+  background: var(--nz-selected-strong);
 }
 
 ul.nz-launcher li a .icon {

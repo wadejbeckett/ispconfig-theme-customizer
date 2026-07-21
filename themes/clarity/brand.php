@@ -30,8 +30,9 @@
  *   - Always HTTP 200 with valid CSS. When nothing is set it emits an
  *     empty sheet and the theme falls back to its shipped tokens/logo —
  *     so it is a no-op both without the customizer and before first use.
- *   - Injection-safe: every value is validated (hex regex / data-URI
- *     regex / 0|1) before it reaches the output.
+ *   - Injection-safe: every value is validated before it reaches the
+ *     output (hex regex / data-URI regex / url allowlist regex / 0|1 /
+ *     character-strip + length cap for the text wordmark).
  * ============================================================ */
 
 header('Content-Type: text/css; charset=utf-8');
@@ -66,7 +67,13 @@ if (is_readable($config_inc)) {
                             // used only inside a CSS string context (text wordmark
                             // fallback) — strip everything that could escape it
                             $company_name = trim(preg_replace('/["\\\\\r\n<>]/', '', $parsed['misc']['company_name']));
-                            if (strlen($company_name) > 40) $company_name = substr($company_name, 0, 40);
+                            // multibyte-safe cap: byte-substr would cut a UTF-8
+                            // codepoint in half and corrupt the rendered wordmark
+                            if (function_exists('mb_substr')) {
+                                if (mb_strlen($company_name, 'UTF-8') > 40) $company_name = mb_substr($company_name, 0, 40, 'UTF-8');
+                            } elseif (strlen($company_name) > 40) {
+                                $company_name = substr($company_name, 0, 40);
+                            }
                         }
                         $custom_logo = (string)$row['custom_logo'];
                     }

@@ -70,19 +70,24 @@
   var STOCK_LINE = 'rgb(75, 192, 192)';
   var STOCK_FILL = 'rgba(75, 192, 192, 0.2)';
 
-  /* v2.2 luminous: area fills are a vertical accent gradient (28%→2% dark,
-     18%→2% light — the same ratios as the --nz-chart-fill-* tokens; canvas
-     gradients can't consume color-mix() vars, so they are re-derived from the
-     accent hex here). Scriptable, so each chart rebuilds it for its own area. */
+  /* v2.2 luminous: area fills are a vertical accent gradient mirroring the
+     --nz-chart-fill-* tokens exactly — same ratios (28%→2% dark, 18%→2% light)
+     AND same ramp steps (--nz-blue-400 dark, --nz-blue-500 light; NOT
+     --nz-accent, which aliases a darker step in light mode). Canvas gradients
+     can't consume color-mix() vars, so the color is re-derived from the ramp
+     hex here; brand.php re-hues the ramp vars, so re-branding still propagates.
+     Scriptable, so each chart rebuilds it for its own area. */
   function nzAreaGradient(ctx) {
     var chart = ctx.chart;
     var area = chart.chartArea;
     if (!area) return 'transparent';
-    var p = chartPalette();
-    var top = mode() === 'light' ? 0.18 : 0.28;
+    var light = mode() === 'light';
+    var cs = getComputedStyle(document.body);
+    var base = cs.getPropertyValue(light ? '--nz-blue-500' : '--nz-blue-400').trim()
+            || chartPalette().accent;
     var g = chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
-    g.addColorStop(0, hexAlpha(p.accent, top));
-    g.addColorStop(1, hexAlpha(p.accent, 0.02));
+    g.addColorStop(0, hexAlpha(base, light ? 0.18 : 0.28));
+    g.addColorStop(1, hexAlpha(base, 0.02));
     return g;
   }
 
@@ -129,8 +134,10 @@
        the Chart.js default (nearest + intersect:true) demands pixel-perfect
        aim on an invisible dot */
     if (o.interaction == null) o.interaction = { mode: 'index', intersect: false };
-    /* the canvas carries an inline white background in stock markup; the
-       stylesheet well wins anyway, but don't leave it lying around */
+    /* the canvas carries an inline white background in stock markup — strip it
+       so the card behind shows through. Since v2.2 charts deliberately render
+       FLAT on their card (gradient fills fading to transparent, no inset well);
+       the pre-v2.2 well/border styling is intentionally not restored. */
     if (canvas && canvas.style.backgroundColor) canvas.style.backgroundColor = '';
   }
 
