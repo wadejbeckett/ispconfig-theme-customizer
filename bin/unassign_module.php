@@ -58,8 +58,15 @@ while($r = $res->fetch_assoc()) {
         $csv = implode(',', $new_mods);
         $uid = (int)$r['userid'];
         $stmt = $m->prepare("UPDATE sys_user SET modules = ?, startmodule = ? WHERE userid = ?");
+        if(!$stmt) {
+            fwrite(STDERR, "ERROR: prepare failed: " . $m->error . "\n");
+            exit(1);
+        }
         $stmt->bind_param('ssi', $csv, $new_start, $uid);
-        $stmt->execute();
+        if(!$stmt->execute()) {
+            fwrite(STDERR, "ERROR: update failed for user '" . $r['username'] . "': " . $stmt->error . "\n");
+            exit(1);
+        }
         $stmt->close();
         echo "  - removed 'customizer' from user '" . $r['username'] . "'"
            . (($new_start !== (string)$r['startmodule']) ? " (startmodule reset to dashboard)" : "") . "\n";

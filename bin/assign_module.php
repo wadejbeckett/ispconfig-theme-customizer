@@ -52,8 +52,15 @@ while($r = $res->fetch_assoc()) {
         $csv = implode(',', $mods);
         $uid = (int)$r['userid'];
         $stmt = $m->prepare("UPDATE sys_user SET modules = ? WHERE userid = ?");
+        if(!$stmt) {
+            fwrite(STDERR, "ERROR: prepare failed: " . $m->error . "\n");
+            exit(1);
+        }
         $stmt->bind_param('si', $csv, $uid);
-        $stmt->execute();
+        if(!$stmt->execute()) {
+            fwrite(STDERR, "ERROR: update failed for user '" . $r['username'] . "': " . $stmt->error . "\n");
+            exit(1);
+        }
         $stmt->close();
         echo "  + assigned 'customizer' to admin user '" . $r['username'] . "'\n";
         $changed++;

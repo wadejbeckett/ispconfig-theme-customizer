@@ -198,15 +198,24 @@
           if (fileInput && fileInput.files.length > 0) fd.append('file', fileInput.files[0]);
           return fetch('customizer/logo_upload.php', { method: 'POST', body: fd, credentials: 'same-origin' });
         })
-        .then(function (r) { return r.text(); })
+        .then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.text();
+        })
         .then(function (html) {
           var doc = new DOMParser().parseFromString(html, 'text/html');
+          // Collect BEFORE clearing the slot: an unexpected body (PHP fatal
+          // behind a proxy, a bare die() text) must not silently erase
+          // whatever banner is currently showing.
+          var msgs = [];
+          ['errorMsg', 'OKMsg'].forEach(function (id) {
+            var m = doc.getElementById(id);
+            if (m) msgs.push(m);
+          });
+          if (msgs.length === 0) throw new Error('unexpected response');
           if (slot) {
             slot.innerHTML = '';
-            ['errorMsg', 'OKMsg'].forEach(function (id) {
-              var m = doc.getElementById(id);
-              if (m) slot.appendChild(m);
-            });
+            msgs.forEach(function (m) { slot.appendChild(m); });
             slot.scrollIntoView({ block: 'nearest' });
           }
           var freshPrev = doc.getElementById('used_logo');
@@ -214,7 +223,7 @@
           if (freshPrev && curPrev) curPrev.innerHTML = freshPrev.innerHTML;
         })
         .catch(function () {
-          if (slot) slot.innerHTML = '<div id="errorMsg" class="alert alert-danger clear">Upload failed — network error.</div>';
+          if (slot) slot.innerHTML = '<div id="errorMsg" class="alert alert-danger clear">Upload failed — the server did not accept it. Check the panel error log and try again.</div>';
         })
         .then(function () { upBtn.disabled = false; });
     });

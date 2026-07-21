@@ -82,8 +82,15 @@ foreach(array('company_name', 'custom_login_text', 'custom_login_link') as $k) {
 if(count($did) > 0) {
     $config_str = $parser->get_ini_string($config);
     $stmt = $m->prepare("UPDATE sys_ini SET config = ? WHERE sysini_id = 1");
+    if(!$stmt) {
+        fwrite(STDERR, "ERROR: prepare failed: " . $m->error . "\n");
+        exit(1);
+    }
     $stmt->bind_param('s', $config_str);
-    $stmt->execute();
+    if(!$stmt->execute()) {
+        fwrite(STDERR, "ERROR: update failed: " . $stmt->error . "\n");
+        exit(1);
+    }
     $stmt->close();
 }
 

@@ -24,6 +24,7 @@ for arg in "$@"; do
     --copy) MODE="copy" ;;
     --no-assign) ASSIGN=0 ;;
     -h|--help) grep '^#' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -*) echo "ERROR: unknown option: $arg" >&2; exit 2 ;;
     *) ISPC_ROOT="$arg" ;;
   esac
 done

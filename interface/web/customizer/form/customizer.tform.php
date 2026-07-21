@@ -61,9 +61,11 @@ $form["tabs"]['branding'] = array(
             //* consumed inside a CSS url("...") by brand-aware themes: forbid
             //* every character that could break out of that context. Only a
             //* root-relative path or an https URL (no http: an https panel
-            //* would hit mixed-content blocking anyway).
+            //* would hit mixed-content blocking anyway). The (?!\/) lookahead
+            //* rejects protocol-relative "//host/..." — browsers treat that as
+            //* a REMOTE url, defeating the local-path privacy contract.
             'validators' => array(
-                0 => array('type' => 'REGEX', 'regex' => '/^(https:\/\/[^\s"\'<>()\\\\]+|\/[^\s"\'<>()\\\\]+)?$/', 'errmsg' => 'logo_url_error_regex'),
+                0 => array('type' => 'REGEX', 'regex' => '/^(https:\/\/[^\s"\'<>()\\\\]+|\/(?!\/)[^\s"\'<>()\\\\]+)?$/', 'errmsg' => 'logo_url_error_regex'),
             ),
             'default' => '',
             'value'   => ''
