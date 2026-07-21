@@ -11,10 +11,17 @@ html, body.nz-login {
   margin: 0;
 }
 
+/* v2.2 "Luminous": a dark field at dusk. The signature is the horizon beam —
+   the product's own iconography (the uptime line) made monumental. It crosses
+   the viewport exactly at the seam between wordmark and card, so it anchors
+   the composition at every size. */
 body.nz-login {
   background:
-    radial-gradient(640px 420px at 50% -8%, rgba(0, 101, 171, 0.38), transparent 68%),
-    radial-gradient(900px 600px at 88% 112%, rgba(0, 144, 245, 0.10), transparent 60%),
+    radial-gradient(1100px 340px at 50% 42%, var(--nz-glow-soft), transparent 70%),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--nz-rail) 55%, var(--nz-page)) 0%,
+      var(--nz-page) 44%,
+      color-mix(in srgb, var(--nz-blue-1000) 35%, var(--nz-page)) 100%),
     var(--nz-page);
   color: var(--nz-text);
   font-family: var(--nz-font);
@@ -25,8 +32,10 @@ body.nz-login {
 
 :root[data-nz-theme='light'] body.nz-login {
   background:
-    radial-gradient(640px 420px at 50% -8%, rgba(0, 101, 171, 0.14), transparent 68%),
-    radial-gradient(900px 600px at 88% 112%, rgba(0, 144, 245, 0.05), transparent 60%),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--nz-blue-100) 42%, var(--nz-page)) 0%,
+      var(--nz-page) 46%,
+      color-mix(in srgb, var(--nz-blue-100) 24%, var(--nz-page)) 100%),
     var(--nz-page);
 }
 
@@ -38,29 +47,92 @@ body.nz-login {
   justify-content: center;
   padding: 32px 16px;
   box-sizing: border-box;
+  overflow-x: hidden;         /* the beam spans 100vw */
+}
+
+/* wordmark above the card, standing in the horizon light */
+.nzl-brand {
+  margin: 0 0 42px;
+  position: relative;
+  z-index: 1;
+}
+.nzl-brand img {
+  display: block;
+  height: 40px;
+  width: auto;
+  max-width: min(280px, 80vw);
+  filter: drop-shadow(0 2px 14px var(--nz-glow-soft));
+}
+
+/* light mode = day: the shipped white wordmark becomes ink. brand.php's
+   custom-logo override resets this and adds a legibility halo instead, so
+   coloured logos keep their colours. */
+:root[data-nz-theme='light'] .nzl-brand img {
+  filter: brightness(0.22) saturate(0.9);
 }
 
 .nzl-card {
   width: 100%;
   max-width: 384px;
-  background: var(--nz-card);
-  border: 1px solid var(--nz-border);
-  border-radius: 14px;
-  box-shadow: var(--nz-shadow-2);
-  padding: 0 32px 30px;
+  position: relative;
+  background: var(--nz-glass-fill);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  backdrop-filter: blur(14px) saturate(1.15);
+  border: 1px solid var(--nz-glass-edge);
+  border-radius: 16px;
+  box-shadow: var(--nz-shadow-2), inset 0 1px 0 var(--nz-glass-edge);
+  padding: 28px 32px 30px;
   box-sizing: border-box;
-  overflow: hidden;
 }
 
-/* navy brand band — the wordmark stays white-on-brand in both modes;
-   replace assets/images/wordmark-white.svg to white-label */
-.nzl-brand {
-  margin: 0 -32px 22px;
-  padding: 26px 32px 24px;
-  background: var(--nz-rail);
-  border-bottom: 1px solid var(--nz-rail-edge);
+@supports not (backdrop-filter: blur(1px)) {
+  .nzl-card { background: var(--nz-card); }
 }
-.nzl-brand img { display: block; height: 36px; width: auto; max-width: 100%; }
+
+/* the horizon beam: a 1px line of light crossing the whole viewport, anchored
+   21px above the card. The line carries its own bloom (upward-biased glow) so
+   it stays welded to the seam at every viewport size. */
+.nzl-card::before {
+  content: '';
+  position: absolute;
+  top: -21px;
+  left: calc(50% - 50vw);
+  width: 100vw;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg,
+    transparent 4%,
+    var(--nz-glow-ring) 32%,
+    var(--nz-beam-core) 50%,
+    var(--nz-glow-ring) 68%,
+    transparent 96%);
+  box-shadow:
+    0 0 22px 1px var(--nz-glow-ring),
+    0 -46px 110px 34px var(--nz-glow-soft),
+    0 -130px 260px 90px color-mix(in srgb, var(--nz-blue-500) 9%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .nzl-brand, .nzl-card { animation: nzl-dawn 0.5s var(--nz-ease) both; }
+  @keyframes nzl-dawn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+  }
+}
+
+@media (max-width: 480px) {
+  .nzl-brand { margin-bottom: 30px; }
+  .nzl-brand img { height: 32px; }
+  .nzl-card {
+    max-width: 100%;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: var(--nz-card);
+  }
+  .nzl-card::before {
+    box-shadow: 0 0 16px 1px var(--nz-glow-ring);  /* bloom off, line stays */
+  }
+}
 
 .nzl-hint {
   margin: 0 0 24px;

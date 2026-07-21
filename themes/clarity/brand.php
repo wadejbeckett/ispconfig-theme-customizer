@@ -191,6 +191,9 @@ if ($logo_src !== '') {
     $css .= "#logo img { content: url(\"{$logo_src}\"); height: auto; width: auto; max-height: 26px; max-width: 180px; }\n";
     $css .= ".nz-topbar-brand img { content: url(\"{$logo_src}\"); height: auto; width: auto; max-height: 18px; max-width: 120px; }\n";
     $css .= ".nzl-brand img { content: url(\"{$logo_src}\"); height: auto; width: auto; max-height: 36px; max-width: 100%; }\n";
+    // custom logos keep their own colours in light mode: undo the theme's
+    // ink-darkening of the shipped wordmark, add a soft halo for legibility
+    $css .= ":root[data-nz-theme='light'] .nzl-brand img { filter: drop-shadow(0 1px 6px rgba(2, 26, 43, 0.35)); }\n";
 }
 
 /* ---- attribution courtesy lines (source license notices are untouched) ---- */

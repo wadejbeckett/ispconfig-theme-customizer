@@ -47,10 +47,12 @@
 
 <body class='nz-login'>
   <div class='nzl-scene'>
+    <!-- v2.2: the wordmark stands above the card, in the horizon light.
+         .nzl-brand img stays the brand.php logo-override target. -->
+    <div class='nzl-brand'>
+      <img src='../themes/<tmpl_var name='current_theme'>/assets/images/wordmark-white.svg' alt='ISPConfig' width='122' height='40'>
+    </div>
     <main class='nzl-card' aria-label='Sign in'>
-      <div class='nzl-brand'>
-        <img src='../themes/<tmpl_var name='current_theme'>/assets/images/wordmark-white.svg' alt='ISPConfig' width='122' height='40'>
-      </div>
       <p class='nzl-hint'>Sign in to your control panel</p>
       <tmpl_dyninclude name="content_tpl">
       <div class='nzl-custom'><small><tmpl_var name="custom_login"></small></div>
