@@ -142,11 +142,24 @@ class page_action extends tform_actions {
         //* feed URLs set in System > Interface Config survive the round-trip.
         $atom_keys = array('dashboard_atom_url_admin', 'dashboard_atom_url_reseller', 'dashboard_atom_url_client');
         $show_news = isset($clean['show_news_feed']) ? $clean['show_news_feed'] : '1';
-        foreach($atom_keys as $k) {
-            if($show_news === '0') {
+        if($show_news === '0') {
+            foreach($atom_keys as $k) {
                 $config['misc'][$k] = '';
-            } elseif(!isset($config['misc'][$k]) || $config['misc'][$k] === '') {
-                $config['misc'][$k] = 'https://www.ispconfig.org/atom';
+            }
+        } else {
+            //* restore defaults ONLY on the off->on transition (all three empty).
+            //* While the feed is already on, leave every key untouched — an admin
+            //* may have deliberately blanked a single role's URL in System >
+            //* Interface Config, and refilling it on unrelated saves would
+            //* silently clobber that choice.
+            $any_set = false;
+            foreach($atom_keys as $k) {
+                if(isset($config['misc'][$k]) && $config['misc'][$k] !== '') { $any_set = true; break; }
+            }
+            if(!$any_set) {
+                foreach($atom_keys as $k) {
+                    $config['misc'][$k] = 'https://www.ispconfig.org/atom';
+                }
             }
         }
 

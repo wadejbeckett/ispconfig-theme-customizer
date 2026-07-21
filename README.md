@@ -28,9 +28,10 @@ change it, ship it, brand it — for yourself or your clients — no strings.
 - **Accent colour / sidebar colour / login background** — pick a hex; a
   brand-aware theme re-skins itself to match, in both dark and light modes.
 - **Login screen** — a custom footnote line and link.
-- **Attribution toggles** — optionally hide the "powered by ISPConfig" and theme
-  courtesy lines in the footer. The licence notices in the source and docs are
-  always kept (see *Attribution & licensing*).
+- **Attribution & visibility toggles** — per-checkbox control over the
+  "powered by ISPConfig" and theme courtesy lines in the footer, the dashboard
+  news feed, and the Help version display. The licence notices in the source
+  and docs are always kept (see *Attribution & licensing*).
 
 Everything is stored in ISPConfig's own database (`sys_ini`), so it **survives
 both ISPConfig upgrades and theme updates**, and can be pushed to many panels via
@@ -87,6 +88,7 @@ each other's code — they communicate only through these keys in ISPConfig's
 | Logo | `sys_ini.custom_logo` column | *(the column)* | `data:image/…;base64,…` (≤ ~45 KB raw) |
 | Logo by reference | `sys_ini.config` → `[branding]` | `logo_url` | root-relative path (`/…`) or `https://` URL; no spaces/quotes/brackets/parens; wins over `custom_logo` in brand-aware themes; ignored by the stock theme and login |
 | Version visibility | `sys_ini.config` → `[branding]` | `show_version` | `0`/`1` (default `1`); `0` asks brand-aware themes to hide the Help version surfaces for every user (visual hide; direct URL still answers) |
+| News feed | `sys_ini.config` → `[misc]` | `dashboard_atom_url_admin` / `_reseller` / `_client` | stock core keys driven by the news-feed toggle: off blanks all three (core hides the sidebar feed on an empty URL); on restores the default feed only when all three are empty, so per-role custom URLs survive |
 | Panel / product name | `sys_ini.config` → `[misc]` | `company_name` | text |
 | Login footnote text | `sys_ini.config` → `[misc]` | `custom_login_text` | text |
 | Login footnote link | `sys_ini.config` → `[misc]` | `custom_login_link` | `http(s)://…` |

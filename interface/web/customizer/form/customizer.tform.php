@@ -9,8 +9,11 @@
  *
  * The single global row sys_ini (sysini_id = 1) is the store. The controller
  * (customizer_edit.php) reads/writes two INI sections inside sys_ini.config:
- *   [branding]  accent_hex, rail_hex, login_bg, show_ispconfig_credit, show_theme_credit
- *   [misc]      company_name, custom_login_text, custom_login_link  (existing core keys)
+ *   [branding]  logo_url, accent_hex, rail_hex, login_bg,
+ *               show_ispconfig_credit, show_theme_credit, show_version
+ *   [misc]      company_name, custom_login_text, custom_login_link, and the
+ *               three dashboard_atom_url_* keys via the news-feed toggle
+ *               (all existing core keys)
  * The logo lives in the sys_ini.custom_logo column (handled by logo_upload.php).
  */
 
