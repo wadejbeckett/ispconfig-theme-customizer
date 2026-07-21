@@ -64,7 +64,7 @@ fi
 # --- 3. the manual step we refuse to automate --------------------------------
 echo
 echo "Done. ISPConfig core was not modified."
-if grep -q "conf\['theme'\] *= *'clarity'" "$CONF" 2>/dev/null || grep -q "conf\['theme'\] *= *'clarity'" "$SERVER_CONF" 2>/dev/null; then
+if grep -Eq "conf\[.theme.\] *= *.clarity." "$CONF" 2>/dev/null || grep -Eq "conf\[.theme.\] *= *.clarity." "$SERVER_CONF" 2>/dev/null; then
   cat <<EOWARN
 
 ACTION REQUIRED: \$conf['theme'] is still set to 'clarity'. Revert it to
