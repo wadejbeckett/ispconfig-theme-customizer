@@ -1,8 +1,22 @@
+# Vendored ISPConfig source, kept locally for diffing override contracts
 .refs/
+
+# Build / scratch
 node_modules/
 *.tgz
-.omc/
 archive/
 mockup/webroot/
+
+# Version stamps written by install.sh. In symlink mode it stamps THROUGH the
+# link, so these land in the working tree. They are install-specific.
 themes/clarity/ispconfig_version
 themes/clarity/ISPC_VERSION
+
+# Agent / tooling runtime state — never commit (leaks local paths + session ids)
+.omc/
+.claude/
+.serena/
+.remember/
+
+# File-sync artifacts (Nextcloud/Dropbox conflict copies)
+*conflicted copy*
