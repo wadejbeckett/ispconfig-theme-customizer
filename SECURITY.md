@@ -1,14 +1,16 @@
 # Security Policy
 
-This repository ships two components that install into an ISPConfig panel:
+This is one product: a modern, brandable front-end for ISPConfig, with an
+admin-only page where you set your logo, panel name and colours. It installs
+into the panel in two places, and both are in scope here:
 
-- **the Clarity theme** — `themes/clarity/`, including two endpoints that are
-  reachable **without a session** (`brand.php`, `title.php`);
-- **the branding module** — `interface/web/customizer/`, an **admin-only**
-  settings page that writes the values those endpoints read.
+- `themes/clarity/` — the Clarity design it ships with, including two endpoints
+  that are reachable **without a session** (`brand.php`, `title.php`);
+- `interface/web/customizer/` — the **Branding** page, which writes the values
+  those endpoints read.
 
-They are covered by one policy because they are one contract: `brand.php` reads
-exactly the `sys_ini` keys `customizer_edit.php` writes.
+One policy covers both, because they are one contract: `brand.php` reads exactly
+the `sys_ini` keys `customizer_edit.php` writes.
 
 ## Reporting a vulnerability
 
@@ -27,16 +29,18 @@ The latest tagged release receives fixes.
 Developed and verified against **ISPConfig 3.3.1p1**. ISPConfig **3.2 is
 untested** — it is neither claimed nor supported here.
 
-From **v3.0.0** the theme and the module share a single version number and a
-single tag. Before the merge they were versioned independently, and a mismatched
-pair (module v1.0.12 against theme v2.1.0, say) could leave a written branding
-key with no reader — the accent colour simply did not apply, with no error
-anywhere. Installing a matched pair is now the only thing you can do.
+From **v3.0.0** there is a single version number and a single tag. Before that,
+the design and the Branding page were separate repositories with independent
+versions, and nothing enforced that the halves matched: a mismatched pair
+(branding v1.0.12 against design v2.1.0, say) could leave a written branding key
+with no reader — the accent colour simply did not apply, with no error anywhere.
+A matched pair is now the only thing you can install.
 
-## Trust boundary: the module is admin-only by construction
+## Trust boundary: the Branding page is admin-only by construction
 
-Every module endpoint (`customizer_edit.php`, `logo_upload.php`,
-`logo_delete.php`) opens with the same three checks, in this order:
+Every endpoint under `interface/web/customizer/` (`customizer_edit.php`,
+`logo_upload.php`, `logo_delete.php`) opens with the same three checks, in this
+order:
 
 ```php
 $app->auth->check_module_permissions('customizer');
@@ -74,9 +78,10 @@ and cannot know this one is admin-only. That is worth stating plainly rather
 than claiming an absolute. Even then check 3 refuses the request, so the
 consequence is a visible-but-dead nav entry, not access.
 
-Clients and resellers only ever see the *result* of branding, never the module.
+Clients and resellers only ever see the *result* of branding, never the Branding
+page.
 
-## What the module validates, and where
+## What the Branding page validates, and where
 
 Validation happens on write (the form's filters and validators) **and again on
 read** (`brand.php` re-checks every value before it reaches CSS). The
@@ -203,7 +208,7 @@ browsers apply SVG secure-static mode. The screen is **defence in depth**, not
 the last line of defence. It is written to be exactly as strict as this document
 says it is.
 
-## Other module-side controls
+## Other controls
 
 - **Upload CSRF.** ISPConfig's DB session store does not lock — read is a
   `SELECT`, write is a whole-row `REPLACE`, last writer wins — so a single-use
@@ -224,8 +229,8 @@ says it is.
   framework tests `errorMessage` before calling the save hook and its redirect
   is unconditional, so a refusal raised any later would print "Settings saved."
   over values that were never written.
-- **Symlink installs refuse to serve your working tree.** A symlinked component
-  is read *through* the link, so `install.sh` aborts if the source directory
+- **Symlink installs refuse to serve your working tree.** A symlinked install is
+  served *through* the link, so `install.sh` aborts if the source directory
   contains `.git`, `.omc` or `node_modules` rather than exposing them over HTTP;
   `--copy` excludes them instead.
 
@@ -281,12 +286,12 @@ here rather than left to be discovered.
 
 ## No core file is modified, and this is the whole write surface
 
-Neither component patches, replaces or edits any ISPConfig core file. The theme
+Nothing here patches, replaces or edits any ISPConfig core file. The design
 lives entirely under `themes/clarity/` and overrides templates and assets
 through ISPConfig's own theme loader; it borrows the stock theme's vendor CSS/JS
-by reference and never edits it. The module lives entirely under
-`interface/web/customizer/`. **The theme writes nothing at runtime** — its two
-endpoints only read.
+by reference and never edits it. The Branding page lives entirely under
+`interface/web/customizer/`. **Nothing under `themes/clarity/` writes at
+runtime** — its two endpoints only read.
 
 There are **no schema changes**: no new tables, no new columns, no `CREATE` or
 `ALTER` anywhere in the repository. Every write is an `UPDATE` of a row and
@@ -311,15 +316,15 @@ Two qualifications, because a flat "no new rows" would not be true:
   `themes/clarity/ISPC_VERSION` inside the panel's web root. See the next
   section — that is the one real exposure this project introduces.
 
-The module also *reads* far more of `sys_ini.config` than it writes, and is
-careful with it: it parses the **raw** column rather than going through
+The Branding page also *reads* far more of `sys_ini.config` than it writes, and
+is careful with it: it parses the **raw** column rather than going through
 `getconf::get_global_config()`, because that method applies `stripslashes()` on
 read while nothing re-applies the escaping on write. A read-modify-write through
 it would silently eat one backslash level from **every** value in the file on
-**every** save, including sections this module has no business touching —
-`[mail] smtp_pass` among them, where `pa\ss` degrades to `pass` and outbound
-mail authentication starts failing with nothing to explain it. Parsing raw means
-every value the module does not own is carried through byte-identical.
+**every** save, including sections it has no business touching — `[mail]
+smtp_pass` among them, where `pa\ss` degrades to `pass` and outbound mail
+authentication starts failing with nothing to explain it. Parsing raw means
+every value it does not own is carried through byte-identical.
 
 ## Language files are PHP, and CI never executes them
 
@@ -335,10 +340,10 @@ file:
 Both the Apache and the nginx panel vhosts ISPConfig ships already deny `\.lng$`
 over HTTP, so the shipped wordbooks are not served either.
 
-## Known exposure: the theme's version file is readable without a session
+## Known exposure: the theme directory's version file is readable without a session
 
-**This one is real, it arrives with the theme, and the module's own "hide the
-version" toggle does not cover it.**
+**This one is real, it arrives with any third-party theme, and the `show_version`
+toggle on the Branding page does not cover it.**
 
 ISPConfig refuses to load a third-party theme unless the theme directory
 contains a version file matching the panel exactly — `ispconfig_version` for the
@@ -393,10 +398,10 @@ when you let it reconfigure services, which drops the rule.
 ## Scope
 
 **In scope:** anything in this repository that could let a non-admin reach the
-module; injection into the rendered panel or the login page (CSS, JS or HTML)
-via any value the theme reads; information disclosure on the pre-auth endpoints;
-privilege escalation; corruption of `sys_ini`; and any way either component
-could execute attacker-controlled input.
+Branding page; injection into the rendered panel or the login page (CSS, JS or
+HTML) via any branding value that is read back; information disclosure on the
+pre-auth endpoints; privilege escalation; corruption of `sys_ini`; and any way
+anything shipped here could execute attacker-controlled input.
 
 **Out of scope:** pre-existing ISPConfig core behaviour, which is reported
 upstream instead; and the deliberate, documented ability of an administrator to

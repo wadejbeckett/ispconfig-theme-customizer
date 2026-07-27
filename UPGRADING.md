@@ -7,17 +7,17 @@ each other:
   against it. This is the section that matters, and it applies to *every*
   ISPConfig release including patch releases.
 - **Upgrades of this project.** Pull a new tag and re-run the installer.
-  Includes moving off the old split installation (two separate repositories),
-  which merged into this one at v3.0.0.
+  Includes migrating off the old split installation — the two pre-v3.0.0
+  repositories that merged into this one.
 
-Neither component modifies an ISPConfig core file, so neither is undone by an
-ISPConfig upgrade in the way a patched core file would be. What *is* affected is
-one small piece of metadata the panel uses to decide whether a third-party theme
-is allowed to load.
+Nothing this project installs modifies an ISPConfig core file, so an ISPConfig
+upgrade does not undo it the way it would undo a patched core file. What *is*
+affected is one small piece of metadata the panel uses to decide whether a
+third-party theme is allowed to load.
 
 ## What survives an ISPConfig upgrade
 
-**Your branding data survives.** Everything the Branding module manages lives in
+**Your branding data survives.** Everything the Branding page manages lives in
 ISPConfig's own storage: the `[branding]` section it adds to the `sys_ini.config`
 blob, the stock `[misc]` keys of *System > Interface Config*, and the native
 `sys_ini.custom_logo` column. It adds no tables and no columns. An ISPConfig
@@ -39,8 +39,8 @@ old configuration from `server/lib/config.inc.php` (`install/update.php` line
 111) and carries `$conf['theme']` forward from there into the configs it
 regenerates. Set it only in `interface/lib/config.inc.php` and the value is lost
 at the next upgrade, silently — the login screen reverts to the stock theme with
-no error. Setting it in both files is a documented manual step; the installers
-never edit ISPConfig configuration.
+no error. Setting it in both files is a documented manual step; `install.sh`
+never edits ISPConfig configuration.
 
 ## What you must redo after an ISPConfig upgrade
 
@@ -107,10 +107,11 @@ you the two `printf` commands to write the files by hand. A stamp from a previou
 panel version is worse than no stamp at all: it makes the theme look selectable
 and then resets everyone at login.
 
-### The Branding module needs no re-stamp
+### The Branding page needs no re-stamp
 
-The module is not version-gated and changes nothing in core, so an ISPConfig
-upgrade needs no action for it. Two things are still worth checking:
+The version gate applies to the theme directory only. The Branding page is not
+version-gated and changes nothing in core, so an ISPConfig upgrade needs no
+action for it. Two things are still worth checking:
 
 - If an upgrade ever did remove `interface/web/customizer`, re-run
   `./install.sh --module`.
@@ -197,8 +198,8 @@ curl -sk -o /dev/null -w '%{http_code}\n' https://panel.example.com:8080/themes/
 An unauthenticated `200` there returns your exact ISPConfig version and patch
 level. This is not stock behaviour — the stock `default` theme ships no version
 file and returns 404 (tested) — so the exposure arrives with any third-party
-theme, this one included. It also undercuts the module's own "hide the ISPConfig
-version" toggle, which only hides the version on the Help page.
+theme, this one included. It also undercuts the "hide the ISPConfig version"
+toggle on the Branding page, which only hides the version on the Help page.
 `contrib/webserver/` carries nginx and Apache snippets and the full explanation.
 
 The ISPConfig updater can regenerate the panel vhost when you let it reconfigure
@@ -216,24 +217,28 @@ snippet.
 
 ## Upgrading from the old split installation
 
+Only relevant if you installed before v3.0.0. What follows describes the world
+you are migrating *from* — that one really was two things.
+
 Before v3.0.0 this shipped as two repositories — `clarity-theme-ispconfig` and
 `ispconfig-customizer` — with independent version numbers. That is the reason for
 the merge: `themes/clarity/brand.php` reads exactly the `sys_ini` keys
 `customizer_edit.php` writes, one contract split across two release cycles with
-nothing enforcing that they matched. Module v1.0.12 against theme v2.1.0 left the
-accent colour silently unapplied, with no error anywhere. Both components now
-share one version number and one tag.
+nothing enforcing that the halves matched. The old module at v1.0.12 against the
+old theme at v2.1.0 left the accent colour silently unapplied, with no error
+anywhere. It is one project now, with one version number and one tag, and CI
+enforces that contract.
 
 There is no migration to perform. Your branding data is untouched — it was always
-in ISPConfig's own `sys_ini` row, never in either repository — and the new
-installer deploys to the same two destinations the old ones did, so installing
-from here replaces what they deployed.
+in ISPConfig's own `sys_ini` row, never in either repository — and `install.sh`
+deploys to the same two destinations the old installers did, so installing from
+here replaces what they deployed.
 
 ```bash
 cd /opt
 git clone https://github.com/wadejbeckett/ispconfig-theme-customizer.git
 cd ispconfig-theme-customizer
-sudo ./install.sh                       # both components; add --copy if that is how you had it
+sudo ./install.sh                       # full install; add --copy if that is how you had it
 ```
 
 Then verify: log out and back in, confirm the theme renders, and confirm
@@ -256,8 +261,8 @@ rm -rf /root/clarity-theme /root/ispconfig-customizer
 Two related notes:
 
 - **There are no submodules.** The old `ispconfig-toolkit` umbrella repository
-  pinned both projects as git submodules. It is archived read-only alongside the
-  two component repositories. Do not clone with `--recurse-submodules`; there is
+  pinned those two old repositories as git submodules. It is archived read-only
+  alongside them. Do not clone this one with `--recurse-submodules`; there is
   nothing to recurse into.
 - **Symlink installs stamped into the clone.** If the old theme install was a
   symlink, `ispconfig_version` and `ISPC_VERSION` were written *through* the link
@@ -279,8 +284,8 @@ and re-runs module assignment, and for a `--copy` install it is the step that
 deploys the new files at all. Hard-refresh the browser (`Ctrl+Shift+R`) so the
 new CSS is picked up.
 
-You can upgrade one component at a time with `--theme` or `--module`. With no
-component flag, `install.sh` does both.
+You can re-deploy one half at a time: `--theme` re-deploys the design, `--module`
+re-deploys the Branding page. With no component flag, `install.sh` does both.
 
 ## Uninstalling
 
@@ -289,7 +294,7 @@ about what each flag does. Nothing here edits an ISPConfig core file or
 configuration.
 
 ```bash
-sudo ./uninstall.sh                     # both components, conservative defaults
+sudo ./uninstall.sh                     # no component flag: removes both, conservative defaults
 ```
 
 | What | Default | Flag |
@@ -326,11 +331,12 @@ sudo ./uninstall.sh --module --purge-branding
 ```
 
 `bin/purge_branding.php` restores the three core-owned `dashboard_atom_url_*`
-keys before dropping `[branding]`, but only where the module's own stash recorded
-a URL *and* the live key is still empty — a key holding a URL again has been set
-by hand since, and is never overwritten. So a purge does not silently discard a
-feed the module turned off. Where nothing was stashed — a panel branded before
-the stash existed, module v1.0.12 or earlier — it does not guess a URL back in:
+keys before dropping `[branding]`, but only where the stash recorded a URL *and*
+the live key is still empty — a key holding a URL again has been set by hand
+since, and is never overwritten. So a purge does not silently discard a feed the
+Branding page turned off. Where nothing was stashed — a panel branded before the
+stash existed, under the old `ispconfig-customizer` v1.0.12 or earlier — it does
+not guess a URL back in:
 it reports which roles are left with the feed off, and the stock URL to paste
 under *System > Interface Config*. It blanks — rather than deletes — the three
 stock `[misc]` keys, because those are real fields of *System > Interface

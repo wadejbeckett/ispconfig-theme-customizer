@@ -1,28 +1,39 @@
 #!/usr/bin/env bash
 #
-# ispconfig-theme-customizer — installer for the theme and the branding module.
+# ispconfig-theme-customizer — installer.
 #
-# Installs either or both components into an ISPConfig install:
-#   theme   themes/clarity            -> <ispconfig>/interface/web/themes/clarity
-#   module  interface/web/customizer  -> <ispconfig>/interface/web/customizer
+# A modern, brandable front-end for ISPConfig. It replaces the panel's
+# front-end with a dark (and light) design, and adds an admin page — nav label
+# "Branding" — where you set your logo, panel name and colours.
 #
-# Touches NOTHING in ISPConfig core and adds no database schema. The module
-# writes only to the existing sys_ini row; the theme writes nothing at runtime.
+# It deploys into two directories:
+#   themes/clarity            -> <ispconfig>/interface/web/themes/clarity
+#   interface/web/customizer  -> <ispconfig>/interface/web/customizer
 #
-# The two are independent: the module works on the stock ISPConfig theme (logo,
-# panel name and the per-role news feeds are read by core itself), while the
-# accent colour, login background and version-hiding need a brand-aware theme
-# such as Clarity. Install whichever you want.
+# Touches NOTHING in ISPConfig core and adds no database schema. The Branding
+# page writes only to the existing sys_ini row; the design writes nothing at
+# runtime — it READS exactly the keys that page writes. That shared contract is
+# why this is one project with one version number: before v3.0.0 the halves
+# lived in separate repositories with independent versions, and nothing
+# enforced that they matched, so an accent colour could silently fail to apply.
+#
+# You can still install one half on its own. With --module you get just the
+# Branding page: logo, panel name and the per-role news feeds are read by
+# ISPConfig core itself, so those brand the stock theme too. Accent colour,
+# login background and version-hiding need a brand-aware design, which is what
+# --theme installs. Clarity is the design this SHIPS WITH, not the product's
+# identity — anything that reads the same sys_ini keys inherits the Branding
+# page, and CI enforces that contract.
 #
 # Usage:
 #   ./install.sh [--theme|--module|--all] [--copy] [--no-assign] [ISPCONFIG_ROOT]
 #
-#     --theme       install only the theme
-#     --module      install only the branding module
-#     --all         install both (default)
+#     --theme       install only the design (themes/clarity)
+#     --module      install only the Branding page
+#     --all         install both — the default when no flag is given
 #     --copy        copy instead of symlinking (use for packaged installs)
-#     --no-assign   do not assign the module to admin users; do it by hand in
-#                   System > CP Users > edit the admin user > Modules
+#     --no-assign   do not grant admin users access to the Branding page; do it
+#                   by hand in System > CP Users > edit the admin user > Modules
 #     ISPCONFIG_ROOT defaults to /usr/local/ispconfig
 #
 # Why the theme is version-stamped: ISPConfig gates themes on an EXACT version
@@ -37,6 +48,56 @@
 # releases, so re-run this script after any ISPConfig update.
 #
 set -euo pipefail
+
+# Ignore SIGPIPE, and make the completion check below unmissable.
+#
+# This script REPLACES the theme directory and then stamps the version files
+# that ISPConfig's theme gate requires. If it dies in between, the panel is left
+# with a theme it will refuse to load — and core's response to a failed gate is
+# to silently reset every affected user to the default theme at their next
+# login. No error, nothing in a log. That is the worst failure this project has,
+# and it was reachable by something as ordinary as piping this script's output:
+#
+#     ./install.sh | head        # head exits, we get SIGPIPE
+#     ./install.sh | less        # ...then you press q
+#     ./install.sh | tee log     # ...and tee dies
+#
+# Under `set -e` that killed the run mid-install. Ignoring PIPE means a closed
+# stdout can no longer interrupt the work, and the EXIT trap turns any other
+# early death into a loud, specific warning instead of a panel that quietly
+# reverts to the stock theme a day later.
+trap '' PIPE
+
+# Ignoring the SIGPIPE signal is only half of it: with the reader gone, every
+# subsequent write still fails with EPIPE, and `set -e` treats that failing echo
+# as a fatal error — so the run still died mid-install. Informational output
+# therefore goes through say(), which tolerates a closed stdout. Errors keep
+# using `echo ... >&2`, since stderr is a different descriptor and is normally
+# still attached. The rule: NOTHING the operator chose not to read may decide
+# how much of the install actually happens.
+say() { echo "$@" 2>/dev/null || true; }
+INSTALL_STARTED=0      # set to 1 immediately before the first destructive action
+INSTALL_COMPLETED=0    # set to 1 once every requested component is fully in place
+on_exit() {
+    local rc=$?
+    # Nothing to warn about for --help, a bad flag, or a failed precondition:
+    # those exit before anything on the panel has been touched.
+    [ "$INSTALL_STARTED" -eq 1 ] || return 0
+    [ "$INSTALL_COMPLETED" -eq 0 ] || return 0
+    echo "" >&2
+    echo "*** INSTALL DID NOT COMPLETE (exit $rc) ***" >&2
+    if [ -n "${WANT_THEME:-}" ] && [ -d "${THEMES_DIR:-}/${THEME_NAME:-clarity}" ] \
+       && [ ! -f "${THEMES_DIR:-}/${THEME_NAME:-clarity}/ispconfig_version" ]; then
+        echo "The theme directory is in place but NOT version-stamped. ISPConfig will" >&2
+        echo "reset every user on it to the default theme at their next login, without" >&2
+        echo "showing an error. Re-run this script to finish — it is safe to repeat:" >&2
+        echo "    $0 ${ORIGINAL_ARGS:-}" >&2
+    else
+        echo "Re-run this script to finish. It is safe to run repeatedly." >&2
+    fi
+}
+trap on_exit EXIT
+ORIGINAL_ARGS="$*"
 
 MODE="symlink"
 ISPC_ROOT="/usr/local/ispconfig"
@@ -58,7 +119,8 @@ for arg in "$@"; do
   esac
 done
 
-# neither named -> both, so a bare ./install.sh keeps doing the obvious thing
+# with no component flag, both are installed, so a bare ./install.sh keeps doing
+# the obvious thing
 if [ -z "$WANT_THEME" ] && [ -z "$WANT_MODULE" ]; then WANT_THEME=1; WANT_MODULE=1; fi
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
@@ -67,12 +129,12 @@ THEMES_DIR="$WEB_DIR/themes"
 CONF="$ISPC_ROOT/interface/lib/config.inc.php"
 THEME_NAME="clarity"
 
-echo "ispconfig-theme-customizer installer"
-echo "  source     : $ROOT"
-echo "  target     : $ISPC_ROOT"
-echo "  components : ${WANT_THEME:+theme }${WANT_MODULE:+module}"
-echo "  mode       : $MODE"
-echo
+say "ispconfig-theme-customizer installer"
+say "  source     : $ROOT"
+say "  target     : $ISPC_ROOT"
+say "  installing : ${WANT_THEME:+theme }${WANT_MODULE:+module}"
+say "  mode       : $MODE"
+say
 
 if [ ! -d "$WEB_DIR" ]; then
   echo "ERROR: $WEB_DIR not found — is ISPCONFIG_ROOT correct?" >&2
@@ -82,7 +144,7 @@ fi
 
 # --- helpers ----------------------------------------------------------------
 
-# A symlinked component is SERVED through the link, so editor/agent/vcs state
+# A symlinked directory is SERVED through the link, so editor/agent/vcs state
 # inside the source tree would be reachable over HTTP (e.g. /customizer/.omc/...).
 check_stray() {
   local src="$1"
@@ -91,15 +153,15 @@ check_stray() {
   [ -n "$stray" ] || return 0
   if [ "$MODE" = "symlink" ]; then
     echo "ERROR: $src contains $stray" >&2
-    echo "       A symlinked component SERVES it. Remove it first:" >&2
+    echo "       A symlinked directory is SERVED as-is. Remove it first:" >&2
     echo "         find '$src' \\( -name .omc -o -name .git \\) -prune -exec rm -rf {} +" >&2
     echo "       ...or install with --copy, which excludes them." >&2
     exit 1
   fi
-  echo "NOTE: excluding $stray (and any other .omc/.git/node_modules) from the copy."
+  say "NOTE: excluding $stray (and any other .omc/.git/node_modules) from the copy."
 }
 
-# The web server reads a symlinked component THROUGH the link, so every ancestor
+# The web server reads a symlinked directory THROUGH the link, so every ancestor
 # of this clone must be traversable by it. A clone under /root (mode 700) serves
 # nothing — and would otherwise fail silently at runtime, not here.
 check_traversable() {
@@ -124,17 +186,17 @@ check_traversable() {
 deploy() {
   local src="$1" dest="$2" parent="$3" name="$4"
   if [ -e "$dest" ] || [ -L "$dest" ]; then
-    echo "  removing existing $dest"
+    say "  removing existing $dest"
     rm -rf "$dest"
   fi
   if [ "$MODE" = "symlink" ]; then
     ln -s "$src" "$dest"
-    echo "  symlinked $name into place."
+    say "  symlinked $name into place."
   else
     # tar, not `cp -a`, so the excludes are actually honoured
     tar cf - --exclude='.omc' --exclude='.git' --exclude='node_modules' \
         -C "$parent" "$name" | tar xf - -C "$(dirname "$dest")"
-    echo "  copied $name into place."
+    say "  copied $name into place."
     if id -u ispconfig >/dev/null 2>&1; then
       chown -R ispconfig:ispconfig "$dest" 2>/dev/null || true
     fi
@@ -142,26 +204,32 @@ deploy() {
 }
 
 # --- warn about a previous split installation -------------------------------
-# Before the merge these shipped as two repos (clarity-theme-ispconfig and
+# Before v3.0.0 this shipped as two repos (clarity-theme-ispconfig and
 # ispconfig-customizer), typically cloned to /root/clarity-theme and
 # /root/ispconfig-customizer. Installing from here replaces what they deployed,
 # but their clones linger and re-running one of THEIR installers afterwards
 # would silently overwrite this install with older code.
 for old in /root/clarity-theme /root/ispconfig-customizer /opt/clarity-theme-ispconfig /opt/ispconfig-customizer; do
   if [ -d "$old" ] && [ "$old" != "$ROOT" ]; then
-    echo "NOTE: found a clone of the previous split layout at $old"
-    echo "      Both projects now live in this one repository. That clone is stale —"
-    echo "      remove it once this install is verified, so nobody re-runs its installer."
-    echo
+    say "NOTE: found a clone of the pre-3.0.0 split layout at $old"
+    say "      This is now one project on one version number, in this repository."
+    say "      That clone is stale, and its versions were never checked against"
+    say "      each other — remove it once this install is verified, so nobody"
+    say "      re-runs its installer."
+    say
   fi
 done
+
+# From here on the panel gets modified, so the EXIT trap's warning becomes
+# meaningful. Everything above this line is read-only checks.
+INSTALL_STARTED=1
 
 # --- theme ------------------------------------------------------------------
 if [ -n "$WANT_THEME" ]; then
   SRC="$ROOT/themes/$THEME_NAME"
   DEST="$THEMES_DIR/$THEME_NAME"
 
-  echo "Theme ($THEME_NAME):"
+  say "Design ($THEME_NAME):"
   [ -d "$SRC" ] || { echo "ERROR: source theme not found at $SRC" >&2; exit 1; }
   [ -d "$THEMES_DIR" ] || { echo "ERROR: $THEMES_DIR not found — is ISPCONFIG_ROOT correct?" >&2; exit 1; }
   [ -d "$THEMES_DIR/default" ] || { echo "ERROR: $THEMES_DIR/default missing — Clarity inherits vendor assets from it." >&2; exit 1; }
@@ -181,7 +249,12 @@ if [ -n "$WANT_THEME" ]; then
   if [ -n "$VERSION" ]; then
     printf '%s' "$VERSION" > "$DEST/ispconfig_version"
     printf '%s' "$VERSION" > "$DEST/ISPC_VERSION"
-    echo "  stamped ispconfig_version + ISPC_VERSION = '$VERSION'"
+    # deploy() chowned the tree before these two existed, so chown them too —
+    # otherwise they are the only root-owned files in an ispconfig-owned theme
+    if [ "$MODE" = "copy" ] && id -u ispconfig >/dev/null 2>&1; then
+        chown ispconfig:ispconfig "$DEST/ispconfig_version" "$DEST/ISPC_VERSION" 2>/dev/null || true
+    fi
+    say "  stamped ispconfig_version + ISPC_VERSION = '$VERSION'"
   else
     # Leave NO stale stamp behind: a version file from a previous install against
     # a different panel is worse than none — it makes the theme look selectable
@@ -200,16 +273,16 @@ if [ -n "$WANT_THEME" ]; then
   # `curl https://panel:8080/themes/clarity/ispconfig_version` returns the exact
   # ISPConfig version with no session. Core cannot be asked to rename them (it
   # reads those exact names), so the fix belongs in the web server. This matters
-  # more here than for a stock theme: the branding module offers a "hide the
+  # more here than for a stock theme: the Branding page offers a "hide the
   # version" toggle, and serving it as a static file undercuts that entirely.
-  echo
-  echo "  SECURITY NOTE: $DEST/ispconfig_version and ISPC_VERSION are served over"
-  echo "  HTTP and disclose your exact ISPConfig version to anyone who can reach the"
-  echo "  login page. Deny them at the web-server layer."
+  say
+  say "  SECURITY NOTE: $DEST/ispconfig_version and ISPC_VERSION are served over"
+  say "  HTTP and disclose your exact ISPConfig version to anyone who can reach the"
+  say "  login page. Deny them at the web-server layer."
   if [ -d "$ROOT/contrib/webserver" ]; then
-    echo "  Ready-made Apache and nginx snippets: contrib/webserver/ (see its README)."
+    say "  Ready-made Apache and nginx snippets: contrib/webserver/ (see its README)."
   fi
-  echo
+  say
 fi
 
 # --- module -----------------------------------------------------------------
@@ -217,7 +290,7 @@ if [ -n "$WANT_MODULE" ]; then
   SRC="$ROOT/interface/web/customizer"
   DEST="$WEB_DIR/customizer"
 
-  echo "Branding module:"
+  say "Branding page:"
   [ -d "$SRC" ] || { echo "ERROR: source not found at $SRC" >&2; exit 1; }
 
   check_stray "$SRC"
@@ -225,62 +298,81 @@ if [ -n "$WANT_MODULE" ]; then
 
   if [ "$ASSIGN" -eq 1 ]; then
     if command -v php >/dev/null 2>&1 && [ -f "$CONF" ]; then
-      echo "  assigning the module to admin users:"
-      php "$ROOT/bin/assign_module.php" "$CONF" || {
+      say "  granting admin users access to Branding:"
+      # Capture the helper's output instead of letting it inherit our stdout.
+      # If stdout is a pipe the operator has closed, the helper's own writes fail
+      # and it exits non-zero — which used to be reported as "automatic
+      # assignment failed" when the assignment had in fact succeeded. A false
+      # alarm that sends someone hand-editing CP Users is worse than no message.
+      if assign_out="$(php "$ROOT/bin/assign_module.php" "$CONF" 2>&1)"; then
+        [ -n "$assign_out" ] && say "$assign_out"
+      else
         echo "WARNING: automatic assignment failed — add 'customizer' by hand in" >&2
         echo "         System > CP Users > edit the admin user > Modules." >&2
-      }
+        [ -n "$assign_out" ] && echo "$assign_out" >&2
+      fi
     else
-      echo "  NOTE: could not auto-assign (php CLI or $CONF missing)."
-      echo "        Add it by hand: System > CP Users > edit the admin user >"
-      echo "        Modules > tick 'customizer' > Save."
+      say "  NOTE: could not auto-assign (php CLI or $CONF missing)."
+      say "        Add it by hand: System > CP Users > edit the admin user >"
+      say "        Modules > tick 'customizer' > Save."
     fi
   fi
-  echo
+  say
 fi
 
 check_traversable
 
 # --- closing instructions ---------------------------------------------------
+# Every requested component is in place and, for the theme, stamped. Anything
+# after this point is text; a failure here must not read as a broken install.
+INSTALL_COMPLETED=1
+
 {
-  echo "Done."
-  echo
+  say "Done."
+  say
+  # ONE numbered list, in the order an operator actually performs them: switch
+  # the panel over to the design first, then log back in and brand it. The steps
+  # differ because ISPConfig applies them in different places, not because there
+  # is more than one thing installed here.
+  say "Next steps:"
+  STEP=0
   if [ -n "$WANT_THEME" ]; then
-    echo "Theme — next steps:"
-    echo "  1. Per user:  Tools > User Settings > Design > select \"$THEME_NAME\" > Save,"
-    echo "                Core updates your session and reloads the page, so it"
-    echo "                applies immediately. If the frame still looks stock,"
-    echo "                hard-refresh (Ctrl+Shift+R) to drop the cached CSS."
-    echo "  2. System wide + login screen — set in BOTH config files:"
-    echo
-    echo "       \$conf['theme'] = '$THEME_NAME';"
-    echo
-    echo "     interface/lib/config.inc.php   takes effect immediately (login page +"
-    echo "                                    default for new users)"
-    echo "     server/lib/config.inc.php      makes it survive ISPConfig updates — the"
-    echo "                                    updater regenerates both configs and carries"
-    echo "                                    the theme forward from the SERVER config"
-    echo
-    echo "  3. Hard-refresh the browser (Ctrl+Shift+R) so the new CSS is picked up."
-    echo
+    STEP=$((STEP + 1))
+    say "  $STEP. Per user:  Tools > User Settings > Design > select \"$THEME_NAME\" > Save."
+    say "                Core updates your session and reloads the page, so it"
+    say "                applies immediately. If the frame still looks stock,"
+    say "                hard-refresh (Ctrl+Shift+R) to drop the cached CSS."
+    STEP=$((STEP + 1))
+    say "  $STEP. System wide + login screen — set in BOTH config files:"
+    say
+    say "       \$conf['theme'] = '$THEME_NAME';"
+    say
+    say "     interface/lib/config.inc.php   takes effect immediately (login page +"
+    say "                                    default for new users)"
+    say "     server/lib/config.inc.php      makes it survive ISPConfig updates — the"
+    say "                                    updater regenerates both configs and carries"
+    say "                                    the theme forward from the SERVER config"
+    say
+    say "     Then hard-refresh the browser (Ctrl+Shift+R) so the new CSS is picked up."
   fi
   if [ -n "$WANT_MODULE" ]; then
-    echo "Module — next steps:"
-    echo "  1. Re-log in (or reload the panel) so \"Branding\" appears in the top navigation."
-    echo "  2. Open Branding and set your logo, panel name, colours and login details."
-    echo "  3. Logo, panel name and the news-feed toggle also apply to the STOCK theme —"
-    echo "     core reads those itself. Accent colour, login background and version"
-    echo "     hiding need a brand-aware theme such as Clarity."
-    echo
+    STEP=$((STEP + 1))
+    say "  $STEP. Re-log in (or reload the panel) so \"Branding\" appears in the top navigation."
+    STEP=$((STEP + 1))
+    say "  $STEP. Open Branding and set your logo, panel name, colours and login details."
+    say "     Logo, panel name and the news-feed toggle also apply to the STOCK ISPConfig"
+    say "     theme — core reads those itself. Accent colour, login background and version"
+    say "     hiding need a brand-aware design such as Clarity, installed by --theme."
   fi
+  say
   if [ -n "$WANT_THEME" ]; then
-    echo "IMPORTANT — after ANY ISPConfig upgrade, including patch releases such as"
-    echo "3.3.1p1 -> 3.3.1p2, re-run this script so the version gate is re-stamped."
-    echo "Skip it and the theme silently reverts to 'default' at every login."
-    echo "Then diff the six overridden templates (three shell + three dashboard"
-    echo "dashlets) against the new stock ones — they are listed with their pinned"
-    echo "contracts in themes/$THEME_NAME/BUILT-AGAINST.txt."
-    echo
+    say "IMPORTANT — after ANY ISPConfig upgrade, including patch releases such as"
+    say "3.3.1p1 -> 3.3.1p2, re-run this script so the version gate is re-stamped."
+    say "Skip it and the theme silently reverts to 'default' at every login."
+    say "Then diff the six overridden templates (three shell + three dashboard"
+    say "dashlets) against the new stock ones — they are listed with their pinned"
+    say "contracts in themes/$THEME_NAME/BUILT-AGAINST.txt."
+    say
   fi
-  echo "No ISPConfig core file was modified."
+  say "No ISPConfig core file was modified."
 }

@@ -2,21 +2,23 @@
 #
 # ispconfig-theme-customizer — uninstaller.
 #
-# Cleanly reverses install.sh for either or both components. Touches NOTHING in
-# ISPConfig core.
+# Cleanly reverses install.sh. With no flag it removes everything install.sh put
+# in place. Touches NOTHING in ISPConfig core.
 #
-#   theme   removes themes/clarity and (with --reset-users) flips
-#           sys_user.app_theme rows back to 'default'. Core does NOT heal that
-#           column on its own — without the reset, affected users get a
-#           "theme not compatible" banner at every login.
-#   module  removes interface/web/customizer, strips the module from every
-#           user's module list (resetting any startmodule that pointed at it),
-#           and — only when explicitly asked — wipes the stored branding.
+#   --theme   removes themes/clarity and (with --reset-users) flips
+#             sys_user.app_theme rows back to 'default'. Core does NOT heal that
+#             column on its own — without the reset, affected users get a
+#             "theme not compatible" banner at every login.
+#   --module  removes interface/web/customizer (the Branding page), strips
+#             'customizer' from every user's module list (resetting any
+#             startmodule that pointed at it), and — only when explicitly
+#             asked — wipes the stored branding.
 #
-# By default your branding SURVIVES uninstall (reinstall-friendly): the panel
-# name / login text / logo are stock ISPConfig fields that keep working and stay
-# editable under System > Interface Config, and the [branding] values sit inert
-# in sys_ini for any brand-aware theme.
+# Removing files is NOT the same as restoring stock. By default your branding
+# SURVIVES uninstall (reinstall-friendly): the panel name / login text / logo
+# are stock ISPConfig fields that keep working and stay editable under System >
+# Interface Config, and the [branding] values sit inert in sys_ini for any
+# brand-aware theme. Use --reset-users and --purge-branding to go further.
 #
 # The one thing this script will NEVER do is edit config.inc.php. If you set
 # $conf['theme'] = 'clarity' at install time, revert it yourself in BOTH files
@@ -26,16 +28,23 @@
 #   ./uninstall.sh [--theme|--module|--all] [--reset-users] [--purge-branding]
 #                  [--keep-assignment] [ISPCONFIG_ROOT]
 #
-#     --theme            uninstall only the theme
-#     --module           uninstall only the branding module
-#     --all              uninstall both (default)
-#     --reset-users      theme: reset sys_user.app_theme 'clarity' -> 'default'
-#                        (recommended; skip only if you are reinstalling)
-#     --purge-branding   module: also wipe ALL stored branding values
-#     --keep-assignment  module: leave 'customizer' in users' module lists
+#     --theme            remove only the design (themes/clarity)
+#     --module           remove only the Branding page
+#     --all              remove both — the default when no flag is given
+#     --reset-users      with --theme: reset sys_user.app_theme 'clarity' ->
+#                        'default' (recommended; skip only if reinstalling)
+#     --purge-branding   with --module: also wipe ALL stored branding values
+#     --keep-assignment  with --module: leave 'customizer' in users' module lists
 #     ISPCONFIG_ROOT     defaults to /usr/local/ispconfig
 #
 set -euo pipefail
+
+# Ignore SIGPIPE — see the same guard in install.sh for the full reasoning.
+# Short version: this script does database work and then removes directories,
+# and a closed stdout (`| head`, `| less` then q, a `tee` that dies) used to
+# kill it under `set -e` somewhere in between, leaving a half-uninstalled panel.
+# Output being truncated must never decide how far the work gets.
+trap '' PIPE
 
 ISPC_ROOT="/usr/local/ispconfig"
 RESET_USERS=0
@@ -71,7 +80,7 @@ PHP_BIN="$(command -v php || true)"
 
 echo "ispconfig-theme-customizer uninstaller"
 echo "  target     : $ISPC_ROOT"
-echo "  components : ${WANT_THEME:+theme }${WANT_MODULE:+module}"
+echo "  removing   : ${WANT_THEME:+theme }${WANT_MODULE:+module}"
 echo
 
 # Refuse a wrong ISPCONFIG_ROOT rather than reporting a cheerful success. Without
@@ -124,7 +133,7 @@ if [ -z "$PHP_BIN" ]; then
   echo "         Run the scripts in bin/ manually once php is available." >&2
 else
   if [ -n "$WANT_MODULE" ] && [ "$UNASSIGN" = 1 ]; then
-    echo "removing the module from user accounts:"
+    echo "removing 'customizer' from user accounts:"
     "$PHP_BIN" "$ROOT/bin/unassign_module.php" "$CONF" || {
       echo "WARNING: unassign failed — 'customizer' may remain in users' module lists." >&2
       echo "         Remove it by hand in System > CP Users, or re-run once the DB is reachable." >&2
@@ -172,7 +181,7 @@ remove_dest() {
   echo "removed $dest"
 }
 
-[ -n "$WANT_MODULE" ] && remove_dest "$MOD_DEST" "module directory"
+[ -n "$WANT_MODULE" ] && remove_dest "$MOD_DEST" "Branding page directory"
 [ -n "$WANT_THEME" ]  && remove_dest "$THEME_DEST" "theme directory" 1
 
 # --- 3. closing notes --------------------------------------------------------
@@ -183,8 +192,8 @@ if [ -n "$WANT_MODULE" ] && [ "$PURGE" = 0 ]; then
   cat <<'EONOTE'
 
 Branding values were preserved (reinstall-friendly). To remove them later,
-either reinstall and use the module, edit System > Interface Config (panel name
-and login text), or run:
+either reinstall and use the Branding page, edit System > Interface Config
+(panel name and login text), or run:
   php bin/purge_branding.php
 EONOTE
 fi

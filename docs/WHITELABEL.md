@@ -1,20 +1,24 @@
 # White-Label Roadmap
 
 The goal: ISPConfig as a full Plesk/cPanel alternative that an operator can
-brand as their own — **without ever modifying ISPConfig itself**. Two halves do
-that work: the base theme (`themes/clarity/`) and the admin-only branding module
-(`interface/web/customizer/`, nav label "Branding"). They shipped as separate
-projects until v3.0.0 and now live in this one repository under one version
-number. This document is the verified audit of every place ISPConfig identifies
-itself in 3.3.1p1, who sees it, and how (or whether) the theme/module pair can
-override it inside its allowed envelope.
+brand as their own — **without ever modifying ISPConfig itself**. This is one
+product: a modern, brandable front-end for the panel. It replaces the interface
+with the Clarity design (`themes/clarity/`) and adds an admin-only **Branding**
+page (`interface/web/customizer/`) where the logo, panel name and colours are
+set. The design reads its colours, logo and panel name from exactly the
+`sys_ini` keys that page writes — one contract, one version number. (Before
+v3.0.0 the halves shipped as separate projects on independent versions with
+nothing enforcing that they matched, which is why some version numbers below are
+pre-merge.) This document is the verified audit of every place ISPConfig
+identifies itself in 3.3.1p1, who sees it, and how (or whether) it can be
+overridden inside the allowed envelope.
 
 **The envelope (hard constraint):** theme directories (`themes/<name>/`),
 module directories (`interface/web/<module>/`), and writes to existing DB
 rows/columns (`sys_ini` row 1, `sys_user.modules`, `sys_message`,
 `sys_config`). The single documented exception is `$conf['theme']` in the two
 `config.inc.php` files — a manual, user-performed edit in both directions,
-never touched by installers.
+never touched by `install.sh` or `uninstall.sh`.
 
 Verified override mechanisms (each confirmed against 3.3.1p1 source):
 
@@ -27,14 +31,16 @@ Verified override mechanisms (each confirmed against 3.3.1p1 source):
   three dashboard templates (`dashboard/dashboard.htm`, `dashboard/modules.htm`,
   `dashboard/metrics.htm`). With the three frame templates that is **six
   overridden templates in total**, each pinned in
-  `themes/clarity/BUILT-AGAINST.txt` — re-diff and re-stamp them after *any*
-  ISPConfig upgrade, patch releases included.
+  `themes/clarity/BUILT-AGAINST.txt` — re-diff and re-stamp them, and re-run
+  `install.sh`, after *any* ISPConfig upgrade, patch releases included.
 - **Language strings**: **cannot be shadowed** without core edits — no theme
   fallback exists in the lang loader. Lang-fed surfaces are CSS/JS-hide or
   upstream-patch only.
-- **`sys_ini` config keys**: the customizer's native channel (`[branding]` is
-  module-owned — core's only `[branding]` reference is dead commented code;
-  `[misc]`/`[mail]` keys are stock, core-consumed).
+- **`sys_ini` config keys**: the Branding page's native channel (`[branding]`
+  is ours — core's only `[branding]` reference is dead commented code;
+  `[misc]`/`[mail]` keys are stock, core-consumed). CI checks that every key
+  the page writes is read on the render side, so a future design that reads the
+  same keys inherits the branding unchanged.
 - **`tmpl_phpinclude`**: enabled in core; the theme dir already runs PHP
   (brand.php) — usable for server-side branding inside theme templates.
 
@@ -50,7 +56,7 @@ when each surface was closed, not as versions you can install today.
 | Logo everywhere (frame, login, OTP, reset) | all | native `custom_logo` via the uploader, or `[branding] logo_url` |
 | Accent / rail / login colours | all | `[branding]` + brand.php |
 | Footer credits ("powered by ISPConfig", theme credit) | all | the two attribution toggles (default ON — courtesy lines only) |
-| Login footnote text/link, panel name | all | stock `[misc]` keys the customizer writes |
+| Login footnote text/link, panel name | all | stock `[misc]` keys the Branding page writes |
 | Favicons / tiles / mask icons | all | theme-owned assets (already neutral) |
 | Outbound mail sender identity | all | stock `[mail] admin_name` / `admin_mail` |
 
@@ -69,30 +75,33 @@ when each surface was closed, not as versions you can install today.
 2. **Clarity's own `site.webmanifest` still says `"name": "ISPConfig"`** — the
    last ISPConfig string in our own assets. Ship a neutral name.
 3. **Uninstall tooling (missing at the time; the README overclaimed):** an
-   `uninstall.sh` covering both components + `bin/unassign_module.php` (strip
+   `uninstall.sh` mirroring `install.sh`'s `--theme` / `--module` / `--all`
+   flags (with no flag, both are removed) + `bin/unassign_module.php` (strip
    `customizer` from **all** users' module CSVs — install assigns it to every
    admin, not just one — and reset `startmodule='customizer'` →
-   `'dashboard'`), theme-side `sys_user.app_theme` reset SQL (core does *not*
-   self-heal the column; users get a recurring "theme not compatible" banner),
-   and an explicit `--purge-branding` flag (drop `[branding]`, blank the three
-   `[misc]` keys, clear `custom_logo`). Default preserves branding
-   (reinstall-friendly); purge only on request. Installers never touch
-   `config.inc.php` in either direction.
+   `'dashboard'`), `--reset-users` for the `sys_user.app_theme` reset SQL (core
+   does *not* self-heal the column; users get a recurring "theme not
+   compatible" banner), and an explicit `--purge-branding` flag (drop
+   `[branding]`, blank the three `[misc]` keys, clear `custom_logo`). Neither
+   reset happens by default: uninstall leaves branding stored
+   (reinstall-friendly) and leaves `app_theme` alone unless asked. Neither
+   script touches `config.inc.php` in either direction — reverting
+   `$conf['theme']` is always a manual edit.
 4. Housekeeping: stray `.omc/` state dir inside the theme clone blocks the
    symlink install path.
 
-## P1 — white-label completeness (Branding-module features)
+## P1 — white-label completeness (Branding-page features)
 
 > **Partly delivered.** Item 5b and the news-feed half of item 5 shipped and are
 > in the current tree; 5's dashlet-layout half and items 6-8 are still open.
 > Status is marked per item.
 
-5. *(news-feed half shipped — the module's news-feed toggle owns the three
-   `dashboard_atom_url_*` keys and `bin/purge_branding.php` restores them;
-   the `*_dashlets_left/right` layout keys remain unmanaged.)*
+5. *(news-feed half shipped — the Branding page's news-feed toggle owns the
+   three `dashboard_atom_url_*` keys and `bin/purge_branding.php` restores
+   them; the `*_dashlets_left/right` layout keys remain unmanaged.)*
    **Per-role dashboard curation** (the "hide announcements/news" ask): the
-   customizer should manage the six `*_dashlets_left/right` keys and the three
-   `dashboard_atom_url_*` feeds. Recommended defaults: blank the
+   Branding page should manage the six `*_dashlets_left/right` keys and the
+   three `dashboard_atom_url_*` feeds. Recommended defaults: blank the
    reseller/client news feeds (or point them at the operator's own Atom feed —
    a genuine rebrand feature), leave the admin feed on ispconfig.org (update
    awareness), and **omit `[metrics]` from non-admin layouts** — stock ISPConfig
@@ -113,8 +122,8 @@ when each surface was closed, not as versions you can install today.
    admin-only lang surfaces — Monitor's "ISPConfig Log"/"ISPConfig Cron -
    Log", Help's "About ISPConfig", Tools headings, the fail2ban HowtoForge
    hint. Admin-only eyes, so cosmetic and low priority.
-7. **Branded client announcements** — a white-label *asset*: the customizer
-   can post per-client/per-group notices through core's own `sys_message`
+7. **Branded client announcements** — a white-label *asset*: the Branding page
+   could post per-client/per-group notices through core's own `sys_message`
    mechanism (auth-scoped, dismissible, translated banner slot on every
    dashboard). Clean uninstall = delete own rows.
 8. Theme `error.tpl.htm` override (stock fragment is neutral but unstyled) —
@@ -161,14 +170,14 @@ offer upstream:
 
 ## Role visibility (verified)
 
-Only admins can ever see the customizer. Module access = the `sys_user.modules`
-CSV checked at login and on every request; the installer grants `customizer`
-to `typ='admin'` users only. Client/reseller creation builds module lists from
-`$conf['interface_modules_enabled']` (never contains customizer); the remote
-API filters module grants against that same list; the self-service settings
-form cannot add modules. The only UI that could hand it to a non-admin is the
-admin-gated CP Users editor. Every customizer endpoint is additionally
-triple-guarded (`check_module_permissions` → `admin_allow_system_config`,
+Only admins can ever see the Branding page. Module access = the
+`sys_user.modules` CSV checked at login and on every request; `install.sh`
+grants `customizer` to `typ='admin'` users only. Client/reseller creation builds
+module lists from `$conf['interface_modules_enabled']` (never contains
+`customizer`); the remote API filters module grants against that same list; the
+self-service settings form cannot add modules. The only UI that could hand it to
+a non-admin is the admin-gated CP Users editor. Every one of its endpoints is
+additionally triple-guarded (`check_module_permissions` → `admin_allow_system_config`,
 shipped default *superadmin* → `is_admin`). Resellers and clients only ever
 see the result. One core gotcha worth knowing: editing a client/reseller whose
 `limit_client` changed silently rewrites their module CSV wholesale from the

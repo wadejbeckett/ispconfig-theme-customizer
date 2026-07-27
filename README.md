@@ -1,15 +1,20 @@
 # ispconfig-theme-customizer
 
-Two things that belong together for the [ISPConfig](https://www.ispconfig.org/)
-control panel: **Clarity**, a complete dark/light interface built on VMware
-Clarity design tokens (navy navigation rail, card-based content, Clarity icons,
-a theme switcher, a redesigned login screen), and **Branding**, an admin-only
-white-label module that sets your logo, panel name, accent colour and login
-details from a page inside the panel instead of from a text editor. Both install
-as ordinary ISPConfig extensions — a theme directory and a module directory — so
-**no core file is ever modified and no database schema is added**. Either can be
-installed on its own: the theme is useful with stock branding, and the module
-does real work on the stock ISPConfig theme.
+A modern, brandable front-end for the [ISPConfig](https://www.ispconfig.org/)
+control panel. It replaces the panel's interface with **Clarity**, a complete
+dark/light design built on VMware Clarity design tokens (navy navigation rail,
+card-based content, Clarity icons, a theme switcher, a redesigned login screen),
+and adds an admin-only **Branding** page inside the panel where you set your
+logo, panel name, accent colour and login details instead of editing files by
+hand.
+
+The design reads its colours, logo and panel name from exactly the keys that
+page writes. That shared contract is why this is one product, with one version
+number and one tag.
+
+It installs as ordinary ISPConfig extensions — a theme directory and a module
+directory — so **no core file is ever modified and no database schema is
+added**.
 
 ![Dashboard](mockup/shots/dark-dashboard-desktop.png)
 
@@ -22,24 +27,12 @@ More in [`mockup/shots/`](mockup/shots/) (mobile, forms, components, and
 `default-desktop.png` for a stock-panel comparison) and
 [`docs/screenshots/`](docs/screenshots/).
 
-## Why one repository
+## What you get
 
-These shipped as two repos until v3.0.0, and that was a mistake. The theme's
-`brand.php` reads exactly the `sys_ini` keys the module's `customizer_edit.php`
-writes — one contract, split across two projects with independent version
-numbers and nothing enforcing that they matched. Module v1.0.12 against theme
-v2.1.0 meant the accent colour silently did not apply, with no error anywhere.
-One repo, one version number, one tag.
+### The interface
 
-**v3.0.0** is the first combined release. The number sits above both old lines
-(theme v2.2.4, module v1.0.13) and is a major bump because the repository layout
-changed. There are no submodules; a plain `git clone` is all you need.
-
-## What the theme gives you
-
-- A full interface: vertical brand rail, topbar, card surfaces, restyled tables,
-  forms, tabs and modals — applied by CSS to the stock markup, not by rewriting
-  pages.
+- Vertical brand rail, topbar, card surfaces, restyled tables, forms, tabs and
+  modals — applied by CSS to the stock markup, not by rewriting pages.
 - **Dark and light**, with an in-panel switcher; the choice is stored in
   `localStorage`, so it is per browser.
 - Clarity icon shapes replacing the legacy `ispconfig` icon font, the Bootstrap
@@ -58,7 +51,7 @@ changed. There are no submodules; a plain `git clone` is all you need.
 - Vendor CSS/JS still loads from `themes/default`, so that directory must remain
   present. It always is.
 
-## What the module gives you
+### The Branding page
 
 One admin-only page, labelled **Branding** in the top navigation (not
 "Customizer" — that is only the directory name). It writes to the existing
@@ -66,8 +59,9 @@ One admin-only page, labelled **Branding** in the top navigation (not
 The UI ships in seven locales: English, German, French, Spanish, Italian, Dutch
 and Portuguese.
 
-**Works on the stock ISPConfig theme** — these values are read by ISPConfig core
-itself, so the module is useful with no theme installed:
+**Some of it works on the stock ISPConfig theme** — these values are read by
+ISPConfig core itself, which is why `install.sh --module` is a real option on a
+panel that is staying on the stock look:
 
 | Setting | Where core reads it |
 |---|---|
@@ -79,8 +73,8 @@ itself, so the module is useful with no theme installed:
 The uploader exists because the stock panel's own logo upload is currently
 non-functional. The field it writes is ISPConfig's, not a new one.
 
-**Needs a brand-aware theme** — Clarity, or any theme that adopts the contract
-below. Nothing in core reads these:
+**Needs a brand-aware design** — Clarity, or anything else that adopts the
+[contract below](#the-brand-token-contract). Nothing in core reads these:
 
 | Setting | Effect |
 |---|---|
@@ -110,8 +104,8 @@ sudo ./install.sh
 ./install.sh [--theme|--module|--all] [--copy] [--no-assign] [ISPCONFIG_ROOT]
 ```
 
-- With no component flag, **both** are installed. Use `--theme` or `--module`
-  for one.
+- With no component flag, **both** are installed. `--theme` installs only the
+  interface; `--module` installs only the Branding page.
 - `--copy` copies real files instead of symlinking. Symlinks mean the panel
   reads from your clone, so the clone and every parent directory must stay
   traversable by the web server; with `--copy` the clone can live anywhere and
@@ -133,8 +127,8 @@ change applies immediately — the code does not require a login round trip. In
 practice, if the frame still looks stock, log out and back in, then hard-refresh
 (`Ctrl+Shift+R`) so the browser drops the old CSS.
 
-**Manual step — login screen and system-wide default.** The installers never
-edit ISPConfig configuration, by design. To set the default yourself, add
+**Manual step — login screen and system-wide default.** `install.sh` never
+edits ISPConfig configuration, by design. To set the default yourself, add
 
 ```php
 $conf['theme'] = 'clarity';
@@ -184,7 +178,7 @@ procedure in [UPGRADING.md](UPGRADING.md).
   claims it works. Treat it as unknown.
 - Root shell access to the panel server, and the stock `default` theme still
   present (the theme loads its vendor CSS/JS from there).
-- PHP CLI, for the module's assignment and cleanup helpers. Without it the
+- PHP CLI, for the module-assignment and cleanup helpers. Without it the
   installer says so and prints the manual equivalent.
 
 ## Version disclosure
@@ -204,8 +198,8 @@ No session, no credentials. Anyone who can reach your login page learns the
 exact version **and patch level**. This is not stock behaviour: ISPConfig's own
 `default` theme ships no version file and that URL returns 404 — tested. The
 exposure arrives with any third-party theme, this one included. It also
-undercuts the module's `show_version` toggle, which hides the version on the
-Help page while the same string stays readable one URL away.
+undercuts the `show_version` toggle on the Branding page, which hides the
+version on the Help page while the same string stays readable one URL away.
 
 The fix belongs at the web-server layer, and ISPConfig already denies files this
 way in its own panel vhost. Ready-made nginx and Apache snippets, with the full
@@ -218,60 +212,76 @@ explanation, are in [`contrib/webserver/`](contrib/webserver/README.md).
                [--keep-assignment] [ISPCONFIG_ROOT]
 ```
 
-With no component flag it uninstalls **both**. What it actually does, stated
-plainly, because the defaults are deliberately conservative:
+Same component flags as the installer: with none, **both** are removed. What
+`uninstall.sh` actually does, stated plainly, because the defaults are
+deliberately conservative:
 
-- **It does not restore stock on its own.** The theme uninstaller removes
-  `themes/clarity` but resets `sys_user.app_theme` only when you pass
-  `--reset-users`. That reset matters: core falls back to the default theme at
-  session level but never heals the stored column, so without it affected users
-  get a "theme not compatible" banner at every login. Skip it only if you are
+- **It does not restore stock on its own.** Removing `themes/clarity` leaves
+  `sys_user.app_theme` still pointing at it; **`--reset-users`** is what clears
+  that column. That matters: core falls back to the default theme at session
+  level but never heals the stored value, so without it affected users get a
+  "theme not compatible" banner at every login. Skip it only if you are
   reinstalling.
-- **Your branding survives by default.** The module uninstaller removes the
-  module directory and strips `customizer` from users' module lists (resetting
-  any startmodule that pointed at it), but leaves the stored values alone — the
-  stock fields keep working and stay editable under *System → Interface Config*,
-  and the `[branding]` values sit inert for any brand-aware theme. Pass
-  `--purge-branding` to wipe them, `--keep-assignment` to leave the module in
-  users' lists.
-- **`$conf['theme']` is always yours to revert.** Neither script edits ISPConfig
+- **Your branding survives by default.** The `interface/web/customizer/`
+  directory goes and `customizer` is stripped from users' module lists
+  (resetting any startmodule that pointed at it), but the stored values are left
+  alone — the stock fields keep working and stay editable under *System →
+  Interface Config*, and the `[branding]` values sit inert, ready for any
+  brand-aware design. **`--purge-branding`** wipes them;
+  **`--keep-assignment`** leaves `customizer` in users' module lists.
+- **`$conf['theme']` is always yours to revert.** Nothing here edits ISPConfig
   configuration. If you set it to `'clarity'`, set it back to `'default'` in
-  both files. The uninstaller checks and warns you *before* it removes anything,
+  both files. `uninstall.sh` checks and warns you *before* it removes anything,
   because a panel still configured for a theme directory that no longer exists
   serves a login page with every stylesheet and script 404ing, silently.
 
 ## The brand-token contract
 
-The module writes, and the theme reads, a small set of keys in the global
-`sys_ini` row (`sysini_id = 1`) — the `[branding]` and `[misc]` values listed in
-the two tables above. That is the entire interface between them: no shared code,
-no API.
+The Branding page writes, and the design reads, a small set of keys in the
+global `sys_ini` row (`sysini_id = 1`) — the `[branding]` and `[misc]` values
+listed in the two tables above. That is the entire coupling: no shared code, no
+API.
 
-That is deliberate, and it is the reason to think of this as one contract rather
-than one product. Another base design can adopt the same keys and inherit the
-whole Branding page for free. The reference implementation is
+Clarity is the design this **ships with**, not the product's identity. Anything
+that reads the same keys inherits the whole Branding page for free — CI fails
+the build if a key the Branding page writes is not read back, so a future base
+design can drop in against a contract that is enforced rather than assumed. The
+reference implementation is
 [`themes/clarity/brand.php`](themes/clarity/brand.php) — a read-only, pre-auth
 stylesheet endpoint that queries one row, emits CSS custom properties, and is a
 no-op when nothing is set. The audit of every place ISPConfig identifies itself,
-and which of those can be overridden inside the theme/module envelope, is in
+and which of those can be overridden inside the extension envelope, is in
 [docs/WHITELABEL.md](docs/WHITELABEL.md).
 
-You can also brand the theme with two file swaps and no module at all: replace
+You can also brand it with two file swaps and no stored values at all: replace
 `themes/clarity/assets/images/wordmark-white.svg` (light artwork — it sits on
 the navy rail, the mobile header and the login card; any aspect ratio works) and
-drop your own icons into `themes/clarity/assets/favicon/`. A logo set through
-the module or the native field overrides the wordmark.
+drop your own icons into `themes/clarity/assets/favicon/`. A logo set on the
+Branding page, or in ISPConfig's native field, overrides the wordmark.
+
+### One version number
+
+Until v3.0.0 this shipped as two repositories with independent version numbers,
+and nothing enforced that the two sides of the contract matched: `brand.php`
+read exactly the keys `customizer_edit.php` wrote, but v1.0.12 of one against
+v2.1.0 of the other meant the accent colour silently did not apply, with no
+error anywhere. One contract, so now: one repository, one version number, one
+tag.
+
+**v3.0.0** is the first combined release. The number sits above both old lines
+(v2.2.4 and v1.0.13) and is a major bump because the repository layout changed.
+There are no submodules; a plain `git clone` is all you need.
 
 ## Repo layout
 
 | Path | What |
 |---|---|
-| `themes/clarity/` | The theme: 6 templates, stylesheets, self-hosted fonts, brand assets. |
+| `themes/clarity/` | The interface: 6 templates, stylesheets, self-hosted fonts, brand assets. |
 | `themes/clarity/brand.php` | Brand-token reader — read-only pre-auth stylesheet endpoint; a no-op when nothing is set. |
 | `themes/clarity/BUILT-AGAINST.txt` | What is overridden, against which stock version, and the contracts each override preserves. |
-| `interface/web/customizer/` | The Branding module (directory name `customizer`; nav label "Branding"). |
+| `interface/web/customizer/` | The Branding page (directory name `customizer`; nav label "Branding"). |
 | `bin/` | PHP helpers the scripts call: module assign/unassign, theme reset, branding purge. |
-| `install.sh`, `uninstall.sh` | Unified installers for both components. |
+| `install.sh`, `uninstall.sh` | One of each; `--theme` / `--module` / `--all` select what they act on, default everything. |
 | `contrib/webserver/` | nginx and Apache snippets for the version-disclosure mitigation. |
 | `DESIGN.md` | The design language — tokens, surfaces, component rules. |
 | `UPGRADING.md` | Version stamp and override contracts across panel upgrades. |
@@ -281,9 +291,9 @@ the module or the native field overrides the wordmark.
 ## Contributing
 
 Bug reports, fixes and ideas are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md)
-for how the theme and module are put together, the ground rules that keep them
-upgrade-safe, and how to test a change. The issue templates ask for exactly what
-makes a theme or branding bug diagnosable. Security reports:
+for how it is put together, the ground rules that keep it upgrade-safe, and how
+to test a change. The issue templates ask for exactly what makes an interface or
+branding bug diagnosable. Security reports:
 [SECURITY.md](SECURITY.md).
 
 ## Support this project
@@ -337,8 +347,8 @@ donations; the ways its developers ask to be supported are:
 - Not affiliated with, or endorsed by, **VMware**. Built using the open-source
   Clarity design system (`@cds/core`, MIT).
 - Not affiliated with, or endorsed by, the **ISPConfig project**. ISPConfig is a
-  trademark of its respective owner; this is an independent, third-party theme
-  and module that builds on ISPConfig and competes with nothing in it.
+  trademark of its respective owner; this is an independent, third-party
+  front-end that builds on ISPConfig and competes with nothing in it.
 
 ---
 

@@ -1,7 +1,14 @@
-# clarity — Clarity Theme for ISPConfig
+# clarity — the Clarity design for ISPConfig
 
-The deployable theme directory. Install with `../../install.sh` (see the
-repo README for the two-minute guide).
+The deployable theme directory: the design this front-end ships with. Install
+with `../../install.sh`, which also sets up the in-panel **Branding** page
+unless you pass `--theme` for the design alone (see the repo README for the
+two-minute guide).
+
+The logo, panel name and colours are not baked in: `brand.php` reads them at
+render time from the `sys_ini` keys the Branding page writes, and falls back to
+the neutral defaults shipped here when nothing is set. That shared contract is
+why there is a single version number.
 
 What's inside:
 
