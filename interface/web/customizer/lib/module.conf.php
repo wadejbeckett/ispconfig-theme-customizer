@@ -36,7 +36,7 @@ $module['template']  = 'module.tpl.htm';                   // standard single-co
 $module['startpage'] = 'customizer/customizer_edit.php?id=1';
 $module['tab_width'] = '';
 $module['order']     = '95';
-$module['icon']      = 'icon icon-tools';
+$module['icon']      = 'icon icon-edit icon-branding';
 
 $items = array();
 $items[] = array('title'   => 'Branding',
