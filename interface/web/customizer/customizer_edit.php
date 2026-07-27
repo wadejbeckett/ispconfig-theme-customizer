@@ -43,13 +43,14 @@ class page_action extends tform_actions {
     /* The keys this module owns in each INI section.
      *
      * These are overwritten wholesale from the POST on every save, so ONLY form
-     * fields belong here. [branding] logo_on_dark is deliberately absent: it is
-     * the uploaded dark-background logo, written by logo_upload.php, and listing
-     * it would blank the operator's logo on the next click of Save. It survives
-     * every save because onUpdateSave re-parses the stored blob and only assigns
-     * the keys named below. Same reasoning as sys_ini.custom_logo, which is a
-     * column and was never a candidate for this list. */
-    private $branding_keys = array('logo_url', 'logo_url_on_dark', 'accent_hex', 'rail_hex', 'login_bg', 'show_ispconfig_credit', 'show_theme_credit', 'show_version');
+     * fields belong here. [branding] logo_on_dark and [branding] favicon are
+     * deliberately absent: they are the UPLOADED images, written by
+     * logo_upload.php, and listing either would blank the operator's artwork on
+     * the next click of Save. They survive every save because onUpdateSave
+     * re-parses the stored blob and only assigns the keys named below. Same
+     * reasoning as sys_ini.custom_logo, which is a column and was never a
+     * candidate for this list. */
+    private $branding_keys = array('logo_url', 'logo_url_on_dark', 'favicon_url', 'accent_hex', 'rail_hex', 'login_bg', 'show_ispconfig_credit', 'show_theme_credit', 'show_version');
     private $misc_keys      = array('company_name', 'custom_login_text', 'custom_login_link');
 
     function onShowEdit() {
@@ -67,6 +68,7 @@ class page_action extends tform_actions {
                 'company_name'          => isset($misc['company_name']) ? $misc['company_name'] : '',
                 'logo_url'              => isset($branding['logo_url']) ? $branding['logo_url'] : '',
                 'logo_url_on_dark'      => isset($branding['logo_url_on_dark']) ? $branding['logo_url_on_dark'] : '',
+                'favicon_url'           => isset($branding['favicon_url']) ? $branding['favicon_url'] : '',
                 'accent_hex'            => isset($branding['accent_hex']) ? $branding['accent_hex'] : '',
                 'rail_hex'              => isset($branding['rail_hex']) ? $branding['rail_hex'] : '',
                 'login_bg'              => isset($branding['login_bg']) ? $branding['login_bg'] : '',
@@ -102,7 +104,7 @@ class page_action extends tform_actions {
 
     function onShowEnd() {
         global $app;
-        $this->render_logo_previews();
+        $this->render_image_previews();
         //* the post-save redirect appends msg=saved (see list_default in the form
         //* definition) — without this banner a successful save is indistinguishable
         //* from a silently failed one
@@ -254,16 +256,17 @@ class page_action extends tform_actions {
     }
 
     /**
-     * Both preview rows, each resolved and drawn exactly as the live panel will
-     * resolve and draw it.
+     * All three preview rows — the two logo variants and the favicon — each
+     * resolved and drawn exactly as the live panel will resolve and draw it.
      *
-     * All four stored values are handed to the shared resolver, not just the
+     * Every stored value is handed to the shared resolvers, not just the
      * uploaded ones: a valid logo_url is what the panel actually renders, so
      * previewing custom_logo alone made this page contradict the panel. The same
-     * trap now exists twice over, plus the cross-variant fallback — hence one
-     * resolver, used here and by logo_upload.php and mirrored by both readers.
+     * trap exists for every slot (favicon_url beats favicon in exactly the same
+     * way) — hence one resolver per model, used here and by logo_upload.php and
+     * mirrored by the designs' brand.php / favicon.php readers.
      */
-    private function render_logo_previews() {
+    private function render_image_previews() {
         global $app;
         $sys_ini = $app->db->queryOneRecord("SELECT custom_logo FROM sys_ini WHERE sysini_id = 1");
         $app->uses('getconf');
@@ -277,12 +280,26 @@ class page_action extends tform_actions {
             'logo_url_on_dark' => isset($branding['logo_url_on_dark']) ? $branding['logo_url_on_dark'] : '',
         ));
 
-        //* $app->lng(), not $app->tform->lng(): these three live in the module
+        //* $app->lng(), not $app->tform->lng(): these four live in the module
         //* wordbook (lib/lang/<lang>.lng) rather than the tform one, because
         //* logo_upload.php renders the same previews and has no tform at all.
         $no_logo_txt = $app->lng('no_logo_set_txt');
         $app->tpl->setVar('used_logo', customizer_logo_preview_html($resolved['on_light'], 'on_light', $no_logo_txt, $app->lng('logo_fallback_from_dark_txt')));
         $app->tpl->setVar('used_logo_on_dark', customizer_logo_preview_html($resolved['on_dark'], 'on_dark', $no_logo_txt, $app->lng('logo_fallback_from_light_txt')));
+
+        //* getconf's blob is fine to read the favicon values from — this is a
+        //* pure READ path, so its stripslashes has no missing counterpart to
+        //* damage anything. (The write paths must not use it; see onUpdateSave.)
+        //* Both favicon values are backslash-free by construction anyway: the
+        //* base64 alphabet has none, and the reference validator rejects them.
+        $app->tpl->setVar('used_favicon', customizer_favicon_preview_html(
+            customizer_favicon_resolve(array(
+                'favicon'     => isset($branding['favicon']) ? $branding['favicon'] : '',
+                'favicon_url' => isset($branding['favicon_url']) ? $branding['favicon_url'] : '',
+            )),
+            $app->lng('no_favicon_set_txt'),
+            $app->lng('favicon_url_wins_txt')
+        ));
     }
 }
 

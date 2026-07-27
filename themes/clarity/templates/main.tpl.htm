@@ -16,13 +16,19 @@
   <meta name='keywords' lang='en' content='' />
   <meta name='robots' content='noindex, nofollow' />
 
-  <!-- Clarity Theme for ISPConfig: favicons resolve from this theme's own assets -->
+  <!-- The TAB ICON is brandable: favicon.php serves the operator's own favicon
+       (uploaded, or the path they pointed at) and falls back to this theme's
+       shipped one when nothing is set — so it is a no-op on a panel that has
+       not been branded. No type/sizes attributes: what this endpoint returns
+       depends on what the operator stored, and declaring a type it might not be
+       makes browsers skip the link. One <link>, one fetch.
+       The remaining icon references below stay theme assets on purpose: they
+       are platform install artefacts (home-screen icon, pinned-tab mask, tile
+       config), not the tab, and each has its own size/format contract. -->
+  <link rel='icon' href='/themes/<tmpl_var name='current_theme'>/favicon.php'>
   <link rel='apple-touch-icon' sizes='180x180' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/apple-touch-icon.png'>
-  <link rel='icon' type='image/png' sizes='32x32' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/favicon-32x32.png'>
-  <link rel='icon' type='image/png' sizes='16x16' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/favicon-16x16.png'>
   <link rel='manifest' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/site.webmanifest'>
   <link rel='mask-icon' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/safari-pinned-tab.svg' color='#0065AB'>
-  <link rel='shortcut icon' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/favicon.ico'>
   <meta name='msapplication-TileColor' content='#01243D'>
   <meta name='msapplication-config' content='/themes/<tmpl_var name='current_theme'>/assets/favicon/browserconfig.xml'>
   <meta name='theme-color' content='#01243D'>

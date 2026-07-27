@@ -23,6 +23,16 @@ $wb['logo_url_on_dark_txt'] = 'Logopad / -URL voor donkere achtergronden (oversc
 $wb['logo_url_on_dark_hint_txt'] = 'Optioneel; heeft voorrang op het geüploade bestand hierboven. Dezelfde regels als het pad voor lichte achtergronden: een root-relatief pad (aanbevolen) of een https://-URL. Zo houdt u een logo voor donkere achtergronden ook volledig buiten de interface-instellingen — een pad is een paar bytes, een geüploade afbeelding tot 60 KB.';
 $wb['logo_url_on_dark_error_regex'] = 'Het logopad voor donkere achtergronden moet een root-relatief pad (/…) of een https://-URL zijn, zonder spaties, aanhalingstekens, vierkante haken of ronde haken.';
 
+$wb['favicon_head_txt'] = 'Favicon';
+$wb['favicon_intro_txt'] = 'Het kleine pictogram in het browsertabblad, in bladwijzers en in de geschiedenis. Elk ontwerp levert er zelf een mee, dus een verder volledig gebrand panel toont daar nog steeds het merk van iemand anders — dit vervangt het op elke pagina, ook op het aanmeldscherm. Eén pictogram voor het hele panel: anders dan bij het logo is er geen licht/donker-paar, omdat de browser hetzelfde pictogram tekent, hoe de kopregel van het ontwerp er ook uitziet.';
+$wb['favicon_txt'] = 'Favicon-bestand';
+$wb['favicon_hint_txt'] = 'SVG (eenvoudig, zonder scripts), PNG of ICO, onder de 15 KB. Kies een bestand en klik daarna op “Favicon uploaden” — het wordt op zichzelf geüpload, los van de knop Opslaan onderaan. Een SVG schaalt naar elke schermdichtheid; een .ico dekt nog steeds browsers die er geen accepteren, en een eenvoudige 32&times;32-PNG volstaat op zichzelf. Wat u ook kiest: bekijk de voorbeeldweergave op 16px hierboven. Fijne details en kleine letters lopen op dat formaat dicht, en een tabblad is de kleinste plek waar uw merk ooit verschijnt.';
+$wb['favicon_upload_txt'] = 'Favicon uploaden';
+$wb['used_favicon_txt'] = 'Huidige favicon';
+$wb['favicon_url_txt'] = 'Favicon-pad / -URL (overschrijving)';
+$wb['favicon_url_hint_txt'] = 'Optioneel; heeft voorrang op het geüploade bestand hierboven — dezelfde voorrangsregel als bij de logopaden. Een pad relatief aan de webroot (aanbevolen — bijv. /themes/custom/favicon.svg voor een bestand dat u op de server hebt geplaatst) of een https://-URL. Het panel stuurt de browser daarheen in plaats van opgeslagen bytes te serveren, waardoor het pictogram ook volledig buiten de interface-instellingen blijft. Een externe URL bindt elke pagina van uw panel aan die host en onthult de IP-adressen van uw bezoekers — een lokaal pad verdient de voorkeur.';
+$wb['favicon_url_error_regex'] = 'Het favicon-pad moet een pad relatief aan de webroot (/…) of een https://-URL zijn, zonder spaties, aanhalingstekens, haken of haakjes.';
+
 $wb['brand_head_txt'] = 'Naam & kleuren';
 $wb['company_name_txt'] = 'Paneelnaam';
 $wb['company_name_hint_txt'] = 'Wordt weergegeven in de browsertitel en de voettekst.';
@@ -53,6 +63,9 @@ $wb['logo_uploaded_txt'] = 'Logo bijgewerkt.';
 $wb['logo_removed_txt'] = 'Logo verwijderd.';
 $wb['logo_bad_type_txt'] = 'Niet-ondersteunde afbeelding. Gebruik SVG (eenvoudig, zonder scripts), PNG, JPEG, GIF of WebP.';
 $wb['logo_too_large_txt'] = 'Die afbeelding is te groot. Houd deze onder de 45 KB — een geoptimaliseerde PNG of WebP werkt het best.';
+$wb['favicon_uploaded_txt'] = 'Favicon bijgewerkt. Browsers bewaren pictogrammen hardnekkig in de cache — blijft het oude hangen, ververs dan met Ctrl+Shift+R of open een nieuw tabblad.';
+$wb['favicon_bad_type_txt'] = 'Niet-ondersteund pictogram. Gebruik SVG (eenvoudig, zonder scripts), PNG of ICO.';
+$wb['favicon_too_large_txt'] = 'Dat pictogram is te groot. Houd het onder de 15 KB — een 32&times;32-PNG is ongeveer 1 KB en een .ico met meerdere formaten 5 tot 15 KB.';
 $wb['no_file_uploaded_error'] = 'Er is geen bestand geselecteerd.';
 $wb['upload_failed_txt'] = 'De upload is niet voltooid. Probeer het opnieuw.';
 $wb['demo_mode_txt'] = 'Deze functie is uitgeschakeld in de demomodus.';

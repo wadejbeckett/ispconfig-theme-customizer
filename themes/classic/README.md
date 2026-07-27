@@ -29,28 +29,45 @@ did that was Clarity, so branding your colours meant accepting Clarity's look.
   `?scene[]=`, falls through to the app scene. The value is compared, never
   emitted.
 - `title.php` — the tab title, and the alt text core never sets on the login
-  logo. Both endpoints are pre-authentication: the login screen links them.
+  logo.
+- `favicon.php` — the tab icon. It answers with the operator's own favicon
+  (`[branding] favicon_url` by reference, else the uploaded `[branding]
+  favicon`) and, when nothing is set, streams **stock's** own icon from
+  `themes/default/assets/favicon/` — the very file the shell linked before this
+  endpoint existed, so an unbranded panel is unchanged. It exists because a
+  favicon is a `<link>`, not a style, so `brand.php` cannot carry it; and it
+  never 404s, because a missing icon shows on every tab.
 - `templates/` — **generated at install time. Not in this repository, and never
   to be committed or hand-edited.**
 
-Nothing else. No stylesheets, no images, no fonts: every asset is served from
-`themes/default/assets/`.
+All three endpoints are pre-authentication: the login screen links them.
+
+Nothing else. No stylesheets, no images, no fonts, and no icons of its own:
+every asset is served from `themes/default/assets/`.
 
 ## templates/ is generated — do not hand-edit, do not commit
 
 `install.sh` reads the **target panel's own**
-`themes/default/templates/main.tpl.htm` and `main_login.tpl.htm`, applies three
+`themes/default/templates/main.tpl.htm` and `main_login.tpl.htm`, applies four
 mechanical changes, and writes the result here:
 
 1. every `themes/<tmpl_var name='current_theme'>/assets/` path is pinned to
    `themes/default/assets/`;
-2. `brand.php` and `title.php` are linked immediately before `</head>`;
-3. in the app frame only, stock's single footer credit line is wrapped in its
+2. `brand.php`, `title.php` and `favicon.php` are linked immediately before
+   `</head>`;
+3. stock's `<link rel='icon'>` / `rel='shortcut icon'` tags — three of them on
+   3.3.x — are replaced by the single `favicon.php` link from change 2.
+   Without this, change 1 would leave the tab showing the ISPConfig icon on a
+   panel that is otherwise fully white-labelled;
+4. in the app frame only, stock's single footer credit line is wrapped in its
    own span and a second span is appended for this design's credit.
 
 Everything else is byte-for-byte stock. The installer verifies that: it counts
-the lines it added and aborts rather than deploy a template it cannot account
-for.
+the lines it added *and the icon links it removed* and aborts rather than deploy
+a template it cannot account for. It also proves the result carries exactly one
+tab-icon link and that it is `favicon.php`, so an icon `<link>` written in a
+shape the transform did not recognise fails the install instead of quietly
+leaving the stock icon in place beside ours.
 
 The third change is what makes the two footer-credit toggles on the Branding
 page work here as well as on Clarity — stock renders the whole credit as bare

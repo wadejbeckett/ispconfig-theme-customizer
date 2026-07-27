@@ -119,6 +119,46 @@
   </div>
 </fieldset>
 
+<!-- The favicon is its own fieldset, not a third block inside the Logo one:
+     it is a different asset with different rules (one slot, not two — a tab
+     strip is a tab strip whatever the design's header looks like) and its
+     preview answers a different question. Grouping it with the logos would
+     imply the two-background model applies to it as well. -->
+<fieldset>
+  <legend>{tmpl_var name='favicon_head_txt'}</legend>
+
+  <div class="form-group">
+    <div class="col-sm-9 col-sm-offset-3"><p class="help-block">{tmpl_var name='favicon_intro_txt'}</p></div>
+  </div>
+
+  <div class="form-group">
+    <label class="col-sm-3 control-label">{tmpl_var name='used_favicon_txt'}</label>
+    <div class="col-sm-9" id="used_favicon">{tmpl_var name='used_favicon'}</div>
+  </div>
+  <div class="form-group">
+    <label for="file_favicon" class="col-sm-3 control-label">{tmpl_var name='favicon_txt'}</label>
+    <div class="col-sm-6 col-text">
+      <!-- Same reasoning as file_on_dark: the name never reaches the server
+           (the driver appends the file as 'file' itself), so a distinct one
+           costs nothing and keeps three file inputs unambiguous in a form that
+           also carries a native Save. -->
+      <input name="file_favicon" id="file_favicon" size="30" type="file" class="fileUpload" accept="image/svg+xml,.svg,image/png,image/x-icon,image/vnd.microsoft.icon,.ico" />
+      <p class="help-block">{tmpl_var name='favicon_hint_txt'}</p>
+    </div>
+    <div class="col-sm-3">
+      <button class="btn btn-default" type="button" id="nz-favicon-upload">{tmpl_var name='favicon_upload_txt'}</button>
+      <a href="javascript:void(0);" class="btn btn-default" id="nz-favicon-remove">{tmpl_var name='logo_remove_txt'}</a>
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="favicon_url" class="col-sm-3 control-label">{tmpl_var name='favicon_url_txt'}</label>
+    <div class="col-sm-9">
+      <input type="text" name="favicon_url" id="favicon_url" value="{tmpl_var name='favicon_url'}" class="form-control" placeholder="/themes/custom/favicon.svg" />
+      <p class="help-block">{tmpl_var name='favicon_url_hint_txt'}</p>
+    </div>
+  </div>
+</fieldset>
+
 <fieldset>
   <legend>{tmpl_var name='brand_head_txt'}</legend>
 
@@ -307,11 +347,12 @@
             msgs.forEach(function (m) { msgSlot.appendChild(m); });
             msgSlot.scrollIntoView({ block: 'nearest' });
           }
-          // BOTH previews are refreshed, not just the uploaded one: the two
+          // EVERY preview is refreshed, not just the uploaded one: the two logo
           // variants fall back to each other, so filling an empty dark slot also
           // changes what the light row shows (from "nothing set" to "borrowing
-          // the dark mark"). Refreshing one would leave the other lying.
-          ['used_logo', 'used_logo_on_dark'].forEach(function (id) {
+          // the dark mark"). Refreshing one would leave the other lying. The
+          // favicon row rides along for free — the response always carries it.
+          ['used_logo', 'used_logo_on_dark', 'used_favicon'].forEach(function (id) {
             var freshPrev = doc.getElementById(id);
             var curPrev = document.getElementById(id);
             if (freshPrev && curPrev) curPrev.innerHTML = freshPrev.innerHTML;
@@ -325,6 +366,9 @@
   }
   wireUpload('nz-logo-upload', 'file', 'on_light');
   wireUpload('nz-logo-upload-on-dark', 'file_on_dark', 'on_dark');
+  // The favicon is a third slot on the same driver, not a second uploader: the
+  // CSRF dance is the exact part that must never be reimplemented.
+  wireUpload('nz-favicon-upload', 'file_favicon', 'favicon');
 
   // Remove-logo: send the page's CSRF token as query params so logo_delete.php
   // can enforce csrf_token_check('GET') (loadContent issues a same-origin XHR).
@@ -345,5 +389,6 @@
   }
   wireRemove('nz-logo-remove', 'on_light');
   wireRemove('nz-logo-remove-on-dark', 'on_dark');
+  wireRemove('nz-favicon-remove', 'favicon');
 })();
 </script>

@@ -59,7 +59,8 @@ when each surface was closed, not as versions you can install today.
 | Accent / rail / login colours | all | `[branding]` + brand.php |
 | Footer credits ("powered by ISPConfig", theme credit) | all | the two attribution toggles (default ON — courtesy lines only) |
 | Login footnote text/link, panel name | all | stock `[misc]` keys the Branding page writes |
-| Favicons / tiles / mask icons | all | theme-owned assets (already neutral) |
+| Browser-tab favicon | all | `[branding] favicon` (upload) or `favicon_url` (by reference), served per design by `themes/<design>/favicon.php`; falls back to the design's shipped icon |
+| Home-screen / pinned-tab / tile icons | all | theme-owned assets (already neutral) — platform install artefacts, not the tab |
 | Outbound mail sender identity | all | stock `[mail] admin_name` / `admin_mail` |
 
 ## P0 — bugs & quick wins (all inside the envelope) — *closed*

@@ -9,20 +9,22 @@
  *
  * The single global row sys_ini (sysini_id = 1) is the store. The controller
  * (customizer_edit.php) reads/writes two INI sections inside sys_ini.config:
- *   [branding]  logo_url, logo_url_on_dark, accent_hex, rail_hex, login_bg,
- *               show_ispconfig_credit, show_theme_credit, show_version
+ *   [branding]  logo_url, logo_url_on_dark, favicon_url, accent_hex, rail_hex,
+ *               login_bg, show_ispconfig_credit, show_theme_credit, show_version
  *   [misc]      company_name, custom_login_text, custom_login_link, and the
  *               three dashboard_atom_url_* keys via the news-feed toggle
  *               (all existing core keys)
  *
- * The two UPLOADED logos are not form fields — logo_upload.php writes them
- * directly, one into the sys_ini.custom_logo column and one into
- * [branding] logo_on_dark. Neither may be listed in customizer_edit.php's
- * $branding_keys: that list is blanket-overwritten from the POST on every save,
- * so a logo named there would be erased by the next click of Save.
+ * The three UPLOADED images are not form fields — logo_upload.php writes them
+ * directly: the light-background logo into the sys_ini.custom_logo column, the
+ * dark-background one into [branding] logo_on_dark, the favicon into [branding]
+ * favicon. None may be listed in customizer_edit.php's $branding_keys: that list
+ * is blanket-overwritten from the POST on every save, so an image named there
+ * would be erased by the next click of Save.
  *
- * Why there are two of everything, and which variant goes where, is documented
- * once in lib/preview.inc.php — the file all three endpoints share.
+ * Why there are two logo variants, where each one goes, and why the favicon has
+ * only one, is documented once in lib/preview.inc.php — the file all three
+ * endpoints share.
  */
 
 //* Both empty ON PURPOSE: tform_base builds form_hint from title + description
@@ -132,6 +134,34 @@ $form["tabs"]['branding'] = array(
             ),
             'validators' => array(
                 0 => array('type' => 'REGEX', 'regex' => '/^(https:\/\/[^\s"\'<>()\\\\]+|\/(?!\/)[^\s"\'<>()\\\\]+)?$/D', 'errmsg' => 'logo_url_on_dark_error_regex'),
+            ),
+            'default' => '',
+            'value'   => ''
+        ),
+
+        //* The favicon by reference. Same mechanism as the two logo paths above
+        //* and therefore, deliberately, the same filter and the same anchored
+        //* validator character for character — one reference format for the whole
+        //* extension, so an operator learns the rule once. Only the errmsg
+        //* differs, so they are told which field they got wrong.
+        //*
+        //* The output context is different (this value becomes a Location: header
+        //* in themes/<design>/favicon.php, not a CSS url()), and it is safe there
+        //* for the same reason it is safe in CSS: the pattern admits no
+        //* whitespace at all, so it cannot carry the CR or LF a header-splitting
+        //* value would need. The /D is what makes that true — without it PCRE's
+        //* "$" also matches before a final newline, and a trailing LF is exactly
+        //* the byte that would turn one header into two. Six copies of this
+        //* pattern now exist (two here, two brand.php readers, favicon.php,
+        //* lib/preview.inc.php); they move together or not at all.
+        'favicon_url' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'TEXT',
+            'filters'  => array(
+                0 => array('event' => 'SAVE', 'type' => 'TRIM'),
+            ),
+            'validators' => array(
+                0 => array('type' => 'REGEX', 'regex' => '/^(https:\/\/[^\s"\'<>()\\\\]+|\/(?!\/)[^\s"\'<>()\\\\]+)?$/D', 'errmsg' => 'favicon_url_error_regex'),
             ),
             'default' => '',
             'value'   => ''

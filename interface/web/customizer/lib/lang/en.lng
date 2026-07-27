@@ -10,3 +10,5 @@ $wb['no_logo_set_txt'] = 'No custom logo set — the theme shows its own default
 // has no tform at all, so it resolves them through $app->lng().
 $wb['logo_fallback_from_dark_txt'] = 'No light-background logo set, so the dark-background one is shown here — that is what a light design will display. Upload a dark or full-colour mark to change it.';
 $wb['logo_fallback_from_light_txt'] = 'No dark-background logo set, so the light-background one is shown here — that is what a dark design will display. Upload a light or white mark to change it.';
+$wb['no_favicon_set_txt'] = 'No custom favicon set — the design shows its own.';
+$wb['favicon_url_wins_txt'] = 'This is the favicon path set below, which wins over the uploaded file — that is the same rule the logo paths follow. Clear the path and press Save to use the uploaded icon instead.';

@@ -33,6 +33,18 @@ $wb['used_logo_txt'] = 'Current logo';
 // no tform at all, so they cannot live in this file (which feeds the tform
 // wordbook only). A copy here would be dead.
 
+// The favicon: one slot, not two. A tab strip is a tab strip whatever the
+// design's header looks like, so the light/dark model above does not apply.
+$wb['favicon_head_txt'] = 'Favicon';
+$wb['favicon_intro_txt'] = 'The small icon in the browser tab, in bookmarks and in history. Every design ships its own, so an otherwise fully branded panel still shows someone else’s mark there — this replaces it on every page, including the login screen. One icon for the whole panel: unlike the logo there is no light/dark pair, because a browser draws the same icon whatever the design’s header looks like.';
+$wb['favicon_txt'] = 'Favicon file';
+$wb['favicon_hint_txt'] = 'SVG (plain, script-free), PNG or ICO, under 15 KB. Choose a file, then click “Upload favicon” — it uploads on its own, separately from the Save button at the bottom. An SVG scales to every screen density; a .ico still covers browsers that will not take one, and a plain 32&times;32 PNG is fine by itself. Whatever you choose, look at the 16px preview above: fine detail and small lettering turn to mud at that size, and a tab is the smallest place your brand ever appears.';
+$wb['favicon_upload_txt'] = 'Upload favicon';
+$wb['used_favicon_txt'] = 'Current favicon';
+$wb['favicon_url_txt'] = 'Favicon path / URL (override)';
+$wb['favicon_url_hint_txt'] = 'Optional, and it wins over the uploaded file above — the same precedence the logo paths have. A root-relative path (recommended — e.g. /themes/custom/favicon.svg for a file you placed on the server) or an https:// URL. The panel sends the browser there instead of serving stored bytes, so this also keeps the icon out of the interface settings entirely. A remote URL ties every page of your panel to that host and reveals visitor IPs to it — prefer a local path.';
+$wb['favicon_url_error_regex'] = 'The favicon path must be a root-relative path (/…) or an https:// URL, without spaces, quotes, brackets or parentheses.';
+
 $wb['brand_head_txt'] = 'Name & colours';
 $wb['company_name_txt'] = 'Panel name';
 $wb['company_name_hint_txt'] = 'Shown in the browser title and footer.';
@@ -63,6 +75,9 @@ $wb['logo_uploaded_txt'] = 'Logo updated.';
 $wb['logo_removed_txt'] = 'Logo removed.';
 $wb['logo_bad_type_txt'] = 'Unsupported image. Use SVG (plain, script-free), PNG, JPEG, GIF or WebP.';
 $wb['logo_too_large_txt'] = 'That image is too large. Keep it under 45 KB — an optimised PNG or WebP works best.';
+$wb['favicon_uploaded_txt'] = 'Favicon updated. Browsers cache icons hard — if the old one lingers, hard-refresh (Ctrl+Shift+R) or open a new tab.';
+$wb['favicon_bad_type_txt'] = 'Unsupported icon. Use SVG (plain, script-free), PNG or ICO.';
+$wb['favicon_too_large_txt'] = 'That icon is too large. Keep it under 15 KB — a 32&times;32 PNG is about 1 KB and a multi-size .ico about 5-15 KB.';
 $wb['no_file_uploaded_error'] = 'No file was selected.';
 $wb['upload_failed_txt'] = 'The upload did not complete. Please try again.';
 $wb['demo_mode_txt'] = 'This function is disabled in demo mode.';

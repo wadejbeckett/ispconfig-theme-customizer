@@ -15,12 +15,14 @@
   <meta name='description' lang='en' content='' />
   <meta name='keywords' lang='en' content='' />
 
+ <!-- Same brandable tab icon as the app frame, and it matters most HERE: the
+      login screen is the page a customer sees before anything else, and it is
+      pre-authentication — favicon.php answers with no session, exactly like
+      brand.php and title.php beside it. -->
+ <link rel='icon' href='/themes/<tmpl_var name='current_theme'>/favicon.php'>
  <link rel='apple-touch-icon' sizes='180x180' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/apple-touch-icon.png'>
- <link rel='icon' type='image/png' sizes='32x32' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/favicon-32x32.png'>
- <link rel='icon' type='image/png' sizes='16x16' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/favicon-16x16.png'>
  <link rel='manifest' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/site.webmanifest'>
  <link rel='mask-icon' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/safari-pinned-tab.svg' color='#0065AB'>
- <link rel='shortcut icon' href='/themes/<tmpl_var name='current_theme'>/assets/favicon/favicon.ico'>
  <meta name='msapplication-TileColor' content='#01243D'>
  <meta name='msapplication-config' content='/themes/<tmpl_var name='current_theme'>/assets/favicon/browserconfig.xml'>
  <meta name='theme-color' content='#01243D'>

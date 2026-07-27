@@ -98,12 +98,13 @@ is treated as unset. Values are normalised (leading `#` added, upper-cased)
 before validation, so a pasted `0065ab` is accepted rather than rejected
 opaquely.
 
-**`logo_url` and `logo_url_on_dark`** — the two logos by reference (one per
-background variant), consumed inside a CSS `url("…")`. Both carry the *same*
-filter and the *same* validator, character for character; only the error message
-differs, so the operator learns which of the two fields they got wrong. Only a
+**`logo_url`, `logo_url_on_dark` and `favicon_url`** — the brand images by
+reference, consumed inside a CSS `url("…")` for the two logos and as a
+`Location:` header by each design's `favicon.php` for the icon. All three carry
+the *same* filter and the *same* validator, character for character; only the
+error message differs, so the operator learns which field they got wrong. Only a
 root-relative path or an `https://` URL, and no character that could break out
-of that context:
+of any of those contexts:
 
 ```
 /^(https:\/\/[^\s"'<>()\\]+|\/(?!\/)[^\s"'<>()\\]+)?$/D
@@ -115,10 +116,35 @@ true end-of-subject; without it PCRE also matches *before* a final newline, so
 `/img/logo.png\n` would validate and the raw LF would be emitted inside
 `content: url("…")` — a literal newline terminates a double-quoted CSS string,
 which would break the stylesheet for every visitor, including pre-auth on the
-login screen. Both designs' `brand.php` carry that pattern character for
-character, `/D` included, for the same reason. The field is filtered with `TRIM` only, deliberately not `STRIPNL`: a
+login screen. For `favicon_url` the same trailing LF would land in a `Location:`
+header, which is how one header becomes two; the pattern admits no whitespace at
+all, so with `/D` in place the value cannot carry a CR or LF to split it with.
+Both designs' `brand.php` **and** `favicon.php` carry that pattern character for
+character, `/D` included, for the same reason. The fields are filtered with `TRIM` only, deliberately not `STRIPNL`: a
 filter that spliced an embedded newline out of the *middle* of the value would
 hand the validator a string the administrator never typed.
+
+**The favicon endpoint never fetches what it is pointed at.** A reference is
+answered with a `302` to the browser, not by reading the target server-side.
+That is deliberate twice over: an `https://` reference must not turn a pre-auth
+endpoint into a fetcher of arbitrary URLs on the panel's behalf (an SSRF driven
+by a database value), and a root-relative reference is a *web* path, not a
+filesystem path — resolving `/img/../../etc/passwd` against a directory would be
+a file-disclosure primitive. The browser resolves it, exactly as it would for a
+hardcoded `<link href>`, which is all the reference is.
+
+**The uploaded favicon** (`[branding] favicon`) is a data URI, and the endpoint
+re-validates it before serving: an anchored `data:image/…;base64,…` pattern
+whose media type must be one of the three the uploader accepts
+(`image/svg+xml`, `image/png`, `image/x-icon` / `image/vnd.microsoft.icon`),
+then a **strict** `base64_decode()`. Anything else — a value from a hand-edited
+row, a future version, a corrupt blob — is treated as "not set" and the design's
+own shipped icon is served instead. The response carries
+`X-Content-Type-Options: nosniff` and
+`Content-Security-Policy: default-src 'none'; img-src data:; style-src 'unsafe-inline'; sandbox`,
+because SVG is an active-content format and a direct navigation to that URL
+renders it as a same-origin *document*: uploads are already screened by
+`customizer_svg_ok()`, and the header is the second lock on that door.
 
 **`custom_login_link`** — core renders this **unescaped** inside `<a href="…">`
 on the pre-auth login page (`login/index.php`), so the validator is anchored and
@@ -135,21 +161,35 @@ flags in `title.php`.
 **Toggles** — strict `0|1`; anything else reads as the default, which is always
 the attribution-preserving value.
 
-**Uploaded rasters** — the `finfo` MIME type must be one of `image/png`,
+**Uploaded rasters (logo)** — the `finfo` MIME type must be one of `image/png`,
 `image/jpeg`, `image/gif`, `image/webp`, and the raw file must be ≤ 45,000 bytes
 so its base64 form fits the `sys_ini.custom_logo` column.
 
-**The upload slot** — one endpoint serves both logo variants, so a POST names
-the slot it targets (`on_light`, `on_dark`) and `logo_delete.php` takes the same
-value as a GET parameter. That value selects a *storage location*, so it is
-checked against a shared allowlist (`customizer_logo_slots()` in
-`lib/preview.inc.php`) and never used raw. An absent slot means `on_light`,
-which is what both endpoints did before a second slot existed, so a replayed
-request from an older page still means what it meant. A slot that is present but
-unknown is refused outright rather than defaulted — quietly writing or deleting
-the *other* logo would be a destructive surprise, reported to the operator as
-success. Every other check — CSRF, MIME sniffing, the SVG screen, the size cap,
-demo mode — is shared by both slots rather than duplicated for the new one.
+**Uploaded rasters (favicon)** — a narrower list and a much smaller cap:
+`image/png` or `image/x-icon` / `image/vnd.microsoft.icon` (normalised to the
+former on the way in), ≤ 15,000 bytes. JPEG, GIF and WebP buy nothing in a 16px
+box and would only widen what `favicon.php` must be willing to re-serve. `.ico`
+is accepted because it is the compatibility floor for browsers that will not
+take an SVG icon; `finfo`'s label for it varies by libmagic build, so an
+otherwise-unclassified upload gets one chance to prove itself **structurally**
+(`customizer_ico_ok()`: header, image count, and every directory entry pointing
+at a byte range inside the file). That is identification, not a weaker security
+check — ICO carries no scripting affordance, unlike SVG, where the format itself
+is the risk.
+
+**The upload slot** — one endpoint serves all three brand images, so a POST
+names the slot it targets (`on_light`, `on_dark`, `favicon`) and
+`logo_delete.php` takes the same value as a GET parameter. That value selects a
+*storage location*, so it is checked against a shared allowlist
+(`customizer_logo_slots()` in `lib/preview.inc.php`) and never used raw. An
+absent slot means `on_light`, which is what both endpoints did before a second
+slot existed, so a replayed request from an older page still means what it
+meant. A slot that is present but unknown is refused outright rather than
+defaulted — quietly writing or deleting a *different* image would be a
+destructive surprise, reported to the operator as success. Every other check —
+CSRF, MIME sniffing, the SVG screen, demo mode — is shared by every slot rather
+than duplicated per slot; only the format list and the size cap differ, and only
+where the asset genuinely differs.
 
 ## The SVG screen
 
@@ -257,29 +297,35 @@ says it is.
 
 ## The pre-auth surface
 
-There are **four** of these, not two: `brand.php` (CSS) and `title.php` (JS)
-under `themes/clarity/`, and the same pair under `themes/classic/`. Each design
-links its own two from **both** of its shell templates, including the login
-shell, and only one design is active per request — but once both are installed
-all four exist on disk in the web root and all four are reachable by URL. They
-run with no session and must be safe for anonymous requests. All four are
-written for that, and the read half — query, unescape, normalise, cache — is
-deliberately the same code in both designs, so the two cannot drift apart:
+There are **six** of these, not two: `brand.php` (CSS), `title.php` (JS) and
+`favicon.php` (an image) under `themes/clarity/`, and the same three under
+`themes/classic/`. Each design links its own three from **both** of its shell
+templates, including the login shell, and only one design is active per request
+— but once both are installed all six exist on disk in the web root and all six
+are reachable by URL. They run with no session and must be safe for anonymous
+requests. All six are written for that, and the read half — query, unescape,
+normalise, cache — is deliberately the same code in both designs, so the two
+cannot drift apart:
 
 - **No application bootstrap.** None of them starts a session, loads
   `app.inc.php`, or triggers maintenance-mode redirects. Each opens a direct `mysqli`
   connection with the credentials already in `interface/lib/config.inc.php` and
   issues a **single read-only** `SELECT` against `sys_ini` row 1 — `config` and
-  `custom_logo` for `brand.php`, `config` alone for `title.php`.
+  `custom_logo` for `brand.php`, `config` alone for `title.php` and
+  `favicon.php`.
 - **Always valid output.** `brand.php` always returns HTTP 200 with
   `Content-Type: text/css` (or 304 on an ETag match); `title.php` always returns
-  HTTP 200 with valid JavaScript. All four re-assert their MIME type after
-  including `config.inc.php`, which emits `text/html` on a web request.
+  HTTP 200 with valid JavaScript; `favicon.php` always returns an image — 200,
+  304 on an ETag match, or a 302 to a reference the operator set — and **never**
+  a 404, down to a 1×1 transparent PNG if even the design's own shipped icon
+  files cannot be read, because a broken icon shows on every tab of the panel.
+  All six re-assert their MIME type after including `config.inc.php`, which
+  emits `text/html` on a web request.
 - **Degrade to a no-op on DB failure.** Any connection or query fault is caught
-  and produces an empty stylesheet / a no-op script with `Cache-Control:
-  no-store` — never an error message, never a stack trace, and never a cached
-  failure that would blank a host's branding for a whole max-age window after
-  the database has recovered. `title.php` treats `json_encode` returning `false`
+  and produces an empty stylesheet / a no-op script / the design's shipped icon,
+  with `Cache-Control: no-store` — never an error message, never a stack trace,
+  and never a cached failure that would blank a host's branding for a whole
+  max-age window after the database has recovered. `title.php` treats `json_encode` returning `false`
   (invalid UTF-8 in the stored name) the same way, because a classic script that
   fails to parse runs *nothing*, losing even the statements before it.
 - **Every value is validated or escaped before output.** Colours via the hex
@@ -343,12 +389,15 @@ own** `themes/default/templates/main.tpl.htm` and `main_login.tpl.htm`.
 not to anything else under `themes/default/`; the transformed copies are written
 into `themes/classic/templates/`, which is why the repository contains no
 `templates/` directory for classic. The transform is mechanical and bounded:
-asset paths pinned to `themes/default/assets/`, the design's two brand endpoints
-linked immediately before `</head>`, and the stock footer credit split into two
-addressable spans so each credit toggle has a target. The installer then checks
-its own output against the source — line count, no surviving `current_theme`
-reference, both endpoints present — and aborts rather than deploy a shell it
-cannot account for.
+asset paths pinned to `themes/default/assets/`, the design's three brand
+endpoints linked immediately before `</head>`, stock's tab-icon `<link>`s
+replaced by the one pointing at `favicon.php`, and the stock footer credit split
+into two addressable spans so each credit toggle has a target. The installer
+then checks its own output against the source — line count (derived from how
+many icon links were actually replaced, so the check moves with the transform),
+no surviving `current_theme` reference, all three endpoints present, exactly one
+tab-icon link and it is ours — and aborts rather than deploy a shell it cannot
+account for.
 
 There are **no schema changes**: no new tables, no new columns, no `CREATE` or
 `ALTER` anywhere in the repository. Every write is an `UPDATE` of a row and
@@ -358,6 +407,7 @@ column ISPConfig already has.
 |---|---|---|
 | `sys_ini.config` (row 1) — the `[branding]` section plus existing `[misc]` keys | saving the Branding form | `customizer_edit.php` |
 | `sys_ini.config` (row 1) — the single key `[branding] logo_on_dark` | uploading / removing the **dark-background** logo | `logo_upload.php`, `logo_delete.php` |
+| `sys_ini.config` (row 1) — the single key `[branding] favicon` | uploading / removing the **favicon** | `logo_upload.php`, `logo_delete.php` |
 | `sys_ini.custom_logo` (row 1) — the **light-background** logo | logo upload / remove / purge | `logo_upload.php`, `logo_delete.php`, `bin/purge_branding.php` |
 | `sys_user.modules` | install / uninstall | `bin/assign_module.php` (only `typ='admin'` rows), `bin/unassign_module.php` |
 | `sys_user.startmodule` | uninstall | `bin/unassign_module.php`, and only where it pointed at `customizer` |

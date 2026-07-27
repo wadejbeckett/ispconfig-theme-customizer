@@ -5,3 +5,5 @@ $wb['Branding'] = 'Branding';
 $wb['no_logo_set_txt'] = 'No se ha establecido ningún logotipo personalizado — el tema muestra su propio valor predeterminado.';
 $wb['logo_fallback_from_dark_txt'] = 'No hay ningún logotipo para fondos claros, así que aquí se muestra el de fondos oscuros — eso es lo que mostrará un diseño claro. Suba una versión oscura o a todo color para cambiarlo.';
 $wb['logo_fallback_from_light_txt'] = 'No hay ningún logotipo para fondos oscuros, así que aquí se muestra el de fondos claros — eso es lo que mostrará un diseño oscuro. Suba una versión clara o blanca para cambiarlo.';
+$wb['no_favicon_set_txt'] = 'No se ha establecido ningún favicon personalizado — el diseño muestra el suyo.';
+$wb['favicon_url_wins_txt'] = 'Esta es la ruta del favicon indicada más abajo, que tiene prioridad sobre el archivo subido — la misma regla que siguen las rutas del logotipo. Borre la ruta y pulse Guardar para usar el icono subido.';

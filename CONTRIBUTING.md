@@ -148,8 +148,8 @@ installs, listed in `sys_user.modules` and declared by `lib/module.conf.php`:
 | File | Role |
 |---|---|
 | `interface/web/customizer/customizer_edit.php` | The Branding settings page: reads and writes the `[branding]` keys in `sys_ini.config`. |
-| `interface/web/customizer/logo_upload.php`, `logo_delete.php` | The logo endpoints. Two slots share them, named after the background each logo sits on: `on_light` writes `sys_ini.custom_logo`, `on_dark` writes `[branding] logo_on_dark`. The slot is allowlisted, never taken raw. |
-| `interface/web/customizer/lib/preview.inc.php` | The two-logo model in one place: slot vocabulary, source resolution with the cross-variant fallback, and the preview renderer. Both theme readers mirror its resolution rule and must be changed with it. |
+| `interface/web/customizer/logo_upload.php`, `logo_delete.php` | The brand-image endpoints. Three slots share them: `on_light` writes `sys_ini.custom_logo`, `on_dark` writes `[branding] logo_on_dark`, `favicon` writes `[branding] favicon`. The slot is allowlisted, never taken raw. Only the accepted formats and the size cap vary by slot; CSRF, MIME sniffing, the SVG screen and demo mode are shared. |
+| `interface/web/customizer/lib/preview.inc.php` | The brand-image model in one place: slot vocabulary, source resolution (the two logo variants with their cross-variant fallback, and the favicon), the ICO structural check, and the preview renderers. The theme readers — `brand.php` for the logos, `favicon.php` for the icon — mirror its resolution rules and must be changed with it. |
 | `interface/web/customizer/lib/svg_guard.inc.php` | The SVG upload screen. Its adversarial corpus is `tests/svg/run.php` — run it before and after any change here. |
 | `interface/web/customizer/form/`, `templates/` | tform definition and page markup. |
 | `bin/` | Install/uninstall helpers: `assign_module.php`, `unassign_module.php`, `purge_branding.php`, `reset_app_theme.php`. |
@@ -200,6 +200,18 @@ the two sides one product. Adding a key means adding it to every design in the
 same PR — and adding it to that list, since the check reads from a hard-coded
 list rather than discovering keys. It catches a key being dropped or renamed on
 the design side; it does not prove the value is used correctly.
+
+The favicon has **its own** contract step, **Favicon endpoint contract parity**,
+because it is served by a separate endpoint per design — a favicon is a `<link>`
+and not a style, so `brand.php` cannot carry it, and a check that only walks
+`brand.php` would never notice a design shipping no `favicon.php` at all. It
+requires every `themes/*/` to have one and to read both stored values: with only
+`favicon` a design ignores the operator's by-path override, with only
+`favicon_url` it ignores their upload, and either way the panel keeps flying
+someone else's flag on every tab while every other check stays green. A third
+step proves clarity's committed shells actually *link* that endpoint and no
+longer hardcode an icon asset; classic's shells are generated, so `install.sh`
+verifies its own output instead.
 
 ## Ground rules (what keeps it update-proof)
 

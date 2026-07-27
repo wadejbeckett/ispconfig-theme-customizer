@@ -7,16 +7,20 @@
  * Built for ISPConfig (ispconfig.org, BSD-3-Clause). Not affiliated with or
  * endorsed by the ISPConfig project.
  *
- * Logo upload target for the editor's own fetch() uploader (the button handlers
- * in templates/customizer_edit.htm). Validates MIME + size, writes a data-URI
- * into the slot the request names, and re-renders form.tpl.htm so the response
- * body carries #OKMsg/#errorMsg and refreshed #used_logo / #used_logo_on_dark
- * previews for the caller to lift out with DOMParser.
+ * Brand-image upload target for the editor's own fetch() uploader (the button
+ * handlers in templates/customizer_edit.htm). Validates MIME + size, writes a
+ * data-URI into the slot the request names, and re-renders form.tpl.htm so the
+ * response body carries #OKMsg/#errorMsg and refreshed #used_logo /
+ * #used_logo_on_dark / #used_favicon previews for the caller to lift out with
+ * DOMParser.
  *
- * BOTH logo slots come through here, and the screening is shared, not
- * duplicated: one CSRF flow, one MIME sniff, one SVG guard, one size cap. The
- * only thing the slot changes is where the accepted bytes are stored. See
- * lib/preview.inc.php for the two-variant model and what each store costs.
+ * ALL THREE slots come through here — both logo variants and the favicon — and
+ * the screening is shared, not duplicated: one CSRF flow, one MIME sniff, one
+ * SVG guard, one storage discipline. What the slot changes is the accepted
+ * formats, the size cap and where the accepted bytes are stored; everything
+ * else is common code on purpose, because a second upload endpoint would mean a
+ * second (and eventually weaker) copy of the checks. See lib/preview.inc.php
+ * for the slot model and what each store costs.
  *
  * ISPConfig's stock iframe uploader (ispconfig.js submitUploadForm) is
  * deliberately NOT used here — see the template for why — so this endpoint
@@ -80,7 +84,7 @@ $error = array();
 
 //* WHICH SLOT this upload targets — validated against the shared allowlist and
 //* never used raw. The value picks a STORAGE LOCATION (core's sys_ini.custom_logo
-//* column, or the [branding] logo_on_dark key inside sys_ini.config), so an
+//* column, or one of the [branding] keys inside sys_ini.config), so an
 //* unchecked string here would be a request choosing what it gets to overwrite.
 //*
 //* Absent means on_light, which is what this endpoint did before a second slot
@@ -93,30 +97,70 @@ $slots = customizer_logo_slots();
 $slot  = isset($_POST['slot']) ? (string)$_POST['slot'] : 'on_light';
 if(!isset($slots[$slot])) die('Unknown logo slot.');
 
-$max_raw = 45000; // bytes of raw image; base64 (~x1.37) must fit the ~64 KB TEXT column
-$allowed = array(
-    'image/png'  => true,
-    'image/jpeg' => true,
-    'image/gif'  => true,
-    'image/webp' => true,
-    // image/svg+xml is accepted via customizer_svg_ok() below, not this map:
-    // finfo mislabels prolog-less SVGs (text/xml, text/plain, even text/html),
-    // so SVG detection is by strict XML validation instead of MIME string.
-);
-
+//* Screening is per SLOT, because a favicon is a different kind of asset from a
+//* logo — not merely a smaller one.
+//*
+//* FORMATS. A favicon is painted into a 16px box by the browser's image
+//* pipeline, so JPEG (no transparency, artefacts at that size) and GIF/WebP
+//* (nothing a PNG does not do here) buy nothing and would only widen what
+//* favicon.php has to be willing to re-serve. SVG is the point of the feature —
+//* one file, every density — and .ico is the compatibility floor: not every
+//* browser takes an SVG icon, and plenty of operators have exactly one .ico and
+//* nothing else. Those three, and no more.
+//*
+//* SIZE. The logo cap is 45 KB because a wordmark is a wide piece of artwork.
+//* A favicon is not: a 32x32 PNG is ~1 KB, a tidy SVG mark 1-3 KB, and a
+//* multi-resolution .ico (16/32/48, the shape every generator emits) lands
+//* around 5-15 KB. 15 KB therefore fits every legitimate icon with room to
+//* spare while keeping ~20 KB of base64 — not ~62 KB — as the worst case this
+//* adds to the sys_ini.config blob, which is re-read on page loads and
+//* journalled by the next form save. Reusing 45 KB here would have been a
+//* number copied rather than chosen.
+if($slot === 'favicon') {
+    $max_raw = 15000;
+    $allowed = array(
+        'image/png'                  => true,
+        'image/x-icon'               => true,
+        'image/vnd.microsoft.icon'   => true,
+    );
+} else {
+    $max_raw = 45000; // bytes of raw image; base64 (~x1.37) must fit the ~64 KB TEXT column
+    $allowed = array(
+        'image/png'  => true,
+        'image/jpeg' => true,
+        'image/gif'  => true,
+        'image/webp' => true,
+    );
+}
+// image/svg+xml is accepted via customizer_svg_ok() below, not the maps above:
+// finfo mislabels prolog-less SVGs (text/xml, text/plain, even text/html), so
+// SVG detection is by strict XML validation instead of MIME string. That guard
+// screens the favicon exactly as it screens a logo — an SVG icon is the same
+// active-content format with the same affordances, and the 41-case corpus in
+// tests/svg/ covers this path because it is literally the same call.
 require_once __DIR__ . '/lib/svg_guard.inc.php';
+
+//* Which wording a rejection gets. The favicon's limits differ from the logo's,
+//* so a shared "keep it under 45 KB" message would send the operator hunting
+//* for a problem that is not theirs.
+$bad_type_txt  = ($slot === 'favicon') ? 'favicon_bad_type_txt'  : 'logo_bad_type_txt';
+$too_large_txt = ($slot === 'favicon') ? 'favicon_too_large_txt' : 'logo_too_large_txt';
 
 $data_uri  = null; // set to the stored value on a successful upload
 $upload_ok = false;
 
 if($post_overflow) {
-    $error[] = $app->lng('logo_too_large_txt');
+    //* $slot is 'on_light' here by construction — the whole POST was discarded,
+    //* so the slot field never arrived — which is why this one message is not
+    //* slot-aware. It cannot be: nothing in the request survived to say which
+    //* upload it was.
+    $error[] = $app->lng($too_large_txt);
 } else {
     //* map PHP's own upload error before touching the file
     $err = isset($_FILES['file']['error']) ? $_FILES['file']['error'] : UPLOAD_ERR_NO_FILE;
 
     if($err === UPLOAD_ERR_INI_SIZE || $err === UPLOAD_ERR_FORM_SIZE) {
-        $error[] = $app->lng('logo_too_large_txt');
+        $error[] = $app->lng($too_large_txt);
     } elseif($err === UPLOAD_ERR_NO_FILE || !isset($_FILES['file']['name']) || $_FILES['file']['name'] === '') {
         $error[] = $app->lng('no_file_uploaded_error');
     } elseif($err !== UPLOAD_ERR_OK || !is_uploaded_file($_FILES['file']['tmp_name'])) {
@@ -143,23 +187,53 @@ if($post_overflow) {
             $allowed[$mime] = true;
         }
 
+        //* ICO lane, same shape as the SVG one and for the same reason: finfo's
+        //* verdict is build-dependent. libmagic has said image/x-icon,
+        //* image/vnd.microsoft.icon and — where the magic file is old or the
+        //* distro ships a stripped one — application/octet-stream for the very
+        //* same file. So an otherwise-unclassified upload into the favicon slot
+        //* gets one chance to prove it really is an icon, by structure rather
+        //* than by label (see customizer_ico_ok()). Nothing weaker is happening
+        //* here than for the other raster formats: ICO carries no scripting
+        //* affordance, so identifying the container IS the whole check, unlike
+        //* SVG where the format itself is the risk.
+        if($slot === 'favicon' && !isset($allowed[$mime])
+            && in_array($mime, array('', 'application/octet-stream', 'application/x-ico', 'image/ico'), true)
+            && customizer_ico_ok($data)) {
+            $mime = 'image/x-icon';
+            $allowed[$mime] = true;
+        }
+
+        //* One spelling reaches storage. The two ICO media types are the same
+        //* format, and favicon.php picks the response Content-Type straight out
+        //* of the stored prefix — so normalising here means one canonical value
+        //* in sys_ini and one fewer case for every reader.
+        if($mime === 'image/vnd.microsoft.icon') $mime = 'image/x-icon';
+
         if(!isset($allowed[$mime])) {
-            $error[] = $app->lng('logo_bad_type_txt');
+            $error[] = $app->lng($bad_type_txt);
         } elseif($size <= 0 || $size > $max_raw) {
-            $error[] = $app->lng('logo_too_large_txt');
+            $error[] = $app->lng($too_large_txt);
         } elseif($conf['demo_mode'] == true) {
             $error[] = $app->lng('demo_mode_txt');
         } else {
             $candidate = 'data:' . $mime . ';base64,' . base64_encode($data);
 
-            //* Both writes are a direct UPDATE, never datalogUpdate — a ~60 KB
-            //* base64 blob has no place in sys_datalog. (Saving the Branding
-            //* FORM later does journal the config blob, and with it whatever
-            //* on_dark logo is stored there; that unavoidable cost is spelled
-            //* out in lib/preview.inc.php.)
-            if($slot === 'on_dark') {
-                //* No core column exists for this variant and we may not add
-                //* one, so it goes into sys_ini.config as [branding] logo_on_dark.
+            //* Every write here is a direct UPDATE, never datalogUpdate — a
+            //* ~60 KB base64 blob has no place in sys_datalog. (Saving the
+            //* Branding FORM later does journal the config blob, and with it
+            //* whatever on_dark logo and favicon are stored there; that
+            //* unavoidable cost is spelled out in lib/preview.inc.php.)
+            //*
+            //* Where this slot's bytes live: on_light is core's own
+            //* sys_ini.custom_logo column; the other two are config keys, and
+            //* they share the one code path below.
+            $config_key = customizer_slot_config_key($slot);
+
+            if($config_key !== '') {
+                //* No core column exists for these (the dark-background logo and
+                //* the favicon) and we may not add one, so each goes into
+                //* sys_ini.config as [branding] <key>.
                 //*
                 //* Read-modify-write, with the RAW column parsed and NO
                 //* stripslashes — identical discipline to customizer_edit.php's
@@ -185,7 +259,7 @@ if($post_overflow) {
                 $config = $app->ini_parser->parse_ini_string(isset($raw['config']) ? (string)$raw['config'] : '');
                 if(!is_array($config)) $config = array();
                 if(!isset($config['branding']) || !is_array($config['branding'])) $config['branding'] = array();
-                $config['branding']['logo_on_dark'] = $candidate;
+                $config['branding'][$config_key] = $candidate;
                 $written = $app->db->query("UPDATE sys_ini SET config = ? WHERE sysini_id = 1", $app->ini_parser->get_ini_string($config));
             } else {
                 $written = $app->db->query("UPDATE sys_ini SET custom_logo = ? WHERE sysini_id = 1", $candidate);
@@ -208,10 +282,12 @@ if($post_overflow) {
     }
 }
 
-//* Preview: re-read the stored values so BOTH rows are correct. Refreshing only
-//* the row that was just written would be wrong — the two rows fall back to each
-//* other, so uploading into an empty panel's dark slot also changes what the
-//* LIGHT row displays (from "nothing set" to "borrowing the dark mark"). On
+//* Preview: re-read the stored values so EVERY row is correct. Refreshing only
+//* the row that was just written would be wrong — the two logo rows fall back to
+//* each other, so uploading into an empty panel's dark slot also changes what
+//* the LIGHT row displays (from "nothing set" to "borrowing the dark mark"). The
+//* favicon row stands alone, but it is rendered on every response anyway so the
+//* caller never has to know which rows a given upload could have changed. On
 //* success the value we just wrote is substituted in rather than re-read.
 $row = $app->db->queryOneRecord("SELECT custom_logo FROM sys_ini WHERE sysini_id = 1");
 $app->uses('getconf');
@@ -223,15 +299,18 @@ $stored = array(
     'logo_on_dark'     => isset($branding['logo_on_dark']) ? $branding['logo_on_dark'] : '',
     'logo_url'         => isset($branding['logo_url']) ? $branding['logo_url'] : '',
     'logo_url_on_dark' => isset($branding['logo_url_on_dark']) ? $branding['logo_url_on_dark'] : '',
+    'favicon'          => isset($branding['favicon']) ? $branding['favicon'] : '',
+    'favicon_url'      => isset($branding['favicon_url']) ? $branding['favicon_url'] : '',
 );
 if($data_uri !== null) {
     //* Substitute the value we know we just stored rather than trusting the
     //* read above. getconf caches the config blob for the whole request on its
-    //* FIRST call, so whether its snapshot predates our on_dark UPDATE depends
-    //* on whether anything earlier in the request already asked for a global
-    //* setting — a detail no display path should have to reason about. The
-    //* substitution makes the answer irrelevant.
-    $stored[($slot === 'on_dark') ? 'logo_on_dark' : 'custom_logo'] = $data_uri;
+    //* FIRST call, so whether its snapshot predates our config-key UPDATE
+    //* depends on whether anything earlier in the request already asked for a
+    //* global setting — a detail no display path should have to reason about.
+    //* The substitution makes the answer irrelevant.
+    $written_key = customizer_slot_config_key($slot);
+    $stored[($written_key !== '') ? $written_key : 'custom_logo'] = $data_uri;
 }
 
 $resolved      = customizer_logo_resolve($stored);
@@ -241,13 +320,32 @@ $preview_dark  = customizer_logo_preview_html($resolved['on_dark'],  'on_dark', 
 $app->tpl->setVar('used_logo', $preview_light);
 $app->tpl->setVar('used_logo_on_dark', $preview_dark);
 
+//* The favicon preview is refreshed on EVERY upload, not only a favicon one.
+//* It costs one more render and it keeps the response body a complete, current
+//* picture of the page — the caller lifts whichever previews it finds, and a
+//* stale row it did not think to refresh is exactly how a preview starts lying.
+$preview_favicon = customizer_favicon_preview_html(
+    customizer_favicon_resolve($stored),
+    $app->lng('no_favicon_set_txt'),
+    $app->lng('favicon_url_wins_txt')
+);
+$app->tpl->setVar('used_favicon', $preview_favicon);
+
 //* The caller relocates the banner into the message slot at the top of the
 //* editor while the previews stay down in the form, so the confirmation embeds
 //* the new thumbnail too — otherwise the admin has to scroll to see the result.
 //* It embeds the row that was just uploaded into, drawn on that row's own
 //* background, so the banner itself shows whether the artwork suits the slot.
 if($upload_ok) {
-    $msg[] = $app->lng('logo_uploaded_txt') . '<br />' . (($slot === 'on_dark') ? $preview_dark : $preview_light);
+    if($slot === 'favicon') {
+        //* The favicon banner carries the true-size preview for the same reason
+        //* the logo one carries a thumbnail — except here the preview is the
+        //* actual test. "Favicon updated." over a 16px render is the moment an
+        //* operator finds out their wordmark is unreadable in a tab.
+        $msg[] = $app->lng('favicon_uploaded_txt') . '<br />' . $preview_favicon;
+    } else {
+        $msg[] = $app->lng('logo_uploaded_txt') . '<br />' . (($slot === 'on_dark') ? $preview_dark : $preview_light);
+    }
 }
 
 //* upload_msg/upload_error, NOT msg/error: the content template keys its

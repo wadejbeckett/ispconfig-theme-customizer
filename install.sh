@@ -297,7 +297,7 @@ deploy() {
 # Generate classic's two shell templates from the TARGET PANEL's stock ones.
 # $1 = directory to write them into (a scratch dir; the caller places them).
 #
-# The whole transform is two mechanical changes, and nothing else may differ:
+# The whole transform is three mechanical changes, and nothing else may differ:
 #
 #   1. themes/<tmpl_var name='current_theme'>/assets/  ->  themes/default/assets/
 #      Template fallback does NOT extend to assets. Under classic the stock
@@ -306,8 +306,27 @@ deploy() {
 #      would 404. Pinning them to the default theme is what lets classic ship
 #      no assets at all.
 #
-#   2. brand.php + title.php linked immediately before </head>, so the design
-#      can read the brand contract. Nothing else reads it on a stock shell.
+#   2. brand.php, title.php and favicon.php linked immediately before </head>,
+#      so the design can read the brand contract. Nothing else reads it on a
+#      stock shell.
+#
+#   3. every <link rel='icon'> / rel='shortcut icon'> is REPLACED by the
+#      favicon.php link from change 2. Change 1 alone would leave them
+#      pinned to themes/default/assets/favicon/ — i.e. serving the ISPConfig
+#      mark on every tab of a panel whose whole point is to carry someone
+#      else's brand. The endpoint falls back to those very files when nothing is
+#      stored, so an unbranded panel is unchanged.
+#      Stock declares the icon three times (two sized PNGs and the legacy
+#      shortcut .ico) and the replacement is ONE unsized, untyped link: what the
+#      endpoint returns depends on what the operator stored, and a browser skips
+#      a link whose declared type it cannot render. That makes this the one
+#      change that alters the output's LINE COUNT, so the count check below is
+#      derived from how many icon links were actually removed rather than being
+#      a constant — see it for the arithmetic.
+#      The other icon references (apple-touch-icon, mask-icon, manifest, tile
+#      config) are deliberately left pointing at stock's assets: they are
+#      platform install artefacts with their own size and format contracts, not
+#      the tab icon, and each would need its own endpoint to be brandable.
 #
 # Deliberately NOT added: a "generated file, do not edit" banner. It would ship
 # in the HTML of a pre-authentication page and announce, to anyone who can reach
@@ -318,7 +337,16 @@ generate_classic_templates() {
   local outdir="$1"
   local stock="$THEMES_DIR/default/templates"
   local find_str="themes/<tmpl_var name='current_theme'>/assets/"
-  local tpl src out prefix scene ins1 ins2 src_n out_n
+  local tpl src out prefix scene ins1 ins2 ins3 src_n out_n rc icons out_icons
+
+  # ONE definition of "this line is a tab-icon <link>", used by the awk transform
+  # (which deletes them) and by the shell check afterwards (which proves exactly
+  # one survives and that it is ours). POSIX character classes rather than \t so
+  # awk and grep -E read the pattern identically. Anchored at the start of the
+  # line: a <link> that does not begin its line is not a shape this generator
+  # claims to understand, and it is refused loudly below rather than mangled.
+  local icon_re="^[[:space:]]*<link[^>]*rel=['\"](shortcut icon|icon)['\"]"
+  local cnt_file="$outdir/.nzc_icon_count"
 
   for tpl in main.tpl.htm main_login.tpl.htm; do
     src="$stock/$tpl"
@@ -357,6 +385,10 @@ generate_classic_templates() {
 
     ins1="  <link rel='stylesheet' href='${prefix}themes/classic/brand.php${scene}' />"
     ins2="  <script src='${prefix}themes/classic/title.php'></script>"
+    # No type/sizes attributes, and the same ${prefix} as the endpoints above so
+    # a panel served from a sub-path keeps working (stock links its favicons
+    # root-relative, but its stylesheets tell us what this panel can rely on).
+    ins3="  <link rel='icon' href='${prefix}themes/classic/favicon.php'>"
 
     # The footer credits have to become individually addressable, or the Branding
     # page ends up with two toggles that do nothing on this design. Stock renders
@@ -372,8 +404,17 @@ generate_classic_templates() {
 
     # index()/substr rather than gsub(): the search string is a literal full of
     # regex metacharacters, and a literal search cannot be defeated by quoting.
-    if ! awk -v find="$find_str" -v repl="themes/default/assets/" \
-             -v ins1="$ins1" -v ins2="$ins2" -v cred2="$cred2" '
+    #
+    # Exit status is a three-way answer, not a boolean: 0 transformed, 1 no
+    # </head> (nowhere to link anything), 2 an icon <link> that shares its line
+    # with other markup — a shape this generator does not know how to rewrite,
+    # which must stop the install rather than silently drop whatever else was on
+    # that line. The END rule's own exit would override the earlier one, hence
+    # the `aborted` guard.
+    rc=0
+    awk -v find="$find_str" -v repl="themes/default/assets/" \
+        -v ins1="$ins1" -v ins2="$ins2" -v ins3="$ins3" -v cred2="$cred2" \
+        -v icon_re="$icon_re" -v cnt_file="$cnt_file" '
         function lreplace(s,   acc, p) {
             acc = ""
             while ((p = index(s, find)) > 0) {
@@ -382,8 +423,15 @@ generate_classic_templates() {
             }
             return acc s
         }
+        # how many tags start on this line — one is the shape we handle
+        function tag_count(s,   parts) { return split(s, parts, "<") - 1 }
         { line = lreplace($0) }
-        !done && line ~ /<\/head>/ { print ins1; print ins2; done = 1 }
+        line ~ icon_re {
+            if (tag_count(line) != 1) { aborted = 1; exit 2 }
+            icons++
+            next
+        }
+        !done && line ~ /<\/head>/ { print ins3; print ins1; print ins2; done = 1 }
         # Split the footer credit into two addressable spans, preserving stock
         # indentation. Matching on both "powered by" and app_link keeps this off
         # any other line that happens to contain one of them.
@@ -397,11 +445,33 @@ generate_classic_templates() {
             next
         }
         { print line }
-        END { if (!done) exit 1 }
-    ' "$src" > "$out"; then
+        END { print icons + 0 > cnt_file; if (!aborted && !done) exit 1 }
+    ' "$src" > "$out" || rc=$?
+
+    if [ "$rc" -eq 2 ]; then
+      echo "ERROR: an icon <link> shares its line with other markup in $src:" >&2
+      grep -nE "$icon_re" "$src" >&2 || true
+      echo "       classic replaces those links with one pointing at its favicon" >&2
+      echo "       endpoint, and it will not delete a line carrying anything else." >&2
+      echo "       Install clarity instead (--design=clarity) and open an issue with" >&2
+      echo "       your ISPConfig version." >&2
+      return 1
+    elif [ "$rc" -ne 0 ]; then
       echo "ERROR: no </head> in $src — nowhere to link the brand endpoints." >&2
       return 1
     fi
+
+    # How many icon links awk removed. Read from the file awk wrote rather than
+    # counted again here: one definition of the pattern, one engine applying it,
+    # so the count and the deletion can never disagree.
+    icons="$(cat "$cnt_file" 2>/dev/null || true)"
+    case "$icons" in
+      ''|*[!0-9]*)
+        echo "ERROR: the template transform did not report how many icon links it" >&2
+        echo "       removed from $tpl, so its output cannot be verified." >&2
+        return 1
+        ;;
+    esac
 
     # --- verify the output is the stock file plus exactly those changes ------
     # A silent miss here is the worst outcome this script has: a classic shell
@@ -409,15 +479,23 @@ generate_classic_templates() {
     # stylesheet and script 404ing, and nothing logs it.
     src_n="$(awk 'END{print NR}' "$src")"
     out_n="$(awk 'END{print NR}' "$out")"
-    # +2 for the two <head> links, +1 more if the footer credit was split in two.
-    # The split is expected in the app frame and absent from the login shell,
-    # which has no footer — so this is derived from the output rather than
-    # assumed, and a future ISPConfig that moves the footer degrades to a warning
-    # instead of failing an install over a courtesy line.
-    expected=$(( src_n + 2 ))
+    # +3 for the three <head> links (favicon, brand, title), MINUS the icon links
+    # that were replaced by the first of them — stock declares the tab icon three
+    # times, so this is normally a net zero on the app frame and the login shell
+    # alike. Deriving it from the count awk reported, rather than hardcoding
+    # "minus 3", is what lets this check keep working on an ISPConfig that ships
+    # a different number of icon links: the check moves with the transform
+    # instead of having to be relaxed.
+    # +1 more if the footer credit was split in two. That split is expected in
+    # the app frame and absent from the login shell, which has no footer — so it
+    # too is derived from the output rather than assumed, and a future ISPConfig
+    # that moves the footer degrades to a warning instead of failing an install
+    # over a courtesy line.
+    expected=$(( src_n + 3 - icons ))
     if grep -q "nzc-credit-ispconfig" "$out"; then expected=$(( expected + 1 )); fi
     if [ "$out_n" -ne "$expected" ]; then
-      echo "ERROR: generated $tpl is $out_n lines, expected $expected." >&2
+      echo "ERROR: generated $tpl is $out_n lines, expected $expected" >&2
+      echo "       (stock $src_n + 3 head links - $icons icon links replaced)." >&2
       return 1
     fi
     if [ "$tpl" = "main.tpl.htm" ] && ! grep -q "nzc-credit-ispconfig" "$out"; then
@@ -436,11 +514,30 @@ generate_classic_templates() {
       echo "       no assets. Refusing to install a shell that would 404 everything." >&2
       return 1
     fi
-    if ! grep -q -F "themes/classic/brand.php" "$out" || ! grep -q -F "themes/classic/title.php" "$out"; then
+    if ! grep -q -F "themes/classic/brand.php" "$out" || ! grep -q -F "themes/classic/title.php" "$out" \
+       || ! grep -q -F "themes/classic/favicon.php" "$out"; then
       echo "ERROR: the brand endpoints are missing from the generated $tpl." >&2
       return 1
     fi
+
+    # Exactly one tab-icon link, and it is ours. This is the check that catches
+    # an icon <link> written in a shape the pattern above did not recognise: the
+    # stock one would survive alongside ours, the browser would be free to pick
+    # either, and a panel would keep flying the ISPConfig flag on some tabs and
+    # the operator's on others — the kind of half-applied white-label that gets
+    # noticed by a customer rather than by a check.
+    out_icons="$(grep -cE "$icon_re" "$out" || true)"
+    if [ "$out_icons" != "1" ]; then
+      echo "ERROR: generated $tpl carries $out_icons tab-icon <link> tags, expected 1:" >&2
+      grep -nE "$icon_re" "$out" >&2 || true
+      return 1
+    fi
   done
+
+  # The scratch dir is copied from by name, not wholesale, so this only tidies —
+  # but a leftover counter file in a directory the caller may one day copy
+  # entirely is exactly the sort of thing that ships by accident.
+  rm -f "$cnt_file"
 }
 
 # --- warn about a previous split installation -------------------------------

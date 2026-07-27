@@ -118,20 +118,77 @@ jobs:
           if [ "$missing" -ne 0 ]; then exit 1; fi
           echo "brand-token contract intact"
 
+      - name: Favicon endpoint contract parity
+        # The favicon is served by a SEPARATE endpoint per design (a favicon is
+        # a <link>, not a style, so brand.php cannot carry it) — which means the
+        # check above, which only walks brand.php, would never notice a design
+        # that shipped no favicon.php at all or read the wrong keys from it.
+        # Every base design under themes/ must have one, and it must read both
+        # stored values: `favicon` alone would ignore the operator's by-path
+        # override, `favicon_url` alone would ignore their upload, and either
+        # way the panel keeps flying someone else's flag on every tab while all
+        # the other checks here stay green.
+        run: |
+          set -e
+          missing=0
+          for design in themes/*/; do
+            reader="${design}favicon.php"
+            if [ ! -f "$reader" ]; then
+              echo "::error file=${design}::design has no favicon.php, so its tab icon is not brandable"
+              missing=1
+              continue
+            fi
+            for key in favicon favicon_url; do
+              if ! grep -q "\['$key'\]" "$reader"; then
+                echo "::error file=$reader::branding key '$key' is written by the module but not read by $reader"
+                missing=1
+              fi
+            done
+          done
+          if [ "$missing" -ne 0 ]; then exit 1; fi
+          echo "favicon endpoint contract intact"
+
+      - name: Designs link their favicon endpoint
+        # clarity's shells are committed, so the <link rel='icon'> in them is
+        # checked here; classic's are generated at install time and install.sh
+        # verifies its own output instead (exactly one icon link, and it points
+        # at favicon.php). A committed shell that still hardcodes an icon asset
+        # is a design whose endpoint exists but is never asked for — branding
+        # would apply everywhere except the one surface this endpoint is for.
+        run: |
+          set -e
+          fail=0
+          for tpl in themes/clarity/templates/main.tpl.htm themes/clarity/templates/main_login.tpl.htm; do
+            if ! grep -q "favicon.php" "$tpl"; then
+              echo "::error file=$tpl::does not link the design's favicon.php"
+              fail=1
+            fi
+            if grep -qE "rel='(shortcut )?icon'[^>]*assets/favicon/" "$tpl"; then
+              echo "::error file=$tpl::still points a tab icon at a shipped asset instead of favicon.php"
+              grep -nE "rel='(shortcut )?icon'[^>]*assets/favicon/" "$tpl"
+              fail=1
+            fi
+          done
+          if [ "$fail" -ne 0 ]; then exit 1; fi
+          echo "designs link their favicon endpoint"
+
       - name: classic ships no assets and no committed templates
         # classic is the stock look: it inherits every template it does not
-        # override and every asset, so the ONLY files it may contain are the two
-        # brand endpoints and its docs. A stylesheet or an image appearing here
-        # means someone started forking the stock theme by hand; a committed
-        # templates/ means the install-time generation has been bypassed and the
-        # shell would freeze at one ISPConfig version. Both are silent failures
-        # at runtime, so catch them here.
+        # override and every asset, so the ONLY files it may contain are its
+        # three brand endpoints and its docs. A stylesheet or an image appearing
+        # here means someone started forking the stock theme by hand — including
+        # an assets/favicon/ directory: classic's favicon.php falls back to the
+        # STOCK icon set on purpose, so shipping icons here would make the
+        # unbranded panel stop looking like stock. A committed templates/ means
+        # the install-time generation has been bypassed and the shell would
+        # freeze at one ISPConfig version. All of those are silent failures at
+        # runtime, so catch them here.
         run: |
           set -e
           unexpected="$(find themes/classic -mindepth 1 \
-            ! -name 'brand.php' ! -name 'title.php' ! -name 'README.md' ! -name '.gitignore')"
+            ! -name 'brand.php' ! -name 'title.php' ! -name 'favicon.php' ! -name 'README.md' ! -name '.gitignore')"
           if [ -n "$unexpected" ]; then
-            echo "::error::themes/classic must contain only brand.php, title.php, README.md and .gitignore:"
+            echo "::error::themes/classic must contain only brand.php, title.php, favicon.php, README.md and .gitignore:"
             echo "$unexpected"
             exit 1
           fi
