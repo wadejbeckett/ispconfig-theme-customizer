@@ -4,23 +4,29 @@ Bug reports, fixes, and ideas are all welcome. This page is the practical
 guide; the design language itself (tokens, surfaces, component rules) lives in
 [DESIGN.md](DESIGN.md).
 
-This repository holds two components that ship together:
+This is one product — a modern, brandable front-end for ISPConfig, with an admin
+page where you set your logo, panel name and colours. The codebase has two
+areas, and working out which one your change belongs in is usually the first
+thing to do:
 
-- **the theme**, `themes/clarity/` — the visual layer
-- **the branding module**, `interface/web/customizer/` — the admin page that
-  stores white-label settings, plus the `bin/` helpers that install, remove and
-  purge them
+- `themes/clarity/` — the design layer
+- `interface/web/customizer/` — the **Branding** page that stores the
+  white-label settings, plus the `bin/` helpers that install, remove and purge
+  them
 
-They are one contract: the module writes a set of `sys_ini` keys and a
-brand-aware theme reads them. CI enforces that contract, so a change to either
-side that drops a key fails the build rather than silently disabling branding.
-If you are adding a key, add it on both sides in the same change.
+They are one contract: the Branding page writes a set of `sys_ini` keys and a
+brand-aware design reads them. Clarity is the design that ships; anything else
+reading the same keys inherits the Branding page for free. CI enforces that
+contract, so a change on one side that drops a key fails the build rather than
+silently disabling branding. If you are adding a key, add it on both sides in
+the same change.
 
 ## Reporting a bug
 
 Open a [bug report](../../issues/new/choose). The template asks for the things
-that make a theme bug diagnosable: ISPConfig version, theme version, browser,
-dark or light mode, a screenshot, and any browser-console errors.
+that make a bug diagnosable: ISPConfig version, the release or commit you
+installed, browser, dark or light mode, a screenshot, and any browser-console
+errors.
 
 One check before filing: **switch your user back to the stock `default` theme
 and try again.** If the problem is still there, it's an ISPConfig issue, not a
@@ -28,10 +34,13 @@ theme issue — take it to the
 [ISPConfig bugtracker](https://git.ispconfig.org/ispconfig/ispconfig3/-/issues)
 or the [HowtoForge forum](https://forum.howtoforge.com/) instead.
 
-## How the theme is put together
+## How it is put together
 
-There is no build step. The theme is six template overrides plus plain CSS and
-one JS file, loaded in this order:
+There is no build step anywhere in this repository.
+
+### The design layer — `themes/clarity/`
+
+Six template overrides plus plain CSS and one JS file, loaded in this order:
 
 | File | Role |
 |---|---|
@@ -57,12 +66,65 @@ without a matching entry there.
 `themes/clarity/BUILT-AGAINST.txt` records exactly which stock contracts the
 theme relies on — read it before touching a template.
 
+### The Branding page — `interface/web/customizer/`
+
+A stock ISPConfig tform module:
+
+| File | Role |
+|---|---|
+| `interface/web/customizer/customizer_edit.php` | The Branding settings page: reads and writes the `[branding]` keys in `sys_ini.config`. |
+| `interface/web/customizer/logo_upload.php`, `logo_delete.php` | The logo endpoints, writing `sys_ini.custom_logo`. |
+| `interface/web/customizer/lib/svg_guard.inc.php` | The SVG upload screen. Its adversarial corpus is `tests/svg/run.php` — run it before and after any change here. |
+| `interface/web/customizer/form/`, `templates/` | tform definition and page markup. |
+| `bin/` | Install/uninstall helpers: `assign_module.php`, `unassign_module.php`, `purge_branding.php`, `reset_app_theme.php`. |
+
+**Any new endpoint opens with the same three admin checks**, in this order —
+`check_module_permissions('customizer')`, then
+`check_security_permissions('admin_allow_system_config')`, then an
+`is_admin()` guard that dies. See [SECURITY.md](SECURITY.md) for why all three
+are needed rather than any one of them.
+
+#### Translations
+
+Three wordbooks ship, and three different core code paths load them:
+
+| Wordbook | Loaded by |
+|---|---|
+| `interface/web/customizer/lib/<lang>.lng` | `nav.php` merges it on every page for the top-menu title, and `lib/module.conf.php` reads it for the dashboard launcher tile. |
+| `interface/web/customizer/lib/lang/<lang>.lng` | auto-loaded by `app.inc.php` inside the module. |
+| `interface/web/customizer/lib/lang/<lang>_customizer.lng` | the tform wordbook for the settings form. |
+
+`.github/scripts/lang_check.php` runs in CI and enforces two rules that bite
+translators in particular:
+
+- **Key parity** against each wordbook's English source. ISPConfig
+  *substitutes* wordbooks rather than merging them — it only falls back to
+  `en.lng` when the per-language file is **absent** — so a file that exists but
+  omits a key makes the raw key name render in the UI.
+- **An 8-character budget on `top_menu_customizer`.** That string is the nav
+  label — `Branding` in English — and it drives both the top nav and the
+  dashboard launcher tile, where the core dashlet truncates anything longer to
+  7 characters plus `..`.
+
+The script parses `.lng` files as text and never `include()`s them — they are
+PHP, and they arrive through pull requests. Keep it that way.
+
+A separate CI step, **Brand-token contract parity**, greps
+`themes/clarity/brand.php` for each of the six keys the Branding page writes
+(`accent_hex`, `rail_hex`, `login_bg`, `logo_url`, `show_version`,
+`company_name`) and fails if one is missing. This is the check that keeps the
+two sides one product, and it is what a future design would have to satisfy to
+drop in. Adding a key means adding it on both sides in the same PR — and adding
+it to that list, since the check reads from a hard-coded list rather than
+discovering keys. It catches a key being dropped or renamed on the design side;
+it does not prove the value is used correctly.
+
 ## Ground rules (what keeps it update-proof)
 
 1. **Never modify an ISPConfig core file.** Everything ships inside
    `themes/clarity/` and `interface/web/customizer/`; the one sanctioned
    exception is the documented `$conf['theme']` line users set themselves.
-2. **Components read only semantic tokens.** No hard-coded colors outside
+2. **Stylesheets read only semantic tokens.** No hard-coded colors outside
    `tokens.css`. Need a new color? Add a token.
 3. **Every new token needs a light-mode value** in the remap block — except
    `--nz-rail-accent`, which is deliberately never remapped (the navy rail is
@@ -83,58 +145,6 @@ theme relies on — read it before touching a template.
    class names; `icons.css` overrides the glyphs those classes render. Adding a
    Clarity icon costs no extra request — adding a font would.
 
-## How the module is put together
-
-The branding module is a stock ISPConfig tform module — no build step here
-either:
-
-| File | Role |
-|---|---|
-| `interface/web/customizer/customizer_edit.php` | The Branding settings page: reads and writes the `[branding]` keys in `sys_ini.config`. |
-| `interface/web/customizer/logo_upload.php`, `logo_delete.php` | The logo endpoints, writing `sys_ini.custom_logo`. |
-| `interface/web/customizer/lib/svg_guard.inc.php` | The SVG upload screen. Its adversarial corpus is `tests/svg/run.php` — run it before and after any change here. |
-| `interface/web/customizer/form/`, `templates/` | tform definition and page markup. |
-| `bin/` | Install/uninstall helpers: `assign_module.php`, `unassign_module.php`, `purge_branding.php`, `reset_app_theme.php`. |
-
-**Any new endpoint opens with the same three admin checks**, in this order —
-`check_module_permissions('customizer')`, then
-`check_security_permissions('admin_allow_system_config')`, then an
-`is_admin()` guard that dies. See [SECURITY.md](SECURITY.md) for why all three
-are needed rather than any one of them.
-
-### Translations
-
-Three wordbooks ship, and three different core code paths load them:
-
-| Wordbook | Loaded by |
-|---|---|
-| `interface/web/customizer/lib/<lang>.lng` | `nav.php` merges it on every page for the top-menu title, and `lib/module.conf.php` reads it for the dashboard launcher tile. |
-| `interface/web/customizer/lib/lang/<lang>.lng` | auto-loaded by `app.inc.php` inside the module. |
-| `interface/web/customizer/lib/lang/<lang>_customizer.lng` | the tform wordbook for the settings form. |
-
-`.github/scripts/lang_check.php` runs in CI and enforces two rules that bite
-translators in particular:
-
-- **Key parity** against each wordbook's English source. ISPConfig
-  *substitutes* wordbooks rather than merging them — it only falls back to
-  `en.lng` when the per-language file is **absent** — so a file that exists but
-  omits a key makes the raw key name render in the UI.
-- **An 8-character budget on `top_menu_customizer`.** That string drives both
-  the top nav and the dashboard launcher tile, and the core dashlet truncates
-  anything longer to 7 characters plus `..`.
-
-The script parses `.lng` files as text and never `include()`s them — they are
-PHP, and they arrive through pull requests. Keep it that way.
-
-A separate CI step, **Brand-token contract parity**, greps
-`themes/clarity/brand.php` for each of the six keys the module writes
-(`accent_hex`, `rail_hex`, `login_bg`, `logo_url`, `show_version`,
-`company_name`) and fails if one is missing. Adding a key means adding it on
-both sides in the same PR — and adding it to that list, since the check reads
-from a hard-coded list rather than discovering keys from the module. It catches
-a key being dropped or renamed on the theme side; it does not prove the value is
-used correctly.
-
 ## Developing and testing a change
 
 ```bash
@@ -143,8 +153,12 @@ cd ispconfig-theme-customizer
 ./install.sh /usr/local/ispconfig     # on a TEST panel, not production
 ```
 
-A bare `./install.sh` installs **both** components. Pass `--theme` or
-`--module` if you are only working on one side.
+With no component flag, `install.sh` installs both sides. Pass `--theme` to
+install just the design, or `--module` to install just the Branding page, if you
+are only working on one of them. `uninstall.sh` takes the same flags.
+
+Re-run `install.sh` after **any** ISPConfig upgrade, patch releases included —
+the version files the panel checks are pinned to the exact release.
 
 The default symlink install means edits to your clone appear on the panel
 immediately — just hard-refresh (`Ctrl+Shift+R`). If browsers cling to stale
