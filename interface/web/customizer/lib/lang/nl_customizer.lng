@@ -6,13 +6,22 @@ $wb['settings_saved_txt'] = 'Instellingen opgeslagen. Kleurwijzigingen verschijn
 
 $wb['logo_head_txt'] = 'Logo';
 $wb['logo_txt'] = 'Logobestand';
-$wb['logo_hint_txt'] = 'Kies een bestand en klik vervolgens op "Logo uploaden" — het logo wordt direct geüpload, los van de knop Opslaan onderaan. SVG, PNG, JPEG, GIF of WebP, kleiner dan 45 KB. Lichte afbeeldingen werken het best — het logo staat op de donkere zijbalk en de aanmeldbalk.';
+$wb['logo_hint_txt'] = 'Het merkteken dat OP een lichte achtergrond staat en dus donker of in volle kleur moet zijn. Dit is het exemplaar dat ISPConfig zelf gebruikt: de standaardkoptekst en de aanmeldpagina zijn allebei licht. Kies een bestand en klik vervolgens op "Logo uploaden" — het logo wordt direct geüpload, los van de knop Opslaan onderaan. SVG, PNG, JPEG, GIF of WebP, kleiner dan 45 KB.';
 $wb['upload_txt'] = 'Logo uploaden';
-$wb['logo_url_txt'] = 'Logo-URL / -pad (overschrijving)';
-$wb['logo_url_hint_txt'] = 'Optioneel. Een root-relatief pad (aanbevolen — bijv. /themes/custom/logo.svg voor een bestand dat u op de server hebt geplaatst) of een https://-URL. Indien ingesteld, gebruiken merkbewuste thema’s dit overal in plaats van het geüploade logo, ook op hun aanmeldpagina; alleen het standaardthema van ISPConfig gebruikt altijd het geüploade logo. SVG of een 2x-PNG van ongeveer 500&times;160 werkt het best (het wordt ongeveer 26px hoog weergegeven). Een externe URL koppelt uw aanmeldpagina aan die host en geeft de IP-adressen van uw bezoekers aan die host prijs — geef de voorkeur aan een lokaal pad.';
-$wb['logo_url_error_regex'] = 'De logo-overschrijving moet een root-relatief pad (/…) of een https://-URL zijn, zonder spaties, aanhalingstekens, vierkante haken of ronde haken.';
+$wb['logo_url_txt'] = 'Logopad / -URL voor lichte achtergronden (overschrijving)';
+$wb['logo_url_hint_txt'] = 'Optioneel; heeft voorrang op het geüploade bestand hierboven. Een root-relatief pad (aanbevolen — bijv. /themes/custom/logo.svg voor een bestand dat u op de server hebt geplaatst) of een https://-URL. Indien ingesteld, gebruiken merkbewuste ontwerpen dit overal, ook op hun aanmeldpagina; alleen het standaardthema van ISPConfig gebruikt altijd het geüploade logo, want dat is de enige waarde die de kern kent. SVG of een 2x-PNG van ongeveer 500&times;160 werkt het best (het wordt ongeveer 26px hoog weergegeven). Een externe URL koppelt uw aanmeldpagina aan die host en geeft de IP-adressen van uw bezoekers aan die host prijs — geef de voorkeur aan een lokaal pad.';
+$wb['logo_url_error_regex'] = 'Het logopad voor lichte achtergronden moet een root-relatief pad (/…) of een https://-URL zijn, zonder spaties, aanhalingstekens, vierkante haken of ronde haken.';
 $wb['logo_remove_txt'] = 'Verwijderen';
 $wb['used_logo_txt'] = 'Huidig logo';
+$wb['logo_variants_hint_txt'] = 'Twee velden, omdat ontwerpen het oneens zijn over helderheid: clarity zet het logo op een donkere marineblauwe balk, de standaardweergave op een lichtgrijze koptekst. Vul het veld in dat past bij het ontwerp dat u gebruikt. Laat het andere leeg en het leent gewoon dit exemplaar — precies zoals het paneel zich vandaag al gedraagt. Elke voorbeeldweergave staat op de achtergrond waarvoor het veld bedoeld is, zodat een logo in het verkeerde veld meteen opvalt.';
+$wb['logo_on_light_head_txt'] = 'Logo voor lichte achtergronden';
+$wb['logo_on_dark_head_txt'] = 'Logo voor donkere achtergronden';
+$wb['logo_on_dark_txt'] = 'Logobestand';
+$wb['logo_on_dark_hint_txt'] = 'Het merkteken dat OP een donkere achtergrond staat en dus licht of wit moet zijn. De marineblauwe zijbalk en aanmeldbalk van Clarity gebruiken dit exemplaar. Dezelfde formaten en dezelfde grens van 45 KB. Goed om te weten: ISPConfig heeft maar één logokolom en deze extensie voegt er geen toe, dus deze afbeelding wordt in de interface-instellingen bewaard — ze wordt bij het laden van pagina’s opnieuw gelezen en bij de volgende keer Opslaan in het wijzigingslogboek geschreven. Als dat op uw paneel uitmaakt, gebruik dan het padveld hieronder; een pad kost slechts een paar bytes.';
+$wb['used_logo_on_dark_txt'] = 'Huidig logo';
+$wb['logo_url_on_dark_txt'] = 'Logopad / -URL voor donkere achtergronden (overschrijving)';
+$wb['logo_url_on_dark_hint_txt'] = 'Optioneel; heeft voorrang op het geüploade bestand hierboven. Dezelfde regels als het pad voor lichte achtergronden: een root-relatief pad (aanbevolen) of een https://-URL. Zo houdt u een logo voor donkere achtergronden ook volledig buiten de interface-instellingen — een pad is een paar bytes, een geüploade afbeelding tot 60 KB.';
+$wb['logo_url_on_dark_error_regex'] = 'Het logopad voor donkere achtergronden moet een root-relatief pad (/…) of een https://-URL zijn, zonder spaties, aanhalingstekens, vierkante haken of ronde haken.';
 
 $wb['brand_head_txt'] = 'Naam & kleuren';
 $wb['company_name_txt'] = 'Paneelnaam';
@@ -50,3 +59,4 @@ $wb['demo_mode_txt'] = 'Deze functie is uitgeschakeld in de demomodus.';
 
 $wb['btn_save_txt'] = 'Opslaan';
 $wb['btn_cancel_txt'] = 'Annuleren';
+$wb['logo_delete_failed_txt'] = 'Kon het logo niet verwijderen — het wegschrijven naar de database is mislukt. Het is nog opgeslagen; probeer het opnieuw.';

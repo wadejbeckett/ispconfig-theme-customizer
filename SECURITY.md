@@ -98,7 +98,10 @@ is treated as unset. Values are normalised (leading `#` added, upper-cased)
 before validation, so a pasted `0065ab` is accepted rather than rejected
 opaquely.
 
-**`logo_url`** — the logo by reference, consumed inside a CSS `url("…")`. Only a
+**`logo_url` and `logo_url_on_dark`** — the two logos by reference (one per
+background variant), consumed inside a CSS `url("…")`. Both carry the *same*
+filter and the *same* validator, character for character; only the error message
+differs, so the operator learns which of the two fields they got wrong. Only a
 root-relative path or an `https://` URL, and no character that could break out
 of that context:
 
@@ -135,6 +138,18 @@ the attribution-preserving value.
 **Uploaded rasters** — the `finfo` MIME type must be one of `image/png`,
 `image/jpeg`, `image/gif`, `image/webp`, and the raw file must be ≤ 45,000 bytes
 so its base64 form fits the `sys_ini.custom_logo` column.
+
+**The upload slot** — one endpoint serves both logo variants, so a POST names
+the slot it targets (`on_light`, `on_dark`) and `logo_delete.php` takes the same
+value as a GET parameter. That value selects a *storage location*, so it is
+checked against a shared allowlist (`customizer_logo_slots()` in
+`lib/preview.inc.php`) and never used raw. An absent slot means `on_light`,
+which is what both endpoints did before a second slot existed, so a replayed
+request from an older page still means what it meant. A slot that is present but
+unknown is refused outright rather than defaulted — quietly writing or deleting
+the *other* logo would be a destructive surprise, reported to the operator as
+success. Every other check — CSRF, MIME sniffing, the SVG screen, the size cap,
+demo mode — is shared by both slots rather than duplicated for the new one.
 
 ## The SVG screen
 
@@ -342,18 +357,25 @@ column ISPConfig already has.
 | What | When | Written by |
 |---|---|---|
 | `sys_ini.config` (row 1) — the `[branding]` section plus existing `[misc]` keys | saving the Branding form | `customizer_edit.php` |
-| `sys_ini.custom_logo` (row 1) | logo upload / remove / purge | `logo_upload.php`, `logo_delete.php`, `bin/purge_branding.php` |
+| `sys_ini.config` (row 1) — the single key `[branding] logo_on_dark` | uploading / removing the **dark-background** logo | `logo_upload.php`, `logo_delete.php` |
+| `sys_ini.custom_logo` (row 1) — the **light-background** logo | logo upload / remove / purge | `logo_upload.php`, `logo_delete.php`, `bin/purge_branding.php` |
 | `sys_user.modules` | install / uninstall | `bin/assign_module.php` (only `typ='admin'` rows), `bin/unassign_module.php` |
 | `sys_user.startmodule` | uninstall | `bin/unassign_module.php`, and only where it pointed at `customizer` |
 | `sys_user.app_theme` | uninstall with `--reset-users` | `bin/reset_app_theme.php`, and only rows equal to a design being removed (`clarity`, `classic`); the name is validated as a name, and `default` is refused outright |
 
 Two qualifications, because a flat "no new rows" would not be true:
 
-- The config write goes through core's own `datalogUpdate()`, which appends one
-  row to the **`sys_datalog`** journal per changed save — exactly what happens
-  when you save **System → Interface Config** yourself. The logo write is a
-  direct `UPDATE` instead, deliberately: a 48 KB blob has no business in the
-  journal.
+- The **form** config write goes through core's own `datalogUpdate()`, which
+  appends one row to the **`sys_datalog`** journal per changed save — exactly
+  what happens when you save **System → Interface Config** yourself. Every logo
+  write is a direct `UPDATE` instead, deliberately: a 60 KB blob has no business
+  in the journal. That holds for the dark-background logo too, even though it
+  lives *inside* `sys_ini.config`; `logo_upload.php` and `logo_delete.php`
+  read-modify-write that column directly and never call `datalogUpdate()`.
+  The honest caveat: once a dark-background logo is stored there, the **next**
+  save of the Branding form journals the blob with the image in it. Core has one
+  logo column and this project adds no schema, so there is nowhere else to put
+  it — `logo_url_on_dark` stores a path instead, for panels where that matters.
 - On disk, `install.sh` creates `themes/<design>/ispconfig_version` and
   `themes/<design>/ISPC_VERSION` inside the panel's web root, for each design it
   installs — and for classic it also writes that design's two generated shell
@@ -369,6 +391,12 @@ it would silently eat one backslash level from **every** value in the file on
 smtp_pass` among them, where `pa\ss` degrades to `pass` and outbound mail
 authentication starts failing with nothing to explain it. Parsing raw means
 every value it does not own is carried through byte-identical.
+
+The two logo endpoints now perform the same read-modify-write for the
+dark-background logo, under the same rule and for the same reason. The stored
+value is itself immune to that asymmetry: the base64 alphabet and the
+`data:image/…;base64,` prefix contain no backslash, so the `stripslashes()` every
+reader applies is a no-op on it.
 
 ## Language files are PHP, and CI never executes them
 

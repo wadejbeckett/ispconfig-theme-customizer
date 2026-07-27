@@ -3,3 +3,5 @@ $wb['top_menu_customizer'] = 'Branding';
 $wb['White-label'] = 'White-label';
 $wb['Branding'] = 'Branding';
 $wb['no_logo_set_txt'] = 'Nessun logo personalizzato impostato — il tema mostra il proprio logo predefinito.';
+$wb['logo_fallback_from_dark_txt'] = 'Nessun logo per sfondi chiari impostato, quindi qui viene mostrato quello per sfondi scuri — è ciò che mostrerà un design chiaro. Carichi una versione scura o a colori per cambiarlo.';
+$wb['logo_fallback_from_light_txt'] = 'Nessun logo per sfondi scuri impostato, quindi qui viene mostrato quello per sfondi chiari — è ciò che mostrerà un design scuro. Carichi una versione chiara o bianca per cambiarlo.';

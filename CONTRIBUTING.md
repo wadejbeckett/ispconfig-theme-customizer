@@ -148,7 +148,8 @@ installs, listed in `sys_user.modules` and declared by `lib/module.conf.php`:
 | File | Role |
 |---|---|
 | `interface/web/customizer/customizer_edit.php` | The Branding settings page: reads and writes the `[branding]` keys in `sys_ini.config`. |
-| `interface/web/customizer/logo_upload.php`, `logo_delete.php` | The logo endpoints, writing `sys_ini.custom_logo`. |
+| `interface/web/customizer/logo_upload.php`, `logo_delete.php` | The logo endpoints. Two slots share them, named after the background each logo sits on: `on_light` writes `sys_ini.custom_logo`, `on_dark` writes `[branding] logo_on_dark`. The slot is allowlisted, never taken raw. |
+| `interface/web/customizer/lib/preview.inc.php` | The two-logo model in one place: slot vocabulary, source resolution with the cross-variant fallback, and the preview renderer. Both theme readers mirror its resolution rule and must be changed with it. |
 | `interface/web/customizer/lib/svg_guard.inc.php` | The SVG upload screen. Its adversarial corpus is `tests/svg/run.php` — run it before and after any change here. |
 | `interface/web/customizer/form/`, `templates/` | tform definition and page markup. |
 | `bin/` | Install/uninstall helpers: `assign_module.php`, `unassign_module.php`, `purge_branding.php`, `reset_app_theme.php`. |
@@ -185,10 +186,14 @@ The script parses `.lng` files as text and never `include()`s them — they are
 PHP, and they arrive through pull requests. Keep it that way.
 
 A separate CI step, **Brand-token contract parity**, greps *every*
-`themes/*/brand.php` for each of the six keys on CI's hard-coded contract list
-(`accent_hex`, `rail_hex`, `login_bg`, `logo_url`, `show_version`,
-`company_name` — the Branding page writes more than these; the list is the
-subset a design must read) and fails if one is missing. The loop walks the directory rather
+`themes/*/brand.php` for each of the eight keys on CI's hard-coded contract list
+(`accent_hex`, `rail_hex`, `login_bg`, `logo_url`, `logo_url_on_dark`,
+`logo_on_dark`, `show_version`, `company_name` — the Branding page writes more
+than these; the list is the subset a design must read) and fails if one is
+missing. The two `*_on_dark` logo keys are listed separately from `logo_url`
+because `logo_on_dark` is not a substring of `logo_url_on_dark`, so each name
+genuinely has to appear: a design implementing only one of the pair would render
+the wrong-brightness mark on half its surfaces, and no other check would see it. The loop walks the directory rather
 than naming a design on purpose: both `clarity` and `classic` have to satisfy
 it, and a third design must not quietly opt out. This is the check that keeps
 the two sides one product. Adding a key means adding it to every design in the

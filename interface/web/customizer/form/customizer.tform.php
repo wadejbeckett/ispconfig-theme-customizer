@@ -9,12 +9,20 @@
  *
  * The single global row sys_ini (sysini_id = 1) is the store. The controller
  * (customizer_edit.php) reads/writes two INI sections inside sys_ini.config:
- *   [branding]  logo_url, accent_hex, rail_hex, login_bg,
+ *   [branding]  logo_url, logo_url_on_dark, accent_hex, rail_hex, login_bg,
  *               show_ispconfig_credit, show_theme_credit, show_version
  *   [misc]      company_name, custom_login_text, custom_login_link, and the
  *               three dashboard_atom_url_* keys via the news-feed toggle
  *               (all existing core keys)
- * The logo lives in the sys_ini.custom_logo column (handled by logo_upload.php).
+ *
+ * The two UPLOADED logos are not form fields — logo_upload.php writes them
+ * directly, one into the sys_ini.custom_logo column and one into
+ * [branding] logo_on_dark. Neither may be listed in customizer_edit.php's
+ * $branding_keys: that list is blanket-overwritten from the POST on every save,
+ * so a logo named there would be erased by the next click of Save.
+ *
+ * Why there are two of everything, and which variant goes where, is documented
+ * once in lib/preview.inc.php — the file all three endpoints share.
  */
 
 //* Both empty ON PURPOSE: tform_base builds form_hint from title + description
@@ -93,6 +101,37 @@ $form["tabs"]['branding'] = array(
             //* valid PCRE modifiers and order between them is irrelevant.)
             'validators' => array(
                 0 => array('type' => 'REGEX', 'regex' => '/^(https:\/\/[^\s"\'<>()\\\\]+|\/(?!\/)[^\s"\'<>()\\\\]+)?$/D', 'errmsg' => 'logo_url_error_regex'),
+            ),
+            'default' => '',
+            'value'   => ''
+        ),
+
+        //* The dark-background variant of the field above: same mechanism (a
+        //* logo by reference rather than by upload), same output context (a CSS
+        //* url("…") in a theme's brand.php), and therefore DELIBERATELY the same
+        //* filter and the same anchored validator, character for character. Only
+        //* the errmsg differs, so the operator is told which of the two fields
+        //* they got wrong. Every rationale above applies here unchanged — the
+        //* TRIM-not-STRIPNL choice, and the /D on the pattern. If one of these
+        //* two regexes is ever edited, the other and the four reader-side copies
+        //* (clarity/classic brand.php, lib/preview.inc.php) must move with it.
+        //*
+        //* This second reference slot is not symmetry for its own sake. The
+        //* uploaded dark logo is the one value in this module that has nowhere
+        //* to live but the sys_ini.config blob, where it is re-read on page
+        //* loads and journalled by the next form save; a reference costs a path
+        //* string instead, so it is the escape hatch from that cost. Without it
+        //* an operator who prefers references would have a reference slot for
+        //* one variant and an upload slot for the other, and the precedence rule
+        //* would stop being one sentence.
+        'logo_url_on_dark' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'TEXT',
+            'filters'  => array(
+                0 => array('event' => 'SAVE', 'type' => 'TRIM'),
+            ),
+            'validators' => array(
+                0 => array('type' => 'REGEX', 'regex' => '/^(https:\/\/[^\s"\'<>()\\\\]+|\/(?!\/)[^\s"\'<>()\\\\]+)?$/D', 'errmsg' => 'logo_url_on_dark_error_regex'),
             ),
             'default' => '',
             'value'   => ''

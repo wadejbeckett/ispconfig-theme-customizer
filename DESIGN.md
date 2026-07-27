@@ -142,13 +142,21 @@ changes per mode.
 The normal route is the extension's **Branding** page, which stores logo, panel
 name and colours in `sys_ini`; `themes/clarity/brand.php` reads those keys and
 emits a stylesheet that overrides the shipped values (see
-[SECURITY.md](SECURITY.md) for that endpoint's exposure). A referenced
-`logo_url` wins over an uploaded logo, and with neither set but a panel name
-given, the name renders as a CSS text wordmark in the same slots.
+[SECURITY.md](SECURITY.md) for that endpoint's exposure).
+
+The logo has **two variants, named after the background they sit on**, because
+one panel runs designs whose headers disagree about brightness: Clarity's rail
+is navy and wants a white mark, the stock look's header is `#f2f5f7` and wants a
+dark one. Each design asks for the variant matching its own background and falls
+back to the other when that variant is unset — so a panel with a single stored
+logo behaves exactly as it always did. Within a variant, a referenced path
+(`logo_url` / `logo_url_on_dark`) wins over the uploaded image, and with no logo
+at all but a panel name given, the name renders as a CSS text wordmark in the
+same slots.
 
 Below that, the shipped logo is a plain file: replace
 `themes/clarity/assets/images/wordmark-white.svg` with any SVG/PNG
-(white/light artwork recommended — it always sits on the navy brand
+(white/light artwork recommended — it sits on the navy brand
 band). Heights are fixed in CSS; width follows the file's aspect ratio.
 That file is the fallback the panel paints when nothing is set, and the
 design's tokens are the fallback for every colour the Branding page does not
