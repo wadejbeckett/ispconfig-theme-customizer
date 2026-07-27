@@ -257,7 +257,8 @@ pass `--design=` again for anything other than clarity: the default is clarity,
 so a bare re-run leaves a `classic` install unstamped, and the installer warns
 when it finds a design directory it did not stamp.
 
-If you run **clarity**, also diff its six overridden templates against the stock
+After a **major** upgrade (3.3 -> 3.4), not every patch release, also diff
+**clarity**'s six overridden templates against the stock
 ones for your new version before trusting the upgrade. Compare against your own
 panel's `interface/web/themes/default/templates/` and
 `interface/web/dashboard/**/templates/`, or against the ISPConfig source for
@@ -289,7 +290,10 @@ inside the panel's **web root**, under that exact name — so the web server
 serves it as an ordinary static file:
 
 ```bash
-curl -k https://panel.example.com:8080/themes/clarity/ispconfig_version
+for d in clarity classic; do
+  curl -k https://panel.example.com:8080/themes/$d/ispconfig_version
+done
+# a design you did not install returns 404 either way
 # 3.3.1p1
 ```
 

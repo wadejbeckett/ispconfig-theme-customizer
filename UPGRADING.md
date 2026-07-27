@@ -510,3 +510,22 @@ shell is built from whatever panel it is installed on. It does assume the shape
 of the stock shell, and it fails loudly rather than quietly when that shape is
 not one it recognises. ISPConfig 3.2 has not been tested — it is neither claimed
 as supported nor known to be broken.
+
+## If you installed before v3.1.0 with the default (symlink) mode
+
+Re-run `./install.sh` — nothing else is needed, and your settings are untouched.
+
+Before v3.1.0 every branding endpoint located the panel with a path built from
+`__DIR__`, and PHP resolves `__DIR__` through symlinks. Since `install.sh`
+defaults to symlink mode, that path landed in the git clone rather than the
+panel, `config.inc.php` was never found, and the endpoints took their
+database-failure path: a valid but empty response.
+
+The visible symptom was that branding appeared to do nothing — colours, logo and
+the toggles all inert — with no error, no log entry and no 404 to chase. Panels
+installed with `--copy` were unaffected, which is why it went unnoticed.
+
+The fix is in the endpoints themselves, so re-running the installer to deploy the
+current files is the whole remedy. Nothing in the database changed, so your
+stored branding comes back exactly as you left it.
+
