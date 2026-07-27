@@ -364,12 +364,24 @@ echo $css;
  */
 function brand_parse_config($config)
 {
-    // Same reasoning as the config path above: a second __DIR__ walk lands in
-    // the clone on a symlink install. Derive it from the config path that was
-    // actually found, so the two can never disagree about where the panel is.
-    $parser_file = ($config_inc !== '')
-        ? dirname($config_inc) . '/classes/ini_parser.inc.php'
-        : __DIR__ . '/../../../lib/classes/ini_parser.inc.php';
+    // Same reasoning as the config path resolved at top level: a bare __DIR__
+    // walk lands in the git clone on a symlink install, so prefer the path the
+    // web server actually requested. $config_inc is NOT usable here — this is a
+    // function, and PHP has no implicit access to the enclosing file's scope;
+    // referencing it emitted "Undefined variable" warnings straight into this
+    // endpoint's CSS response, which corrupted the stylesheet.
+    $parser_file = '';
+    $_pf = array();
+    if (!empty($_SERVER['SCRIPT_FILENAME'])) {
+        $_pf[] = dirname($_SERVER['SCRIPT_FILENAME']) . '/../../../lib/classes/ini_parser.inc.php';
+    }
+    $_pf[] = __DIR__ . '/../../../lib/classes/ini_parser.inc.php';
+    if (!empty($_SERVER['DOCUMENT_ROOT'])) {
+        $_pf[] = $_SERVER['DOCUMENT_ROOT'] . '/../lib/classes/ini_parser.inc.php';
+    }
+    foreach ($_pf as $_c) {
+        if (is_readable($_c)) { $parser_file = $_c; break; }
+    }
     if (is_readable($parser_file)) {
         require_once $parser_file;
         if (class_exists('ini_parser')) {
