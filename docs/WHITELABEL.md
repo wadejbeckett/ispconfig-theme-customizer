@@ -2,9 +2,11 @@
 
 The goal: ISPConfig as a full Plesk/cPanel alternative that an operator can
 brand as their own — **without ever modifying ISPConfig itself**. This is one
-product: a modern, brandable front-end for the panel. It replaces the interface
-with the Clarity design (`themes/clarity/`) and adds an admin-only **Branding**
-page (`interface/web/customizer/`) where the logo, panel name and colours are
+product: a modern, brandable front-end for the panel. It replaces the interface with one of two
+designs — `clarity` (`themes/clarity/`), a ground-up dark and light interface, or
+`classic` (`themes/classic/`), the stock look made brandable by an install-time
+generated shell — and adds an admin-only **Branding** page
+(`interface/web/customizer/`) where the logo, panel name and colours are
 set. The design reads its colours, logo and panel name from exactly the
 `sys_ini` keys that page writes — one contract, one version number. (Before
 v3.0.0 the halves shipped as separate projects on independent versions with

@@ -6,12 +6,14 @@ headings to `[b]…[/b]`, links to `[url=…]…[/url]`, and images to `[img]…
 when posting. Images to attach are listed at the end.
 
 **Framing note — the thing this draft gets right and earlier ones got wrong:**
-this is ONE project, not a theme and a module that happen to ship together. It
-is a themeable, brandable front-end for ISPConfig. Clarity is the design it
-ships with; the Branding page is where you make it yours. Don't reintroduce
-"two parts" structure — no `X + Y` title, no parallel "what X gives you" /
-"what Y gives you" sections. That the two pieces can be installed separately is
-a deployment detail, not the product's identity.
+this is ONE extension, not a theme and a module that happen to ship together. It
+is a brandable front-end for ISPConfig. Two designs read the same contract —
+`clarity` and `classic` — and the Branding page is where you make either one
+yours. Don't reintroduce "two parts" structure — no `X + Y` title, no parallel
+"what X gives you" / "what Y gives you" sections. That the pieces can be
+installed separately is a deployment detail, not the product's identity.
+"extension" is ISPConfig's own word for a third-party add-on (System →
+Extension Installer); use it, not "plugin" or "module", for the product noun.
 
 Keep the symbiosis framing in the opening intact — it is what positions this as
 *building on* ISPConfig, not competing with it.
@@ -27,9 +29,10 @@ panel to look and feel like a first-class modern control panel, and to be able t
 hand a client a panel with *their* name on it — **without ever patching the
 core.** This is the result.
 
-It replaces the panel's front-end with a dark (and light) design, and adds an
-admin page where you set your logo, panel name and colours. Those are not two
-products bolted together: the design reads its colours, logo and panel name from
+It replaces the panel's front-end with a design of your choosing — either
+`clarity`, a ground-up dark and light interface, or `classic`, the stock
+ISPConfig look made brandable — and adds an admin page where you set your logo,
+panel name and colours. Those are not two products bolted together: the design reads its colours, logo and panel name from
 the settings that page writes, which is why they ship as one thing with one
 version number.
 
@@ -98,16 +101,17 @@ reads a few of those keys itself. Verified against the 3.3 source:
 | Setting | Read by |
 |---|---|
 | `custom_logo`, `company_name`, the per-role dashboard Atom feed URLs | ISPConfig **core** — these apply on the stock theme too |
-| `accent_hex`, `rail_hex`, `login_bg`, `logo_url`, `show_version` | the shipped design's `brand.php` — these need it installed |
+| `accent_hex`, `rail_hex`, `login_bg`, `logo_url`, `show_version` | either design's `brand.php` — these need a design installed |
 
 So `./install.sh --module` on a stock panel is a legitimate thing to do if you
 only want your logo and panel name. `--theme` alone is equally fine. The default
 installs both, which is what most people want.
 
 **And the design is replaceable.** Anything that reads those same keys inherits
-the whole branding page for free. Clarity is the design that ships today, not an
-assumption baked into the project — CI fails the build if either side of the
-contract drifts, precisely so a second design can drop in later.
+the whole branding page for free. That is not hypothetical: **two** designs ship
+and read the same contract — `clarity`, a ground-up dark and light interface, and
+`classic`, the stock ISPConfig look made brandable. CI walks every
+`themes/*/brand.php`, so a third cannot quietly opt out of the contract either.
 
 ### Install
 
@@ -118,9 +122,10 @@ cd ispconfig-theme-customizer
 sudo ./install.sh                    # --theme or --module to install one half
 ```
 
-Flags: `--theme` / `--module` / `--all` (default is both), `--copy` to copy real
-files instead of symlinking, `--no-assign` to skip assigning the Branding page to
-admin users. An `ISPCONFIG_ROOT` path can be passed as the last argument; it
+Flags: `--theme` / `--module` / `--all` (default is both), `--design=<name>` to
+choose the design — `clarity` (default), `classic`, or `all` to offer both in the
+Design picker — `--copy` to copy real files instead of symlinking, and
+`--no-assign` to skip assigning the Branding page to admin users. An `ISPCONFIG_ROOT` path can be passed as the last argument; it
 defaults to `/usr/local/ispconfig`.
 
 Then two manual steps the installer deliberately does **not** do for you:
@@ -130,13 +135,15 @@ Then two manual steps the installer deliberately does **not** do for you:
    `server/lib/config.inc.php`. The installer never edits ISPConfig config.
    (The server one matters: panel updates regenerate both files and carry the
    value forward from the *server* config.)
-2. Select it for your own account: *Tools → User Settings → Design → `clarity`
-   → Save*. Core updates the session and force-reloads the page, so it applies
+2. Select it for your own account: *Tools → User Settings → Design →
+   `clarity` (or `classic`) → Save*. Core updates the session and force-reloads the page, so it applies
    immediately. If the frame still looks stock, hard-refresh (`Ctrl+Shift+R`) so
    the browser drops the old CSS.
 
-Uninstall is `./uninstall.sh` with the same component flags, plus
-`--reset-users`, `--purge-branding` and `--keep-assignment`. See below for what
+Uninstall is `./uninstall.sh` with the same component and `--design` flags, plus
+`--reset-users`, `--purge-branding` and `--keep-assignment`. `--design` defaults
+to *all* designs there, deliberately: installing picks what you want, removing
+has to clear whatever might be present. See below for what
 it does and does not undo.
 
 ### Compatibility, and the two things that will bite you

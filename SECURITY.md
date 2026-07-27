@@ -1,16 +1,18 @@
 # Security Policy
 
-This is one product: a modern, brandable front-end for ISPConfig, with an
-admin-only page where you set your logo, panel name and colours. It installs
-into the panel in two places, and both are in scope here:
+This is one extension: a brandable front-end for ISPConfig, with an admin-only
+page where you set your logo, panel name and colours. It installs into the panel
+in two places, and both are in scope here:
 
-- `themes/clarity/` — the Clarity design it ships with, including two endpoints
-  that are reachable **without a session** (`brand.php`, `title.php`);
-- `interface/web/customizer/` — the **Branding** page, which writes the values
-  those endpoints read.
+- `themes/clarity/` and `themes/classic/` — the two designs it ships, each with
+  two endpoints that are reachable **without a session** (`brand.php`,
+  `title.php`), so four in total;
+- `interface/web/customizer/` — the **Branding** page. That page is an ISPConfig
+  *module* in core's sense of the word (`lib/module.conf.php`,
+  `sys_user.modules`), and it writes the values those endpoints read.
 
-One policy covers both, because they are one contract: `brand.php` reads exactly
-the `sys_ini` keys `customizer_edit.php` writes.
+One policy covers both halves, because they are one contract: every `brand.php`
+reads exactly the `sys_ini` keys `customizer_edit.php` writes.
 
 ## Reporting a vulnerability
 
@@ -84,7 +86,8 @@ page.
 ## What the Branding page validates, and where
 
 Validation happens on write (the form's filters and validators) **and again on
-read** (`brand.php` re-checks every value before it reaches CSS). The
+read** (each design's `brand.php` re-checks every value before it reaches CSS).
+The
 reader-side pass is defence in depth, not the boundary: it exists so that a
 value written by some other means — the remote `system_config_set` call, a
 direct `UPDATE`, a restored backup — is still checked at render time.
@@ -109,8 +112,8 @@ true end-of-subject; without it PCRE also matches *before* a final newline, so
 `/img/logo.png\n` would validate and the raw LF would be emitted inside
 `content: url("…")` — a literal newline terminates a double-quoted CSS string,
 which would break the stylesheet for every visitor, including pre-auth on the
-login screen. The reader-side pattern in `brand.php` carries `/D` for the same
-reason. The field is filtered with `TRIM` only, deliberately not `STRIPNL`: a
+login screen. Both designs' `brand.php` carry that pattern character for
+character, `/D` included, for the same reason. The field is filtered with `TRIM` only, deliberately not `STRIPNL`: a
 filter that spliced an embedded newline out of the *middle* of the value would
 hand the validator a string the administrator never typed.
 
@@ -120,9 +123,11 @@ forbids quotes, whitespace and angle brackets:
 `/^(https?:\/\/[^\s"'<>]+)?$/`.
 
 **Free text** (`company_name`, `custom_login_text`) — `STRIPTAGS` + `STRIPNL` on
-save. The theme normalises again on read (control characters stripped) and
-escapes per output context: a CSS-string escape in `brand.php`, `json_encode`
-with the HEX flags in `title.php`.
+save. The active design normalises again on read (control characters stripped,
+by the same byte-wise filter in all four endpoints, so the CSS wordmark and the
+tab title can never derive different strings from the same row) and escapes per
+output context: a CSS-string escape in `brand.php`, `json_encode` with the HEX
+flags in `title.php`.
 
 **Toggles** — strict `0|1`; anything else reads as the default, which is always
 the attribution-preserving value.
@@ -203,8 +208,9 @@ any real logo is refused, so the numbers above cannot go stale without the build
 going red. You can run it yourself with `php tests/svg/run.php`.
 
 The honest framing: this endpoint is admin-only, and every place the logo
-renders is an image context (an `<img>` tag, or CSS `content: url()`), where
-browsers apply SVG secure-static mode. The screen is **defence in depth**, not
+renders — on either design — is an image context (an `<img>` tag, or CSS
+`content: url()` / `background-image`), where browsers apply SVG secure-static
+mode. The screen is **defence in depth**, not
 the last line of defence. It is written to be exactly as strict as this document
 says it is.
 
@@ -236,19 +242,24 @@ says it is.
 
 ## The pre-auth surface
 
-`themes/clarity/brand.php` (CSS) and `themes/clarity/title.php` (JS) are linked
-from **both** shell templates, including `main_login.tpl.htm`. They run with no
-session and must be safe for anonymous requests. Both are written for that:
+There are **four** of these, not two: `brand.php` (CSS) and `title.php` (JS)
+under `themes/clarity/`, and the same pair under `themes/classic/`. Each design
+links its own two from **both** of its shell templates, including the login
+shell, and only one design is active per request — but once both are installed
+all four exist on disk in the web root and all four are reachable by URL. They
+run with no session and must be safe for anonymous requests. All four are
+written for that, and the read half — query, unescape, normalise, cache — is
+deliberately the same code in both designs, so the two cannot drift apart:
 
-- **No application bootstrap.** Neither starts a session, loads `app.inc.php`,
-  or triggers maintenance-mode redirects. Each opens a direct `mysqli`
+- **No application bootstrap.** None of them starts a session, loads
+  `app.inc.php`, or triggers maintenance-mode redirects. Each opens a direct `mysqli`
   connection with the credentials already in `interface/lib/config.inc.php` and
   issues a **single read-only** `SELECT` against `sys_ini` row 1 — `config` and
   `custom_logo` for `brand.php`, `config` alone for `title.php`.
 - **Always valid output.** `brand.php` always returns HTTP 200 with
   `Content-Type: text/css` (or 304 on an ETag match); `title.php` always returns
-  HTTP 200 with valid JavaScript. Both re-assert their MIME type after including
-  `config.inc.php`, which emits `text/html` on a web request.
+  HTTP 200 with valid JavaScript. All four re-assert their MIME type after
+  including `config.inc.php`, which emits `text/html` on a web request.
 - **Degrade to a no-op on DB failure.** Any connection or query fault is caught
   and produces an empty stylesheet / a no-op script with `Cache-Control:
   no-store` — never an error message, never a stack trace, and never a cached
@@ -270,8 +281,23 @@ session and must be safe for anonymous requests. Both are written for that:
   through `json_encode` with `JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS |
   JSON_HEX_QUOT`; `document.title` and the `<img alt>` text stay uncapped on
   purpose.
+- **One request parameter exists, on one endpoint.**
+  `themes/classic/brand.php` accepts `?scene=login`. A few rules apply to the
+  login screen only, and classic cannot scope them with a body class the way
+  Clarity does — its templates are generated from the panel's stock ones and the
+  transform may not touch the markup, and stock's login `<body>` carries no
+  class or id to hang a selector on — so `install.sh` adds that query string to
+  the link in the generated login shell and the scope travels in the URL. The
+  value is **only ever compared, never emitted**: `$_GET['scene'] === 'login'`
+  selects the login scene and *anything else at all* selects the app scene.
+  Because the comparison is `===` against a string, an array — `?scene[]=login`
+  — is simply not equal and falls through to the app scene rather than raising a
+  type error, and no form of the parameter reaches the response body. It does
+  reach the `ETag`, deliberately: the two scenes are different URLs, and a
+  validator that ignored the scene would let a stale revalidation cross them.
+  The other three endpoints read no request input whatsoever.
 - **No code execution surface.** Nothing user-controlled is `eval`'d or
-  `include`'d. Both endpoints read and emit validated scalars.
+  `include`'d. All four endpoints read and emit validated scalars.
 - **Caching is `private`**, max-age 30 seconds, so branding never lands in a
   shared or reverse-proxy cache.
 
@@ -286,12 +312,28 @@ here rather than left to be discovered.
 
 ## No core file is modified, and this is the whole write surface
 
-Nothing here patches, replaces or edits any ISPConfig core file. The design
-lives entirely under `themes/clarity/` and overrides templates and assets
-through ISPConfig's own theme loader; it borrows the stock theme's vendor CSS/JS
-by reference and never edits it. The Branding page lives entirely under
-`interface/web/customizer/`. **Nothing under `themes/clarity/` writes at
-runtime** — its two endpoints only read.
+Nothing here patches, replaces or edits any ISPConfig core file. The designs
+live entirely under `themes/clarity/` and `themes/classic/` and override
+templates and assets through ISPConfig's own theme loader; Clarity borrows the
+stock theme's vendor CSS/JS by reference and never edits it, and classic ships
+no assets at all — every stylesheet, script and icon on the page is served from
+`themes/default/assets/` exactly as core left it. The Branding page lives
+entirely under `interface/web/customizer/`. **Nothing under either design
+directory writes at runtime** — all four endpoints only read.
+
+`classic` is the one that comes close to core, so it is worth stating exactly.
+Its two shell templates are **generated at install time from the target panel's
+own** `themes/default/templates/main.tpl.htm` and `main_login.tpl.htm`.
+`install.sh` **reads** those two files and writes nothing back — not to them,
+not to anything else under `themes/default/`; the transformed copies are written
+into `themes/classic/templates/`, which is why the repository contains no
+`templates/` directory for classic. The transform is mechanical and bounded:
+asset paths pinned to `themes/default/assets/`, the design's two brand endpoints
+linked immediately before `</head>`, and the stock footer credit split into two
+addressable spans so each credit toggle has a target. The installer then checks
+its own output against the source — line count, no surviving `current_theme`
+reference, both endpoints present — and aborts rather than deploy a shell it
+cannot account for.
 
 There are **no schema changes**: no new tables, no new columns, no `CREATE` or
 `ALTER` anywhere in the repository. Every write is an `UPDATE` of a row and
@@ -303,7 +345,7 @@ column ISPConfig already has.
 | `sys_ini.custom_logo` (row 1) | logo upload / remove / purge | `logo_upload.php`, `logo_delete.php`, `bin/purge_branding.php` |
 | `sys_user.modules` | install / uninstall | `bin/assign_module.php` (only `typ='admin'` rows), `bin/unassign_module.php` |
 | `sys_user.startmodule` | uninstall | `bin/unassign_module.php`, and only where it pointed at `customizer` |
-| `sys_user.app_theme` | uninstall with `--reset-users` | `bin/reset_app_theme.php`, and only rows equal to `clarity` |
+| `sys_user.app_theme` | uninstall with `--reset-users` | `bin/reset_app_theme.php`, and only rows equal to a design being removed (`clarity`, `classic`); the name is validated as a name, and `default` is refused outright |
 
 Two qualifications, because a flat "no new rows" would not be true:
 
@@ -312,9 +354,11 @@ Two qualifications, because a flat "no new rows" would not be true:
   when you save **System → Interface Config** yourself. The logo write is a
   direct `UPDATE` instead, deliberately: a 48 KB blob has no business in the
   journal.
-- On disk, `install.sh` creates `themes/clarity/ispconfig_version` and
-  `themes/clarity/ISPC_VERSION` inside the panel's web root. See the next
-  section — that is the one real exposure this project introduces.
+- On disk, `install.sh` creates `themes/<design>/ispconfig_version` and
+  `themes/<design>/ISPC_VERSION` inside the panel's web root, for each design it
+  installs — and for classic it also writes that design's two generated shell
+  templates, described above. See the next section: the version files are the one
+  real exposure this project introduces.
 
 The Branding page also *reads* far more of `sys_ini.config` than it writes, and
 is careful with it: it parses the **raw** column rather than going through
@@ -340,7 +384,7 @@ file:
 Both the Apache and the nginx panel vhosts ISPConfig ships already deny `\.lng$`
 over HTTP, so the shipped wordbooks are not served either.
 
-## Known exposure: the theme directory's version file is readable without a session
+## Known exposure: each design directory's version file is readable without a session
 
 **This one is real, it arrives with any third-party theme, and the `show_version`
 toggle on the Branding page does not cover it.**
@@ -348,14 +392,20 @@ toggle on the Branding page does not cover it.**
 ISPConfig refuses to load a third-party theme unless the theme directory
 contains a version file matching the panel exactly — `ispconfig_version` for the
 login gate, `ISPC_VERSION` for the admin default-settings form. Core reads those
-exact filenames from that exact location, so `install.sh` has to create them.
-But the theme directory lives inside the panel's **web root**, so the web server
-serves them as ordinary static files:
+exact filenames from that exact location, so `install.sh` has to create them in
+**every** design directory it installs. But a design directory lives inside the
+panel's **web root**, so the web server serves them as ordinary static files:
 
 ```
 $ curl -k https://panel.example.com:8080/themes/clarity/ispconfig_version
 3.3.1p1
+$ curl -k https://panel.example.com:8080/themes/classic/ispconfig_version
+3.3.1p1
 ```
+
+`classic` is no exception, despite being the stock look: it is still a
+third-party theme directory as far as core's gate is concerned, so it carries
+the same two files.
 
 No session, no credentials, nothing unusual in the log. Anyone who can reach
 your login page learns your exact ISPConfig version **and patch level** — which
@@ -367,7 +417,7 @@ version file — the gate exists to validate *third-party* themes — so a stock
 panel discloses nothing here. This was tested: on a stock panel
 `/themes/default/ispconfig_version` returns 404 while
 `/themes/clarity/ispconfig_version` returns 200. Installing any third-party
-theme, this one included, introduces the exposure.
+theme, either design here included, introduces the exposure.
 
 It also **undercuts this project's own `show_version` toggle**, which hides the
 version on the Help page while the same string stays readable one URL away.
@@ -375,9 +425,11 @@ Applying the mitigation is what makes that toggle honest.
 
 The fix belongs at the web-server layer, because the filenames cannot be
 changed. Ready-made Apache and nginx snippets, with the full explanation and a
-verification command, are in **`contrib/webserver/`**. They also deny
-`BUILT-AGAINST.txt`, which names the version, and the theme's `README.md`, which
-is internal documentation with no reason to be public.
+verification command, are in **`contrib/webserver/`**. They match any theme
+directory rather than a named one, so a single rule covers both designs — and
+any other third-party theme you install. They also deny `BUILT-AGAINST.txt`,
+which names the version (Clarity ships one; classic does not), and each design's
+`README.md`, which is internal documentation with no reason to be public.
 The snippets follow ISPConfig's existing idiom for this — its own vhosts already
 deny dotfiles and `.lng` files the same way.
 
@@ -389,11 +441,14 @@ when you let it reconfigure services, which drops the rule.
 - The intermittent core **"CSRF attempt blocked"** caused by the lock-free
   session store. The uploader works around it; the real fix belongs in core and
   is being prepared for upstream.
-- Under the **stock** ISPConfig theme an SVG logo renders at intrinsic size,
-  because core measures logos with `getimagesizefromstring()`, which cannot read
-  SVG. Brand-aware themes size via CSS and are unaffected; prefer PNG or WebP on
-  the stock theme. A guard for this belongs in core and is being prepared for
-  upstream.
+- Under the **stock** ISPConfig theme an *uploaded* SVG logo renders at
+  intrinsic size, because core measures logos with `getimagesizefromstring()`,
+  which cannot read SVG. `classic` inherits that, and deliberately: it leaves the
+  uploaded logo to core's own markup rather than racing it with a second code
+  path. Clarity sizes via CSS and is unaffected, as is a logo set by `logo_url`
+  on **either** design, which `brand.php` sizes itself. So prefer PNG or WebP for
+  an uploaded logo on the stock theme or on classic. A guard for this belongs in
+  core and is being prepared for upstream.
 
 ## Scope
 
@@ -407,6 +462,10 @@ anything shipped here could execute attacker-controlled input.
 upstream instead; and the deliberate, documented ability of an administrator to
 opt into hiding the optional courtesy credits and the Help version line (the
 `show_version` toggle described above — and note that on its own it does not
-cover the version file, which is why `contrib/webserver/` exists). Licence
+cover the version file, which is why `contrib/webserver/` exists). Both credit
+toggles work on **both** designs, since `install.sh` splits stock's footer while
+generating classic's shell so each credit is individually hideable. Licence
 notices are never removed, the update notice and the donate dashlet are left
-exactly as core ships them, and every attribution toggle defaults to **on**.
+exactly as core ships them, and every attribution toggle defaults to **on**. If
+the markup a toggle targets is ever absent, the rule matches nothing and the
+credit simply stays visible — the failure mode is "attribution shown".

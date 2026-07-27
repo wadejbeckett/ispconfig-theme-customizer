@@ -61,6 +61,15 @@ trap '' PIPE
 # Errors keep `echo ... >&2` — a different descriptor, normally still attached.
 say() { echo "$@" 2>/dev/null || true; }
 
+# Print ONLY the usage header — the comment block between the shebang and
+# `set -euo pipefail` — not every top-level comment in the file. The old
+# implementation grepped '^#' across the whole script, so --help emitted ~150
+# lines: the SIGPIPE rationale, "--- helpers ---" section markers, and every
+# other note written for someone reading the source, buried the four lines an
+# operator actually wanted.
+usage() { sed -n '2,/^set -euo pipefail/p' "$0" | grep '^#' | sed 's/^# \{0,1\}//'; }
+
+
 ISPC_ROOT="/usr/local/ispconfig"
 RESET_USERS=0
 PURGE=0
@@ -97,7 +106,7 @@ for arg in "$@"; do
     --purge-branding)  PURGE=1 ;;
     --keep-assignment) UNASSIGN=0 ;;
     # grep -v '^#!' so the shebang does not print as a stray "!/usr/bin/env bash"
-    -h|--help)         grep '^#' "$0" | grep -v '^#!' | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help)         usage; exit 0 ;;
     -*)                echo "ERROR: unknown option: $arg" >&2; exit 2 ;;
     *)                 ISPC_ROOT="$arg" ;;
   esac

@@ -105,6 +105,15 @@ trap '' PIPE
 # still attached. The rule: NOTHING the operator chose not to read may decide
 # how much of the install actually happens.
 say() { echo "$@" 2>/dev/null || true; }
+
+# Print ONLY the usage header — the comment block between the shebang and
+# `set -euo pipefail` — not every top-level comment in the file. The old
+# implementation grepped '^#' across the whole script, so --help emitted ~150
+# lines: the SIGPIPE rationale, "--- helpers ---" section markers, and every
+# other note written for someone reading the source, buried the four lines an
+# operator actually wanted.
+usage() { sed -n '2,/^set -euo pipefail/p' "$0" | grep '^#' | sed 's/^# \{0,1\}//'; }
+
 INSTALL_STARTED=0      # set to 1 immediately before the first destructive action
 INSTALL_COMPLETED=0    # set to 1 once every requested component is fully in place
 on_exit() {
@@ -182,7 +191,7 @@ for arg in "$@"; do
     --copy)      MODE="copy" ;;
     --no-assign) ASSIGN=0 ;;
     # grep -v '^#!' so the shebang does not print as a stray "!/usr/bin/env bash"
-    -h|--help)   grep '^#' "$0" | grep -v '^#!' | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help)   usage; exit 0 ;;
     -*)          echo "ERROR: unknown option: $arg" >&2; exit 2 ;;
     *)           ISPC_ROOT="$arg" ;;
   esac
