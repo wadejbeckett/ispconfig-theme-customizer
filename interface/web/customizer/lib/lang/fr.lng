@@ -5,3 +5,5 @@ $wb['Branding'] = 'Branding';
 $wb['no_logo_set_txt'] = 'Aucun logo personnalisé défini — le thème affiche son propre logo par défaut.';
 $wb['logo_fallback_from_dark_txt'] = 'Aucun logo pour fonds clairs n’est défini ; celui pour fonds sombres est donc affiché ici — c’est ce qu’affichera un design clair. Téléversez une version sombre ou en couleurs pour le changer.';
 $wb['logo_fallback_from_light_txt'] = 'Aucun logo pour fonds sombres n’est défini ; celui pour fonds clairs est donc affiché ici — c’est ce qu’affichera un design sombre. Téléversez une version claire ou blanche pour le changer.';
+$wb['no_favicon_set_txt'] = 'Aucun favicon personnalisé défini — le design affiche le sien.';
+$wb['favicon_url_wins_txt'] = 'Il s’agit du chemin du favicon défini ci-dessous, prioritaire sur le fichier téléversé — la même règle que pour les chemins du logo. Videz ce champ et enregistrez pour utiliser l’icône téléversée.';

@@ -29,6 +29,19 @@ What's inside:
   `assets/javascripts/` — self-hosted Inter, the neutral default brand marks,
   and the one script the frame adds. Everything else, including all vendor
   JavaScript, is served from `themes/default/assets/`.
+- `favicon.php` — the tab icon, served rather than linked as a file. Both shell
+  templates point their single `<link rel='icon'>` at it; it answers with the
+  operator's own favicon (`[branding] favicon_url` by reference, else the
+  uploaded `[branding] favicon`) and falls back to `assets/favicon/` when
+  nothing is set, so it is a no-op on an unbranded panel. A favicon is a
+  `<link>`, not a style, which is why it cannot live in `brand.php`. Pre-auth
+  like the other two endpoints, and it never 404s: every failure path — the
+  database down, an invalid stored value, missing asset files — still ends in a
+  valid image, because a broken icon shows on every tab of the panel.
+  The other icon references in the shells (`apple-touch-icon`, `mask-icon`,
+  the web manifest, the Windows tile) stay theme assets: they are platform
+  install artefacts with their own size and format contracts. Replace those
+  files here if you want them branded too.
 - `BUILT-AGAINST.txt` — the upgrade-safety contract: which stock behaviors
   the templates preserve and what to re-check after an ISPConfig upgrade. That
   means every upgrade, patch releases included — the version stamp is an exact

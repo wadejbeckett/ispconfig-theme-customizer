@@ -26,7 +26,28 @@
 $company = '';
 $read_ok = false;
 
-$config_inc = __DIR__ . '/../../../lib/config.inc.php'; // interface/lib/config.inc.php
+// Locate interface/lib/config.inc.php WITHOUT trusting __DIR__ alone.
+// install.sh's DEFAULT mode is a SYMLINK, and PHP resolves __DIR__ through
+// symlinks — so on a symlinked design __DIR__ is the git clone, where
+// ../../../lib/config.inc.php does not exist. This endpoint would then fail to
+// find the panel, take its DB-failure path, and emit its empty/no-op response:
+// branding silently doing nothing on the documented default install, with no
+// error anywhere. SCRIPT_FILENAME is the path the web server actually
+// requested and is NOT symlink-resolved, so try that first; __DIR__ still
+// covers CLI use and copy installs, and DOCUMENT_ROOT is a last resort.
+$config_inc = '';
+$_cfg_candidates = array();
+if (!empty($_SERVER['SCRIPT_FILENAME'])) {
+    $_cfg_candidates[] = dirname($_SERVER['SCRIPT_FILENAME']) . '/../../../lib/config.inc.php';
+}
+$_cfg_candidates[] = __DIR__ . '/../../../lib/config.inc.php';
+if (!empty($_SERVER['DOCUMENT_ROOT'])) {
+    $_cfg_candidates[] = $_SERVER['DOCUMENT_ROOT'] . '/../lib/config.inc.php';
+}
+foreach ($_cfg_candidates as $_cand) {
+    if (is_readable($_cand)) { $config_inc = $_cand; break; }
+}
+unset($_cfg_candidates, $_cand);
 if (is_readable($config_inc)) {
     require $config_inc;
     if (isset($conf) && is_array($conf) && !empty($conf['db_host'])) {
@@ -41,7 +62,11 @@ if (is_readable($config_inc)) {
                 if ($res = @$mysqli->query('SELECT config FROM sys_ini WHERE sysini_id = 1')) {
                     $read_ok = true;
                     if ($row = $res->fetch_assoc()) {
-                        $ini_parser_inc = __DIR__ . '/../../../lib/classes/ini_parser.inc.php';
+                        // Derive this from the config path already resolved above, NOT from a
+                        // second __DIR__ walk — on a symlink install that walk lands in
+                        // the clone and the parser silently is not found, which would
+                        // leave the panel name unread even though the DB read succeeded.
+                        $ini_parser_inc = dirname($config_inc) . '/classes/ini_parser.inc.php';
                         if (is_readable($ini_parser_inc)) {
                             require_once $ini_parser_inc;
                             $parser = new ini_parser();

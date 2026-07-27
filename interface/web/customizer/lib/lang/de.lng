@@ -6,3 +6,5 @@ $wb['Branding'] = 'Branding';
 $wb['no_logo_set_txt'] = 'Kein eigenes Logo gesetzt — das Theme zeigt seine eigene Vorgabe.';
 $wb['logo_fallback_from_dark_txt'] = 'Kein Logo für helle Hintergründe gesetzt, daher wird hier das für dunkle Hintergründe gezeigt — genau das zeigt auch ein helles Design. Laden Sie eine dunkle oder farbige Version hoch, um das zu ändern.';
 $wb['logo_fallback_from_light_txt'] = 'Kein Logo für dunkle Hintergründe gesetzt, daher wird hier das für helle Hintergründe gezeigt — genau das zeigt auch ein dunkles Design. Laden Sie eine helle oder weiße Version hoch, um das zu ändern.';
+$wb['no_favicon_set_txt'] = 'Kein eigenes Favicon gesetzt — das Design zeigt sein eigenes.';
+$wb['favicon_url_wins_txt'] = 'Dies ist der unten gesetzte Favicon-Pfad; er hat Vorrang vor der hochgeladenen Datei — dieselbe Regel wie bei den Logo-Pfaden. Leeren Sie das Feld und speichern Sie, um stattdessen das hochgeladene Symbol zu verwenden.';

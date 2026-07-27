@@ -1,12 +1,17 @@
 <?php
 /**
- * ispconfig-customizer — the two-logo model: slot vocabulary, source resolution
- * and the preview renderer.
+ * ispconfig-customizer — the brand-image model: slot vocabulary, source
+ * resolution and the preview renderers.
  * Copyright (c) 2026 Wade Beckett. MIT License — see ../../LICENSE.
  *
  * Required by customizer_edit.php, logo_upload.php and logo_delete.php. Those
  * three must agree about which slots exist, where each one is stored and which
  * one a given design renders, so all of that lives here and nowhere else.
+ *
+ * Three slots: the two logo variants below, and the FAVICON (see the block near
+ * the bottom of this file). All three share one upload endpoint, one delete
+ * endpoint, one CSRF flow and one slot allowlist — only the screening rules and
+ * the storage location differ per slot.
  *
  * ---- WHY THERE ARE TWO LOGOS -------------------------------------------
  * One panel runs designs whose headers have OPPOSITE brightness: clarity's rail
@@ -81,9 +86,27 @@
  * Returned as a MAP so callers test with isset() rather than in_array(): the
  * slot selects a storage location (a core column vs. a config key), so it is
  * exactly the kind of value that must never be taken raw from a request.
+ *
+ * 'favicon' is the third brand image and rides the same machinery deliberately:
+ * one allowlist, one CSRF flow, one SVG screen, one delete path. The function
+ * keeps its name even though it now also names a non-logo slot — it IS the slot
+ * allowlist, its two callers read it as "which brand image does this request
+ * target", and renaming it would churn a contract shared with logo_delete.php
+ * for no behavioural gain.
  */
 function customizer_logo_slots() {
-    return array('on_light' => true, 'on_dark' => true);
+    return array('on_light' => true, 'on_dark' => true, 'favicon' => true);
+}
+
+/**
+ * Which sys_ini.config key a slot's UPLOAD is stored under, or '' when the slot
+ * is stored somewhere else (on_light lives in core's own sys_ini.custom_logo
+ * column). Shared by logo_upload.php and logo_delete.php so the write path and
+ * the delete path can never disagree about where a slot's bytes live.
+ */
+function customizer_slot_config_key($slot) {
+    $keys = array('on_dark' => 'logo_on_dark', 'favicon' => 'favicon');
+    return isset($keys[$slot]) ? $keys[$slot] : '';
 }
 
 /**
@@ -193,4 +216,188 @@ function customizer_logo_preview_html($resolved, $want, $no_logo_text, $fallback
         $html .= '<p class="help-block">' . $fallback_text . '</p>';
     }
     return $html;
+}
+
+/* ---- THE FAVICON ---------------------------------------------------------
+ *
+ * The third brand image, and the one an operator notices last and complains
+ * about first: every design ships its own icon set and the shells hardcoded
+ * links to it, so a white-labelled panel still showed whoever's mark the design
+ * happened to ship, on every tab, bookmark and history entry.
+ *
+ *   reference : [branding] favicon_url   (a root-relative path or an https URL)
+ *   upload    : [branding] favicon       (a data URI)
+ *
+ * ONE precedence rule for the whole extension: the reference beats the upload,
+ * exactly as logo_url beats custom_logo and logo_url_on_dark beats
+ * logo_on_dark. There is deliberately no cross-slot fallback here — the logo
+ * has two variants that stand in for each other, the favicon has one, and
+ * "falls back to the logo" would print a 500px wordmark into a 16px box.
+ *
+ * WHY AN ENDPOINT, not CSS: brand.php emits a stylesheet and a favicon is a
+ * <link>, not a style. Swapping it from JavaScript would flicker on every load
+ * and would not work at all with JS disabled — on a pre-auth page. So each
+ * design serves themes/<design>/favicon.php, and the shells link THAT.
+ *
+ * Both stores are config keys because core has no favicon column and this
+ * extension adds no schema; the size cap (15 KB raw, well under the logo's
+ * 45 KB) is what keeps the config blob from growing a second image-sized value.
+ * An operator who minds that cost has favicon_url, which stores a path.
+ *
+ * The resolution + validation below is MIRRORED by themes/clarity/favicon.php
+ * and themes/classic/favicon.php, which cannot include this file (they are
+ * pre-auth endpoints that must keep working with this module uninstalled). All
+ * three copies change together — same rule as the two brand.php readers.
+ */
+
+/**
+ * Is $uri a favicon data URI we are willing to store, preview and re-serve?
+ *
+ * Narrower than customizer_logo_data_ok() on purpose: a favicon is decoded and
+ * streamed back by favicon.php with a Content-Type derived from this very
+ * string, so the type is an ALLOWLIST of the three formats the uploader accepts
+ * rather than "any image/*". Anything else falls back to the design's shipped
+ * icon at render time, which is the documented behaviour for an invalid value.
+ *
+ * image/vnd.microsoft.icon is accepted alongside image/x-icon even though the
+ * uploader normalises to the latter: the two are the same format under two
+ * spellings, and a value written by an older build (or by hand) should render
+ * rather than be silently ignored.
+ *
+ * /D for the same reason as everywhere else in this file — without it PCRE's $
+ * also matches before a trailing newline.
+ */
+function customizer_favicon_data_ok($uri) {
+    return ($uri !== '' && preg_match(
+        '#^data:image/(?:svg\+xml|png|x-icon|vnd\.microsoft\.icon);base64,[A-Za-z0-9+/=]+$#D',
+        $uri) === 1);
+}
+
+/**
+ * Resolve the favicon from the two stored values, applying the one precedence
+ * rule (reference beats upload).
+ *
+ * $stored keys, both optional: favicon_url, favicon.
+ *
+ * Returns:
+ *   'src'    what the panel will render, or '' when nothing valid is stored
+ *   'kind'   which field it came from ('url' / 'data' / '')
+ *   'masked' true when the reference is winning over a stored upload
+ *
+ * 'masked' is the case worth reporting: an operator who has a path set and then
+ * uploads a file gets "Favicon updated." over a preview of the OTHER icon,
+ * because the precedence rule quietly applied. The single most confusing thing
+ * about a precedence rule is not being told it took effect.
+ */
+function customizer_favicon_resolve($stored) {
+    if(!is_array($stored)) $stored = array();
+    $ref  = (isset($stored['favicon_url']) && is_string($stored['favicon_url'])) ? $stored['favicon_url'] : '';
+    $data = (isset($stored['favicon'])     && is_string($stored['favicon']))     ? $stored['favicon']     : '';
+
+    $data_ok = customizer_favicon_data_ok($data);
+
+    //* The SAME reference validator the logos use — one allowlist regex for the
+    //* whole module, carrying /D, mirrored by every reader.
+    if(customizer_logo_ref_ok($ref)) return array('src' => $ref,  'kind' => 'url',  'masked' => $data_ok);
+    if($data_ok)                     return array('src' => $data, 'kind' => 'data', 'masked' => false);
+    return array('src' => '', 'kind' => '', 'masked' => false);
+}
+
+/**
+ * The favicon preview, drawn at the sizes a browser actually paints.
+ *
+ * This is the whole point of previewing a favicon: the failure mode is not "the
+ * wrong image", it is a perfectly good logo that turns to mud at 16px. So the
+ * icon is rendered at 16px and 32px — no scaling up to a comfortable preview
+ * size, which would hide exactly the defect the operator needs to see — and on
+ * BOTH a light and a dark swatch, because a tab strip is light or dark
+ * depending on the browser's own theme and a mark that only survives one of
+ * them is a real defect too.
+ *
+ * $resolved        one customizer_favicon_resolve() result
+ * $no_favicon_text already-localised text for "nothing set"
+ * $masked_text     already-localised note, shown only when the path override is
+ *                  hiding an uploaded icon; pass '' to suppress it
+ */
+function customizer_favicon_preview_html($resolved, $no_favicon_text, $masked_text = '') {
+    $src = (is_array($resolved) && isset($resolved['src'])) ? (string)$resolved['src'] : '';
+    if($src === '') return '<em>' . $no_favicon_text . '</em>';
+
+    //* htmlspecialchars is a no-op on both value shapes (the base64 alphabet and
+    //* the reference allowlist admit none of & < > " '), so escaping
+    //* unconditionally costs nothing and removes the need for the reader of this
+    //* line to know which of the two kinds of value it is holding.
+    $esc  = htmlspecialchars($src, ENT_QUOTES);
+    $html = '<span style="display:inline-flex;gap:12px;flex-wrap:wrap">';
+
+    //* light strip first (stock's own page grey), then clarity's rail navy — the
+    //* same two surfaces the logo rows use, so both previews on this page speak
+    //* about backgrounds in the same vocabulary.
+    $swatches = array(
+        array('bg' => '#F2F5F7', 'edge' => '#D5DDE3', 'ink' => '#5A6B78'),
+        array('bg' => '#01243D', 'edge' => '#01243D', 'ink' => '#93A9BA'),
+    );
+    foreach($swatches as $sw) {
+        //* width/height attributes AND the CSS box: the attributes are what a
+        //* browser with images still loading reserves, the CSS is what stops a
+        //* stylesheet elsewhere on the page (or an SVG with no intrinsic size)
+        //* from growing the icon past true size and defeating the preview.
+        $html .= '<span style="background:' . $sw['bg'] . ';border:1px solid ' . $sw['edge']
+               . ';border-radius:4px;padding:8px 12px;text-align:center;line-height:1">'
+               . '<img src="' . $esc . '" alt="" width="16" height="16" style="width:16px;height:16px;vertical-align:bottom" />'
+               . '<img src="' . $esc . '" alt="" width="32" height="32" style="width:32px;height:32px;margin-left:10px;vertical-align:bottom" />'
+               . '<span style="display:block;margin-top:6px;font-size:11px;color:' . $sw['ink'] . '">16 &middot; 32 px</span>'
+               . '</span>';
+    }
+    $html .= '</span>';
+
+    //* Say so when the path override is what is being shown while an uploaded
+    //* icon also exists — otherwise uploading a file appears to do nothing, and
+    //* "Favicon updated." over an unchanged preview reads as a broken upload
+    //* rather than as the documented precedence rule.
+    if($masked_text !== '' && is_array($resolved)
+        && isset($resolved['masked']) && $resolved['masked']) {
+        $html .= '<p class="help-block">' . $masked_text . '</p>';
+    }
+    return $html;
+}
+
+/**
+ * Is $data a real .ico file?
+ *
+ * Used by the uploader as a LAST resort, when finfo has no useful verdict for
+ * an icon — libmagic's label for ICO varies across builds (image/x-icon,
+ * image/vnd.microsoft.icon, and application/octet-stream on old or stripped
+ * magic files), and "some operators only have a .ico" is precisely the case
+ * this format is accepted for. Unlike SVG there is nothing executable to screen
+ * here, so identifying the container structurally is identification, not a
+ * weaker substitute for a security check: an ICO is decoded by the browser's
+ * image pipeline and never as markup.
+ *
+ * The header is 6 bytes (reserved=0, type=1 for icons, image count) followed by
+ * one 16-byte directory entry per image, each pointing at a byte range that
+ * must lie inside the file and after the directory itself. Cursors (type 2)
+ * are refused: same container, wrong thing to serve as an icon.
+ */
+function customizer_ico_ok($data) {
+    $len = strlen($data);
+    if($len < 22) return false;                      // 6-byte header + one 16-byte entry
+
+    $head = @unpack('vreserved/vtype/vcount', substr($data, 0, 6));
+    if(!is_array($head) || $head['reserved'] !== 0 || $head['type'] !== 1) return false;
+
+    $count = $head['count'];
+    //* An icon file with hundreds of images is not something a real generator
+    //* emits; the bound also keeps the loop below trivially cheap.
+    if($count < 1 || $count > 64) return false;
+    $dir_end = 6 + $count * 16;
+    if($len < $dir_end) return false;
+
+    for($i = 0; $i < $count; $i++) {
+        $e = @unpack('Cwidth/Cheight/Ccolors/Creserved/vplanes/vbits/Vbytes/Voffset', substr($data, 6 + $i * 16, 16));
+        if(!is_array($e)) return false;
+        if($e['bytes'] < 1 || $e['offset'] < $dir_end) return false;
+        if($e['offset'] + $e['bytes'] > $len) return false;
+    }
+    return true;
 }

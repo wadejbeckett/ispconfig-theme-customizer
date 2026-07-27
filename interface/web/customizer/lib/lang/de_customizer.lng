@@ -23,6 +23,16 @@ $wb['logo_url_on_dark_txt'] = 'Logo-Pfad / -URL für dunkle Hintergründe (Über
 $wb['logo_url_on_dark_hint_txt'] = 'Optional; hat Vorrang vor der hochgeladenen Datei oben. Dieselben Regeln wie beim Pfad für helle Hintergründe: ein serverrelativer Pfad (empfohlen) oder eine https://-URL. So halten Sie ein Logo für dunkle Hintergründe zudem vollständig aus den Interface-Einstellungen heraus — ein Pfad sind wenige Bytes, ein hochgeladenes Bild bis zu 60 KB.';
 $wb['logo_url_on_dark_error_regex'] = 'Der Logo-Pfad für dunkle Hintergründe muss ein serverrelativer Pfad (/…) oder eine https://-URL sein, ohne Leerzeichen, Anführungszeichen oder Klammern.';
 
+$wb['favicon_head_txt'] = 'Favicon';
+$wb['favicon_intro_txt'] = 'Das kleine Symbol im Browser-Tab, in den Lesezeichen und im Verlauf. Jedes Design bringt sein eigenes mit, sodass ein ansonsten vollständig gebrandetes Panel dort weiterhin ein fremdes Zeichen zeigt — dieses Feld ersetzt es auf jeder Seite, auch auf der Anmeldeseite. Ein Symbol für das gesamte Panel: Anders als beim Logo gibt es kein helles/dunkles Paar, denn der Browser zeichnet dasselbe Symbol, unabhängig davon, wie die Kopfzeile des Designs aussieht.';
+$wb['favicon_txt'] = 'Favicon-Datei';
+$wb['favicon_hint_txt'] = 'SVG (unkompliziert, ohne Skripte), PNG oder ICO, unter 15 KB. Wählen Sie eine Datei und klicken Sie dann auf „Favicon hochladen" — es wird eigenständig hochgeladen, getrennt von der Schaltfläche „Speichern" unten. Ein SVG skaliert auf jede Bildschirmdichte; eine .ico deckt weiterhin Browser ab, die kein SVG annehmen, und ein einfaches 32&times;32-PNG genügt für sich allein. Was Sie auch wählen: Sehen Sie sich die 16-px-Vorschau oben an. Feine Details und kleine Schrift verschwimmen in dieser Größe, und ein Tab ist der kleinste Ort, an dem Ihre Marke je erscheint.';
+$wb['favicon_upload_txt'] = 'Favicon hochladen';
+$wb['used_favicon_txt'] = 'Aktuelles Favicon';
+$wb['favicon_url_txt'] = 'Favicon-Pfad / -URL (Überschreibung)';
+$wb['favicon_url_hint_txt'] = 'Optional; hat Vorrang vor der hochgeladenen Datei oben — dieselbe Rangfolge wie bei den Logo-Pfaden. Ein serverrelativer Pfad (empfohlen — z. B. /themes/custom/favicon.svg für eine Datei, die Sie auf dem Server abgelegt haben) oder eine https://-URL. Das Panel verweist den Browser dorthin, statt gespeicherte Bytes auszuliefern, und hält das Symbol damit vollständig aus den Interface-Einstellungen heraus. Eine externe URL bindet jede Seite Ihres Panels an diesen Host und gibt ihm die IP-Adressen Ihrer Besucher preis — ein lokaler Pfad ist vorzuziehen.';
+$wb['favicon_url_error_regex'] = 'Der Favicon-Pfad muss ein serverrelativer Pfad (/…) oder eine https://-URL sein, ohne Leerzeichen, Anführungszeichen oder Klammern.';
+
 $wb['brand_head_txt'] = 'Name & Farben';
 $wb['company_name_txt'] = 'Panel-Name';
 $wb['company_name_hint_txt'] = 'Wird im Browser-Titel und in der Fußzeile angezeigt.';
@@ -53,6 +63,9 @@ $wb['logo_uploaded_txt'] = 'Logo aktualisiert.';
 $wb['logo_removed_txt'] = 'Logo entfernt.';
 $wb['logo_bad_type_txt'] = 'Nicht unterstütztes Bild. Verwenden Sie SVG (unkompliziert, ohne Skripte), PNG, JPEG, GIF oder WebP.';
 $wb['logo_too_large_txt'] = 'Dieses Bild ist zu groß. Halten Sie es unter 45 KB — ein optimiertes PNG oder WebP funktioniert am besten.';
+$wb['favicon_uploaded_txt'] = 'Favicon aktualisiert. Browser speichern Symbole hartnäckig zwischen — falls das alte bestehen bleibt, laden Sie mit Strg+Umschalt+R neu oder öffnen Sie einen neuen Tab.';
+$wb['favicon_bad_type_txt'] = 'Nicht unterstütztes Symbol. Verwenden Sie SVG (unkompliziert, ohne Skripte), PNG oder ICO.';
+$wb['favicon_too_large_txt'] = 'Dieses Symbol ist zu groß. Halten Sie es unter 15 KB — ein 32&times;32-PNG hat etwa 1 KB, eine .ico mit mehreren Größen etwa 5-15 KB.';
 $wb['no_file_uploaded_error'] = 'Es wurde keine Datei ausgewählt.';
 $wb['upload_failed_txt'] = 'Der Upload wurde nicht abgeschlossen. Bitte versuchen Sie es erneut.';
 $wb['demo_mode_txt'] = 'Diese Funktion ist im Demo-Modus deaktiviert.';

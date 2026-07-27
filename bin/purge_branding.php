@@ -12,10 +12,12 @@
  *     own [branding] news_url_* stash, so a purge never leaves the dashboard
  *     news feed switched off (must happen BEFORE [branding] is dropped)
  *   - drops the module-owned [branding] section from sys_ini.config, which takes
- *     the uploaded dark-background logo ([branding] logo_on_dark) and both
- *     logo_url* references with it
+ *     the uploaded dark-background logo ([branding] logo_on_dark), the uploaded
+ *     favicon ([branding] favicon) and every *_url reference with them
  *     (no live core code reads that section — its only consumer is a
- *     brand-aware theme)
+ *     brand-aware theme; with the section gone each design's favicon.php serves
+ *     that design's own shipped icon again, which is what it does on a panel
+ *     that was never branded)
  *   - blanks the three core-owned [misc] keys (blank, never delete: they are
  *     stock fields of System > Interface Config)
  *   - clears sys_ini.custom_logo, the uploaded light-background logo
@@ -143,6 +145,15 @@ foreach($atom_stash as $k => $stash) {
 //* panel does not claim to have removed something.
 if(isset($config['branding']['logo_on_dark']) && $config['branding']['logo_on_dark'] !== '') {
     $did[] = "cleared dark-background logo ([branding] logo_on_dark)";
+}
+
+//* Same reasoning for the uploaded favicon, and the same stakes: it is the one
+//* brand surface that renders on EVERY page including the login screen, so an
+//* operator reading this report must see it named. Dropping [branding] below
+//* clears it (and favicon_url with it), after which each design's favicon.php
+//* falls back to its own shipped icon.
+if(isset($config['branding']['favicon']) && $config['branding']['favicon'] !== '') {
+    $did[] = "cleared uploaded favicon ([branding] favicon)";
 }
 
 if(isset($config['branding'])) {

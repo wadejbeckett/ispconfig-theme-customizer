@@ -23,6 +23,16 @@ $wb['logo_url_on_dark_txt'] = 'Chemin / URL du logo pour fonds sombres (remplace
 $wb['logo_url_on_dark_hint_txt'] = 'Facultatif ; prioritaire sur le fichier téléversé ci-dessus. Mêmes règles que pour le chemin des fonds clairs : un chemin relatif à la racine (recommandé) ou une URL https://. C’est aussi ainsi que vous gardez un logo pour fonds sombres entièrement hors des paramètres de l’interface — un chemin représente quelques octets, une image téléversée jusqu’à 60 KB.';
 $wb['logo_url_on_dark_error_regex'] = 'Le chemin du logo pour fonds sombres doit être un chemin relatif à la racine (/…) ou une URL https://, sans espaces, guillemets, crochets ni parenthèses.';
 
+$wb['favicon_head_txt'] = 'Favicon';
+$wb['favicon_intro_txt'] = 'La petite icône de l’onglet du navigateur, des favoris et de l’historique. Chaque design fournit la sienne : un panneau par ailleurs entièrement personnalisé y affiche donc encore la marque de quelqu’un d’autre — ce réglage la remplace sur toutes les pages, y compris l’écran de connexion. Une seule icône pour tout le panneau : contrairement au logo, il n’y a pas de paire claire/sombre, car le navigateur dessine la même icône quel que soit l’en-tête du design.';
+$wb['favicon_txt'] = 'Fichier du favicon';
+$wb['favicon_hint_txt'] = 'SVG (simple, sans script), PNG ou ICO, de moins de 15 KB. Choisissez un fichier, puis cliquez sur « Téléverser le favicon » — il est téléversé immédiatement, indépendamment du bouton « Enregistrer » en bas de page. Un SVG s’adapte à toutes les densités d’écran ; un .ico couvre encore les navigateurs qui n’en acceptent pas, et un simple PNG de 32&times;32 suffit à lui seul. Quel que soit votre choix, regardez l’aperçu à 16px ci-dessus : les détails fins et les petits caractères s’y brouillent, et un onglet est le plus petit endroit où votre marque apparaisse.';
+$wb['favicon_upload_txt'] = 'Téléverser le favicon';
+$wb['used_favicon_txt'] = 'Favicon actuel';
+$wb['favicon_url_txt'] = 'Chemin / URL du favicon (remplacement)';
+$wb['favicon_url_hint_txt'] = 'Facultatif ; prioritaire sur le fichier téléversé ci-dessus — la même règle que pour les chemins du logo. Un chemin relatif à la racine (recommandé — par ex. /themes/custom/favicon.svg pour un fichier que vous avez placé sur le serveur) ou une URL https://. Le panneau y redirige le navigateur au lieu de servir des octets stockés, ce qui garde aussi l’icône entièrement hors des paramètres de l’interface. Une URL distante lie chaque page de votre panneau à cet hôte et lui révèle les adresses IP de vos visiteurs — préférez un chemin local.';
+$wb['favicon_url_error_regex'] = 'Le chemin du favicon doit être un chemin relatif à la racine (/…) ou une URL https://, sans espaces, guillemets, crochets ni parenthèses.';
+
 $wb['brand_head_txt'] = 'Nom et couleurs';
 $wb['company_name_txt'] = 'Nom du panneau';
 $wb['company_name_hint_txt'] = 'Affiché dans le titre du navigateur et le pied de page.';
@@ -53,6 +63,9 @@ $wb['logo_uploaded_txt'] = 'Logo mis à jour.';
 $wb['logo_removed_txt'] = 'Logo supprimé.';
 $wb['logo_bad_type_txt'] = 'Image non prise en charge. Utilisez un SVG (simple, sans script), PNG, JPEG, GIF ou WebP.';
 $wb['logo_too_large_txt'] = 'Cette image est trop volumineuse. Gardez-la en dessous de 45 KB — un PNG ou WebP optimisé convient le mieux.';
+$wb['favicon_uploaded_txt'] = 'Favicon mis à jour. Les navigateurs conservent les icônes en cache avec ténacité — si l’ancienne persiste, rechargez avec Ctrl+Maj+R ou ouvrez un nouvel onglet.';
+$wb['favicon_bad_type_txt'] = 'Icône non prise en charge. Utilisez un SVG (simple, sans script), PNG ou ICO.';
+$wb['favicon_too_large_txt'] = 'Cette icône est trop volumineuse. Gardez-la en dessous de 15 KB — un PNG de 32&times;32 pèse environ 1 KB et un .ico multi-tailles de 5 à 15 KB.';
 $wb['no_file_uploaded_error'] = 'Aucun fichier n’a été sélectionné.';
 $wb['upload_failed_txt'] = 'Le téléversement n’a pas abouti. Veuillez réessayer.';
 $wb['demo_mode_txt'] = 'Cette fonction est désactivée en mode démonstration.';

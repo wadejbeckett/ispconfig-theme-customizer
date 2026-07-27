@@ -222,22 +222,27 @@ be dropped this way — the theme's layout is built on them.
 
 ### classic: two templates, regenerated on every install run
 
-classic ships `brand.php`, `title.php` and a README, and no templates. Its two
-shell templates — `main.tpl.htm` and `main_login.tpl.htm` — are **generated at
-install time** from the target panel's own `themes/default/templates/`, which is
-why browsing this repository shows no `templates/` directory under
-`themes/classic`.
+classic ships `brand.php`, `title.php`, `favicon.php` and a README, and no
+templates. Its two shell templates — `main.tpl.htm` and `main_login.tpl.htm` —
+are **generated at install time** from the target panel's own
+`themes/default/templates/`, which is why browsing this repository shows no
+`templates/` directory under `themes/classic`.
 
-`install.sh` makes two mechanical changes to each stock file: every
+`install.sh` makes three mechanical changes to each stock file: every
 `themes/<tmpl_var name='current_theme'>/assets/` path is pinned to
 `themes/default/assets/` (template fallback does not extend to assets, and
-`themes/classic/assets/` does not exist and never will), and `brand.php` +
-`title.php` are linked immediately before `</head>`. In the app frame it also
-splits the stock footer credit into two spans, so the credit toggles on the
-Branding page have a target each on this design too — both ship on, and neither
-touches a licence notice. It then verifies the output — length against the source
-file, no surviving `current_theme` reference, both brand endpoints present — and
-refuses to deploy a shell it cannot account for.
+`themes/classic/assets/` does not exist and never will); `brand.php`,
+`title.php` and `favicon.php` are linked immediately before `</head>`; and
+stock's `<link rel='icon'>` / `rel='shortcut icon'` tags are replaced by that
+one `favicon.php` link, so the tab does not keep showing the ISPConfig icon on
+a panel that is otherwise white-labelled. In the app frame it also splits the
+stock footer credit into two spans, so the credit toggles on the Branding page
+have a target each on this design too — both ship on, and neither touches a
+licence notice. It then verifies the output — length against the source file
+(counting the icon links it replaced, so the check tracks the transform rather
+than a constant), no surviving `current_theme` reference, all three brand
+endpoints present, exactly one tab-icon link and it is ours — and refuses to
+deploy a shell it cannot account for.
 
 So there is no manual diff for classic after an ISPConfig upgrade. Re-running
 `install.sh`, which the version stamp already requires, replaces `templates/`
@@ -248,9 +253,11 @@ stamp together.
 Two outcomes are worth knowing:
 
 - If the new stock shell is not a shape the generator recognises — it cannot
-  tell how the stylesheets are linked, there is no `</head>`, the output is not
-  the expected length, or a `current_theme` reference survives the rewrite —
-  `install.sh` prints the reason and exits **before** classic is deployed. The
+  tell how the stylesheets are linked, there is no `</head>`, an icon `<link>`
+  shares its line with other markup, the output is not the expected length, a
+  `current_theme` reference survives the rewrite, or the result carries anything
+  other than exactly one tab-icon link — `install.sh` prints the reason and
+  exits **before** classic is deployed. The
   design half runs first, so nothing else in that run happens either — with
   `--design=all`, clarity is installed before classic is attempted and survives;
   the Branding page does not get installed. Fall back to clarity and report your

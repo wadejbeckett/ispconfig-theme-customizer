@@ -7,10 +7,11 @@
  * Built for ISPConfig (ispconfig.org, BSD-3-Clause). Not affiliated with or
  * endorsed by the ISPConfig project.
  *
- * Clears ONE uploaded logo slot — sys_ini.custom_logo for the light-background
- * variant, [branding] logo_on_dark for the dark one. The other variant then
- * covers for it through the documented fallback, and with neither left the theme
- * shows its own default. See lib/preview.inc.php for the model.
+ * Clears ONE uploaded brand-image slot — sys_ini.custom_logo for the
+ * light-background logo, [branding] logo_on_dark for the dark one, [branding]
+ * favicon for the icon. With a logo variant cleared the other one covers for it
+ * through the documented fallback; with the favicon cleared each design serves
+ * its own shipped icon again. See lib/preview.inc.php for the model.
  *
  * Reached via data-load-content (an XHR GET); we require the XHR header so a
  * cross-site <img>/<form> cannot trigger it, and re-load the editor after.
@@ -65,29 +66,34 @@ if($conf['demo_mode'] == true) {
     $app->error($app->lng('demo_mode_txt'));
 }
 
-if($slot === 'on_dark') {
+//* Which sys_ini.config key this slot's upload lives under, '' for on_light
+//* (core's own sys_ini.custom_logo column). Shared with the uploader so the two
+//* endpoints can never disagree about where a slot's bytes are.
+$config_key = customizer_slot_config_key($slot);
+
+if($config_key !== '') {
     //* Read-modify-write of sys_ini.config with the RAW column parsed and NO
     //* stripslashes — the same discipline as the uploader, customizer_edit.php's
     //* onUpdateSave and bin/purge_branding.php. Reading through
     //* getconf::get_global_config() would unescape every value in the file with
-    //* nothing re-escaping on write, so removing our logo would quietly damage
+    //* nothing re-escaping on write, so removing our image would quietly damage
     //* settings this module has no business touching.
     //*
     //* Only the key is removed, never the [branding] section: the section holds
     //* the colours, the credit toggles and the news-feed stash, and Remove means
-    //* "remove this logo", not "reset the branding". Dropping the section is
+    //* "remove this image", not "reset the branding". Dropping the section is
     //* bin/purge_branding.php's job, on uninstall.
     //*
-    //* logo_url_on_dark is deliberately left alone too. It is a form field, so it
-    //* is cleared by blanking it and pressing Save; Remove has always been the
-    //* control for the UPLOADED logo alone, and it would be a poor surprise for
-    //* it to also discard a path the operator typed.
+    //* logo_url_on_dark and favicon_url are deliberately left alone too. They are
+    //* form fields, so they are cleared by blanking them and pressing Save;
+    //* Remove has always been the control for the UPLOADED image alone, and it
+    //* would be a poor surprise for it to also discard a path the operator typed.
     $app->uses('ini_parser');
     $raw    = $app->db->queryOneRecord("SELECT config FROM sys_ini WHERE sysini_id = 1");
     $config = $app->ini_parser->parse_ini_string(isset($raw['config']) ? (string)$raw['config'] : '');
     if(!is_array($config)) $config = array();
-    if(isset($config['branding']['logo_on_dark'])) {
-        unset($config['branding']['logo_on_dark']);
+    if(isset($config['branding'][$config_key])) {
+        unset($config['branding'][$config_key]);
         // Check the return, exactly as the upload path does. db::query() returns
         // false both on a failed query AND on a securityScan refusal, so a
         // silent ignore here reports "removed" while the logo is still stored —

@@ -71,7 +71,28 @@ $custom_logo  = '';
 $company_name = '';
 $read_ok      = false; // true only when the sys_ini read actually succeeded
 
-$config_inc = __DIR__ . '/../../../lib/config.inc.php'; // interface/lib/config.inc.php
+// Locate interface/lib/config.inc.php WITHOUT trusting __DIR__ alone.
+// install.sh's DEFAULT mode is a SYMLINK, and PHP resolves __DIR__ through
+// symlinks — so on a symlinked design __DIR__ is the git clone, where
+// ../../../lib/config.inc.php does not exist. This endpoint would then fail to
+// find the panel, take its DB-failure path, and emit its empty/no-op response:
+// branding silently doing nothing on the documented default install, with no
+// error anywhere. SCRIPT_FILENAME is the path the web server actually
+// requested and is NOT symlink-resolved, so try that first; __DIR__ still
+// covers CLI use and copy installs, and DOCUMENT_ROOT is a last resort.
+$config_inc = '';
+$_cfg_candidates = array();
+if (!empty($_SERVER['SCRIPT_FILENAME'])) {
+    $_cfg_candidates[] = dirname($_SERVER['SCRIPT_FILENAME']) . '/../../../lib/config.inc.php';
+}
+$_cfg_candidates[] = __DIR__ . '/../../../lib/config.inc.php';
+if (!empty($_SERVER['DOCUMENT_ROOT'])) {
+    $_cfg_candidates[] = $_SERVER['DOCUMENT_ROOT'] . '/../lib/config.inc.php';
+}
+foreach ($_cfg_candidates as $_cand) {
+    if (is_readable($_cand)) { $config_inc = $_cand; break; }
+}
+unset($_cfg_candidates, $_cand);
 if (is_readable($config_inc)) {
     // config.inc.php only defines $conf + constants — but on a web request it also
     // emits `Content-Type: text/html`, which we re-assert away from below.
@@ -343,7 +364,12 @@ echo $css;
  */
 function brand_parse_config($config)
 {
-    $parser_file = __DIR__ . '/../../../lib/classes/ini_parser.inc.php';
+    // Same reasoning as the config path above: a second __DIR__ walk lands in
+    // the clone on a symlink install. Derive it from the config path that was
+    // actually found, so the two can never disagree about where the panel is.
+    $parser_file = ($config_inc !== '')
+        ? dirname($config_inc) . '/classes/ini_parser.inc.php'
+        : __DIR__ . '/../../../lib/classes/ini_parser.inc.php';
     if (is_readable($parser_file)) {
         require_once $parser_file;
         if (class_exists('ini_parser')) {

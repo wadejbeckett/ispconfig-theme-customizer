@@ -154,6 +154,15 @@ logo behaves exactly as it always did. Within a variant, a referenced path
 at all but a panel name given, the name renders as a CSS text wordmark in the
 same slots.
 
+The **favicon** follows the same precedence rule and nothing else about the logo
+model: `favicon_url` beats the uploaded `favicon`, but there is no light/dark
+pair, because a browser paints the same icon whatever the design's header looks
+like. It is served by `themes/<design>/favicon.php` rather than emitted by
+`brand.php` — a favicon is a `<link>`, not a style — and falls back to the
+design's shipped icon set, so an unbranded panel is unchanged. The Branding page
+previews it at 16px and 32px on a light and a dark strip: a mark that is
+illegible at 16px is the failure mode this preview exists to catch.
+
 Below that, the shipped logo is a plain file: replace
 `themes/clarity/assets/images/wordmark-white.svg` with any SVG/PNG
 (white/light artwork recommended — it sits on the navy brand

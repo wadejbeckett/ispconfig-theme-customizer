@@ -28,6 +28,18 @@ WHAT THIS THEME OVERRIDES (all upgrade-safe, no core modification):
   sidenav.tpl.htm is NOT overridden - the stock tree markup is styled
                                   generically under #sidebar.
 
+  Both shell templates link this design's THREE brand endpoints, and those
+  links are part of the override contract: brand.php (CSS), title.php (JS) and
+  favicon.php (the tab icon). The favicon one replaces stock's three icon
+  <link>s (32x32, 16x16, shortcut .ico) with a single unsized, untyped link —
+  what the endpoint returns depends on what the operator stored, and a browser
+  skips a link whose declared type it cannot render. If a future stock shell
+  gains further rel='icon' variants, they must NOT be copied in: two icon links
+  means the browser may pick either, and the panel would show the operator's
+  mark on some tabs and this design's on others. The remaining icon references
+  (apple-touch-icon, mask-icon, manifest, msapplication tile) stay pointed at
+  assets/favicon/ deliberately — platform install artefacts, not the tab.
+
 VENDOR DEPENDENCIES (loaded from themes/default — theme assets have NO
 fallback, so these explicit paths must exist):
   bootstrap.min.css, fonts.min.css (ispconfig icon font), pushy.min.css,
