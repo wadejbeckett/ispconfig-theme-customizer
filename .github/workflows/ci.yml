@@ -93,19 +93,42 @@ jobs:
         # is one contract split across two directories, and before the repos
         # were merged it was also split across two version numbers — a rename on
         # either side silently stopped branding from applying, with no error.
-        # Fail loudly instead. A future base design under themes/ must satisfy
-        # this same check to inherit the module.
+        # Fail loudly instead. EVERY base design under themes/ has to satisfy
+        # this check to inherit the module, which is why the loop walks the
+        # directory rather than naming one design: adding a third must not
+        # quietly opt out of the contract.
         run: |
           set -e
           missing=0
-          for key in accent_hex rail_hex login_bg logo_url show_version company_name; do
-            if ! grep -q "$key" themes/clarity/brand.php; then
-              echo "::error::brand token '$key' is written by the module but not read by themes/clarity/brand.php"
-              missing=1
-            fi
+          for reader in themes/*/brand.php; do
+            for key in accent_hex rail_hex login_bg logo_url show_version company_name; do
+              if ! grep -q "$key" "$reader"; then
+                echo "::error file=$reader::brand token '$key' is written by the module but not read by $reader"
+                missing=1
+              fi
+            done
           done
           if [ "$missing" -ne 0 ]; then exit 1; fi
           echo "brand-token contract intact"
+
+      - name: classic ships no assets and no committed templates
+        # classic is the stock look: it inherits every template it does not
+        # override and every asset, so the ONLY files it may contain are the two
+        # brand endpoints and its docs. A stylesheet or an image appearing here
+        # means someone started forking the stock theme by hand; a committed
+        # templates/ means the install-time generation has been bypassed and the
+        # shell would freeze at one ISPConfig version. Both are silent failures
+        # at runtime, so catch them here.
+        run: |
+          set -e
+          unexpected="$(find themes/classic -mindepth 1 \
+            ! -name 'brand.php' ! -name 'title.php' ! -name 'README.md' ! -name '.gitignore')"
+          if [ -n "$unexpected" ]; then
+            echo "::error::themes/classic must contain only brand.php, title.php, README.md and .gitignore:"
+            echo "$unexpected"
+            exit 1
+          fi
+          echo "classic is template- and asset-free as designed"
 
       - name: Shell syntax
         run: |
