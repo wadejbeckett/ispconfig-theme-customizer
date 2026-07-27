@@ -30,9 +30,21 @@
  *   - Always HTTP 200 with valid CSS. When nothing is set it emits an
  *     empty sheet and the theme falls back to its shipped tokens/logo —
  *     so it is a no-op both without the customizer and before first use.
- *   - Injection-safe: every value is validated before it reaches the
- *     output (hex regex / data-URI regex / url allowlist regex / 0|1 /
- *     character-strip + length cap for the text wordmark).
+ *   - Injection-safe: every value is validated or escaped before it
+ *     reaches the output (hex regex / data-URI regex / url allowlist
+ *     regex / 0|1 / control-char strip + CSS-string escape + length
+ *     cap for the text wordmark).
+ *   - company_name is normalised identically here and in title.php
+ *     (stripslashes on the blob, control-char strip, trim) so the CSS
+ *     wordmark and the tab title / alt text never disagree about the
+ *     panel's own name. Change one, change the other.
+ *   - The 40-char cap is NOT part of that parity and must not be made
+ *     part of it. It exists only for the nowrap rail/topbar slot, so it
+ *     applies to this CSS wordmark and to title.php's visible failover
+ *     wordmark — the two things that land in that slot. document.title
+ *     and img alt text stay UNCAPPED on purpose: a tab elides on its own,
+ *     and an accessible name should be the real brand, not one trimmed to
+ *     fit a layout.
  * ============================================================ */
 
 header('Content-Type: text/css; charset=utf-8');
@@ -64,9 +76,23 @@ if (is_readable($config_inc)) {
                         $parsed      = brand_parse_config((string)$row['config']);
                         $branding    = (isset($parsed['branding']) && is_array($parsed['branding'])) ? $parsed['branding'] : array();
                         if (isset($parsed['misc']['company_name']) && is_string($parsed['misc']['company_name'])) {
-                            // used only inside a CSS string context (text wordmark
-                            // fallback) — strip everything that could escape it
-                            $company_name = trim(preg_replace('/["\\\\\r\n<>]/', '', $parsed['misc']['company_name']));
+                            // Normalise EXACTLY as title.php does, so the two brand
+                            // endpoints can never derive different strings from the
+                            // same sys_ini row (they co-render on the login page: the
+                            // CSS wordmark here, the tab title / <img alt> there).
+                            // Only control characters are removed, and only because
+                            // they cannot be represented: a raw CR/LF terminates a CSS
+                            // string, after which the parser's error recovery would
+                            // read the remainder of the name as further declarations.
+                            // Everything printable survives and is escaped at the
+                            // emit site instead — see the wordmark block below.
+                            // The class is applied byte-wise and deliberately WITHOUT
+                            // /u: with /u a single malformed UTF-8 byte makes
+                            // preg_replace return NULL and the brand silently vanishes,
+                            // while 0x00-0x1F and 0x7F never occur inside a valid UTF-8
+                            // sequence (continuation bytes are 0x80-0xBF), so a byte
+                            // filter cannot damage a multibyte character.
+                            $company_name = trim(preg_replace('/[\x00-\x1F\x7F]/', '', $parsed['misc']['company_name']));
                             // multibyte-safe cap: byte-substr would cut a UTF-8
                             // codepoint in half and corrupt the rendered wordmark
                             if (function_exists('mb_substr')) {
@@ -198,7 +224,13 @@ $logo_src = '';
 if (isset($branding['logo_url']) && is_string($branding['logo_url'])
     // (?!/) rejects protocol-relative "//host/..." — that is a REMOTE url in
     // disguise; writer-side validation matches, this is reader-side parity
-    && preg_match('#^(https://[^\s"\'<>()\\\\]+|/(?!/)[^\s"\'<>()\\\\]+)$#', $branding['logo_url'])) {
+    // The D modifier is load-bearing, not decoration: without it PCRE's `$` also
+    // matches BEFORE a final newline, so "/img/logo.png\n" would validate and the
+    // raw LF would be emitted inside content: url("...") — a literal newline
+    // terminates a double-quoted CSS string, breaking this sheet for every
+    // visitor including pre-auth on the login screen. The writer-side validator
+    // in the module's tform carries /D for the same reason.
+    && preg_match('#^(https://[^\s"\'<>()\\\\]+|/(?!/)[^\s"\'<>()\\\\]+)$#D', $branding['logo_url'])) {
     $logo_src = $branding['logo_url'];
 } elseif ($custom_logo !== '' && preg_match('#^data:image/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$#i', $custom_logo)) {
     $logo_src = $custom_logo;
@@ -222,7 +254,21 @@ if ($logo_src !== '') {
     // wordmark (CSS text content on the brand slots). Rail/topbar are navy in
     // both modes -> white text; the login slot inherits the theme's light-mode
     // ink filter, which correctly darkens this text too.
-    $css .= "#logo img, .nz-topbar-brand img, .nzl-brand img { content: \"{$company_name}\"; "
+    //
+    // Escape for the CSS string context rather than deleting: inside content:"…"
+    // only " (which would close the string) and \ (which would start an escape
+    // sequence and swallow the next character) have any meaning, and both have a
+    // lossless CSS escape. CR/LF — the one thing with no escape worth using —
+    // were already removed on read. Order matters: backslashes are doubled first,
+    // so the backslash this adds in front of a quote is not itself doubled.
+    // < and > are deliberately left untouched: brand.php is only ever fetched
+    // through <link rel='stylesheet'> (main.tpl.htm:53, main_login.tpl.htm:45),
+    // never inlined into a <style> block, so angle brackets have no HTML context
+    // to break out of — and deleting them silently rewrote legitimate panel names
+    // ("Host > Cloud" lost its arrow, '"Acme" Hosting' lost its quotes) while
+    // title.php's tab title on the same screen rendered them intact.
+    $wordmark_css = str_replace(array('\\', '"'), array('\\\\', '\\"'), $company_name);
+    $css .= "#logo img, .nz-topbar-brand img, .nzl-brand img { content: \"{$wordmark_css}\"; "
           . "font: 600 15px/1.3 'Inter', -apple-system, sans-serif; color: #fff; "
           . "white-space: nowrap; letter-spacing: 0.01em; }\n";
     $css .= ".nzl-brand img { font-size: 19px; }\n";

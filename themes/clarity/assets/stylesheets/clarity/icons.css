@@ -8,6 +8,49 @@
  *
  * Loads after app.css/base.css: the two FontAwesome specials at the bottom
  * override rules that live there.
+ *
+ * ------------------------------------------------------------------------
+ * THIRD-PARTY NOTICE — VMware Clarity Design System (@cds/core 6.17)
+ * ------------------------------------------------------------------------
+ * The 29 icon shapes below (32 classes; several classes share a shape) are
+ * verbatim @cds/core artwork on Clarity's 36x36 grid, re-emitted here as
+ * data-URI SVG so the panel needs no icon font and no extra HTTP request.
+ * That is redistribution of a substantial portion of the upstream Software,
+ * so MIT's condition — "The above copyright notice and this permission
+ * notice shall be included in all copies or substantial portions of the
+ * Software" — applies to this file, and the notice must travel WITH the
+ * artwork. Prose credit in README.md does not satisfy it: a downstream
+ * packager who vendors only themes/ would ship the shapes without the
+ * notice. Keep this header attached to the shapes; if the shapes are ever
+ * replaced with original artwork, this notice may be removed with them.
+ *
+ *   MIT License
+ *
+ *   Copyright (c) 2016-2021 VMware, Inc.  All rights reserved.
+ *
+ *   Permission is hereby granted, free of charge, to any person obtaining a
+ *   copy of this software and associated documentation files (the
+ *   "Software"), to deal in the Software without restriction, including
+ *   without limitation the rights to use, copy, modify, merge, publish,
+ *   distribute, sublicense, and/or sell copies of the Software, and to
+ *   permit persons to whom the Software is furnished to do so, subject to
+ *   the following conditions:
+ *
+ *   The above copyright notice and this permission notice shall be included
+ *   in all copies or substantial portions of the Software.
+ *
+ *   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ *   OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ *   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ *   IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ *   CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ *   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ *   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Everything else in this file — the selector set, the mask plumbing and the
+ * ISPConfig-specific mappings — is part of the Clarity Theme for ISPConfig
+ * and is covered by the repository LICENSE.
+ * ------------------------------------------------------------------------
  */
 
 /* ---------- shared base: every masked ::before ---------- */

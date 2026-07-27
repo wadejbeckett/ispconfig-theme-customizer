@@ -27,7 +27,14 @@
     if (!b) return;
     var light = mode() === 'light';
     b.setAttribute('aria-pressed', light ? 'true' : 'false');
-    b.setAttribute('aria-label', light ? 'Switch to dark theme' : 'Switch to light theme');
+    /* the two labels are read off the button itself so they live in
+       templates/main.tpl.htm, the one place a translator or a re-brander can
+       reach them — this file cannot be localised any other way, since a theme
+       has no lang directory ISPConfig will load and core exposes no language
+       code to JS. English only if the template did not supply them. */
+    b.setAttribute('aria-label',
+      b.getAttribute(light ? 'data-nz-to-dark' : 'data-nz-to-light') ||
+      (light ? 'Switch to dark theme' : 'Switch to light theme'));
   }
 
   document.addEventListener('click', function (e) {
@@ -70,6 +77,22 @@
   var STOCK_LINE = 'rgb(75, 192, 192)';
   var STOCK_FILL = 'rgba(75, 192, 192, 0.2)';
 
+  /* Which datasets the theme has taken over, remembered per dataset object.
+     Needed because themeChartConfig() runs twice over the same config: once at
+     beforeInit and again on every mode toggle. After the first pass
+     ds.borderColor holds a RESOLVED hex (getComputedStyle substitutes the
+     custom property), so a colour test alone would never match again and the
+     stroke would keep the accent of the mode it was born in — #2EA9FF stranded
+     on the white light-mode card is 2.55:1, and #0065AB stranded on the dark
+     card is 2.15:1, both under the 3:1 non-text floor of WCAG 2.1 SC 1.4.11 —
+     while the scriptable gradient fill beside it repainted correctly.
+     A WeakSet rather than a marker property: Chart.js treats the dataset object
+     itself as an option scope, so anything written onto it becomes resolvable
+     as an option, and the entries die with the dataset when a dashlet rebuilds
+     its chart. */
+  var nzLine = new WeakSet();   /* stroke/point colour is ours */
+  var nzFill = new WeakSet();   /* flat backgroundColor is ours too */
+
   /* v2.2 luminous: area fills are a vertical accent gradient mirroring the
      --nz-chart-fill-* tokens exactly — same ratios (28%→2% dark, 18%→2% light)
      AND same ramp steps (--nz-blue-400 dark, --nz-blue-500 light; NOT
@@ -111,13 +134,23 @@
     ((config.data && config.data.datasets) || []).forEach(function (ds) {
       var isLine = (config.type === 'line') || ds.type === 'line';
       /* stock teal AND colorless datasets (the v2.2 metrics cards ship no
-         colors on purpose) both take the accent voice */
-      if (ds.borderColor === STOCK_LINE || ds.borderColor == null) {
+         colors on purpose) both take the accent voice — and keep taking it on
+         every later pass, so a mode toggle repaints the stroke instead of
+         leaving it on the accent of the previous mode (see nzLine above).
+         A dataset that arrived with its own colour is never adopted and is
+         still left alone. */
+      if (nzLine.has(ds) || ds.borderColor === STOCK_LINE || ds.borderColor == null) {
+        nzLine.add(ds);
         ds.borderColor = p.accent;
         ds.pointBackgroundColor = p.accent;
         if (ds.fill) {
+          /* scriptable, so this one already re-derives itself per draw */
           ds.backgroundColor = nzAreaGradient;
-        } else if (ds.backgroundColor == null || ds.backgroundColor === STOCK_FILL) {
+        } else if (nzFill.has(ds) || ds.backgroundColor == null ||
+                   ds.backgroundColor === STOCK_FILL) {
+          nzFill.add(ds);
+          /* flat fill is a plain rgba string, so it has to be re-derived here
+             for the new mode exactly like the stroke */
           ds.backgroundColor = ds.fill == null ? p.fill : nzAreaGradient;
         }
       }
@@ -237,6 +270,18 @@
 
   /* ---------- 6. content enhancement (stock markup, AJAX-loaded) ---------- */
 
+  /* Localisation of strings this file injects is structurally limited, so the
+     rule below is: if stock markup already carries a translated string for the
+     thing we are naming, use that; only fall back to English where core offers
+     none. A theme genuinely cannot do better than that — ISPConfig's lang
+     loader only ever reads a module's own lib/lang/<lang>_*.lng (there is no
+     theme fallback in it), so the theme cannot ship or shadow lang keys, and
+     core hands JavaScript no language code either: main.tpl.htm exposes only a
+     handful of pre-translated strings on ISPConfig.*, and even core's own
+     datepicker init in ispconfig.js hardcodes 'language': 'en'.
+     What that leaves in English on a non-English panel: the ICON_NAMES
+     fallbacks below and the "Show all (n)"/"Show less" table cap, because core
+     ships no translated equivalent anywhere in the DOM for either. */
   var ICON_NAMES = {
     'icon-delete': 'Delete',
     'icon-edit': 'Edit',
@@ -257,18 +302,32 @@
       if (b.getAttribute('aria-label') || b.textContent.trim()) return;
       var i = b.querySelector('[class*="icon-"], [class*="glyphicon-"], [class*="fa-"]');
       if (!i) return;
-      var cls = Array.prototype.find.call(i.classList, function (c) { return ICON_NAMES[c]; });
-      if (cls) {
-        b.setAttribute('aria-label', ICON_NAMES[cls]);
-        if (!b.title) b.title = ICON_NAMES[cls];
+      /* the stock list filter button is icon-only but keeps its caption in
+         value= ({tmpl_var name="filter_txt"}), i.e. already in the session
+         language — always prefer that over the English table */
+      var name = b.tagName === 'BUTTON' ? (b.value || '').trim() : '';
+      if (!name) {
+        var cls = Array.prototype.find.call(i.classList, function (c) { return ICON_NAMES[c]; });
+        name = cls ? ICON_NAMES[cls] : '';
+      }
+      if (name) {
+        b.setAttribute('aria-label', name);
+        if (!b.title) b.title = name;
       }
     });
 
-    /* keyboard-reachable column sorting + sort state */
+    /* keyboard-reachable column sorting + sort state.
+       tabindex only — deliberately NO role="button" here. role=button would
+       replace the <th>'s implicit columnheader role, and aria-sort is not a
+       supported state of role=button (ARIA 1.2), so the sort direction we set
+       two lines down would be dropped from the accessibility tree; the browser
+       would also stop mapping the header to its data cells, costing screen
+       reader users the column name when they arrow through the ~80 stock list
+       views. Enter/Space are handled by the document keydown listener further
+       down, which is what actually supplies the button-like behaviour. */
     scope.querySelectorAll('th[data-column]').forEach(function (th) {
       if (!th.hasAttribute('tabindex')) {
         th.setAttribute('tabindex', '0');
-        th.setAttribute('role', 'button');
       }
       var o = th.getAttribute('data-ordered');
       th.setAttribute('aria-sort', o ? (o === 'desc' ? 'descending' : 'ascending') : 'none');
@@ -282,11 +341,17 @@
         /* a header with no text is an empty section shell (e.g. the news
            panel with the feed switched off) — hide it, never caret it */
         if (!h.textContent.trim()) { h.style.display = 'none'; return; }
-        var key = 'nz-tree:' + h.textContent.trim();
+        var title = h.textContent.trim();
+        var key = 'nz-tree:' + title;
         var btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'nz-caret';
-        btn.setAttribute('aria-label', 'Toggle section');
+        /* name the caret after its own section rather than with a generic
+           "Toggle section": the header text comes from core's already
+           translated menu, so this is announced in the panel's language
+           ("Websites, collapsed, button"), and it identifies WHICH section
+           the control belongs to on a sidebar full of identical carets */
+        btn.setAttribute('aria-label', title);
         var collapsed = false;
         try { collapsed = localStorage.getItem(key) === '1'; } catch (e) {}
         ul.classList.toggle('nz-collapsed', collapsed);
@@ -329,14 +394,29 @@
       tbl.tBodies[0].appendChild(tr);
     });
 
-    /* filter inputs inherit their column header's name */
-    var heads = scope.querySelectorAll('thead tr:first-child th');
-    scope.querySelectorAll('thead tr:nth-child(2) td').forEach(function (td, i) {
-      var c = td.querySelector('input, select');
-      var h = heads[i];
-      if (c && h && !c.getAttribute('aria-label') && h.textContent.trim()) {
-        c.setAttribute('aria-label', 'Filter by ' + h.textContent.trim());
-      }
+    /* filter inputs inherit their column header's name. The word for "filter"
+       is lifted off the stock filter button sitting in the same header row —
+       core fills its value= from {tmpl_var name="filter_txt"}, so it is in the
+       session language, whereas a literal "Filter by " here would put English
+       into the accessible name of every search box on a localised panel.
+       Walking one <thead> at a time also keeps the header cell and the filter
+       cell paired: a flat document-wide index pairs the second table's filter
+       cells against the first table's headers on pages with two lists. */
+    scope.querySelectorAll('thead').forEach(function (thead) {
+      if (thead.rows.length < 2) return;
+      var heads = thead.rows[0].cells;
+      var fbtn = thead.querySelector('[name="Filter"]');
+      var word = fbtn ? (fbtn.value || '').trim() : '';
+      Array.prototype.forEach.call(thead.rows[1].cells, function (td, i) {
+        var c = td.querySelector('input, select');
+        var h = heads[i];
+        if (!c || !h || c.getAttribute('aria-label') || !h.textContent.trim()) return;
+        /* the filter button itself lives in one of these cells; it is named by
+           the icon-button pass above, not here */
+        if (c.tagName === 'INPUT' && /^(button|submit|reset|image)$/i.test(c.type)) return;
+        var col = h.textContent.trim();
+        c.setAttribute('aria-label', word ? word + ': ' + col : col);
+      });
     });
   }
 

@@ -14,15 +14,25 @@ html, body.nz-login {
 /* v2.2 "Luminous": a dark field at dusk. The signature is the horizon beam —
    the product's own iconography (the uptime line) made monumental. It crosses
    the viewport exactly at the seam between wordmark and card, so it anchors
-   the composition at every size. */
+   the composition at every size.
+
+   The flat --nz-page fill below is NOT redundant with the gradients that
+   follow. The luminous background is built from color-mix()-backed tokens
+   (--nz-glow-soft, tokens.css) reached through var(). A declaration that
+   contains var() is parsed optimistically and only fails later, at
+   computed-value time — and a declaration that is invalid at computed-value
+   time resolves to `unset`, it does NOT fall back to an earlier declaration
+   the way a parse-time-invalid value would. So on a UA without color-mix()
+   (Chrome/Edge < 111, Firefox < 113, Safari < 16.2, and the Android
+   WebViews built on those) the whole shorthand would collapse to
+   transparent while still outranking Bootstrap's body{background-color:#fff}
+   — a white canvas under --nz-text. Declaring the flat colour in the base
+   rule and gating the luminous version behind @supports keeps the login
+   page — the one page that must never fail to render — on a correct
+   surface everywhere, and costs supporting browsers one extra paint of a
+   colour they immediately overpaint. */
 body.nz-login {
-  background:
-    radial-gradient(1100px 340px at 50% 42%, var(--nz-glow-soft), transparent 70%),
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--nz-rail) 55%, var(--nz-page)) 0%,
-      var(--nz-page) 44%,
-      color-mix(in srgb, var(--nz-blue-1000) 35%, var(--nz-page)) 100%),
-    var(--nz-page);
+  background: var(--nz-page);
   color: var(--nz-text);
   font-family: var(--nz-font);
   font-size: 14px;
@@ -30,13 +40,28 @@ body.nz-login {
   -moz-osx-font-smoothing: grayscale;
 }
 
-:root[data-nz-theme='light'] body.nz-login {
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--nz-blue-100) 42%, var(--nz-page)) 0%,
-      var(--nz-page) 46%,
-      color-mix(in srgb, var(--nz-blue-100) 24%, var(--nz-page)) 100%),
-    var(--nz-page);
+/* Light mode needs no flat fallback of its own: --nz-page is already
+   mode-aware, so the base rule above resolves to #F1F6F8 there. Only the
+   gradient variant has to be restated inside @supports. */
+@supports (color: color-mix(in srgb, red 50%, transparent)) {
+  body.nz-login {
+    background:
+      radial-gradient(1100px 340px at 50% 42%, var(--nz-glow-soft), transparent 70%),
+      linear-gradient(180deg,
+        color-mix(in srgb, var(--nz-rail) 55%, var(--nz-page)) 0%,
+        var(--nz-page) 44%,
+        color-mix(in srgb, var(--nz-blue-1000) 35%, var(--nz-page)) 100%),
+      var(--nz-page);
+  }
+
+  :root[data-nz-theme='light'] body.nz-login {
+    background:
+      linear-gradient(180deg,
+        color-mix(in srgb, var(--nz-blue-100) 42%, var(--nz-page)) 0%,
+        var(--nz-page) 46%,
+        color-mix(in srgb, var(--nz-blue-100) 24%, var(--nz-page)) 100%),
+      var(--nz-page);
+  }
 }
 
 .nzl-scene {
@@ -71,11 +96,19 @@ body.nz-login {
   filter: brightness(0.22) saturate(0.9);
 }
 
+/* The card carries the login form, so its fill is load-bearing, not
+   decorative: --nz-glass-fill is a translucent color-mix() and would go
+   invalid at computed-value time (→ transparent) on a pre-color-mix UA,
+   dropping --nz-text onto whatever is behind it. The opaque --nz-card is
+   therefore the base declaration and the glass is layered on top only where
+   color-mix() exists. --nz-glass-edge (border, inset highlight) is
+   color-mix() too, but it degrades to no border rather than to invisible
+   text, so it needs no fallback. */
 .nzl-card {
   width: 100%;
   max-width: 384px;
   position: relative;
-  background: var(--nz-glass-fill);
+  background: var(--nz-card);
   -webkit-backdrop-filter: blur(14px) saturate(1.15);
   backdrop-filter: blur(14px) saturate(1.15);
   border: 1px solid var(--nz-glass-edge);
@@ -85,6 +118,15 @@ body.nz-login {
   box-sizing: border-box;
 }
 
+@supports (color: color-mix(in srgb, red 50%, transparent)) {
+  .nzl-card { background: var(--nz-glass-fill); }
+}
+
+/* The glass is also wrong without a blur behind it — translucency alone is
+   just a washed-out card — so those UAs get the opaque fill back. This block
+   must stay AFTER the color-mix one: equal specificity, so source order
+   decides. Note Safari shipped UNPREFIXED backdrop-filter only in 18, so
+   Safari 16.2–17 lands here despite supporting the -webkit- form. */
 @supports not (backdrop-filter: blur(1px)) {
   .nzl-card { background: var(--nz-card); }
 }

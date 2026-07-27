@@ -15,6 +15,12 @@
  * Same design constraints as brand.php: pre-auth safe (no app bootstrap, no
  * session), a single read-only query, always HTTP 200 with valid JS, and the
  * value reaches the output only through json_encode (script-context safe).
+ *
+ * company_name is normalised identically here and in brand.php (stripslashes
+ * on the blob, control-char strip, trim, and a 40-char cap on the *visible*
+ * wordmark) so the tab title and the CSS wordmark — which co-render on the
+ * login screen — never disagree about the panel's own name. Change one,
+ * change the other.
  */
 
 $company = '';
@@ -39,9 +45,32 @@ if (is_readable($config_inc)) {
                         if (is_readable($ini_parser_inc)) {
                             require_once $ini_parser_inc;
                             $parser = new ini_parser();
-                            $parsed = $parser->parse_ini_string((string)$row['config']);
+                            // stripslashes before parsing is mandatory for sys_ini.config,
+                            // not a nicety: the write path escapes the field on its way in
+                            // (tform_base::_encode() runs db->quote() over every value
+                            // before the blob is serialised), and ini_parser is a plain
+                            // line splitter that unescapes nothing. So core ALWAYS unquotes
+                            // on read — app.inc.php:108, getconf.inc.php:54,
+                            // server_config_edit.php:190 — and so does brand.php's
+                            // brand_parse_config(). Parsing the raw blob here painted
+                            // O\'Brien Hosting in the tab (and in every <img alt>) while
+                            // the CSS wordmark from brand.php read O'Brien Hosting: two
+                            // brand surfaces on the same pre-auth login page disagreeing
+                            // about the customer's own name.
+                            $parsed = $parser->parse_ini_string(stripslashes((string)$row['config']));
                             if (isset($parsed['misc']['company_name']) && is_string($parsed['misc']['company_name'])) {
-                                $company = trim($parsed['misc']['company_name']);
+                                // Same normalisation as brand.php, character for
+                                // character, so both endpoints derive an identical
+                                // string from an identical row. Control characters go
+                                // because brand.php cannot represent them (a raw CR/LF
+                                // would terminate its CSS string); everything printable
+                                // stays and is escaped per output context — json_encode
+                                // here, a CSS-string escape there. Byte-wise and without
+                                // /u on purpose: with /u one malformed UTF-8 byte makes
+                                // preg_replace return NULL and the brand vanishes, while
+                                // 0x00-0x1F and 0x7F never occur inside a valid UTF-8
+                                // sequence, so a byte filter cannot split a codepoint.
+                                $company = trim(preg_replace('/[\x00-\x1F\x7F]/', '', $parsed['misc']['company_name']));
                             }
                         }
                     }
@@ -65,21 +94,54 @@ if ($read_ok) {
     header('Cache-Control: no-store');
 }
 
-if ($company !== '') {
-    $name_js = json_encode($company, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+$name_js = ($company !== '')
+    ? json_encode($company, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)
+    : false;
+
+// json_encode() returns FALSE on invalid UTF-8, and false concatenates as ''.
+// Emitting it would produce `document.title=;` or `var n="x",w=;` — a PARSE
+// error, and a classic script that fails to parse runs NOTHING, so even the
+// statements before it are lost. This endpoint is pre-auth and unconditional,
+// so that would blank the brand on every page of the panel including login.
+// Treat unencodable input exactly like "no panel name set": emit the documented
+// no-op and let the theme fall back to its shipped wordmark.
+if ($name_js !== false) {
     echo 'document.title=' . $name_js . ';' . "\n";
+    // The VISIBLE failover wordmark lands in the same nowrap rail/topbar slot as
+    // brand.php's `content:` wordmark, so it must truncate at the same point —
+    // brand.php caps at 40 (multibyte-safe: a byte substr would cut a UTF-8
+    // codepoint in half and corrupt the glyph), and so does this. document.title
+    // and the alt text stay uncapped on purpose: a browser tab elides on its own
+    // and an accessible name should be the real brand, not a layout-fitted one.
+    $wordmark = $company;
+    if (function_exists('mb_substr')) {
+        if (mb_strlen($wordmark, 'UTF-8') > 40) $wordmark = mb_substr($wordmark, 0, 40, 'UTF-8');
+    } elseif (strlen($wordmark) > 40) {
+        $wordmark = substr($wordmark, 0, 40);
+    }
+    $wordmark_js = json_encode($wordmark, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+    // The byte-substr fallback above is precisely how invalid UTF-8 reaches this
+    // line: with mbstring absent it can cut a multibyte codepoint in half. Rather
+    // than emit `w=;` and kill the script, fall back to the uncapped name — it is
+    // already known-encodable, and an over-long failover wordmark is a cosmetic
+    // overflow, not a dead brand.
+    if ($wordmark_js === false) $wordmark_js = $name_js;
     // Brand-slot failover: the wordmark <img> elements get the panel name as
     // alt text (assistive tech + broken-image state say the BRAND, never the
     // product), and if the slot's own src fails to load it is replaced by a
     // styled text wordmark (.nz-wordmark-text, themed in app.css/login.css).
-    echo '(function(){var n=' . $name_js . ';'
+    echo '(function(){var n=' . $name_js . ',w=' . $wordmark_js . ';'
+       . 'function swap(img){var s=document.createElement("span");s.className="nz-wordmark-text";s.textContent=w;img.replaceWith(s);}'
        . 'function arm(){document.querySelectorAll("#logo img,.nz-topbar-brand img,.nzl-brand img").forEach(function(img){'
        . 'img.alt=n;'
-       . 'img.addEventListener("error",function(){var s=document.createElement("span");s.className="nz-wordmark-text";s.textContent=n;img.replaceWith(s);});'
-       . 'if(img.complete&&img.naturalWidth===0){var s=document.createElement("span");s.className="nz-wordmark-text";s.textContent=n;img.replaceWith(s);}'
+       . 'img.addEventListener("error",function(){swap(img);});'
+       . 'if(img.complete&&img.naturalWidth===0){swap(img);}'
        . '});}'
        . 'if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",arm);}else{arm();}'
        . '})();';
 } else {
+    // No panel name set, or a stored name that is not encodable as JSON.
+    // Either way this endpoint is a documented no-op: valid JavaScript that
+    // does nothing, so the theme keeps its shipped title and wordmark.
     echo '/* no panel name set — stock title kept */';
 }
