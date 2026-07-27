@@ -46,14 +46,26 @@
         var last = data.length ? data[data.length - 1] : null;
         var v = document.getElementById('nz-stat-' + chartname);
         if (v && last !== null) v.textContent = nzStatFmt(last);
+        // The header chip strip mirrors the four cards for an at-a-glance summary.
+        // #nz-dash-chips only exists in our dashboard.htm override, so this block
+        // silently no-ops elsewhere (monitor/show_sys_state.htm ships its own
+        // createChart with the same signature and no chip container).
+        //
+        // The chip key MUST be the `label` argument, never a literal string: `label`
+        // is {tmpl_var name="<n>chart_label"}, which dashlets/metrics.php already
+        // resolved from dashboard/lib/lang/<lang>_dashlet_metrics.lng for the session
+        // language. A theme cannot add or shadow ISPConfig lang keys — the lang loader
+        // only reads the module's own lib/lang directories, never the theme's — so the
+        // strings core hands us in tmpl_vars are the only localised source available
+        // here. Hardcoding English printed 'Load' in the chip and 'Systembelastung %'
+        // on the card directly beneath it on a German panel.
         var chips = document.getElementById('nz-dash-chips');
-        var chipNames = { loadchart: 'Load', memchart: 'Memory', rxchart: 'Net in', txchart: 'Net out' };
-        if (chips && last !== null && chipNames[chartname]) {
+        if (chips && last !== null && label) {
             var chip = document.createElement('span');
             chip.className = 'nz-chip';
             var k = document.createElement('span');
             k.className = 'nz-chip-k';
-            k.textContent = chipNames[chartname];
+            k.textContent = label;
             chip.appendChild(k);
             chip.appendChild(document.createTextNode(nzStatFmt(last)));
             chips.appendChild(chip);

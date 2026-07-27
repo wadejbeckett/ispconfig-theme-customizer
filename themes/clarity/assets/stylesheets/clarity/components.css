@@ -267,9 +267,20 @@ ul.nz-launcher li a .icon {
   margin-bottom: 12px;
 }
 
+/* The height above is load-bearing but is delivered by :has(), which a UA
+   without :has() support (Firefox < 121/ESR 115, Chrome < 105, Safari < 15.4)
+   drops together with the whole rule — and nz-theme.js sets
+   Chart.defaults.maintainAspectRatio = false for every chart on the page, so
+   the wrapper would fall back to auto height driven by the stock
+   canvas height="30", i.e. the ribbon the comment above warns about. A
+   min-height on the canvas itself needs no :has(): it gives the auto-height
+   wrapper a real box to measure, so Chart.js gets ~90px instead of ~30px.
+   It never fights the sized containers — .nz-statcard-chart is 120px (100px
+   under 640px) and the :has() wrapper 110px, all above this floor. */
 #pageContent canvas {
   width: 100% !important;
   max-width: 100%;
+  min-height: 90px;
 }
 
 /* ---------- cards & tables ---------- */
@@ -992,8 +1003,14 @@ body.nz .label {
 body.nz .label-success { background: var(--nz-success-deep); color: #FFFFFF; }
 body.nz .label-warning { background: var(--nz-warning-deep); color: var(--nz-alert-text); }
 body.nz .label-danger  { background: var(--nz-danger-deep); color: #FFFFFF; }
+/* info/default read the -deep fill like their siblings. They used to read
+   --nz-info-surface, which is the ALERT panel token: in dark mode that is
+   blue-800 and looked right by accident, but light mode remaps it to the
+   Clarity 50-tint #E5F3FB, leaving white text at 1.13:1 — an invisible
+   badge. No stock ISPConfig template emits these two classes, but the theme
+   is a general Bootstrap-3 skin and addons do, so the rule has to hold. */
 body.nz .label-info, body.nz .label-default {
-  background: var(--nz-info-surface);
+  background: var(--nz-info-deep);
   color: #FFFFFF;
 }
 

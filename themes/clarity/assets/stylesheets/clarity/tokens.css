@@ -16,6 +16,12 @@
  *   - Brand blue #0065AB — the ramp is re-anchored on it
  *     (hue ~205), so the console is unmistakably its own, not a
  *     Clarity clone.
+ *
+ * This file takes colour VALUES from Clarity, not code or assets.
+ * The icon artwork in icons.css is a different matter — that is
+ * verbatim @cds/core SVG, and MIT's notice condition applies to
+ * it; the required copyright + permission notice lives in that
+ * file's header, next to the shapes it covers.
  * ============================================================ */
 
 :root {
@@ -132,6 +138,7 @@
   --nz-info:            var(--nz-blue-400);
   --nz-info-text:       var(--nz-blue-300);
   --nz-info-tint:       rgba(46, 169, 255, 0.10);
+  --nz-info-deep:       var(--nz-blue-800);  /* white on #00518A = 8.3:1 */
 
   /* Surface washes & edges (mode-dependent translucents) */
   --nz-veil:            rgba(255, 255, 255, 0.03);  /* hover wash            */
@@ -285,6 +292,7 @@
   --nz-success-deep:     #42810E;
   --nz-warning-deep:     #FFA600;
   --nz-danger-deep:      #C21D00;
+  --nz-info-deep:        var(--nz-blue-700);  /* white on #0065AB = 6.0:1 */
 
   /* softer elevation on light surfaces */
   --nz-shadow-1:        0 1px 2px rgba(27, 43, 50, 0.10);
