@@ -43,8 +43,10 @@ THE ispconfig_version FILE IS REQUIRED — and is install-specific.
 ISPConfig gates themes by an EXACT match of ISPC_APP_VERSION under two
 filenames (ispconfig_version gates login + user pickers; ISPC_VERSION gates
 the admin default-settings picker). ../../install.sh stamps both; re-run it
-after every ISPConfig upgrade, and re-diff the overridden templates against
-the new stock ones (main.tpl.htm, topnav.tpl.htm, main_login.tpl.htm).
+after every ISPConfig upgrade, and re-diff ALL SIX overridden templates against
+the new stock ones: the three shell templates (main.tpl.htm, topnav.tpl.htm,
+main_login.tpl.htm) and the three dashboard dashlets pinned below
+(dashboard.htm, modules.htm, metrics.htm).
 
 --- v2.2 dashlet template overrides (templates/dashboard/, added 2026-07-21) ---
 dashboard.htm   <- interface/web/dashboard/templates/dashboard.htm (3.3.1p1)

@@ -53,6 +53,13 @@ jobs:
         # arbitrary code execution in the runner.
         run: php .github/scripts/lang_check.php
 
+      - name: SVG upload screen — adversarial corpus
+        # 29 bypass attempts that defeated the previous byte-scanning
+        # implementation, plus 12 shapes real editors emit. SECURITY.md cites
+        # this corpus by name, so it runs on every push and the claim cannot go
+        # stale.
+        run: php tests/svg/run.php
+
       - name: Cache-buster consistency
         # every ?ver= in a shell template must match — a mismatched bump ships
         # stale CSS/JS to browsers holding the old version (a real past bug)

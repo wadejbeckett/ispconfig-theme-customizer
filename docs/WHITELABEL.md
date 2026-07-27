@@ -1,11 +1,13 @@
 # White-Label Roadmap
 
 The goal: ISPConfig as a full Plesk/cPanel alternative that an operator can
-brand as their own — **without ever modifying ISPConfig itself**. The toolkit
-splits into the base theme (Clarity, evolving) and the branding module
-(ispconfig-customizer). This document is the verified audit of every place
-ISPConfig identifies itself in 3.3.1p1, who sees it, and how (or whether) the
-kit can override it inside its allowed envelope.
+brand as their own — **without ever modifying ISPConfig itself**. Two halves do
+that work: the base theme (`themes/clarity/`) and the admin-only branding module
+(`interface/web/customizer/`, nav label "Branding"). They shipped as separate
+projects until v3.0.0 and now live in this one repository under one version
+number. This document is the verified audit of every place ISPConfig identifies
+itself in 3.3.1p1, who sees it, and how (or whether) the theme/module pair can
+override it inside its allowed envelope.
 
 **The envelope (hard constraint):** theme directories (`themes/<name>/`),
 module directories (`interface/web/<module>/`), and writes to existing DB
@@ -17,10 +19,16 @@ never touched by installers.
 Verified override mechanisms (each confirmed against 3.3.1p1 source):
 
 - **Frame templates** (`main.tpl.htm`, `main_login.tpl.htm`, `topnav.tpl.htm`,
-  `error.tpl.htm`): theme-flat override — Clarity already owns the first three.
+  `error.tpl.htm`): theme-flat override — Clarity owns the first three;
+  `error.tpl.htm` is still stock (item 8 below).
 - **Module content templates** (dashlets, login pages, help pages, tools):
   override at `themes/clarity/templates/<module>/<basename>.htm` — the
-  module-subdir rule. Flat placement never wins for these.
+  module-subdir rule. Flat placement never wins for these. Clarity uses it for
+  three dashboard templates (`dashboard/dashboard.htm`, `dashboard/modules.htm`,
+  `dashboard/metrics.htm`). With the three frame templates that is **six
+  overridden templates in total**, each pinned in
+  `themes/clarity/BUILT-AGAINST.txt` — re-diff and re-stamp them after *any*
+  ISPConfig upgrade, patch releases included.
 - **Language strings**: **cannot be shadowed** without core edits — no theme
   fallback exists in the lang loader. Lang-fed surfaces are CSS/JS-hide or
   upstream-patch only.
@@ -32,6 +40,10 @@ Verified override mechanisms (each confirmed against 3.3.1p1 source):
 
 ## Status: already covered
 
+Version numbers cited from here down are the **pre-merge release lines** — theme
+v2.x and module v1.x, both folded into v3.0.0. They are kept as the record of
+when each surface was closed, not as versions you can install today.
+
 | Surface | Audience | How |
 |---|---|---|
 | Browser tab `Name :: ISPConfig` | all | theme v2.1.5 — a set panel name replaces the product title (main + login + reset pages) |
@@ -42,12 +54,13 @@ Verified override mechanisms (each confirmed against 3.3.1p1 source):
 | Favicons / tiles / mask icons | all | theme-owned assets (already neutral) |
 | Outbound mail sender identity | all | stock `[mail] admin_name` / `admin_mail` |
 
-## P0 — bugs & quick wins (all inside the envelope)
+## P0 — bugs & quick wins (all inside the envelope) — *closed*
 
-> **Status: SHIPPED 2026-07-21** — customizer v1.0.6 + theme v2.1.6/v2.1.7.
-> Items 1-4 below are done and live-verified (title.php serves the branded
-> title on all auth pages incl. OTP; uninstall round-trips tested against the
-> production DB with exact state restoration).
+> **History, not a to-do list.** All four shipped 2026-07-21 in customizer
+> v1.0.6 + theme v2.1.6/v2.1.7, and were live-verified then: title.php serves
+> the branded title on all auth pages incl. OTP, and uninstall round-trips were
+> tested against the production DB with exact state restoration. The items are
+> written below as they were when open; each is fixed in the current tree.
 
 1. **OTP page leaks a bare "ISPConfig" tab title** — core never sets
    `company_name` there, so the v2.1.5 trim never fires. Proper fix: render the
@@ -55,8 +68,8 @@ Verified override mechanisms (each confirmed against 3.3.1p1 source):
    reading `sys_ini` (also removes the JS-trim flash on all auth pages).
 2. **Clarity's own `site.webmanifest` still says `"name": "ISPConfig"`** — the
    last ISPConfig string in our own assets. Ship a neutral name.
-3. **Uninstall tooling (currently missing, README overclaims):**
-   `uninstall.sh` in both repos + `bin/unassign_module.php` (strip
+3. **Uninstall tooling (missing at the time; the README overclaimed):** an
+   `uninstall.sh` covering both components + `bin/unassign_module.php` (strip
    `customizer` from **all** users' module CSVs — install assigns it to every
    admin, not just one — and reset `startmodule='customizer'` →
    `'dashboard'`), theme-side `sys_user.app_theme` reset SQL (core does *not*
@@ -68,9 +81,16 @@ Verified override mechanisms (each confirmed against 3.3.1p1 source):
 4. Housekeeping: stray `.omc/` state dir inside the theme clone blocks the
    symlink install path.
 
-## P1 — white-label completeness (customizer features)
+## P1 — white-label completeness (Branding-module features)
 
-5. **Per-role dashboard curation** (the "hide announcements/news" ask): the
+> **Partly delivered.** Item 5b and the news-feed half of item 5 shipped and are
+> in the current tree; 5's dashlet-layout half and items 6-8 are still open.
+> Status is marked per item.
+
+5. *(news-feed half shipped — the module's news-feed toggle owns the three
+   `dashboard_atom_url_*` keys and `bin/purge_branding.php` restores them;
+   the `*_dashlets_left/right` layout keys remain unmanaged.)*
+   **Per-role dashboard curation** (the "hide announcements/news" ask): the
    customizer should manage the six `*_dashlets_left/right` keys and the three
    `dashboard_atom_url_*` feeds. Recommended defaults: blank the
    reseller/client news feeds (or point them at the operator's own Atom feed —
@@ -81,7 +101,8 @@ Verified override mechanisms (each confirmed against 3.3.1p1 source):
    not just branding). Gotchas to encode: setting only one column key
    activates both (empty ≠ default), `[none]` is the hide-all idiom, feeds are
    session-cached until re-login.
-5b. **Staff-view version hiding (requested 2026-07-21):** operators who brand
+5b. *(shipped — the `show_version` toggle, `themes/clarity/brand.php`.)*
+   **Staff-view version hiding (requested 2026-07-21):** operators who brand
    for their own staff don't want "ISPConfig Version: x.y.z" visible in Help.
    Mechanism: a `[branding]` toggle read by brand.php emitting
    `#help_version { display:none }` (the nav item carries that html_id) —

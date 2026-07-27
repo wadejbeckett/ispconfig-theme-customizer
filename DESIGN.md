@@ -144,8 +144,10 @@ titles 14/600 (micro-header family), weights 400/500/600 only.
 
 ## 9. Architecture (how it stays upgrade-safe)
 
-- `themes/clarity/` is **self-contained**: own templates
-  (`main.tpl.htm`, `topnav.tpl.htm`, `main_login.tpl.htm`), own CSS
+- `themes/clarity/` is **self-contained**: own templates — three shell
+  (`main.tpl.htm`, `topnav.tpl.htm`, `main_login.tpl.htm`) and three dashboard
+  dashlets (`templates/dashboard/{dashboard,modules,metrics}.htm`), all six
+  pinned with their stock contracts in `BUILT-AGAINST.txt` — own CSS
   (`tokens.css` → `base.css` → `app.css` → `components.css`, login pages:
   `tokens.css` → `login.css`), own fonts/favicons/logo.
 - Vendor CSS/JS load from `themes/default/...` by explicit path (ISPConfig
@@ -198,7 +200,13 @@ Deliberate deviations (each for brand, anatomy, or WCAG):
 
 ## Provenance & licensing
 
-- VMware Clarity `@cds/core` 6.17 — MIT (token values only; no code bundled).
+- VMware Clarity `@cds/core` 6.17 — MIT. Surface and status token *values* are
+  derived from Clarity's dark theme, and 29 icon shapes are bundled verbatim as
+  data-URI SVG masks in `themes/clarity/assets/stylesheets/clarity/icons.css`.
+  Because artwork ships, the MIT copyright and permission notice ships with it,
+  in that file's header. (An earlier version of this line said "token values
+  only; no code bundled" — that was wrong, and wrong in the direction that
+  matters for a licence obligation.)
 - DirectAdmin Evolution — visual reference only (anatomy/metrics studied from
   the public demo; no assets copied).
 - Inter — SIL OFL 1.1, self-hosted.
