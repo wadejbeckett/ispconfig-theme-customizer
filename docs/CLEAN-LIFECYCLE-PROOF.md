@@ -30,8 +30,11 @@ verified byte-identical.
 | Server-side PHP vs pristine | **0 modified** |
 | Files added outside our own directories | **none** |
 
-The only paths the extension occupies are `interface/web/customizer/` and
-`interface/web/themes/clarity/`.
+The only paths the extension occupies are `interface/web/customizer/` and the
+design directory it installed. This cycle installed clarity only; run with
+`--design=all` and the same test additionally accounts for
+`interface/web/themes/classic/`, its two generated shell templates and its two
+version stamps.
 
 ### Uninstalled (default flags)
 

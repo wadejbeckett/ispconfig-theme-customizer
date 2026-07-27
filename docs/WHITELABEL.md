@@ -25,8 +25,12 @@ never touched by `install.sh` or `uninstall.sh`.
 Verified override mechanisms (each confirmed against 3.3.1p1 source):
 
 - **Frame templates** (`main.tpl.htm`, `main_login.tpl.htm`, `topnav.tpl.htm`,
-  `error.tpl.htm`): theme-flat override — Clarity owns the first three;
-  `error.tpl.htm` is still stock (item 8 below).
+  `error.tpl.htm`): theme-flat override. **clarity** owns the first three as
+  committed files. **classic** owns the first two as install-time generated
+  copies of the panel's own stock markup — deliberately not committed, so they
+  cannot drift from the ISPConfig version actually installed — and inherits
+  `topnav.tpl.htm` from stock unchanged. `error.tpl.htm` is still stock in both
+  (item 8 below).
 - **Module content templates** (dashlets, login pages, help pages, tools):
   override at `themes/clarity/templates/<module>/<basename>.htm` — the
   module-subdir rule. Flat placement never wins for these. Clarity uses it for
@@ -113,7 +117,7 @@ when each surface was closed, not as versions you can install today.
    not just branding). Gotchas to encode: setting only one column key
    activates both (empty ≠ default), `[none]` is the hide-all idiom, feeds are
    session-cached until re-login.
-5b. *(shipped — the `show_version` toggle, `themes/clarity/brand.php`.)*
+5b. *(shipped — the show_version toggle, honoured by each design's brand.php)*
    **Staff-view version hiding (requested 2026-07-21):** operators who brand
    for their own staff don't want "ISPConfig Version: x.y.z" visible in Help.
    Mechanism: a `[branding]` toggle read by brand.php emitting
