@@ -248,7 +248,9 @@ check_traversable
   if [ -n "$WANT_THEME" ]; then
     echo "Theme — next steps:"
     echo "  1. Per user:  Tools > User Settings > Design > select \"$THEME_NAME\" > Save,"
-    echo "                then LOG OUT AND BACK IN (the theme is applied at login)."
+    echo "                Core updates your session and reloads the page, so it"
+    echo "                applies immediately. If the frame still looks stock,"
+    echo "                hard-refresh (Ctrl+Shift+R) to drop the cached CSS."
     echo "  2. System wide + login screen — set in BOTH config files:"
     echo
     echo "       \$conf['theme'] = '$THEME_NAME';"

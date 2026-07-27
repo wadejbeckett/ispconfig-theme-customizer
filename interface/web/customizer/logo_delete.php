@@ -1,7 +1,7 @@
 <?php
 /**
  * ispconfig-customizer — standalone white-label branding for ISPConfig.
- * https://github.com/wadejbeckett/ispconfig-customizer
+ * https://github.com/wadejbeckett/ispconfig-theme-customizer
  * Copyright (c) 2026 Wade Beckett. MIT License — see LICENSE.
  *
  * Built for ISPConfig (ispconfig.org, BSD-3-Clause). Not affiliated with or
