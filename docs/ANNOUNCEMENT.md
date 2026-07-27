@@ -5,43 +5,49 @@ Contributions). It is written in Markdown; the forum uses BBCode, so convert
 headings to `[b]…[/b]`, links to `[url=…]…[/url]`, and images to `[img]…[/img]`
 when posting. Images to attach are listed at the end.
 
-Keep the framing in the first two paragraphs intact — it is what positions this
-as *building on* ISPConfig, not competing with it.
+**Framing note — the thing this draft gets right and earlier ones got wrong:**
+this is ONE project, not a theme and a module that happen to ship together. It
+is a themeable, brandable front-end for ISPConfig. Clarity is the design it
+ships with; the Branding page is where you make it yours. Don't reintroduce
+"two parts" structure — no `X + Y` title, no parallel "what X gives you" /
+"what Y gives you" sections. That the two pieces can be installed separately is
+a deployment detail, not the product's identity.
+
+Keep the symbiosis framing in the opening intact — it is what positions this as
+*building on* ISPConfig, not competing with it.
 
 ---
 
-## Clarity + Branding — a modern dark theme and a white-label module for ISPConfig (open source, no core changes)
+## A modern, brandable front-end for ISPConfig (open source, no core changes)
 
 Hi everyone,
 
-I've been running ISPConfig in production and wanted it to look and feel like a
-first-class modern control panel — and to let me hand a cleanly branded panel to
-clients — **without ever patching the core.** That turned into an open-source
-project I'd like to share with the community. It has two parts, and you can
-install either one or both:
+I've been running ISPConfig in production and wanted two things from it: for the
+panel to look and feel like a first-class modern control panel, and to be able to
+hand a client a panel with *their* name on it — **without ever patching the
+core.** This is the result.
 
-- **Clarity** — a complete dark (and light) theme: a navy sidebar rail, a
-  redesigned login screen, a restructured dashboard with proper stat cards and
-  themed charts, and Clarity/CDS-style iconography.
-- **Branding** — an admin-only white-label module: set your logo, panel name,
-  accent colours, login screen and a few visibility toggles from a page inside
-  ISPConfig. Some of it works on **stock ISPConfig**; the colour settings need a
-  brand-aware theme (like Clarity) to apply them.
+It replaces the panel's front-end with a dark (and light) design, and adds an
+admin page where you set your logo, panel name and colours. Those are not two
+products bolted together: the design reads its colours, logo and panel name from
+the settings that page writes, which is why they ship as one thing with one
+version number.
 
-**Both are built to be good citizens of the ISPConfig ecosystem.** Everything
-lives in a theme directory and a module directory only — **no core file is ever
-modified**, and no database schema is added — so an `ispconfig_update.sh` run
-never overwrites or deletes them. (The theme's version stamp does have to be
-re-applied after every panel update — see the compatibility section below.)
-Every setting is stored in ISPConfig's own `sys_ini` table, so it is also
-reachable across a fleet via the remote API — with one upstream caveat, noted
-further down. **Out of the box nothing is hidden:** the "powered by ISPConfig"
-credit, the admin update notice, the version line and the donate dashlet are all
-left exactly as core ships them. The module *offers* toggles to hide the footer
-credits, the news feed and the version line. Every attribution toggle ships
-**on**: nothing is hidden until an administrator turns it off. The goal is to
-make ISPConfig an easier "yes" for people who'd otherwise reach for
-Plesk/cPanel — and send them to ISPConfig's own support and paid modules, not
+**It is built to be a good citizen of the ISPConfig ecosystem.** Everything lives
+in a theme directory and a module directory — **no core file is ever modified**,
+and no database schema is added — so an `ispconfig_update.sh` run never
+overwrites or deletes it. (The version stamp does have to be re-applied after
+every panel update — see the compatibility section; it's one command.) Every
+setting is stored in ISPConfig's own `sys_ini` table.
+
+**Out of the box nothing is hidden.** The "powered by ISPConfig" credit, the
+admin update notice, the version line and the donate dashlet are all left exactly
+as core ships them. There *are* toggles to hide the footer credits, the news feed
+and the version line — handy when you're demoing to a client — and every one of
+them ships **on**. Nothing disappears until an administrator deliberately turns
+it off, and the open-source licence notices are never touchable. The goal is to
+make ISPConfig an easier "yes" for people who'd otherwise reach for Plesk or
+cPanel, and to send them toward ISPConfig's own support and paid modules, not
 away from them.
 
 ### Screenshots
@@ -50,75 +56,58 @@ away from them.
 
 ![Dashboard](https://raw.githubusercontent.com/wadejbeckett/ispconfig-theme-customizer/main/mockup/shots/dark-dashboard-desktop.png)
 
-The Branding page — set the logo, name, colours and visibility toggles from
-inside the panel:
+The Branding page, where the panel's identity is set:
 
 ![Branding page](https://raw.githubusercontent.com/wadejbeckett/ispconfig-theme-customizer/main/docs/screenshots/branding-page-dark.png)
 
 *(Light mode of each is attached below.)*
 
-### One repo, one version number
+### What you get
 
-The theme and the module used to be two separate repos with independent version
-numbers. That was a mistake, and it is worth saying why, because it is the whole
-reason for this release.
+**The panel, redesigned**
 
-The module writes a small set of keys into `sys_ini`; the theme's `brand.php`
-reads exactly those keys. That is one contract — and nothing enforced that the
-two halves of it were in step. Running module v1.0.12 against theme v2.1.0 meant
-the accent colour silently did not apply. No error, no warning, nothing in a log
-to grep for: you set a colour, saved, and the panel stayed blue.
-
-So they are now **one repository, one version number, one tag**:
-**[ispconfig-theme-customizer](https://github.com/wadejbeckett/ispconfig-theme-customizer)**,
-starting at **v3.0.0** (above both old lines — the theme was v2.2.4, the module
-v1.0.13 — and a major bump because the repo layout changed). There are no git
-submodules and nothing to `--recurse-submodules`. The old
-`clarity-theme-ispconfig`, `ispconfig-customizer` and `ispconfig-toolkit` repos
-are **archived read-only**; please don't clone them.
-
-### What Clarity (the theme) gives you
-
-- Dark canon + a light mode, toggled in the top bar and remembered per browser.
-- A redesigned login screen and a dashboard that leads with system status
+- A dark canon and a light mode, toggled in the top bar and remembered per
+  browser.
+- A redesigned login screen, and a dashboard that leads with system status
   (live load / memory / network) instead of a wall of launcher tiles.
-- Charts themed to match (gradient fills, hover tooltips), in both modes.
+- Charts themed to match — gradient fills, hover tooltips — in both modes.
 - Clarity-style icons, keyboard search (Ctrl/⌘-K, or `/`), an off-canvas mobile
   drawer, and a11y fixes for the stock markup.
-- Self-contained: it only borrows the stock theme's vendor CSS/JS; it never
-  edits them. It overrides **six** stock templates — three shell templates
-  (`main.tpl.htm`, `main_login.tpl.htm`, `topnav.tpl.htm`) and three dashboard
-  dashlets (`dashboard.htm`, `modules.htm`, `metrics.htm`). Each one is pinned
-  with the exact stock template variables it consumes in
-  `themes/clarity/BUILT-AGAINST.txt`, so you can re-check them after an upgrade.
 
-### What Branding (the module) gives you
+**The panel, made yours**
 
 - **Logo** — upload SVG/PNG/JPEG/GIF/WebP (validated, under 45 KB), or reference
   a file by root-relative path or `https://` URL. Shows on the sidebar, mobile
-  header and login.
+  header and login screen.
 - **Panel name, accent / sidebar / login-background colours, login footnote.**
-- **Visibility toggles** — optionally hide the footer credits, the dashboard
-  news feed, and the Help version line (handy for clean client demos). The
-  open-source **licence notices are always kept** — the toggles only hide
-  optional courtesy text, never a licence file.
-- Stored in `sys_ini`, so it survives updates and is readable/writable through
-  the remote API's `system_config_set` — with one upstream caveat: that call
-  rewrites the whole config blob through core's `getconf`, which strips a
-  backslash level from every value it isn't editing (the module itself parses
-  the raw column precisely to avoid this). If you plan to push branding across a
-  fleet that way, read `SECURITY.md` and `docs/UPSTREAM-PATCHES.md` §4 first.
+- **Visibility toggles** for the footer credits, dashboard news feed and Help
+  version line, as described above.
 
-**How much works without the theme** (verified against the ISPConfig 3.3
-source — worth being exact about):
+Both halves are configured from one page inside the panel, labelled **Branding**
+in the navigation.
+
+### How it holds together (and why that matters to you)
+
+The design reads a small, fixed set of keys out of `sys_ini`; the Branding page
+writes exactly those keys. That contract is the whole architecture, and it has
+two consequences worth knowing:
+
+**Some of your branding works even on the stock ISPConfig theme**, because core
+reads a few of those keys itself. Verified against the 3.3 source:
 
 | Setting | Read by |
 |---|---|
-| `custom_logo`, `company_name`, the per-role dashboard Atom feed URLs | ISPConfig **core** — these work on the stock theme |
-| `accent_hex`, `rail_hex`, `login_bg`, `logo_url`, `show_version` | only a **brand-aware theme's** `brand.php` — these need Clarity |
+| `custom_logo`, `company_name`, the per-role dashboard Atom feed URLs | ISPConfig **core** — these apply on the stock theme too |
+| `accent_hex`, `rail_hex`, `login_bg`, `logo_url`, `show_version` | the shipped design's `brand.php` — these need it installed |
 
-The nav entry is labelled **Branding** (not "Customizer" — that's the internal
-directory name).
+So `./install.sh --module` on a stock panel is a legitimate thing to do if you
+only want your logo and panel name. `--theme` alone is equally fine. The default
+installs both, which is what most people want.
+
+**And the design is replaceable.** Anything that reads those same keys inherits
+the whole branding page for free. Clarity is the design that ships today, not an
+assumption baked into the project — CI fails the build if either side of the
+contract drifts, precisely so a second design can drop in later.
 
 ### Install
 
@@ -126,25 +115,25 @@ directory name).
 cd /opt                              # somewhere the web server can read — NOT /root
 git clone https://github.com/wadejbeckett/ispconfig-theme-customizer.git
 cd ispconfig-theme-customizer
-sudo ./install.sh                    # both components; --theme or --module for one
+sudo ./install.sh                    # --theme or --module to install one half
 ```
 
 Flags: `--theme` / `--module` / `--all` (default is both), `--copy` to copy real
-files instead of symlinking, `--no-assign` to skip assigning the module to admin
-users. An `ISPCONFIG_ROOT` path can be passed as the last argument; it defaults
-to `/usr/local/ispconfig`.
+files instead of symlinking, `--no-assign` to skip assigning the Branding page to
+admin users. An `ISPCONFIG_ROOT` path can be passed as the last argument; it
+defaults to `/usr/local/ispconfig`.
 
 Then two manual steps the installer deliberately does **not** do for you:
 
-1. To make Clarity the login screen and system default, set
+1. To make it the login screen and system default, set
    `$conf['theme'] = 'clarity';` in **both** `interface/lib/config.inc.php` and
    `server/lib/config.inc.php`. The installer never edits ISPConfig config.
    (The server one matters: panel updates regenerate both files and carry the
    value forward from the *server* config.)
-2. Pick Clarity for your own account: *Tools → User Settings → Design →
-   `clarity` → Save*. Core updates the session and force-reloads the page, so
-   the change applies immediately. If the frame still looks stock, hard-refresh
-   (`Ctrl+Shift+R`) so the browser drops the old CSS.
+2. Select it for your own account: *Tools → User Settings → Design → `clarity`
+   → Save*. Core updates the session and force-reloads the page, so it applies
+   immediately. If the frame still looks stock, hard-refresh (`Ctrl+Shift+R`) so
+   the browser drops the old CSS.
 
 Uninstall is `./uninstall.sh` with the same component flags, plus
 `--reset-users`, `--purge-branding` and `--keep-assignment`. See below for what
@@ -162,44 +151,38 @@ ISPConfig gates third-party themes on an *exact* string match against
 is enough to make core reset every affected user to the default theme at their
 next login. Re-running the installer just re-stamps the version files. After a
 *major* upgrade (3.3 → 3.4) also re-check the six template contracts in
-`BUILT-AGAINST.txt` against your own panel's stock theme, or against the
-ISPConfig source for your version.
+`themes/clarity/BUILT-AGAINST.txt` against your own panel's stock theme.
 
 **Uninstall does not "restore stock" by default, and that is on purpose.**
-Concretely:
 
-- The theme uninstaller removes the theme directory. It only resets
-  `sys_user.app_theme` back to `default` if you pass `--reset-users` — do pass
-  it unless you're reinstalling, because core never heals that column and
-  affected users otherwise get a "theme not compatible" banner at every login.
+- The theme half removes its directory. It only resets `sys_user.app_theme` back
+  to `default` if you pass `--reset-users` — do pass it unless you're
+  reinstalling, because core never heals that column and affected users
+  otherwise get a "theme not compatible" banner at every login.
 - Reverting `$conf['theme']` is always yours to do, in both config files. The
   uninstaller checks and warns you before it removes anything, but it will not
   edit ISPConfig config.
-- The module uninstaller **keeps your branding values** unless you pass
-  `--purge-branding`. Logo, panel name and login text are stock ISPConfig fields
-  that keep working and stay editable under System → Interface Config; the rest
-  sits inert in `sys_ini` for any brand-aware theme. That makes a reinstall
-  painless, but it does mean an uninstalled panel is still branded.
+- Your branding values are **kept** unless you pass `--purge-branding`. Logo,
+  panel name and login text are stock ISPConfig fields that keep working and
+  stay editable under System → Interface Config; the rest sits inert in
+  `sys_ini`. That makes reinstalling painless, but it does mean an uninstalled
+  panel is still branded.
 
-### One security note, up front
+### If you used the older repos
 
-Core's theme gate requires a file at `themes/<theme>/ispconfig_version` inside
-the panel's web root, so the web server serves it as a static file. An
-unauthenticated `GET /themes/clarity/ispconfig_version` returns your exact
-ISPConfig version *and patch level* — no session, no unusual log entry.
+This used to be three repositories — a theme, a module, and an umbrella that
+carried both as git submodules. That was a mistake: the design and the branding
+page are one contract, and independent version numbers meant nothing enforced
+that the two halves were in step. Running the module at v1.0.12 against the theme
+at v2.1.0 meant the accent colour silently did not apply — no error, no warning,
+nothing in a log to grep for.
 
-This is not specific to my theme: stock ISPConfig's `default` theme ships no
-such file and returns 404, so the exposure arrives with **any** third-party
-theme, this one included. I tested both. It also undercuts the module's own
-"hide the version" toggle, which only hides the display on the Help page while
-the same value stays readable one URL away.
-
-There is nothing I can do about it from inside the theme — core reads those
-exact filenames and there is no alternative location — so `contrib/webserver/`
-ships nginx and Apache deny snippets, in the same idiom ISPConfig already uses
-for `.lng` files in its own panel vhost, with a full explanation in that
-directory's README. If you install any third-party theme, it is worth applying
-regardless of whose theme it is.
+They are now one repository, one version number, one tag, starting at **v3.0.0**.
+No submodules, nothing to `--recurse-submodules`. The old
+`clarity-theme-ispconfig`, `ispconfig-customizer` and `ispconfig-toolkit` repos
+are **archived read-only** and each points here; please don't clone them. Your
+stored branding is untouched by the move — it lives in `sys_ini`, not in the
+clone. The installer detects a stale old clone and tells you to remove it.
 
 ### Licence & attribution
 
@@ -209,24 +192,23 @@ the README.
 
 The icon set is not just tokens: 29 official `@cds/core` Clarity icon shapes are
 bundled verbatim as data-URI SVG in
-`themes/clarity/assets/stylesheets/clarity/icons.css`, so Clarity's own
-iconography costs no extra font download (the stock theme's Font Awesome and
-Bootstrap Icons are still loaded as vendor CSS, for core's own markup). That is
-redistribution of a substantial portion of the upstream MIT
-software, so VMware's copyright and permission notice travels in that file's own
-header, where a downstream packager who vendors only `themes/` still gets it.
+`themes/clarity/assets/stylesheets/clarity/icons.css`, so the iconography costs
+no extra font download (the stock theme's Font Awesome and Bootstrap Icons are
+still loaded as vendor CSS, for core's own markup). That is redistribution of a
+substantial portion of the upstream MIT software, so VMware's copyright and
+permission notice travels in that file's own header, where a downstream packager
+who vendors only `themes/` still gets it.
 
-The module's UI ships in **seven** languages — English, German, French, Spanish,
-Italian, Dutch and Portuguese — with key parity enforced in CI. More
-translations very welcome.
+The UI ships in **seven** languages — English, German, French, Spanish, Italian,
+Dutch and Portuguese — with key parity enforced in CI. More translations very
+welcome.
 
 ### Feedback wanted
 
-This is offered back to the community free and open. I'd genuinely value
-review, bug reports, and translation help — and I'm keeping a short list of
-small **core** patches I found along the way (a couple of long-standing panel
-papercuts) that I'd like to offer upstream as merge requests if the maintainers
-are open to them.
+This is offered back to the community free and open. I'd genuinely value review,
+bug reports, and translation help — and I'm keeping a short list of small **core**
+patches I found along the way (a couple of long-standing panel papercuts) that
+I'd like to offer upstream as merge requests if the maintainers are open to them.
 
 Repo: https://github.com/wadejbeckett/ispconfig-theme-customizer
 
@@ -257,19 +239,21 @@ capture them before posting or leave those two dark-only.)
 - [x] Branding-page screenshot captured and committed (dark + light).
 - [x] v3.0.0 tagged and pushed. Release is live at
       `github.com/wadejbeckett/ispconfig-theme-customizer/releases/tag/v3.0.0`.
-- [x] Old repos (`clarity-theme-ispconfig` → renamed, `ispconfig-customizer`,
-      `ispconfig-toolkit`) archived read-only. The two archived repos each got a
-      README pointing at the merged repo, pushed *before* archiving — archiving
-      makes a repo read-only, so the order matters.
+- [x] Old repos archived read-only, each with a README pointing at the merged
+      repo, pushed *before* archiving — archiving makes a repo read-only, so the
+      order matters.
 - [x] raw.githubusercontent image URLs verified against the NEW repo name (not
       relying on the rename redirect): all three return HTTP 200, and all eight
       files in the attach table exist in the repo.
 - [x] `./install.sh --help` and `./uninstall.sh --help` run, and the flags in
       this post match what they print.
-- [ ] Decide whether to keep the "One security note, up front" section. It is
-      honest and it is not specific to this theme, but it is a lot of caveat for
-      a launch post — cutting it to a line in `SECURITY.md` is a defensible
-      call, and entirely yours.
+- [x] Reads as ONE product, not two that share a repo. No `X + Y` title, no
+      parallel per-component sections.
+- [ ] Decide whether the version-disclosure note belongs in the post at all. It
+      is documented honestly in `SECURITY.md` and mitigated in
+      `contrib/webserver/`; leading a launch post with it may be more caveat
+      than a first impression wants. Currently omitted here — that is a change
+      from an earlier draft, and it is your call.
 - [ ] Post from the project account; link the repo, not the live panel.
 - [ ] Later, separately: offer the upstream core patches in their own humble
       thread. Deliberately NOT part of this launch.
