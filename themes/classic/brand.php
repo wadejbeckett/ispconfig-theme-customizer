@@ -481,13 +481,16 @@ if (isset($branding['show_version']) && $branding['show_version'] === '0') {
 $hide_ispc  = isset($branding['show_ispconfig_credit']) && $branding['show_ispconfig_credit'] === '0';
 $hide_theme = isset($branding['show_theme_credit'])     && $branding['show_theme_credit']     === '0';
 
-if ($hide_ispc)  { $css .= ".nzc-credit-ispconfig { display: none; }\n"; }
+// The separator lives INSIDE .nzc-credit-theme (install.sh nests it there), so
+// hiding ours takes the separator with it by containment — no rule needed. The
+// case that actually dangles is the opposite one: hide core's line, keep ours,
+// and the footer opens with a stray "·". So the separator is hidden alongside
+// .nzc-credit-ispconfig, which is also what clarity's reader does.
+if ($hide_ispc)  { $css .= ".nzc-credit-ispconfig, .nzc-credit-sep { display: none; }\n"; }
 if ($hide_theme) { $css .= ".nzc-credit-theme { display: none; }\n"; }
 // With both gone the bar is an empty strip of padding, so remove it entirely
 // rather than leave a gap the operator has to wonder about.
 if ($hide_ispc && $hide_theme) { $css .= "#footer { display: none; }\n"; }
-// Ours hidden but core's kept: drop the separator that would otherwise dangle.
-if ($hide_theme && !$hide_ispc) { $css .= ".nzc-credit-sep { display: none; }\n"; }
 
 echo $css;
 

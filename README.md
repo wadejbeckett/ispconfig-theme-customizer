@@ -1,20 +1,25 @@
-# ispconfig-theme-customizer
+# ISPConfig Theme Customizer
 
-A modern, brandable front-end for the [ISPConfig](https://www.ispconfig.org/)
-control panel. It replaces the panel's interface with **Clarity**, a complete
-dark/light design built on VMware Clarity design tokens (navy navigation rail,
+An extension for the [ISPConfig](https://www.ispconfig.org/) control panel that
+makes the panel brandable. It replaces the panel's front-end with a design, and
+adds an admin-only **Branding** page inside the panel where you set your logo,
+panel name, accent colour and login details instead of editing files by hand.
+
+Two designs ship with the extension: **clarity**, a ground-up dark/light
+interface built on VMware Clarity design tokens (navy navigation rail,
 card-based content, Clarity icons, a theme switcher, a redesigned login screen),
-and adds an admin-only **Branding** page inside the panel where you set your
-logo, panel name, accent colour and login details instead of editing files by
-hand.
+and **classic**, the stock ISPConfig look made brandable. `--design` picks;
+[the interface](#the-interface) explains the difference. Every option on the
+Branding page works on both.
 
-The design reads its colours, logo and panel name from exactly the keys that
-page writes. That shared contract is why this is one product, with one version
-number and one tag.
+A design reads its colours, logo and panel name from exactly the keys that page
+writes. That shared contract is why this is one product, with one version number
+and one tag.
 
-It installs as ordinary ISPConfig extensions — a theme directory and a module
-directory — so **no core file is ever modified and no database schema is
-added**.
+Everything it installs is additive: a theme directory under
+`interface/web/themes/`, and an ISPConfig **module** — the mechanism that puts a
+page in the panel's top navigation — under `interface/web/customizer/`. **No
+core file is ever modified and no database schema is added.**
 
 ![Dashboard](mockup/shots/dark-dashboard-desktop.png)
 
@@ -23,13 +28,20 @@ added**.
 | ![Websites list](mockup/shots/dark-sites-desktop.png) | ![Login](mockup/shots/dark-login-desktop.png) |
 | ![Light dashboard](mockup/shots/light-dashboard-desktop.png) | ![Branding page](docs/screenshots/branding-page-dark.png) |
 
-More in [`mockup/shots/`](mockup/shots/) (mobile, forms, components, and
-`default-desktop.png` for a stock-panel comparison) and
-[`docs/screenshots/`](docs/screenshots/).
+Those are the clarity design. More in [`mockup/shots/`](mockup/shots/) (mobile,
+forms, components, and `default-desktop.png` for a stock-panel comparison — the
+shape classic keeps) and [`docs/screenshots/`](docs/screenshots/).
 
 ## What you get
 
 ### The interface
+
+Two designs, selected with `--design` (see [Install](#install)). They are
+alternatives, not layers: pick one, or install both and let each user choose in
+the Design picker. Both read the same brand tokens, so the Branding page drives
+either one.
+
+#### clarity — the default
 
 - Vertical brand rail, topbar, card surfaces, restyled tables, forms, tabs and
   modals — applied by CSS to the stock markup, not by rewriting pages.
@@ -51,17 +63,39 @@ More in [`mockup/shots/`](mockup/shots/) (mobile, forms, components, and
 - Vendor CSS/JS still loads from `themes/default`, so that directory must remain
   present. It always is.
 
+#### classic — the stock look, made brandable
+
+- The panel you already know: stock layout, stock stylesheets, stock everything,
+  with your logo, panel name, accent colour, navigation band and login
+  background applied on top of it. Install with `--design=classic`.
+- No CSS, fonts or images of its own. Every asset is served from
+  `themes/default/assets/`; it ships `brand.php`, `title.php` and a README.
+- Its **two** shell templates (`main.tpl.htm`, `main_login.tpl.htm`) are
+  **generated at install time** from the target panel's own
+  `themes/default/templates/` and are deliberately not in the repository —
+  which is why browsing GitHub shows no `templates/` directory under
+  `themes/classic/`. `install.sh` makes two mechanical changes (pin asset paths
+  to `themes/default/assets/`, link `brand.php` and `title.php` before
+  `</head>`), splits the stock footer credit into two addressable spans, and
+  aborts rather than deploy a template it cannot account for.
+- That is what makes classic stock-by-construction and self-healing: the
+  installer run you already have to do after a panel upgrade regenerates the
+  shell from the new stock markup, so there is nothing to diff by hand. Full
+  reasoning in [`themes/classic/README.md`](themes/classic/README.md).
+
 ### The Branding page
 
 One admin-only page, labelled **Branding** in the top navigation (not
 "Customizer" — that is only the directory name). It writes to the existing
-`sys_ini` row and to `sys_user.modules`; it creates no tables and no columns.
+`sys_ini` row and nothing else; it creates no tables and no columns. (The
+module-list grant lives in `bin/assign_module.php`, run by the installer, not in
+the page itself.)
 The UI ships in seven locales: English, German, French, Spanish, Italian, Dutch
 and Portuguese.
 
-**Some of it works on the stock ISPConfig theme** — these values are read by
+**Some of it works with no design installed at all** — these values are read by
 ISPConfig core itself, which is why `install.sh --module` is a real option on a
-panel that is staying on the stock look:
+panel that is staying on the stock `default` theme:
 
 | Setting | Where core reads it |
 |---|---|
@@ -73,22 +107,37 @@ panel that is staying on the stock look:
 The uploader exists because the stock panel's own logo upload is currently
 non-functional. The field it writes is ISPConfig's, not a new one.
 
-**Needs a brand-aware design** — Clarity, or anything else that adopts the
-[contract below](#the-brand-token-contract). Nothing in core reads these:
+If you want the stock look *and* the rest of this page to do something, install
+`--design=classic` rather than `--module` alone: same look, every option live.
+
+**Needs a brand-aware design** — clarity or classic, or anything else that
+adopts the [contract below](#the-brand-token-contract). Nothing in core reads
+these:
 
 | Setting | Effect |
 |---|---|
 | `accent_hex` | re-hues the blue ramp and accents |
-| `rail_hex` | the navy brand rail |
+| `rail_hex` | the main navigation band — clarity's navy brand rail, classic's navbar |
 | `login_bg` | login-screen background base |
 | `logo_url` | logo by reference (root-relative path or `https` URL); wins over the uploaded `custom_logo` |
 | `show_version` | hides the version surfaces on the Help page — read [Version disclosure](#version-disclosure) before relying on it |
 | `show_ispconfig_credit`, `show_theme_credit` | the two footer courtesy lines |
 
-Attribution defaults to **on**. The donate dashlet and the admin update notice
-are left exactly as ISPConfig ships them.
+Every row in both tables works on **both** designs. The two footer toggles are
+not clarity-only: `install.sh` splits stock's single footer line while it
+generates classic's shell, so each credit is individually hideable there too.
+
+Attribution defaults to **on**, on both designs, and neither toggle touches a
+licence notice. The donate dashlet and the admin update notice are left exactly
+as ISPConfig ships them.
 
 ## Install
+
+Installation is `git clone` plus `./install.sh`. ISPConfig's own *System →
+Extension Installer* screen lists only what is in
+[repo.ispconfig.com](https://repo.ispconfig.com/api/v1/list/), ISPConfig UG's
+curated repository, so this extension is **not** available there — there is no
+one-click path today.
 
 Clone somewhere the web server can read — **not `/root`**, which is mode 700 and
 serves nothing through a symlink:
@@ -101,11 +150,19 @@ sudo ./install.sh
 ```
 
 ```
-./install.sh [--theme|--module|--all] [--copy] [--no-assign] [ISPCONFIG_ROOT]
+./install.sh [--theme|--module|--all] [--design=<name>] [--copy]
+             [--no-assign] [ISPCONFIG_ROOT]
 ```
 
-- With no component flag, **both** are installed. `--theme` installs only the
-  interface; `--module` installs only the Branding page.
+- With no component flag, **both** halves are installed. `--theme` installs only
+  the design; `--module` installs only the Branding page.
+- `--design=<name>` takes `clarity`, `classic` or `all`, and is repeatable
+  (`--design=clarity --design=classic` is the same as `--design=all`). It is a
+  **separate axis** from `--theme`/`--module`/`--all`: those pick which halves,
+  this picks which design the theme half means. Default is `clarity` — a second
+  design never appears in the panel's Design picker unless you ask for it — so
+  bare `./install.sh` means exactly what it always did. Naming a design
+  alongside `--module` alone installs no design, and the installer says so.
 - `--copy` copies real files instead of symlinking. Symlinks mean the panel
   reads from your clone, so the clone and every parent directory must stay
   traversable by the web server; with `--copy` the clone can live anywhere and
@@ -116,22 +173,24 @@ sudo ./install.sh
 - `ISPCONFIG_ROOT` defaults to `/usr/local/ispconfig`.
 
 The installer also stamps the two version-gate files ISPConfig requires
-(`ispconfig_version` and `ISPC_VERSION`) and prints the next steps.
+(`ispconfig_version` and `ISPC_VERSION`) into every design directory it
+installs, and prints the next steps.
 
 Multiserver: install only on the server that serves the ISPConfig web interface.
 Slaves need nothing.
 
-**Then pick the theme.** Per user: *Tools → User Settings → Design → `clarity` →
-Save*. Core updates the session theme on save and force-reloads the page, so the
-change applies immediately — the code does not require a login round trip. In
-practice, if the frame still looks stock, log out and back in, then hard-refresh
-(`Ctrl+Shift+R`) so the browser drops the old CSS.
+**Then pick the design.** Per user: *Tools → User Settings → Design →
+`clarity` (or `classic`) → Save*. Core updates the session theme on save and
+force-reloads the page, so the change applies immediately — the code does not
+require a login round trip. In practice, if the frame still looks stock, log out
+and back in, then hard-refresh (`Ctrl+Shift+R`) so the browser drops the old
+CSS.
 
 **Manual step — login screen and system-wide default.** `install.sh` never
 edits ISPConfig configuration, by design. To set the default yourself, add
 
 ```php
-$conf['theme'] = 'clarity';
+$conf['theme'] = 'clarity';   // or 'classic'
 ```
 
 to **both** `interface/lib/config.inc.php` **and** `server/lib/config.inc.php`
@@ -152,32 +211,40 @@ Re-run the installer after **every** panel upgrade, including patch releases
 ```bash
 cd /opt/ispconfig-theme-customizer
 git fetch --tags && git checkout <tag>
-sudo ./install.sh
+sudo ./install.sh                     # add the same --design flags you used
 ```
 
-This is not just for major versions. Core compares the stamped
-`ispconfig_version` against `ISPC_APP_VERSION` as an exact string; on any
-mismatch it resets affected users to the default theme at login and the Design
-picker stops offering the theme. That value changes on every release.
+This applies to both designs and is not just for major versions. Core compares
+the stamped `ispconfig_version` against `ISPC_APP_VERSION` as an exact string;
+on any mismatch it resets affected users to the default theme at login and the
+Design picker stops offering the design. That value changes on every release.
 
 If you installed with `--copy`, re-run **with `--copy` again** — re-running
-without it converts the install into a symlink pointing at your clone.
+without it converts the install into a symlink pointing at your clone. Likewise
+pass `--design=` again for anything other than clarity: the default is clarity,
+so a bare re-run leaves a `classic` install unstamped, and the installer warns
+when it finds a design directory it did not stamp.
 
-Also diff the six overridden templates against the stock ones for your new
-version before trusting the upgrade. Compare against your own panel's
-`interface/web/themes/default/templates/` and
+If you run **clarity**, also diff its six overridden templates against the stock
+ones for your new version before trusting the upgrade. Compare against your own
+panel's `interface/web/themes/default/templates/` and
 `interface/web/dashboard/**/templates/`, or against the ISPConfig source for
-that version; `BUILT-AGAINST.txt` lists what each override must preserve. Full
-procedure in [UPGRADING.md](UPGRADING.md).
+that version; `BUILT-AGAINST.txt` lists what each override must preserve.
+**classic** needs no such diff — the same `install.sh` run regenerates its two
+shell templates from the new stock ones. Full procedure in
+[UPGRADING.md](UPGRADING.md).
 
 ## Compatibility
 
-- **ISPConfig 3.3** — developed and verified against **3.3.1p1**. The template
-  overrides are pinned to that version's stock markup.
+- **ISPConfig 3.3** — developed and verified against **3.3.1p1**. Clarity's
+  template overrides are pinned to that version's stock markup; classic's are
+  generated from whatever stock markup your panel has, and the generator aborts
+  if it does not recognise it.
 - **ISPConfig 3.2 is not verified.** It has not been tested, and nothing here
   claims it works. Treat it as unknown.
 - Root shell access to the panel server, and the stock `default` theme still
-  present (the theme loads its vendor CSS/JS from there).
+  present (clarity loads its vendor CSS/JS from there; classic loads everything
+  from there).
 - PHP CLI, for the module-assignment and cleanup helpers. Without it the
   installer says so and prints the manual equivalent.
 
@@ -194,34 +261,42 @@ curl -k https://panel.example.com:8080/themes/clarity/ispconfig_version
 # 3.3.1p1
 ```
 
-No session, no credentials. Anyone who can reach your login page learns the
-exact version **and patch level**. This is not stock behaviour: ISPConfig's own
-`default` theme ships no version file and that URL returns 404 — tested. The
-exposure arrives with any third-party theme, this one included. It also
-undercuts the `show_version` toggle on the Branding page, which hides the
+It applies to every design installed — `themes/classic/ispconfig_version` is
+served the same way. No session, no credentials. Anyone who can reach your login
+page learns the exact version **and patch level**. This is not stock behaviour:
+ISPConfig's own `default` theme ships no version file and that URL returns 404 —
+tested. The exposure arrives with any third-party theme, this one included. It
+also undercuts the `show_version` toggle on the Branding page, which hides the
 version on the Help page while the same string stays readable one URL away.
 
 The fix belongs at the web-server layer, and ISPConfig already denies files this
 way in its own panel vhost. Ready-made nginx and Apache snippets, with the full
-explanation, are in [`contrib/webserver/`](contrib/webserver/README.md).
+explanation, are in [`contrib/webserver/`](contrib/webserver/README.md); the
+rules match any theme directory, so one copy covers both designs.
 
 ## Uninstall
 
 ```
-./uninstall.sh [--theme|--module|--all] [--reset-users] [--purge-branding]
-               [--keep-assignment] [ISPCONFIG_ROOT]
+./uninstall.sh [--theme|--module|--all] [--design=<name>] [--reset-users]
+               [--purge-branding] [--keep-assignment] [ISPCONFIG_ROOT]
 ```
 
-Same component flags as the installer: with none, **both** are removed. What
-`uninstall.sh` actually does, stated plainly, because the defaults are
+Same component flags as the installer: with none, **both** halves are removed.
+`--design` takes the same values (`clarity`, `classic`, `all`) and is likewise
+repeatable — but here it defaults to **all designs**, not to clarity. Removal
+has to clear whatever might be on the panel; a narrow default would leave a
+stray design behind. Removing one that was never installed just prints that
+there was nothing to do.
+
+What `uninstall.sh` actually does, stated plainly, because the defaults are
 deliberately conservative:
 
-- **It does not restore stock on its own.** Removing `themes/clarity` leaves
+- **It does not restore stock on its own.** Removing a design directory leaves
   `sys_user.app_theme` still pointing at it; **`--reset-users`** is what clears
-  that column. That matters: core falls back to the default theme at session
-  level but never heals the stored value, so without it affected users get a
-  "theme not compatible" banner at every login. Skip it only if you are
-  reinstalling.
+  that column, for exactly the designs being removed. That matters: core falls
+  back to the default theme at session level but never heals the stored value,
+  so without it affected users get a "theme not compatible" banner at every
+  login. Skip it only if you are reinstalling.
 - **Your branding survives by default.** The `interface/web/customizer/`
   directory goes and `customizer` is stripped from users' module lists
   (resetting any startmodule that pointed at it), but the stored values are left
@@ -230,10 +305,11 @@ deliberately conservative:
   brand-aware design. **`--purge-branding`** wipes them;
   **`--keep-assignment`** leaves `customizer` in users' module lists.
 - **`$conf['theme']` is always yours to revert.** Nothing here edits ISPConfig
-  configuration. If you set it to `'clarity'`, set it back to `'default'` in
-  both files. `uninstall.sh` checks and warns you *before* it removes anything,
-  because a panel still configured for a theme directory that no longer exists
-  serves a login page with every stylesheet and script 404ing, silently.
+  configuration. If you set it to `'clarity'` or `'classic'`, set it back to
+  `'default'` in both files. `uninstall.sh` checks and warns you *before* it
+  removes anything, because a panel still configured for a theme directory that
+  no longer exists serves a login page with every stylesheet and script 404ing,
+  silently.
 
 ## The brand-token contract
 
@@ -242,18 +318,22 @@ global `sys_ini` row (`sysini_id = 1`) — the `[branding]` and `[misc]` values
 listed in the two tables above. That is the entire coupling: no shared code, no
 API.
 
-Clarity is the design this **ships with**, not the product's identity. Anything
-that reads the same keys inherits the whole Branding page for free — CI fails
-the build if a key the Branding page writes is not read back, so a future base
-design can drop in against a contract that is enforced rather than assumed. The
-reference implementation is
-[`themes/clarity/brand.php`](themes/clarity/brand.php) — a read-only, pre-auth
-stylesheet endpoint that queries one row, emits CSS custom properties, and is a
-no-op when nothing is set. The audit of every place ISPConfig identifies itself,
-and which of those can be overridden inside the extension envelope, is in
+Neither design is the product's identity — they are two implementations of the
+same contract, which is the point. Anything that reads the same keys inherits
+the whole Branding page for free; CI fails the build if a key the Branding page
+writes is not read back, so a further design can drop in against a contract that
+is enforced rather than assumed. The two implementations are
+[`themes/clarity/brand.php`](themes/clarity/brand.php) and
+[`themes/classic/brand.php`](themes/classic/brand.php) — read-only, pre-auth
+stylesheet endpoints that query one row, emit CSS, and are a no-op when nothing
+is set. Clarity emits custom properties into its own token layer; classic
+overrides stock's selectors, taking your hue and stock's own lightness for each
+role. The audit of every place ISPConfig identifies itself, and which of those
+can be overridden inside the extension envelope, is in
 [docs/WHITELABEL.md](docs/WHITELABEL.md).
 
-You can also brand it with two file swaps and no stored values at all: replace
+On clarity you can also brand it with two file swaps and no stored values at
+all: replace
 `themes/clarity/assets/images/wordmark-white.svg` (light artwork — it sits on
 the navy rail, the mobile header and the login card; any aspect ratio works) and
 drop your own icons into `themes/clarity/assets/favicon/`. A logo set on the
@@ -276,14 +356,17 @@ There are no submodules; a plain `git clone` is all you need.
 
 | Path | What |
 |---|---|
-| `themes/clarity/` | The interface: 6 templates, stylesheets, self-hosted fonts, brand assets. |
+| `themes/clarity/` | The default design: 6 templates, stylesheets, self-hosted fonts, brand assets. |
 | `themes/clarity/brand.php` | Brand-token reader — read-only pre-auth stylesheet endpoint; a no-op when nothing is set. |
 | `themes/clarity/BUILT-AGAINST.txt` | What is overridden, against which stock version, and the contracts each override preserves. |
-| `interface/web/customizer/` | The Branding page (directory name `customizer`; nav label "Branding"). |
+| `themes/classic/` | The stock look, made brandable. `brand.php`, `title.php`, a README — no assets, and no `templates/`. |
+| `themes/classic/brand.php` | Same reader against stock's selectors; also serves the login scene (`?scene=login`). |
+| `themes/classic/templates/` | **Generated by `install.sh`** from the target panel's own stock templates. Not in the repository, not to be hand-edited. |
+| `interface/web/customizer/` | The Branding page — an ISPConfig module (directory name `customizer`; nav label "Branding"). |
 | `bin/` | PHP helpers the scripts call: module assign/unassign, theme reset, branding purge. |
-| `install.sh`, `uninstall.sh` | One of each; `--theme` / `--module` / `--all` select what they act on, default everything. |
+| `install.sh`, `uninstall.sh` | One of each; `--theme` / `--module` / `--all` select which halves, `--design` selects which design. |
 | `contrib/webserver/` | nginx and Apache snippets for the version-disclosure mitigation. |
-| `DESIGN.md` | The design language — tokens, surfaces, component rules. |
+| `DESIGN.md` | Clarity's design language — tokens, surfaces, component rules. Does not apply to classic, which has none by design. |
 | `UPGRADING.md` | Version stamp and override contracts across panel upgrades. |
 | `docs/WHITELABEL.md` | Verified audit of ISPConfig's self-identification surfaces. |
 | `mockup/` | Offline dev harness: renders the real templates with sample content and screenshots them (`python3 build.py --shoot`; needs Playwright and a local ISPConfig source checkout for the stock vendor assets). Not needed to install. |

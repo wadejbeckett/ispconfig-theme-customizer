@@ -1,8 +1,17 @@
-# Clarity Theme for ISPConfig — Design Language
+# Clarity — Design Language
 
-**Clarity Theme for ISPConfig** (`themes/clarity/`) is a ground-up dark interface for
-ISPConfig: DirectAdmin-Evolution frame anatomy fused with VMware Clarity's
-dark surface system, anchored on the brand blue **`#0065AB`**.
+**Scope: this document describes the `clarity` design only.** The ISPConfig
+Theme Customizer extension ships two designs, and they have opposite goals.
+`clarity` (`themes/clarity/`) is the one with a design language of its own —
+everything below is about it. `classic` (`themes/classic/`) deliberately has
+none: it is the stock ISPConfig look, re-coloured from the same Branding page,
+with its shell generated from the panel's own stock templates at install time.
+None of the tokens, surfaces or component rules below apply to it — its rule is
+that it looks like stock. See `themes/classic/README.md`.
+
+**Clarity** is a ground-up dark and light interface for ISPConfig:
+DirectAdmin-Evolution frame anatomy fused with VMware Clarity's dark surface
+system, anchored on the brand blue **`#0065AB`**.
 
 The single source of truth is
 **`themes/clarity/assets/stylesheets/clarity/tokens.css`** — a self-contained
@@ -20,7 +29,7 @@ only** (`--nz-card`, `--nz-action`, …), never ramp steps, never raw hex.
 | Brand | `#0065AB` | the whole blue ramp is re-anchored on it (hue ~205); the rail navy `#01243D` is its 1100 step, the dark action blue `#2EA9FF` its 400 step |
 
 Clarity dark and DirectAdmin Evolution read as one family — desaturated dark
-blue-grey surfaces with a light action blue. Clarity Theme for ISPConfig sits deliberately in
+blue-grey surfaces with a light action blue. This design sits deliberately in
 that family while staying unmistakably its own (the navy rail and every
 interactive element derive from `#0065AB`).
 
@@ -67,7 +76,7 @@ interactive element derive from `#0065AB`).
 ```
 
 - **Rail** hosts the logo, the module nav (`#topnav-container`, markup from
-  the theme's own `topnav.tpl.htm`), and the contextual `#sidebar` (module
+  this design's own `topnav.tpl.htm`), and the contextual `#sidebar` (module
   tree, or news on the dashboard) under a hairline. Active module = navy-blue
   fill (`#002D4D`) + 3px rounded `#2EA9FF` bar + white text.
 - **Topbar** is sticky, blurred page-color; the global search is a single
@@ -130,10 +139,27 @@ changes per mode.
 
 ## 7. White-labeling
 
-The logo is a plain file: replace
+The normal route is the extension's **Branding** page, which stores logo, panel
+name and colours in `sys_ini`; `themes/clarity/brand.php` reads those keys and
+emits a stylesheet that overrides the shipped values (see
+[SECURITY.md](SECURITY.md) for that endpoint's exposure). A referenced
+`logo_url` wins over an uploaded logo, and with neither set but a panel name
+given, the name renders as a CSS text wordmark in the same slots.
+
+Below that, the shipped logo is a plain file: replace
 `themes/clarity/assets/images/wordmark-white.svg` with any SVG/PNG
 (white/light artwork recommended — it always sits on the navy brand
 band). Heights are fixed in CSS; width follows the file's aspect ratio.
+That file is the fallback the panel paints when nothing is set, and the
+design's tokens are the fallback for every colour the Branding page does not
+override — a re-brand should never need a component rewrite.
+
+The footer carries the two courtesy credits in separate spans
+(`.nz-credit-ispconfig`, `.nz-credit-theme`, with the `·` separator in
+`.nz-credit-sep`) so each is individually hideable from the Branding page.
+Both ship visible; hiding the theme credit alone also hides the separator, so
+nothing renders with an orphaned middot. Neither toggle touches a licence
+notice.
 
 ## 8. Typography
 
@@ -159,7 +185,7 @@ titles 14/600 (micro-header family), weights 400/500/600 only.
 - Every stock JS contract is honored — see `themes/clarity/BUILT-AGAINST.txt`
   for the full list and the `ispconfig_version` gating rules (stamped by
   `install.sh`).
-- Validation harness: `mockup/build.py` renders the theme's real templates
+- Validation harness: `mockup/build.py` renders this design's real templates
   with a vlibTemplate-compatible engine + captured/synthesized content
   fragments (`mockup/fragments/`), and screenshots dashboard, list, form and
   login pages at desktop + mobile.
@@ -171,7 +197,7 @@ titles 14/600 (micro-header family), weights 400/500/600 only.
 3. Follow §3/§4 shapes. The look survives any markup because every surface,
    edge and state derives from the same three ramps.
 
-## 11. Clarity alignment & deviation register
+## 11. VMware Clarity alignment & deviation register
 
 Audited token-by-token against `@cds/core` 6.17 **dark, standard density**
 (2026-07-09). Adopted directly: surface ladder roles, text hierarchy
@@ -210,4 +236,5 @@ Deliberate deviations (each for brand, anatomy, or WCAG):
 - DirectAdmin Evolution — visual reference only (anatomy/metrics studied from
   the public demo; no assets copied).
 - Inter — SIL OFL 1.1, self-hosted.
-- ISPConfig — BSD; no core file modified, everything ships as a theme.
+- ISPConfig — BSD; no core file modified. Everything ships inside the
+  extension's own directories, this design's being `themes/clarity/`.

@@ -1,7 +1,7 @@
 # Upstream contributions for ISPConfig core
 
-Three core issues surfaced while building the Clarity theme and Customizer module
-against ISPConfig 3.3 (dev/3.3.1p1). None are theme/module bugs — they're in core
+Four core issues surfaced while building this extension against ISPConfig 3.3
+(dev/3.3.1p1). None are bugs in the extension — they're in core
 — so rather than work around them silently we're offering them back to the
 project. Each was located and quoted against the real 3.3 source and then
 independently re-verified; the candidate patches below are **starting points**,
