@@ -6,13 +6,22 @@ $wb['settings_saved_txt'] = 'Einstellungen gespeichert. Farbänderungen erschein
 
 $wb['logo_head_txt'] = 'Logo';
 $wb['logo_txt'] = 'Logo-Datei';
-$wb['logo_hint_txt'] = 'Wählen Sie eine Datei und klicken Sie dann auf „Logo hochladen" — das Logo wird eigenständig hochgeladen, getrennt von der Schaltfläche „Speichern" unten. SVG, PNG, JPEG, GIF oder WebP, unter 45 KB. Helle Grafiken funktionieren am besten — das Logo sitzt auf der dunklen Seitenleiste und im Anmeldebereich.';
+$wb['logo_hint_txt'] = 'Das Logo, das AUF einem hellen Hintergrund sitzt und daher dunkel oder farbig sein sollte. Dieses verwendet ISPConfig selbst: Die Standard-Kopfzeile und die Anmeldeseite sind beide hell. Wählen Sie eine Datei und klicken Sie dann auf „Logo hochladen" — das Logo wird eigenständig hochgeladen, getrennt von der Schaltfläche „Speichern" unten. SVG, PNG, JPEG, GIF oder WebP, unter 45 KB.';
 $wb['upload_txt'] = 'Logo hochladen';
-$wb['logo_url_txt'] = 'Logo-URL / -Pfad (Überschreibung)';
-$wb['logo_url_hint_txt'] = 'Optional. Ein serverrelativer Pfad (empfohlen — z. B. /themes/custom/logo.svg für eine Datei, die Sie auf dem Server abgelegt haben) oder eine https://-URL. Wenn gesetzt, verwenden Branding-fähige Themes diese überall anstelle des hochgeladenen Logos, auch auf ihrer Anmeldeseite; nur das Standard-Theme von ISPConfig verwendet stets das hochgeladene Logo. SVG oder ein 2x-PNG von etwa 500&times;160 funktioniert am besten (es wird etwa 26 px hoch angezeigt). Eine externe URL bindet Ihre Anmeldeseite an diesen Host und gibt ihm die IP-Adressen Ihrer Besucher preis — ein lokaler Pfad ist vorzuziehen.';
-$wb['logo_url_error_regex'] = 'Die Logo-Überschreibung muss ein serverrelativer Pfad (/…) oder eine https://-URL sein, ohne Leerzeichen, Anführungszeichen oder Klammern.';
+$wb['logo_url_txt'] = 'Logo-Pfad / -URL für helle Hintergründe (Überschreibung)';
+$wb['logo_url_hint_txt'] = 'Optional; hat Vorrang vor der hochgeladenen Datei oben. Ein serverrelativer Pfad (empfohlen — z. B. /themes/custom/logo.svg für eine Datei, die Sie auf dem Server abgelegt haben) oder eine https://-URL. Wenn gesetzt, verwenden Branding-fähige Designs diesen überall, auch auf ihrer Anmeldeseite; nur das Standard-Theme von ISPConfig verwendet stets das hochgeladene Logo, denn nur dieses kennt der Kern. SVG oder ein 2x-PNG von etwa 500&times;160 funktioniert am besten (es wird etwa 26 px hoch angezeigt). Eine externe URL bindet Ihre Anmeldeseite an diesen Host und gibt ihm die IP-Adressen Ihrer Besucher preis — ein lokaler Pfad ist vorzuziehen.';
+$wb['logo_url_error_regex'] = 'Der Logo-Pfad für helle Hintergründe muss ein serverrelativer Pfad (/…) oder eine https://-URL sein, ohne Leerzeichen, Anführungszeichen oder Klammern.';
 $wb['logo_remove_txt'] = 'Entfernen';
 $wb['used_logo_txt'] = 'Aktuelles Logo';
+$wb['logo_variants_hint_txt'] = 'Zwei Felder, weil die Designs unterschiedlich hell sind: Clarity setzt das Logo auf eine dunkelblaue Leiste, die Standardansicht auf eine hellgraue Kopfzeile. Füllen Sie das Feld aus, das zu Ihrem Design passt. Lassen Sie das andere leer, übernimmt es einfach dieses hier — genau so, wie sich das Panel schon heute verhält. Jede Vorschau wird auf dem Hintergrund gezeigt, für den ihr Feld gedacht ist, sodass ein Logo im falschen Feld sofort auffällt.';
+$wb['logo_on_light_head_txt'] = 'Logo für helle Hintergründe';
+$wb['logo_on_dark_head_txt'] = 'Logo für dunkle Hintergründe';
+$wb['logo_on_dark_txt'] = 'Logo-Datei';
+$wb['logo_on_dark_hint_txt'] = 'Das Logo, das AUF einem dunklen Hintergrund sitzt und daher hell oder weiß sein sollte. Die dunkelblaue Seitenleiste und der Anmeldebereich von Clarity verwenden dieses. Gleiche Formate, gleiche Grenze von 45 KB. Wichtig zu wissen: ISPConfig hat nur eine Logo-Spalte und diese Erweiterung legt keine weitere an, deshalb wird dieses Bild in den Interface-Einstellungen abgelegt — es wird also bei Seitenaufrufen erneut gelesen und beim nächsten Speichern in das Änderungsprotokoll geschrieben. Falls das auf Ihrem Panel eine Rolle spielt, verwenden Sie stattdessen das Pfadfeld unten; ein Pfad kostet nur wenige Bytes.';
+$wb['used_logo_on_dark_txt'] = 'Aktuelles Logo';
+$wb['logo_url_on_dark_txt'] = 'Logo-Pfad / -URL für dunkle Hintergründe (Überschreibung)';
+$wb['logo_url_on_dark_hint_txt'] = 'Optional; hat Vorrang vor der hochgeladenen Datei oben. Dieselben Regeln wie beim Pfad für helle Hintergründe: ein serverrelativer Pfad (empfohlen) oder eine https://-URL. So halten Sie ein Logo für dunkle Hintergründe zudem vollständig aus den Interface-Einstellungen heraus — ein Pfad sind wenige Bytes, ein hochgeladenes Bild bis zu 60 KB.';
+$wb['logo_url_on_dark_error_regex'] = 'Der Logo-Pfad für dunkle Hintergründe muss ein serverrelativer Pfad (/…) oder eine https://-URL sein, ohne Leerzeichen, Anführungszeichen oder Klammern.';
 
 $wb['brand_head_txt'] = 'Name & Farben';
 $wb['company_name_txt'] = 'Panel-Name';
@@ -50,3 +59,4 @@ $wb['demo_mode_txt'] = 'Diese Funktion ist im Demo-Modus deaktiviert.';
 
 $wb['btn_save_txt'] = 'Speichern';
 $wb['btn_cancel_txt'] = 'Abbrechen';
+$wb['logo_delete_failed_txt'] = 'Das Logo konnte nicht entfernt werden — der Datenbankschreibvorgang ist fehlgeschlagen. Es ist weiterhin gespeichert; bitte erneut versuchen.';

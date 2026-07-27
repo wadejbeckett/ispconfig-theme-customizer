@@ -4,3 +4,9 @@ $wb['White-label'] = 'White-label';
 $wb['Branding'] = 'Branding';
 // resolved via $app->lng() in customizer_edit.php (the module lng is auto-loaded there)
 $wb['no_logo_set_txt'] = 'No custom logo set — the theme shows its own default.';
+// Shown under a logo preview that is displaying the OTHER variant because its
+// own slot is empty. They live in THIS wordbook, not the tform one, for the same
+// reason as no_logo_set_txt: logo_upload.php renders the very same previews and
+// has no tform at all, so it resolves them through $app->lng().
+$wb['logo_fallback_from_dark_txt'] = 'No light-background logo set, so the dark-background one is shown here — that is what a light design will display. Upload a dark or full-colour mark to change it.';
+$wb['logo_fallback_from_light_txt'] = 'No dark-background logo set, so the light-background one is shown here — that is what a dark design will display. Upload a light or white mark to change it.';

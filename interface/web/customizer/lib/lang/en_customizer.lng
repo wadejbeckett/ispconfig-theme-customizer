@@ -5,16 +5,33 @@ $wb['customizer_desc_txt'] = 'Brand this control panel as your own — the logo,
 $wb['settings_saved_txt'] = 'Settings saved. Colour changes appear after a full page refresh (F5).';
 
 $wb['logo_head_txt'] = 'Logo';
+// The two logo slots are named after the BACKGROUND they sit on, not after the
+// colour of the artwork: which of your designs has a dark header is something
+// you can look at, whereas "is this artwork light enough" is a judgement call.
+$wb['logo_variants_hint_txt'] = 'Two slots, because designs disagree about brightness: clarity puts the logo on a dark navy rail, the stock look puts it on a light grey header. Fill in the slot that matches the design you use. Leave the other empty and it simply borrows this one, exactly as the panel behaves today. Each preview is drawn on the background its slot is for, so a mark in the wrong slot is obvious at a glance.';
+
+$wb['logo_on_light_head_txt'] = 'Logo for light backgrounds';
 $wb['logo_txt'] = 'Logo file';
-$wb['logo_hint_txt'] = 'Choose a file, then click "Upload logo" — the logo uploads on its own, separately from the Save button at the bottom. SVG, PNG, JPEG, GIF or WebP, under 45 KB. Light artwork works best — it sits on the dark sidebar and login band.';
+$wb['logo_hint_txt'] = 'The mark that sits ON a light background, so it should be dark or full-colour. This is the one ISPConfig itself uses: the stock header and the login page are both light. Choose a file, then click "Upload logo" — the logo uploads on its own, separately from the Save button at the bottom. SVG, PNG, JPEG, GIF or WebP, under 45 KB.';
 $wb['upload_txt'] = 'Upload logo';
-$wb['logo_url_txt'] = 'Logo URL / path (override)';
-$wb['logo_url_hint_txt'] = 'Optional. A root-relative path (recommended — e.g. /themes/custom/logo.svg for a file you placed on the server) or an https:// URL. When set, brand-aware themes use it instead of the uploaded logo everywhere, including their login screen; only the stock ISPConfig theme always uses the uploaded one. SVG or a 2x PNG around 500&times;160 works best (it displays about 26px tall). A remote URL ties your login page to that host and reveals visitor IPs to it — prefer a local path.';
-$wb['logo_url_error_regex'] = 'The logo override must be a root-relative path (/…) or an https:// URL, without spaces, quotes, brackets or parentheses.';
+$wb['logo_url_txt'] = 'Light-background logo path / URL (override)';
+$wb['logo_url_hint_txt'] = 'Optional, and it wins over the uploaded file above. A root-relative path (recommended — e.g. /themes/custom/logo.svg for a file you placed on the server) or an https:// URL. When set, brand-aware designs use it everywhere, including their login screen; only the stock ISPConfig theme always uses the uploaded one, because the upload is the only value core knows about. SVG or a 2x PNG around 500&times;160 works best (it displays about 26px tall). A remote URL ties your login page to that host and reveals visitor IPs to it — prefer a local path.';
+$wb['logo_url_error_regex'] = 'The light-background logo path must be a root-relative path (/…) or an https:// URL, without spaces, quotes, brackets or parentheses.';
+
+$wb['logo_on_dark_head_txt'] = 'Logo for dark backgrounds';
+$wb['logo_on_dark_txt'] = 'Logo file';
+$wb['logo_on_dark_hint_txt'] = 'The mark that sits ON a dark background, so it should be light or white. Clarity’s navy sidebar and login band use this one. Same formats and the same 45 KB limit. Worth knowing: ISPConfig has only one logo column and this extension adds none, so this image is kept in the interface settings instead — which means it is re-read on page loads and is written into the change log the next time you press Save. If that matters on your panel, use the path field below instead; a path costs a few bytes.';
+$wb['used_logo_on_dark_txt'] = 'Current logo';
+$wb['logo_url_on_dark_txt'] = 'Dark-background logo path / URL (override)';
+$wb['logo_url_on_dark_hint_txt'] = 'Optional, and it wins over the uploaded file above. Same rules as the light-background path: a root-relative path (recommended) or an https:// URL. This is also how you keep a dark-background logo out of the interface settings entirely — a path is a few bytes where an uploaded image is up to 60 KB.';
+$wb['logo_url_on_dark_error_regex'] = 'The dark-background logo path must be a root-relative path (/…) or an https:// URL, without spaces, quotes, brackets or parentheses.';
+
 $wb['logo_remove_txt'] = 'Remove';
 $wb['used_logo_txt'] = 'Current logo';
-// no_logo_set_txt is resolved via $app->lng(), which reads lib/lang/en.lng — the
-// copy that used to live here was dead (this file feeds the tform wordbook only).
+// no_logo_set_txt and the two logo_fallback_* notes are resolved via $app->lng(),
+// which reads lib/lang/en.lng — logo_upload.php renders the same previews and has
+// no tform at all, so they cannot live in this file (which feeds the tform
+// wordbook only). A copy here would be dead.
 
 $wb['brand_head_txt'] = 'Name & colours';
 $wb['company_name_txt'] = 'Panel name';
@@ -52,3 +69,4 @@ $wb['demo_mode_txt'] = 'This function is disabled in demo mode.';
 
 $wb['btn_save_txt'] = 'Save';
 $wb['btn_cancel_txt'] = 'Cancel';
+$wb['logo_delete_failed_txt'] = 'Could not remove the logo — the database write failed. It is still stored; try again.';

@@ -10,9 +10,25 @@
  * README ("Brand-token contract"), never code.
  *
  * Contract consumed (sys_ini, global row sysini_id = 1):
- *   custom_logo  column           -> logo (data URI), via CSS content:
- *   config [branding] logo_url    -> logo by reference (root-relative path or
- *                                    https URL); wins over custom_logo
+ *   THE LOGO — two variants, each named by the BACKGROUND it sits on:
+ *     custom_logo  column              -> LIGHT-background mark, uploaded
+ *     config [branding] logo_url       -> LIGHT-background mark, by reference
+ *                                         (root-relative path or https URL)
+ *     config [branding] logo_on_dark   -> DARK-background mark, uploaded
+ *                                         (a data URI; core has no column for
+ *                                         it and we may not add one)
+ *     config [branding] logo_url_on_dark -> DARK-background mark, by reference
+ *   Resolution, which must stay identical to themes/classic/brand.php and to
+ *   the customizer's lib/preview.inc.php:
+ *     1. within a variant, a valid reference beats an uploaded data URI (the
+ *        precedence logo_url has always had over custom_logo);
+ *     2. this design asks for the variant matching ITS OWN background and falls
+ *        back to the other when that variant is empty.
+ *   Clarity's rail and topbar are navy in both colour modes, so the wanted
+ *   variant here is the DARK-background one. Rule 2 is what keeps this change
+ *   non-breaking: a panel with only the historical custom_logo still renders it
+ *   everywhere, exactly as before.
+ *
  *   config [branding] accent_hex  -> re-hues the blue ramp + accents
  *   config [branding] rail_hex    -> the navy brand rail
  *   config [branding] login_bg    -> login-screen background base
@@ -215,35 +231,57 @@ if ($accent !== '' || $login_bg !== '') {
 }
 
 /* ---- logo: override the shipped wordmark ---- */
-// Source precedence: [branding] logo_url (a file the admin references — a
-// root-relative path, or an https URL) wins over the uploaded custom_logo
-// data URI. Both are validated with anchored character-class regexes so no
-// value can break out of the CSS url("...") context (no quotes, parens,
-// whitespace, angle brackets, or backslashes can pass).
-$logo_src = '';
-if (isset($branding['logo_url']) && is_string($branding['logo_url'])
-    // (?!/) rejects protocol-relative "//host/..." — that is a REMOTE url in
-    // disguise; writer-side validation matches, this is reader-side parity
-    // The D modifier is load-bearing, not decoration: without it PCRE's `$` also
-    // matches BEFORE a final newline, so "/img/logo.png\n" would validate and the
-    // raw LF would be emitted inside content: url("...") — a literal newline
-    // terminates a double-quoted CSS string, breaking this sheet for every
-    // visitor including pre-auth on the login screen. The writer-side validator
-    // in the module's tform carries /D for the same reason.
-    && preg_match('#^(https://[^\s"\'<>()\\\\]+|/(?!/)[^\s"\'<>()\\\\]+)$#D', $branding['logo_url'])) {
-    $logo_src = $branding['logo_url'];
-} elseif ($custom_logo !== '' && preg_match('#^data:image/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$#i', $custom_logo)) {
-    $logo_src = $custom_logo;
-}
+// Two variants, resolved by brand_logo_variant() below: within each, a
+// reference (a file the admin points at) beats the uploaded data URI. Every
+// value is validated with an anchored character-class regex so none can break
+// out of the CSS url("...") context — no quotes, parens, whitespace, angle
+// brackets or backslashes can pass.
+$logo_on_dark = brand_logo_variant(
+    isset($branding['logo_url_on_dark']) ? $branding['logo_url_on_dark'] : '',
+    isset($branding['logo_on_dark'])     ? $branding['logo_on_dark']     : ''
+);
+$logo_on_light = brand_logo_variant(
+    isset($branding['logo_url']) ? $branding['logo_url'] : '',
+    $custom_logo
+);
+// Clarity's brand slots sit on the navy rail, the navy topbar and the login
+// band, so this design wants the DARK-background mark — and falls back to the
+// light-background one when the operator has only set that. One logo in
+// custom_logo, which is every panel in the field today, therefore renders
+// exactly as it did before this second variant existed.
+$logo_src = ($logo_on_dark !== '') ? $logo_on_dark : $logo_on_light;
+
 if ($logo_src !== '') {
+    // Emit the value ONCE into a custom property and reference it from each slot.
+    // An uploaded logo is a base64 data URI up to the 45 KB cap, so repeating it
+    // inline per selector multiplied the stylesheet by the number of slots — with
+    // both variants supplied that was ~240 KB of CSS, served UNAUTHENTICATED on
+    // every login page render. A custom property costs one copy and the browser
+    // resolves it at each use site.
+    $css .= ":root { --nz-brand-logo: url(\"{$logo_src}\"); }\n";
     // both dimensions auto + a max box -> the logo keeps its aspect ratio and fits,
     // for any width (the base rules pin a fixed height, which would distort wide logos).
-    $css .= "#logo img { content: url(\"{$logo_src}\"); height: auto; width: auto; max-height: 26px; max-width: 180px; }\n";
-    $css .= ".nz-topbar-brand img { content: url(\"{$logo_src}\"); height: auto; width: auto; max-height: 18px; max-width: 120px; }\n";
-    $css .= ".nzl-brand img { content: url(\"{$logo_src}\"); height: auto; width: auto; max-height: 36px; max-width: 100%; }\n";
-    // custom logos keep their own colours in light mode: undo the theme's
-    // ink-darkening of the shipped wordmark, add a soft halo for legibility
-    $css .= ":root[data-nz-theme='light'] .nzl-brand img { filter: drop-shadow(0 1px 6px rgba(2, 26, 43, 0.35)); }\n";
+    $css .= "#logo img { content: var(--nz-brand-logo); height: auto; width: auto; max-height: 26px; max-width: 180px; }\n";
+    $css .= ".nz-topbar-brand img { content: var(--nz-brand-logo); height: auto; width: auto; max-height: 18px; max-width: 120px; }\n";
+    $css .= ".nzl-brand img { content: var(--nz-brand-logo); height: auto; width: auto; max-height: 36px; max-width: 100%; }\n";
+    // The rail and topbar are navy in BOTH colour modes, so the mark above is
+    // right for them everywhere. The LOGIN slot is the one exception: in light
+    // mode .nzl-brand sits on a light page, which is the same background/artwork
+    // mismatch this two-variant model exists to fix, one slot further down.
+    //
+    // So when the operator has genuinely supplied both variants, give the light
+    // mode's login slot the light-background mark — and drop the halo with it,
+    // because a mark that suits its background does not need rescuing. When only
+    // one variant is set the two resolve to the same value, the condition is
+    // false, and the halo is emitted exactly as it always was.
+    if ($logo_on_light !== '' && $logo_on_dark !== '' && $logo_on_light !== $logo_src) {
+        $css .= ":root { --nz-brand-logo-light: url(\"{$logo_on_light}\"); }\n";
+        $css .= ":root[data-nz-theme='light'] .nzl-brand img { content: var(--nz-brand-logo-light); filter: none; }\n";
+    } else {
+        // custom logos keep their own colours in light mode: undo the theme's
+        // ink-darkening of the shipped wordmark, add a soft halo for legibility
+        $css .= ":root[data-nz-theme='light'] .nzl-brand img { filter: drop-shadow(0 1px 6px rgba(2, 26, 43, 0.35)); }\n";
+    }
     // mask the content swap: on a hard refresh the SHIPPED wordmark paints for
     // a frame or two before the custom image decodes — a white-label leak. The
     // brand slots start invisible and fade in once the swap has had its beat.
@@ -315,6 +353,45 @@ function brand_parse_config($config)
         }
     }
     return array();
+}
+
+/**
+ * Resolve ONE logo variant to the value this sheet may emit, or '' when the
+ * variant is unset or holds something we will not print.
+ *
+ * $ref  the by-reference slot   (logo_url / logo_url_on_dark)
+ * $data the uploaded data URI   (sys_ini.custom_logo / [branding] logo_on_dark)
+ *
+ * The reference wins, which is the precedence logo_url has always had over
+ * custom_logo — unchanged, now simply applied to each variant in turn.
+ *
+ * Both patterns are anchored and both are duplicated in themes/classic/brand.php
+ * and in the customizer's lib/preview.inc.php. The duplication is deliberate:
+ * this is a pre-authentication endpoint that must keep working with the
+ * customizer uninstalled, so it cannot include the module's code. All copies
+ * must be changed together.
+ *
+ * (?!/) rejects protocol-relative "//host/..." — a REMOTE url in disguise, which
+ * would defeat the local-path privacy contract; writer-side validation matches.
+ *
+ * The D modifier is load-bearing, not decoration: without it PCRE's `$` also
+ * matches BEFORE a final newline, so "/img/logo.png\n" would validate and the
+ * raw LF would be emitted inside content: url("...") — a literal newline
+ * terminates a double-quoted CSS string, breaking this sheet for every visitor
+ * including pre-auth on the login screen. The writer-side validator in the
+ * module's tform carries /D for the same reason.
+ */
+function brand_logo_variant($ref, $data)
+{
+    if (is_string($ref) && $ref !== ''
+        && preg_match('#^(https://[^\s"\'<>()\\\\]+|/(?!/)[^\s"\'<>()\\\\]+)$#D', $ref)) {
+        return $ref;
+    }
+    if (is_string($data) && $data !== ''
+        && preg_match('#^data:image/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$#i', $data)) {
+        return $data;
+    }
+    return '';
 }
 
 /** The two rail custom-properties, emitted identically wherever rail is set. */

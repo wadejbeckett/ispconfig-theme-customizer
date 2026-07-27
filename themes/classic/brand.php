@@ -10,10 +10,24 @@
  * It is the same brand-token contract, read against a different skin.
  *
  * Contract consumed (sys_ini, global row sysini_id = 1):
- *   custom_logo  column           -> nothing to do: CORE itself inlines it on
- *                                    the stock shell. We must not fight it.
- *   config [branding] logo_url    -> logo by reference (root-relative path or
- *                                    https URL); wins over custom_logo
+ *   THE LOGO — two variants, each named by the BACKGROUND it sits on:
+ *     custom_logo  column              -> LIGHT-background mark, uploaded.
+ *                                         Usually nothing to do: CORE itself
+ *                                         inlines that column on the stock
+ *                                         shell, and we must not fight it.
+ *     config [branding] logo_url       -> LIGHT-background mark, by reference
+ *     config [branding] logo_on_dark   -> DARK-background mark, uploaded
+ *     config [branding] logo_url_on_dark -> DARK-background mark, by reference
+ *   Resolution, identical to themes/clarity/brand.php and to the customizer's
+ *   lib/preview.inc.php:
+ *     1. within a variant, a valid reference beats an uploaded data URI;
+ *     2. this design asks for the variant matching ITS OWN background and falls
+ *        back to the other when that variant is empty.
+ *   classic's header is stock's #F2F5F7 and its login card is white, so the
+ *   wanted variant here is the LIGHT-background one — which is exactly the
+ *   column core already renders, so in the common case this file still emits
+ *   nothing at all for the logo.
+ *
  *   config [branding] accent_hex  -> primary action, links, focus, active nav
  *   config [branding] rail_hex    -> the main-navigation band (+ mobile menu)
  *   config [branding] login_bg    -> login-screen background
@@ -339,54 +353,65 @@ if ($rail !== '') {
 /* =========================================================================
  * logo + wordmark
  * -------------------------------------------------------------------------
- * Precedence is the same as Clarity's: a valid [branding] logo_url wins over
- * the uploaded custom_logo, and the panel name is the wordmark only when there
- * is no logo at all.
+ * Same two-variant model as Clarity, read against the opposite background.
+ * classic's header is stock's #F2F5F7 and its login card is white, so this
+ * design asks for the LIGHT-background mark and falls back to the dark one only
+ * if the operator has set nothing else. The panel name becomes the wordmark
+ * only when there is no logo of either variant.
  *
- * custom_logo alone needs NO rule here: core reads that column itself and
- * inlines it into the stock shell (index.php:100-109 writes a data URI into
- * #logo's style attribute, and main_login.tpl.htm renders it as an <img>).
- * Duplicating that would be two code paths racing over one value.
+ * The uploaded LIGHT-background mark needs NO rule here in the ordinary case:
+ * it lives in sys_ini.custom_logo, and core reads that column itself and inlines
+ * it into the stock shell (index.php writes a data URI into #logo's style
+ * attribute, and main_login.tpl.htm renders it as an <img>). Duplicating that
+ * would be two code paths racing over one value. So the test below is not "is
+ * there a logo_url" but "is the resolved logo something OTHER than the value
+ * core is already painting" — which covers three cases with one rule:
+ *   - a logo_url reference (core knows nothing about it), as before;
+ *   - the dark-background mark arriving by fallback because the operator has
+ *     only uploaded that one — core would otherwise paint sys_ini.default_logo,
+ *     i.e. the stock ISPConfig logo, which is the single thing a white-label
+ *     panel must never show;
+ *   - both, in which case the reference wins as it always has.
  *
- * logo_url is the one core knows nothing about, and overriding it costs
- * !important: core's logo is an INLINE style attribute, which outranks every
- * declaration in an external sheet no matter how specific. The declarations are
- * kept to the image itself — the slot's width/height stay core's, because they
- * are computed from the logo actually stored and second-guessing them here
- * would move the header for everyone.
+ * Overriding core costs !important: core's logo is an INLINE style attribute,
+ * which outranks every declaration in an external sheet no matter how specific.
+ * The declarations stay on the image itself — the slot's width/height remain
+ * core's. Those dimensions are computed from whatever core itself is holding
+ * (custom_logo, else default_logo's 200x65, which is also #logo's fixed size in
+ * ispconfig.css), so they are the right box to fit into and background-size:
+ * contain does the fitting; second-guessing them here would move the header for
+ * everyone.
  * =======================================================================*/
-$logo_url = '';
-if (isset($branding['logo_url']) && is_string($branding['logo_url'])
-    // (?!/) rejects protocol-relative "//host/..." — that is a REMOTE url in
-    // disguise; writer-side validation matches, this is reader-side parity.
-    // The D modifier is load-bearing, not decoration: without it PCRE's `$` also
-    // matches BEFORE a final newline, so "/img/logo.png\n" would validate and the
-    // raw LF would be emitted inside url("...") — a literal newline terminates a
-    // double-quoted CSS string, breaking this sheet for every visitor including
-    // pre-auth on the login screen. The writer-side validator in the module's
-    // tform carries /D for the same reason.
-    && preg_match('#^(https://[^\s"\'<>()\\\\]+|/(?!/)[^\s"\'<>()\\\\]+)$#D', $branding['logo_url'])) {
-    $logo_url = $branding['logo_url'];
-}
-// Whether CORE already has a logo to render. An unparseable custom_logo counts
-// as none: core would inline the broken value either way, so treating it as
-// "no logo" lets the wordmark below replace it instead of stacking on top.
-$core_logo = ($custom_logo !== '' && preg_match('#^data:image/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$#i', $custom_logo));
+// Whether CORE already has a logo to render, and which value it is. An
+// unparseable custom_logo counts as none: core would inline the broken value
+// either way, so treating it as "no logo" lets the wordmark below replace it
+// instead of stacking on top.
+$core_logo = (preg_match('#^data:image/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$#i', $custom_logo)) ? $custom_logo : '';
 
-if ($logo_url !== '') {
+$logo_on_light = brand_logo_variant(
+    isset($branding['logo_url']) ? $branding['logo_url'] : '',
+    $custom_logo
+);
+$logo_on_dark = brand_logo_variant(
+    isset($branding['logo_url_on_dark']) ? $branding['logo_url_on_dark'] : '',
+    isset($branding['logo_on_dark'])     ? $branding['logo_on_dark']     : ''
+);
+$logo_src = ($logo_on_light !== '') ? $logo_on_light : $logo_on_dark;
+
+if ($logo_src !== '' && $logo_src !== $core_logo) {
     if ($scene === 'login') {
         // The login shell renders the logo as a plain <img> in .panel-heading
         // (main_login.tpl.htm). content: swaps the rendered image; auto sizing
         // with a max box keeps any aspect ratio instead of squashing it. This
         // selector is emitted in the login scene ONLY — .panel-heading img would
         // otherwise match any Bootstrap panel in the app frame.
-        $css .= ".panel-heading img { content: url(\"{$logo_url}\"); height: auto; width: auto; "
+        $css .= ".panel-heading img { content: url(\"{$logo_src}\"); height: auto; width: auto; "
               . "max-height: 64px; max-width: 100%; }\n";
     } else {
-        $css .= "#logo { background-image: url(\"{$logo_url}\") !important; background-repeat: no-repeat !important; "
+        $css .= "#logo { background-image: url(\"{$logo_src}\") !important; background-repeat: no-repeat !important; "
               . "background-position: left center !important; background-size: contain !important; }\n";
     }
-} elseif (!$core_logo && $company_name !== '') {
+} elseif ($logo_src === '' && $company_name !== '') {
     // No logo of either kind, but the panel is named: the NAME becomes the
     // wordmark. Without this the stock ISPConfig logo keeps rendering — core
     // falls back to sys_ini.default_logo — which is the one thing a white-label
@@ -530,6 +555,45 @@ function brand_parse_config($config)
         }
     }
     return array();
+}
+
+/**
+ * Resolve ONE logo variant to the value this sheet may emit, or '' when the
+ * variant is unset or holds something we will not print.
+ *
+ * $ref  the by-reference slot   (logo_url / logo_url_on_dark)
+ * $data the uploaded data URI   (sys_ini.custom_logo / [branding] logo_on_dark)
+ *
+ * The reference wins, which is the precedence logo_url has always had over
+ * custom_logo — unchanged, now simply applied to each variant in turn.
+ *
+ * Byte-identical to themes/clarity/brand.php's copy, and to the two patterns in
+ * the customizer's lib/preview.inc.php. The duplication is deliberate: this is a
+ * pre-authentication endpoint that must keep working with the customizer
+ * uninstalled, so it cannot include the module's code, and the two designs are
+ * never loaded in the same request. All copies must be changed together.
+ *
+ * (?!/) rejects protocol-relative "//host/..." — a REMOTE url in disguise, which
+ * would defeat the local-path privacy contract; writer-side validation matches.
+ *
+ * The D modifier is load-bearing, not decoration: without it PCRE's `$` also
+ * matches BEFORE a final newline, so "/img/logo.png\n" would validate and the
+ * raw LF would be emitted inside url("...") — a literal newline terminates a
+ * double-quoted CSS string, breaking this sheet for every visitor including
+ * pre-auth on the login screen. The writer-side validator in the module's tform
+ * carries /D for the same reason.
+ */
+function brand_logo_variant($ref, $data)
+{
+    if (is_string($ref) && $ref !== ''
+        && preg_match('#^(https://[^\s"\'<>()\\\\]+|/(?!/)[^\s"\'<>()\\\\]+)$#D', $ref)) {
+        return $ref;
+    }
+    if (is_string($data) && $data !== ''
+        && preg_match('#^data:image/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$#i', $data)) {
+        return $data;
+    }
+    return '';
 }
 
 /** Return a validated #rrggbb value from the branding array, or '' if absent/invalid. */

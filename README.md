@@ -99,7 +99,7 @@ panel that is staying on the stock `default` theme:
 
 | Setting | Where core reads it |
 |---|---|
-| `custom_logo` (uploader) | login page and panel header |
+| `custom_logo` (the **light-background** logo uploader) | login page and panel header — both light surfaces, which is why that variant lives in core's own column |
 | `company_name` | browser title prefix |
 | `custom_login_text` / `custom_login_link` | the extra line on the login screen |
 | `dashboard_atom_url_admin` / `_reseller` / `_client` | the per-role dashboard news feed, which the page's news toggle drives |
@@ -119,9 +119,26 @@ these:
 | `accent_hex` | re-hues the blue ramp and accents |
 | `rail_hex` | the main navigation band — clarity's navy brand rail, classic's navbar |
 | `login_bg` | login-screen background base |
-| `logo_url` | logo by reference (root-relative path or `https` URL); wins over the uploaded `custom_logo` |
+| `logo_url` | **light-background** logo by reference (root-relative path or `https` URL); wins over the uploaded `custom_logo` |
+| `logo_on_dark` | **dark-background** logo, uploaded (a data URI). Core has no second logo column and this extension adds none, so this one rides in the config blob — see the note below |
+| `logo_url_on_dark` | **dark-background** logo by reference; wins over `logo_on_dark`, and keeps the image out of the config blob entirely |
 | `show_version` | hides the version surfaces on the Help page — read [Version disclosure](#version-disclosure) before relying on it |
 | `show_ispconfig_credit`, `show_theme_credit` | the two footer courtesy lines |
+
+**Two logos, named after the background they sit on.** One panel runs designs
+whose headers disagree about brightness — clarity's rail is navy and wants a
+white mark, classic's header is stock's `#f2f5f7` and wants a dark one — so a
+single logo cannot serve both. Each design asks for the variant matching its own
+background and **falls back to the other one when that variant is unset**, which
+is what makes this non-breaking: a panel with only the historical `custom_logo`
+renders exactly as it always did. Within a variant, a reference beats an upload.
+
+The cost of `logo_on_dark`, stated plainly: it is stored in `sys_ini.config`
+rather than a column, so it is re-read whenever the panel loads a global setting
+and it is journalled into `sys_datalog` by the next save of the Branding page.
+The column is `longtext` so nothing truncates, and the 45 KB upload cap bounds
+it — but if that trade does not suit your panel, use `logo_url_on_dark`, which
+stores a path.
 
 Every row in both tables works on **both** designs. The two footer toggles are
 not clarity-only: `install.sh` splits stock's single footer line while it

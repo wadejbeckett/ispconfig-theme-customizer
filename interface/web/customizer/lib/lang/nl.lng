@@ -3,3 +3,5 @@ $wb['top_menu_customizer'] = 'Branding';
 $wb['White-label'] = 'White-label';
 $wb['Branding'] = 'Branding';
 $wb['no_logo_set_txt'] = 'Geen eigen logo ingesteld — het thema toont zijn eigen standaard.';
+$wb['logo_fallback_from_dark_txt'] = 'Geen logo voor lichte achtergronden ingesteld, dus hier wordt dat voor donkere achtergronden getoond — dat is wat een licht ontwerp laat zien. Upload een donkere of volledig gekleurde versie om dit te wijzigen.';
+$wb['logo_fallback_from_light_txt'] = 'Geen logo voor donkere achtergronden ingesteld, dus hier wordt dat voor lichte achtergronden getoond — dat is wat een donker ontwerp laat zien. Upload een lichte of witte versie om dit te wijzigen.';

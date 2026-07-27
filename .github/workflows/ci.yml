@@ -101,7 +101,14 @@ jobs:
           set -e
           missing=0
           for reader in themes/*/brand.php; do
-            for key in accent_hex rail_hex login_bg logo_url show_version company_name; do
+            # logo_on_dark / logo_url_on_dark are the dark-background logo
+            # variant. They are listed separately from logo_url because
+            # "logo_on_dark" is NOT a substring of "logo_url_on_dark", so each
+            # name really has to appear in every reader — a design that
+            # implemented only one of the two would render the wrong-brightness
+            # mark on half its surfaces, which is the bug the variant exists to
+            # fix and is invisible to every other check here.
+            for key in accent_hex rail_hex login_bg logo_url logo_url_on_dark logo_on_dark show_version company_name; do
               if ! grep -q "$key" "$reader"; then
                 echo "::error file=$reader::brand token '$key' is written by the module but not read by $reader"
                 missing=1

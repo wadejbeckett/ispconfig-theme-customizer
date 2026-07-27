@@ -3,3 +3,5 @@ $wb['top_menu_customizer'] = 'Branding';
 $wb['White-label'] = 'Marca blanca';
 $wb['Branding'] = 'Branding';
 $wb['no_logo_set_txt'] = 'No se ha establecido ningún logotipo personalizado — el tema muestra su propio valor predeterminado.';
+$wb['logo_fallback_from_dark_txt'] = 'No hay ningún logotipo para fondos claros, así que aquí se muestra el de fondos oscuros — eso es lo que mostrará un diseño claro. Suba una versión oscura o a todo color para cambiarlo.';
+$wb['logo_fallback_from_light_txt'] = 'No hay ningún logotipo para fondos oscuros, así que aquí se muestra el de fondos claros — eso es lo que mostrará un diseño oscuro. Suba una versión clara o blanca para cambiarlo.';

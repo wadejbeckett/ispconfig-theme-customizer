@@ -4,3 +4,5 @@ $wb['White-label'] = 'White-Label';
 $wb['Branding'] = 'Branding';
 // resolved via $app->lng() in customizer_edit.php (the module lng is auto-loaded there)
 $wb['no_logo_set_txt'] = 'Kein eigenes Logo gesetzt — das Theme zeigt seine eigene Vorgabe.';
+$wb['logo_fallback_from_dark_txt'] = 'Kein Logo für helle Hintergründe gesetzt, daher wird hier das für dunkle Hintergründe gezeigt — genau das zeigt auch ein helles Design. Laden Sie eine dunkle oder farbige Version hoch, um das zu ändern.';
+$wb['logo_fallback_from_light_txt'] = 'Kein Logo für dunkle Hintergründe gesetzt, daher wird hier das für helle Hintergründe gezeigt — genau das zeigt auch ein dunkles Design. Laden Sie eine helle oder weiße Version hoch, um das zu ändern.';

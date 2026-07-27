@@ -11,11 +11,15 @@
  *   - restores the three core-owned dashboard_atom_url_* keys from the module's
  *     own [branding] news_url_* stash, so a purge never leaves the dashboard
  *     news feed switched off (must happen BEFORE [branding] is dropped)
- *   - drops the module-owned [branding] section from sys_ini.config
- *     (no live core code reads it — its only consumer is a brand-aware theme)
+ *   - drops the module-owned [branding] section from sys_ini.config, which takes
+ *     the uploaded dark-background logo ([branding] logo_on_dark) and both
+ *     logo_url* references with it
+ *     (no live core code reads that section — its only consumer is a
+ *     brand-aware theme)
  *   - blanks the three core-owned [misc] keys (blank, never delete: they are
  *     stock fields of System > Interface Config)
- *   - clears sys_ini.custom_logo (the theme/login fall back to their defaults)
+ *   - clears sys_ini.custom_logo, the uploaded light-background logo
+ *     (the theme/login fall back to their defaults)
  * Uses the framework ini_parser (loaded from the target install) so the
  * round-trip can never drift from what the panel itself writes. Direct UPDATE,
  * same as the module's own logo writes. Idempotent.
@@ -126,6 +130,21 @@ foreach($atom_stash as $k => $stash) {
     }
 }
 
+//* Report the uploaded dark-background logo separately, before the section that
+//* holds it is dropped. Dropping [branding] does clear it — but "dropped
+//* [branding] section" reads as settings housekeeping, and this is a visible
+//* brand asset whose removal the operator must be able to see confirmed, exactly
+//* as "cleared custom_logo" confirms the light-background one below. The two
+//* uploaded logos live in different places purely because core has one column
+//* and we may not add a second; the uninstall report should not make that
+//* implementation detail the operator's problem.
+//*
+//* Checked for a non-empty value rather than mere presence, so an already-purged
+//* panel does not claim to have removed something.
+if(isset($config['branding']['logo_on_dark']) && $config['branding']['logo_on_dark'] !== '') {
+    $did[] = "cleared dark-background logo ([branding] logo_on_dark)";
+}
+
 if(isset($config['branding'])) {
     unset($config['branding']);
     $did[] = "dropped [branding] section";
@@ -165,7 +184,7 @@ if((int)$row['logo_len'] > 0) {
         fwrite(STDERR, "ERROR: clearing custom_logo failed: " . $m->error . "\n");
         exit(1);
     }
-    $did[] = "cleared custom_logo";
+    $did[] = "cleared custom_logo (light-background logo)";
 }
 
 if(count($did) === 0) {
