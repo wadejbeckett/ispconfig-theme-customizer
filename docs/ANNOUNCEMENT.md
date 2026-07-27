@@ -255,18 +255,21 @@ capture them before posting or leave those two dark-only.)
 ### Pre-post checklist
 
 - [x] Branding-page screenshot captured and committed (dark + light).
-- [ ] v3.0.0 tagged and pushed before the post goes up — every link and the
-      install block assume it exists.
-- [ ] Old repos (`clarity-theme-ispconfig`, `ispconfig-customizer`,
-      `ispconfig-toolkit`) archived read-only, each with a README line pointing
-      at the merged repo, so anyone arriving from an old link lands somewhere
-      useful.
-- [ ] Confirm the raw.githubusercontent image URLs render in a forum preview
-      (use `raw.githubusercontent.com/.../main/...`, not `github.com/.../raw/...`).
-      Re-check these **after** the GitHub rename — verify the new repo name in
-      the URL, don't rely on the redirect.
-- [ ] Run `./install.sh --help` and `./uninstall.sh --help` once and confirm the
-      flags in this post match what they print.
+- [x] v3.0.0 tagged and pushed. Release is live at
+      `github.com/wadejbeckett/ispconfig-theme-customizer/releases/tag/v3.0.0`.
+- [x] Old repos (`clarity-theme-ispconfig` → renamed, `ispconfig-customizer`,
+      `ispconfig-toolkit`) archived read-only. The two archived repos each got a
+      README pointing at the merged repo, pushed *before* archiving — archiving
+      makes a repo read-only, so the order matters.
+- [x] raw.githubusercontent image URLs verified against the NEW repo name (not
+      relying on the rename redirect): all three return HTTP 200, and all eight
+      files in the attach table exist in the repo.
+- [x] `./install.sh --help` and `./uninstall.sh --help` run, and the flags in
+      this post match what they print.
+- [ ] Decide whether to keep the "One security note, up front" section. It is
+      honest and it is not specific to this theme, but it is a lot of caveat for
+      a launch post — cutting it to a line in `SECURITY.md` is a defensible
+      call, and entirely yours.
 - [ ] Post from the project account; link the repo, not the live panel.
-- [ ] Optional: open a separate, humble thread offering the upstream core
-      patches, rather than bundling them into the announcement.
+- [ ] Later, separately: offer the upstream core patches in their own humble
+      thread. Deliberately NOT part of this launch.
