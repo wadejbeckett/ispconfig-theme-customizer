@@ -180,9 +180,105 @@ candidate + the lower-risk alternative + explicit deferral.
 
 ---
 
+## 4. Saving any config tab silently strips one backslash level from every value it does **not** edit
+
+**Affected — two readers and seven writers, all of one pattern:**
+
+Readers (both apply `stripslashes()` to the stored blob):
+`interface/lib/classes/getconf.inc.php:43` (`get_server_config`) and
+`:54` (`get_global_config`).
+
+Writers (all read via `getconf`, replace one section, and write the whole blob
+back through `ini_parser::get_ini_string()`):
+`interface/web/admin/system_config_edit.php:143,186`,
+`interface/web/admin/server_config_edit.php:171`,
+`interface/web/client/client_edit.php:393`,
+`interface/web/client/reseller_edit.php:318`,
+`interface/web/mail/spamfilter_config_edit.php:84`,
+`interface/lib/classes/remote.d/admin.inc.php:123`,
+`interface/lib/classes/remote.d/server.inc.php:165`.
+
+**Root cause — an asymmetry, not a missing escape.** The stored blob's invariant
+is *escaped*, and three pieces have to agree on that:
+
+- `tform_base::_encode()` line 912 applies `$app->db->quote()` to every field
+  when `$dbencode` is true, so the section being **edited** is written escaped.
+  Correct.
+- `getconf` unescapes the **whole** blob on read (`parse_ini_string(stripslashes(...))`).
+- `ini_parser::get_ini_string()` writes values verbatim, and
+  `db::datalogUpdate()` binds the blob as a query parameter, so **nothing
+  re-applies the escaping** on the way out.
+
+So the edited section round-trips correctly, while every *other* section is read
+unescaped and written back unescaped — losing one backslash level per save. The
+next read strips again. Each further save of any tab eats another level.
+
+**Reproduction** (models the code path exactly; no database required):
+
+```
+1. Save System > Interface Config > Mail with smtp_pass = pa\ss
+     column holds: smtp_pass=pa\\ss        reads back as pa\ss    correct
+
+2. Now save the Misc tab three times (company name, nothing else)
+     save #1 -> smtp_pass reads back as: pass
+     save #2 -> smtp_pass reads back as: pass
+     save #3 -> smtp_pass reads back as: pass
+```
+
+The password is destroyed on the **first** unrelated save. Outbound mail
+authentication then fails with nothing in the UI to explain it, because the Mail
+tab still displays the value it thinks it stored.
+
+**Impact.** Any config value containing a backslash, in any section, corrupted
+by editing an unrelated tab. `smtp_pass` is the most damaging instance because
+the failure is silent and remote. The two `remote.d` call sites make it worse in
+practice: provisioning automation saves these repeatedly, so a value can lose
+several levels in one run.
+
+**Candidate patch** — parse the raw column in the write path rather than the
+unescaped one. Pass-through sections then stay in their stored (escaped) form,
+the edited section is already escaped by `tform`, and the whole array is
+consistently escaped, so the existing `stripslashes()` on read stays correct.
+Shown for `system_config_edit.php`; the other six sites take the same shape:
+
+```diff
+-		$server_config_array = $app->getconf->get_global_config();
++		// Parse the RAW column, not the stripslashes'd one: get_ini_string()
++		// does not re-escape and datalogUpdate() binds the blob, so anything
++		// read through getconf here would be written back one escaping level
++		// short. Sections we are not editing must pass through untouched.
++		$tmp_ini = $app->db->queryOneRecord('SELECT config FROM sys_ini WHERE sysini_id = 1');
++		$server_config_array = $app->ini_parser->parse_ini_string($tmp_ini['config']);
+```
+
+Verified: with this change the same three saves leave `smtp_pass` as `pa\ss`,
+and the edited value still round-trips correctly.
+
+**Alternative worth considering instead** — make the asymmetry impossible rather
+than fixing seven call sites: have `get_ini_string()` escape, or add an explicit
+`getconf::get_global_config_raw()` that the write paths use. That is a larger
+design call and belongs to the maintainers; the per-site patch above is offered
+because it is minimal and provable.
+
+**Risk:** low per site, but it should land on all seven together — a partial fix
+would leave the blob half-escaped depending on which screen was last saved. Worth
+a migration thought too: existing installs may already hold under-escaped values
+from previous saves, and this patch preserves whatever is there rather than
+repairing it.
+
+**Honest caveat:** we could not date the `stripslashes()` calls — our reference
+checkout is squashed to a single commit, so `git blame` attributes everything to
+one merge. They look like a magic-quotes-era vestige, but that is a guess and we
+have not verified it.
+
+---
+
 ## Suggested submission order
 
 1. **#1 SVG guard** — smallest, safest, obviously correct; a good first MR.
-2. **#2 logo setter** — completes a half-shipped feature; medium size.
-3. **#3 session locking** — open as a discussion issue first (with the analysis
+2. **#4 config escaping** — small diff, reproducible in two steps, and it
+   silently corrupts mail credentials today. Arguably the most valuable of the
+   four despite being found last.
+3. **#2 logo setter** — completes a half-shipped feature; medium size.
+4. **#3 session locking** — open as a discussion issue first (with the analysis
    and both fix options) rather than a patch; let the maintainers steer.
