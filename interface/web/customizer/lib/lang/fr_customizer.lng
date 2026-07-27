@@ -1,0 +1,52 @@
+<?php
+$wb['customizer_title'] = 'Branding';
+$wb['page_head_txt'] = 'Branding';
+$wb['customizer_desc_txt'] = 'Personnalisez ce panneau de contrôle aux couleurs de votre marque — le logo, le nom et les couleurs sont enregistrés dans ISPConfig et sont conservés lors des mises à jour du panneau et du thème.';
+$wb['settings_saved_txt'] = 'Paramètres enregistrés. Les changements de couleur apparaissent après un rechargement complet de la page (F5).';
+
+$wb['logo_head_txt'] = 'Logo';
+$wb['logo_txt'] = 'Fichier du logo';
+$wb['logo_hint_txt'] = 'Choisissez un fichier, puis cliquez sur « Téléverser le logo » — le logo est téléversé immédiatement, indépendamment du bouton « Enregistrer » en bas de page. SVG, PNG, JPEG, GIF ou WebP, de moins de 45 KB. Les images claires conviennent le mieux — le logo s\'affiche sur la barre latérale sombre et le bandeau de connexion.';
+$wb['upload_txt'] = 'Téléverser le logo';
+$wb['logo_url_txt'] = 'URL / chemin du logo (remplacement)';
+$wb['logo_url_hint_txt'] = 'Facultatif. Un chemin relatif à la racine (recommandé — par ex. /themes/custom/logo.svg pour un fichier que vous avez placé sur le serveur) ou une URL https://. Lorsqu\'il est défini, les thèmes compatibles avec la personnalisation l\'utilisent à la place du logo téléversé ; le thème d\'origine et la page de connexion utilisent toujours le logo téléversé. Un SVG ou un PNG 2x d\'environ 500&times;160 convient le mieux (il s\'affiche à environ 26px de hauteur). Une URL distante lie votre page de connexion à cet hôte et lui révèle les adresses IP de vos visiteurs — préférez un chemin local.';
+$wb['logo_url_error_regex'] = 'Le remplacement du logo doit être un chemin relatif à la racine (/…) ou une URL https://, sans espaces, guillemets, crochets ni parenthèses.';
+$wb['logo_remove_txt'] = 'Supprimer';
+$wb['used_logo_txt'] = 'Logo actuel';
+
+$wb['brand_head_txt'] = 'Nom et couleurs';
+$wb['company_name_txt'] = 'Nom du panneau';
+$wb['company_name_hint_txt'] = 'Affiché dans le titre du navigateur et le pied de page.';
+$wb['accent_hex_txt'] = 'Couleur d\'accentuation';
+$wb['rail_hex_txt'] = 'Couleur de la barre latérale';
+$wb['login_bg_txt'] = 'Arrière-plan de la connexion';
+$wb['colour_hint_txt'] = 'Valeur hexadécimale comme #0065AB. Laissez vide pour conserver la valeur par défaut du thème.';
+
+$wb['login_head_txt'] = 'Écran de connexion';
+$wb['custom_login_text_txt'] = 'Texte de la note de bas de page de connexion';
+$wb['custom_login_link_txt'] = 'Lien de la note de bas de page de connexion';
+
+$wb['credits_head_txt'] = 'Attribution';
+$wb['credits_hint_txt'] = 'Ces options contrôlent les lignes de courtoisie facultatives du pied de page. Les mentions de licence open source dans le code source et la documentation sont toujours conservées — désactiver une ligne ne les supprime jamais.';
+$wb['show_ispconfig_credit_txt'] = 'Afficher « powered by ISPConfig »';
+$wb['show_theme_credit_txt'] = 'Afficher le crédit du thème';
+$wb['show_version_txt'] = 'Afficher la version du logiciel';
+$wb['show_version_hint_txt'] = 'La section « À propos d\'ISPConfig » et la ligne de version sous Aide. Le masquage s\'applique à chaque administrateur — vous y compris — afin que les démonstrations restent nettes (un thème compatible avec la personnalisation la masque visuellement ; la page elle-même reste accessible par URL directe).';
+$wb['show_news_feed_txt'] = 'Afficher le fil d\'actualités';
+$wb['show_news_feed_hint_txt'] = 'La barre latérale « Dernières actualités » du tableau de bord (le fil du projet ISPConfig par défaut). La désactiver la masque pour tous les rôles ; la réactiver rétablit le fil par défaut mais conserve les URL de fils personnalisés que vous avez définies sous Système > Configuration de l\'interface. Les utilisateurs voient le changement à leur prochaine connexion.';
+
+$wb['accent_hex_error_regex'] = 'La couleur d\'accentuation doit être une valeur hexadécimale comme #0065AB.';
+$wb['rail_hex_error_regex'] = 'La couleur de la barre latérale doit être une valeur hexadécimale comme #01243D.';
+$wb['login_bg_error_regex'] = 'L\'arrière-plan de la connexion doit être une valeur hexadécimale comme #17252B.';
+$wb['login_link_error_regex'] = 'Le lien de la note de bas de page de connexion doit commencer par http:// ou https://.';
+
+$wb['logo_uploaded_txt'] = 'Logo mis à jour.';
+$wb['logo_removed_txt'] = 'Logo supprimé.';
+$wb['logo_bad_type_txt'] = 'Image non prise en charge. Utilisez un SVG (simple, sans script), PNG, JPEG, GIF ou WebP.';
+$wb['logo_too_large_txt'] = 'Cette image est trop volumineuse. Gardez-la en dessous de 45 KB — un PNG ou WebP optimisé convient le mieux.';
+$wb['no_file_uploaded_error'] = 'Aucun fichier n\'a été sélectionné.';
+$wb['upload_failed_txt'] = 'Le téléversement n\'a pas abouti. Veuillez réessayer.';
+$wb['demo_mode_txt'] = 'Cette fonction est désactivée en mode démonstration.';
+
+$wb['btn_save_txt'] = 'Enregistrer';
+$wb['btn_cancel_txt'] = 'Annuler';
