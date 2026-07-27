@@ -349,10 +349,22 @@ generate_classic_templates() {
     ins1="  <link rel='stylesheet' href='${prefix}themes/classic/brand.php${scene}' />"
     ins2="  <script src='${prefix}themes/classic/title.php'></script>"
 
+    # The footer credits have to become individually addressable, or the Branding
+    # page ends up with two toggles that do nothing on this design. Stock renders
+    # the whole line as bare text inside <footer id='footer'>, so CSS can only
+    # hide all of it or none of it. Wrapping core's own line in one span and
+    # appending ours in a second gives show_ispconfig_credit and
+    # show_theme_credit a target each — the same shape clarity's template uses.
+    #
+    # Both ship ON. Nothing is hidden until an administrator chooses to hide it,
+    # and licence notices are never touched by either toggle — these are courtesy
+    # lines, which is a different thing.
+    cred2="<span class='nzc-credit-theme'><span class='nzc-credit-sep'> &middot; </span><a href='https://github.com/wadejbeckett/ispconfig-theme-customizer' target='_blank' rel='noopener'>Classic</a></span>"
+
     # index()/substr rather than gsub(): the search string is a literal full of
     # regex metacharacters, and a literal search cannot be defeated by quoting.
     if ! awk -v find="$find_str" -v repl="themes/default/assets/" \
-             -v ins1="$ins1" -v ins2="$ins2" '
+             -v ins1="$ins1" -v ins2="$ins2" -v cred2="$cred2" '
         function lreplace(s,   acc, p) {
             acc = ""
             while ((p = index(s, find)) > 0) {
@@ -363,6 +375,18 @@ generate_classic_templates() {
         }
         { line = lreplace($0) }
         !done && line ~ /<\/head>/ { print ins1; print ins2; done = 1 }
+        # Split the footer credit into two addressable spans, preserving stock
+        # indentation. Matching on both "powered by" and app_link keeps this off
+        # any other line that happens to contain one of them.
+        !fdone && line ~ /powered by/ && line ~ /app_link/ {
+            match(line, /^[ \t]*/)
+            ind  = substr(line, 1, RLENGTH)
+            body = substr(line, RLENGTH + 1)
+            printf "%s<span class=\047nzc-credit-ispconfig\047>%s</span>\n", ind, body
+            printf "%s%s\n", ind, cred2
+            fdone = 1
+            next
+        }
         { print line }
         END { if (!done) exit 1 }
     ' "$src" > "$out"; then
@@ -376,9 +400,21 @@ generate_classic_templates() {
     # stylesheet and script 404ing, and nothing logs it.
     src_n="$(awk 'END{print NR}' "$src")"
     out_n="$(awk 'END{print NR}' "$out")"
-    if [ "$out_n" -ne "$((src_n + 2))" ]; then
-      echo "ERROR: generated $tpl is $out_n lines, expected $((src_n + 2)) (stock + 2)." >&2
+    # +2 for the two <head> links, +1 more if the footer credit was split in two.
+    # The split is expected in the app frame and absent from the login shell,
+    # which has no footer — so this is derived from the output rather than
+    # assumed, and a future ISPConfig that moves the footer degrades to a warning
+    # instead of failing an install over a courtesy line.
+    expected=$(( src_n + 2 ))
+    if grep -q "nzc-credit-ispconfig" "$out"; then expected=$(( expected + 1 )); fi
+    if [ "$out_n" -ne "$expected" ]; then
+      echo "ERROR: generated $tpl is $out_n lines, expected $expected." >&2
       return 1
+    fi
+    if [ "$tpl" = "main.tpl.htm" ] && ! grep -q "nzc-credit-ispconfig" "$out"; then
+      echo "WARNING: could not find the footer credit line in $src, so the" >&2
+      echo "         'hide footer credits' toggles will have no effect on classic." >&2
+      echo "         Everything else works; please report your ISPConfig version." >&2
     fi
     # After the rewrite the template must not reference the active theme AT ALL.
     # If a future ISPConfig uses current_theme for something other than an asset

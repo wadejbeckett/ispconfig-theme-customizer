@@ -21,11 +21,17 @@
  *   config [misc] company_name    -> text wordmark when no logo is set;
  *                                    tab title / alt text via title.php
  *
- * Two keys Clarity honours are deliberately absent here:
- * show_ispconfig_credit / show_theme_credit. The stock footer is core's own
- * "powered by ISPConfig" line (main.tpl.htm), not a courtesy line this project
- * added, and hiding another project's attribution from its own template is not
- * ours to do. Clarity hides only the credits Clarity itself prints.
+ *   config [branding] show_ispconfig_credit (0/1) -> footer courtesy line
+ *   config [branding] show_theme_credit     (0/1) -> footer courtesy line
+ *
+ * The footer toggles need a hand from install.sh. Stock prints the credit as
+ * bare text inside <footer id='footer'>, which CSS can only hide wholesale, so
+ * the generator splits it into .nzc-credit-ispconfig (core's line) and appends
+ * .nzc-credit-theme (ours) while building this design's shell. Every option on
+ * the Branding page then behaves the same way whichever design is active —
+ * a toggle that silently does nothing on one design is a bug, not a nuance.
+ *
+ * Both ship ON, and neither touches a licence notice: these are courtesy lines.
  *
  * ---- how a colour is derived -------------------------------------------
  * Two rules, and which one applies depends on what the colour is FOR.
@@ -457,6 +463,31 @@ if (isset($branding['show_version']) && $branding['show_version'] === '0') {
           . "#sidebar header:has(+ ul > li#help_version) { display: none; }\n";
     $css .= "#pageContent p.frmTextHead { display: none; }\n";
 }
+
+/* =========================================================================
+ * footer courtesy lines
+ * =======================================================================*/
+// Stock renders the whole footer as bare text inside <footer id='footer'>, so
+// CSS alone could only hide all of it or none of it. install.sh therefore splits
+// it while generating this design's shell: core's own line goes into
+// .nzc-credit-ispconfig and ours is appended as .nzc-credit-theme, giving each
+// toggle a target. If a future ISPConfig moves that markup the spans are absent,
+// these rules match nothing, and the credits simply stay visible — the failure
+// mode is "attribution shown", which is the right way round.
+//
+// Both default to ON: only an explicit '0' hides anything. These are courtesy
+// lines, NOT licence notices — no toggle here touches a licence, and the MIT and
+// BSD-3-Clause texts ship regardless of what is switched off.
+$hide_ispc  = isset($branding['show_ispconfig_credit']) && $branding['show_ispconfig_credit'] === '0';
+$hide_theme = isset($branding['show_theme_credit'])     && $branding['show_theme_credit']     === '0';
+
+if ($hide_ispc)  { $css .= ".nzc-credit-ispconfig { display: none; }\n"; }
+if ($hide_theme) { $css .= ".nzc-credit-theme { display: none; }\n"; }
+// With both gone the bar is an empty strip of padding, so remove it entirely
+// rather than leave a gap the operator has to wonder about.
+if ($hide_ispc && $hide_theme) { $css .= "#footer { display: none; }\n"; }
+// Ours hidden but core's kept: drop the separator that would otherwise dangle.
+if ($hide_theme && !$hide_ispc) { $css .= ".nzc-credit-sep { display: none; }\n"; }
 
 echo $css;
 
