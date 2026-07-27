@@ -42,6 +42,19 @@ if(!$m || $m->connect_errno) {
     exit(1);
 }
 
+//* Pin the connection charset the way the panel does. ISPConfig's db class issues
+//* SET NAMES $conf['db_charset'] (utf8mb4) on every connect, while a raw mysqli
+//* connection inherits mysqli.default_charset — utf8mb3 on older PHP builds, latin1
+//* where PHP links against libmysqlclient. This script only ever writes ASCII module
+//* names, but sys_user.modules is read back, filtered and written whole for EVERY
+//* user, so a mismatched charset is the difference between a lossless round trip and
+//* MySQL replacing characters it cannot represent with '?'. Every raw mysqli
+//* connection in this project pins utf8mb4 for that reason.
+$db_charset = !empty($conf['db_charset']) ? $conf['db_charset'] : 'utf8mb4';
+if(!@$m->set_charset($db_charset) && $db_charset !== 'utf8mb4') {
+    @$m->set_charset('utf8mb4');
+}
+
 $res = $m->query("SELECT userid, username, modules, startmodule FROM sys_user");
 if(!$res) {
     fwrite(STDERR, "ERROR: query failed: " . $m->error . "\n");

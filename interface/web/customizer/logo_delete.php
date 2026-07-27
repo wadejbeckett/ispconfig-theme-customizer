@@ -29,9 +29,26 @@ if(!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQU
 //* control passes the page's token as _csrf_id/_csrf_key query params.
 $app->auth->csrf_token_check('GET');
 
-if($conf['demo_mode'] != true) {
-    $app->db->query("UPDATE sys_ini SET custom_logo = '' WHERE sysini_id = 1");
+//* Demo mode has to REPORT the refusal, not swallow it. Skipping the UPDATE and
+//* still emitting HEADER_REDIRECT would re-render the editor showing the same
+//* logo, which reads as "Remove is broken". $app->error() dies with the theme's
+//* error.tpl.htm, and because that body carries no HEADER_REDIRECT marker
+//* loadContent() drops it straight into #pageContent — the same way core's own
+//* delete endpoints (admin/server_del.php, help/faq_delete.php) refuse.
+//* The refusal is deliberately placed after the CSRF check so a request we have
+//* not authenticated never gets a rendered response.
+if($conf['demo_mode'] == true) {
+    //* $app->lng() would otherwise fall back to the global wordbook, which has
+    //* no demo_mode_txt; load the module's own file (sanitised session language,
+    //* English if that translation is not shipped) exactly as the uploader does.
+    $lng = $app->functions->check_language($_SESSION['s']['language']);
+    $lng_path = '/web/customizer/lib/lang/' . $lng . '_customizer.lng';
+    if(!file_exists(ISPC_ROOT_PATH . $lng_path)) $lng_path = '/web/customizer/lib/lang/en_customizer.lng';
+    $app->load_language_file($lng_path);
+    $app->error($app->lng('demo_mode_txt'));
 }
+
+$app->db->query("UPDATE sys_ini SET custom_logo = '' WHERE sysini_id = 1");
 
 header('Content-Type: text/plain; charset=utf-8');
 echo "HEADER_REDIRECT:customizer/customizer_edit.php?id=1";

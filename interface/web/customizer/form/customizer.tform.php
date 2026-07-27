@@ -61,14 +61,38 @@ $form["tabs"]['branding'] = array(
         'logo_url' => array(
             'datatype' => 'VARCHAR',
             'formtype' => 'TEXT',
+            //* TRIM only — deliberately NOT the STRIPTAGS+STRIPNL pair the free-text
+            //* fields use. tform_base::encode() runs filters BEFORE validators, so a
+            //* STRIPNL here would splice an embedded newline out of the middle of the
+            //* value ("/img/a\nb" -> "/img/ab") and hand the validator something that
+            //* passes, silently storing a path the admin never typed. The regex below
+            //* rejects an embedded newline outright and that is the behaviour we want.
+            //* Surrounding whitespace is different: a browser does not strip a trailing
+            //* space from a text input, so a pasted "/img/logo.png " would fail the
+            //* anchored regex with an opaque error on a field that looks correct — and
+            //* a trailing "\n" is worse still, because PCRE "$" also matches just before
+            //* a final newline, so it validates and only breaks later (db->quote() turns
+            //* the LF into a literal backslash-n, then the stripslashes() in getconf /
+            //* the theme's brand.php collapses that to a bare "n" -> "/img/logo.pngn",
+            //* a 404 with no error ever shown). trim() at SAVE removes both cases before
+            //* either can happen.
+            'filters'  => array(
+                0 => array('event' => 'SAVE', 'type' => 'TRIM'),
+            ),
             //* consumed inside a CSS url("...") by brand-aware themes: forbid
             //* every character that could break out of that context. Only a
             //* root-relative path or an https URL (no http: an https panel
             //* would hit mixed-content blocking anyway). The (?!\/) lookahead
             //* rejects protocol-relative "//host/..." — browsers treat that as
             //* a REMOTE url, defeating the local-path privacy contract.
+            //* The /D modifier makes "$" mean true end-of-subject instead of
+            //* "end, or before a final newline"; belt-and-braces with the TRIM
+            //* above so the anchor stays absolute even if this field is ever
+            //* validated on a path that does not run the filters. (tform_base
+            //* appends "s" to every REGEX validator, giving "/…/Ds" — both are
+            //* valid PCRE modifiers and order between them is irrelevant.)
             'validators' => array(
-                0 => array('type' => 'REGEX', 'regex' => '/^(https:\/\/[^\s"\'<>()\\\\]+|\/(?!\/)[^\s"\'<>()\\\\]+)?$/', 'errmsg' => 'logo_url_error_regex'),
+                0 => array('type' => 'REGEX', 'regex' => '/^(https:\/\/[^\s"\'<>()\\\\]+|\/(?!\/)[^\s"\'<>()\\\\]+)?$/D', 'errmsg' => 'logo_url_error_regex'),
             ),
             'default' => '',
             'value'   => ''

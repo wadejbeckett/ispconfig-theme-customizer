@@ -177,6 +177,13 @@
   // The iframe uploader injects #OKMsg/#errorMsg just above the hidden id input
   // at the bottom of the form, off-screen on this page — pull any injected
   // message up into the slot under the page header, where the admin is looking.
+  //
+  // MUST self-disconnect. ISPConfig.loadContent() swaps #pageContent's children on
+  // every in-panel navigation but leaves #pageForm — and this observer — alive. A
+  // stale observer would keep firing on other modules' pages and move THEIR #OKMsg
+  // into our now-detached slot, so saves elsewhere in the panel would silently show
+  // no confirmation at all (and every revisit here would stack another observer).
+  // Bail out the moment the slot leaves the document.
   var slot = document.getElementById('nz-msg-slot');
   if (slot && window.MutationObserver) {
     var relocate = function () {
@@ -187,8 +194,11 @@
       });
       if (moved) slot.scrollIntoView({ block: 'nearest' });
     };
-    new MutationObserver(relocate)
-      .observe(document.getElementById('pageForm') || document.body, { childList: true, subtree: true });
+    var ob = new MutationObserver(function () {
+      if (!document.body.contains(slot)) { ob.disconnect(); return; }
+      relocate();
+    });
+    ob.observe(document.getElementById('pageForm') || document.body, { childList: true, subtree: true });
     relocate();
   }
 
