@@ -16,7 +16,7 @@ permissions:
 jobs:
   lint:
     runs-on: ubuntu-latest
-    name: PHP lint + asset-version consistency + shell
+    name: PHP lint + language parity + asset consistency + shell
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,13 +28,30 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: mbstring, mysqli
+          # dom/xml are what make the SVG upload screen namespace-aware; without
+          # them logo_upload.php refuses SVG rather than screening it weakly
+          extensions: mbstring, mysqli, dom, xml
 
-      - name: PHP syntax (theme endpoints + bin scripts)
+      - name: PHP syntax (theme endpoints, module sources, bin helpers)
         run: |
           set -e
-          for f in themes/clarity/brand.php themes/clarity/title.php; do php -l "$f"; done
-          find bin -name '*.php' -print0 2>/dev/null | while IFS= read -r -d '' f; do php -l "$f"; done
+          find themes interface bin .github -name '*.php' -print0 \
+            | while IFS= read -r -d '' f; do php -l "$f"; done
+
+      - name: PHP syntax (language files)
+        # .lng files ARE PHP. Linting them is safe (php -l parses, never
+        # executes) and catches the unescaped-apostrophe class of breakage that
+        # a translation PR introduces most often.
+        run: |
+          set -e
+          find interface -name '*.lng' -print0 \
+            | while IFS= read -r -d '' f; do php -l "$f"; done
+
+      - name: Language key parity and nav-title budget
+        # lang_check parses .lng files as TEXT and never include()s them —
+        # these arrive via community translation PRs, so executing one would be
+        # arbitrary code execution in the runner.
+        run: php .github/scripts/lang_check.php
 
       - name: Cache-buster consistency
         # every ?ver= in a shell template must match — a mismatched bump ships
@@ -64,6 +81,39 @@ jobs:
           done
           echo "all dashlet overrides documented"
 
+      - name: Brand-token contract parity
+        # The module WRITES these keys and a brand-aware theme READS them. That
+        # is one contract split across two directories, and before the repos
+        # were merged it was also split across two version numbers — a rename on
+        # either side silently stopped branding from applying, with no error.
+        # Fail loudly instead. A future base design under themes/ must satisfy
+        # this same check to inherit the module.
+        run: |
+          set -e
+          missing=0
+          for key in accent_hex rail_hex login_bg logo_url show_version company_name; do
+            if ! grep -q "$key" themes/clarity/brand.php; then
+              echo "::error::brand token '$key' is written by the module but not read by themes/clarity/brand.php"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then exit 1; fi
+          echo "brand-token contract intact"
+
       - name: Shell syntax
         run: |
+          set -e
           for f in install.sh uninstall.sh; do bash -n "$f"; done
+
+      - name: Installers reject unknown flags
+        # a typo'd flag was once silently consumed as ISPCONFIG_ROOT, exiting 0
+        # having skipped the work it was asked to do
+        run: |
+          set -e
+          for f in install.sh uninstall.sh; do
+            if bash "$f" --definitely-not-a-flag >/dev/null 2>&1; then
+              echo "::error file=$f::accepted an unknown flag instead of exiting non-zero"
+              exit 1
+            fi
+          done
+          echo "installers reject unknown flags"
