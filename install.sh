@@ -2,12 +2,12 @@
 #
 # ispconfig-theme-customizer — installer.
 #
-# A modern, brandable front-end for ISPConfig. It replaces the panel's
-# front-end with a dark (and light) design, and adds an admin page — nav label
-# "Branding" — where you set your logo, panel name and colours.
+# A brandable front-end for ISPConfig. It replaces the panel's front-end with a
+# design, and adds an admin page — nav label "Branding" — where you set your
+# logo, panel name and colours.
 #
 # It deploys into two directories:
-#   themes/clarity            -> <ispconfig>/interface/web/themes/clarity
+#   themes/<design>           -> <ispconfig>/interface/web/themes/<design>
 #   interface/web/customizer  -> <ispconfig>/interface/web/customizer
 #
 # Touches NOTHING in ISPConfig core and adds no database schema. The Branding
@@ -17,24 +17,53 @@
 # lived in separate repositories with independent versions, and nothing
 # enforced that they matched, so an accent colour could silently fail to apply.
 #
+# Two designs read that contract, and you choose with --design:
+#   clarity (default) — a ground-up dark (and light) interface.
+#   classic           — the stock ISPConfig look, made brandable. Ships two
+#                       templates and no assets of its own; everything else
+#                       comes from the panel's own default theme.
+#
 # You can still install one half on its own. With --module you get just the
 # Branding page: logo, panel name and the per-role news feeds are read by
 # ISPConfig core itself, so those brand the stock theme too. Accent colour,
 # login background and version-hiding need a brand-aware design, which is what
-# --theme installs. Clarity is the design this SHIPS WITH, not the product's
-# identity — anything that reads the same sys_ini keys inherits the Branding
-# page, and CI enforces that contract.
+# --theme installs. Neither design is the product's identity — anything that
+# reads the same sys_ini keys inherits the Branding page, and CI enforces that
+# contract.
 #
 # Usage:
-#   ./install.sh [--theme|--module|--all] [--copy] [--no-assign] [ISPCONFIG_ROOT]
+#   ./install.sh [--theme|--module|--all] [--design=<name>] [--copy]
+#                [--no-assign] [ISPCONFIG_ROOT]
 #
-#     --theme       install only the design (themes/clarity)
+#     --theme       install only the design(s)
 #     --module      install only the Branding page
 #     --all         install both — the default when no flag is given
+#     --design=<n>  which design: clarity (the default), classic, or all.
+#                   Repeatable, so --design=clarity --design=classic is the same
+#                   as --design=all.
 #     --copy        copy instead of symlinking (use for packaged installs)
 #     --no-assign   do not grant admin users access to the Branding page; do it
 #                   by hand in System > CP Users > edit the admin user > Modules
 #     ISPCONFIG_ROOT defaults to /usr/local/ispconfig
+#
+# --design is deliberately a SEPARATE axis from --theme/--module/--all rather
+# than a second spelling of them: those three choose which HALVES of the product
+# to install, --design chooses which design the theme half means. Each flag
+# keeps one job, so ./install.sh --design=classic still installs the Branding
+# page (it is a plain install that happens to use the other design), and
+# ./install.sh --theme --design=classic is how you ask for the design alone.
+# Every invocation that worked before still means exactly what it did: with no
+# --design you get clarity, as you always did.
+#
+# classic's two shell templates are GENERATED HERE, from the target panel's own
+# themes/default/templates/, and are not in the repository. ISPConfig searches
+# themes/<active>/templates first and falls back to themes/default/templates
+# (interface/lib/classes/tpl_ini.inc.php), so a design that overrides only the
+# shell inherits every other template from whatever version is installed — but a
+# COMMITTED copy of that shell would freeze one version's markup and diverge
+# from the panel silently. Generating it makes classic stock-by-construction,
+# and since re-running this script after an upgrade is already mandatory for the
+# version stamp, it heals itself in the same pass. See themes/classic/README.md.
 #
 # Why the theme is version-stamped: ISPConfig gates themes on an EXACT version
 # match, under two different filenames depending on the screen (a core quirk):
@@ -80,17 +109,28 @@ INSTALL_STARTED=0      # set to 1 immediately before the first destructive actio
 INSTALL_COMPLETED=0    # set to 1 once every requested component is fully in place
 on_exit() {
     local rc=$?
+    # The generated templates live in a scratch directory until they are
+    # verified; never leave one behind, whatever killed us.
+    [ -z "${CLASSIC_TPL_TMP:-}" ] || rm -rf "$CLASSIC_TPL_TMP"
     # Nothing to warn about for --help, a bad flag, or a failed precondition:
     # those exit before anything on the panel has been touched.
     [ "$INSTALL_STARTED" -eq 1 ] || return 0
     [ "$INSTALL_COMPLETED" -eq 0 ] || return 0
+    local unstamped="" d
+    if [ -n "${WANT_THEME:-}" ] && [ -n "${THEMES_DIR:-}" ]; then
+        for d in ${DESIGNS:-clarity}; do
+            if [ -d "$THEMES_DIR/$d" ] && [ ! -f "$THEMES_DIR/$d/ispconfig_version" ]; then
+                unstamped="$unstamped $d"
+            fi
+        done
+    fi
     echo "" >&2
     echo "*** INSTALL DID NOT COMPLETE (exit $rc) ***" >&2
-    if [ -n "${WANT_THEME:-}" ] && [ -d "${THEMES_DIR:-}/${THEME_NAME:-clarity}" ] \
-       && [ ! -f "${THEMES_DIR:-}/${THEME_NAME:-clarity}/ispconfig_version" ]; then
-        echo "The theme directory is in place but NOT version-stamped. ISPConfig will" >&2
-        echo "reset every user on it to the default theme at their next login, without" >&2
-        echo "showing an error. Re-run this script to finish — it is safe to repeat:" >&2
+    if [ -n "$unstamped" ]; then
+        echo "These design directories are in place but NOT version-stamped:$unstamped" >&2
+        echo "ISPConfig will reset every user on them to the default theme at their next" >&2
+        echo "login, without showing an error. Re-run this script to finish — it is safe" >&2
+        echo "to repeat:" >&2
         echo "    $0 ${ORIGINAL_ARGS:-}" >&2
     else
         echo "Re-run this script to finish. It is safe to run repeatedly." >&2
@@ -104,12 +144,41 @@ ISPC_ROOT="/usr/local/ispconfig"
 ASSIGN=1
 WANT_THEME=""
 WANT_MODULE=""
+DESIGNS=""              # empty until --design is seen; defaults to clarity below
+DESIGN_EXPLICIT=0       # 1 once --design is given, so an ignored one can be reported
+CLASSIC_TPL_TMP=""      # scratch dir for the generated templates (see on_exit)
+
+# Every design this repository ships, in install order. `classic` last so the
+# "Design picker" lists them in the order the docs introduce them.
+ALL_DESIGNS="clarity classic"
+
+# Add a design to the list unless it is already there — --design=all followed by
+# --design=classic must not deploy classic twice.
+want_design() {
+  local d
+  for d in $DESIGNS; do [ "$d" = "$1" ] && return 0; done
+  DESIGNS="${DESIGNS:+$DESIGNS }$1"
+}
 
 for arg in "$@"; do
   case "$arg" in
     --theme)     WANT_THEME=1 ;;
     --module)    WANT_MODULE=1 ;;
     --all)       WANT_THEME=1; WANT_MODULE=1 ;;
+    --design=*)
+      DESIGN_EXPLICIT=1
+      case "${arg#--design=}" in
+        all)     for d in $ALL_DESIGNS; do want_design "$d"; done ;;
+        clarity) want_design clarity ;;
+        classic) want_design classic ;;
+        # A typo here must not silently install the wrong design (or none):
+        # ISPConfig only shows a design in its picker once it exists on disk.
+        *) echo "ERROR: unknown design: ${arg#--design=} (known: $ALL_DESIGNS, all)" >&2; exit 2 ;;
+      esac
+      ;;
+    # Caught explicitly so the value-less form gets a useful message instead of
+    # the catch-all's "unknown option: --design".
+    --design)    echo "ERROR: --design needs a value, e.g. --design=classic" >&2; exit 2 ;;
     --copy)      MODE="copy" ;;
     --no-assign) ASSIGN=0 ;;
     # grep -v '^#!' so the shebang does not print as a stray "!/usr/bin/env bash"
@@ -122,17 +191,30 @@ done
 # with no component flag, both are installed, so a bare ./install.sh keeps doing
 # the obvious thing
 if [ -z "$WANT_THEME" ] && [ -z "$WANT_MODULE" ]; then WANT_THEME=1; WANT_MODULE=1; fi
+# ...and with no --design it means clarity, exactly as it did before classic
+# existed. Adding a second design to the panel's picker is something you ask
+# for, not something an upgrade does to you.
+if [ -z "$DESIGNS" ]; then DESIGNS="clarity"; fi
+
+# --design only means anything when a design is actually being installed. Naming
+# one alongside --module used to parse fine, set DESIGNS, and then install just
+# the Branding page — a successful run that silently ignored what the operator
+# asked for. Say so rather than let them discover it in the Design picker.
+if [ "$DESIGN_EXPLICIT" -eq 1 ] && [ -z "$WANT_THEME" ]; then
+  echo "NOTE: --design was given but no design is installed with --module alone." >&2
+  echo "      Use --all (or drop --module) to install a design as well." >&2
+fi
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 WEB_DIR="$ISPC_ROOT/interface/web"
 THEMES_DIR="$WEB_DIR/themes"
 CONF="$ISPC_ROOT/interface/lib/config.inc.php"
-THEME_NAME="clarity"
 
 say "ispconfig-theme-customizer installer"
 say "  source     : $ROOT"
 say "  target     : $ISPC_ROOT"
 say "  installing : ${WANT_THEME:+theme }${WANT_MODULE:+module}"
+if [ -n "$WANT_THEME" ]; then say "  design(s)  : $DESIGNS"; fi
 say "  mode       : $MODE"
 say
 
@@ -203,6 +285,119 @@ deploy() {
   fi
 }
 
+# Generate classic's two shell templates from the TARGET PANEL's stock ones.
+# $1 = directory to write them into (a scratch dir; the caller places them).
+#
+# The whole transform is two mechanical changes, and nothing else may differ:
+#
+#   1. themes/<tmpl_var name='current_theme'>/assets/  ->  themes/default/assets/
+#      Template fallback does NOT extend to assets. Under classic the stock
+#      markup would ask for themes/classic/assets/…, a directory that does not
+#      exist and never will, and every stylesheet, script and icon on the page
+#      would 404. Pinning them to the default theme is what lets classic ship
+#      no assets at all.
+#
+#   2. brand.php + title.php linked immediately before </head>, so the design
+#      can read the brand contract. Nothing else reads it on a stock shell.
+#
+# Deliberately NOT added: a "generated file, do not edit" banner. It would ship
+# in the HTML of a pre-authentication page and announce, to anyone who can reach
+# the login screen, which extension this panel runs — the exact disclosure a
+# white-label install is for. The warning lives in themes/classic/README.md and
+# in .gitignore instead.
+generate_classic_templates() {
+  local outdir="$1"
+  local stock="$THEMES_DIR/default/templates"
+  local find_str="themes/<tmpl_var name='current_theme'>/assets/"
+  local tpl src out prefix scene ins1 ins2 src_n out_n
+
+  for tpl in main.tpl.htm main_login.tpl.htm; do
+    src="$stock/$tpl"
+    out="$outdir/$tpl"
+    if [ ! -f "$src" ]; then
+      echo "ERROR: $src not found — classic is generated from the panel's own stock" >&2
+      echo "       templates and cannot be built without them." >&2
+      return 1
+    fi
+
+    # How deep the page using this template is served from. The app frame is
+    # rendered at the web root and links its assets as 'themes/…'; the login
+    # shell is rendered from /login/ and links '../themes/…'. Root-relative
+    # '/themes/…' would work on a panel mounted at the docroot and break on one
+    # behind a sub-path, so take whichever prefix the stock markup itself uses
+    # and stay exactly as portable as core is.
+    if grep -q -F "href='../${find_str}stylesheets/" "$src"; then
+      prefix='../'
+    elif grep -q -F "href='${find_str}stylesheets/" "$src"; then
+      prefix=''
+    else
+      echo "ERROR: cannot tell how $tpl links its stylesheets." >&2
+      echo "       This ISPConfig's stock shell is not the shape classic knows how to" >&2
+      echo "       transform. Install clarity instead (--design=clarity) and open an" >&2
+      echo "       issue with your ISPConfig version." >&2
+      return 1
+    fi
+
+    # Only the login shell gets ?scene=login. brand.php has a few rules that must
+    # apply to the login screen alone (its background, its one primary button),
+    # and stock's login <body> carries no class, no id and nothing stable to hang
+    # a selector on — clarity adds one in its own template, classic may not touch
+    # the markup. So the scope travels in the URL instead of the DOM.
+    scene=''
+    [ "$tpl" = "main_login.tpl.htm" ] && scene='?scene=login'
+
+    ins1="  <link rel='stylesheet' href='${prefix}themes/classic/brand.php${scene}' />"
+    ins2="  <script src='${prefix}themes/classic/title.php'></script>"
+
+    # index()/substr rather than gsub(): the search string is a literal full of
+    # regex metacharacters, and a literal search cannot be defeated by quoting.
+    if ! awk -v find="$find_str" -v repl="themes/default/assets/" \
+             -v ins1="$ins1" -v ins2="$ins2" '
+        function lreplace(s,   acc, p) {
+            acc = ""
+            while ((p = index(s, find)) > 0) {
+                acc = acc substr(s, 1, p - 1) repl
+                s   = substr(s, p + length(find))
+            }
+            return acc s
+        }
+        { line = lreplace($0) }
+        !done && line ~ /<\/head>/ { print ins1; print ins2; done = 1 }
+        { print line }
+        END { if (!done) exit 1 }
+    ' "$src" > "$out"; then
+      echo "ERROR: no </head> in $src — nowhere to link the brand endpoints." >&2
+      return 1
+    fi
+
+    # --- verify the output is the stock file plus exactly those changes ------
+    # A silent miss here is the worst outcome this script has: a classic shell
+    # that still points at themes/classic/assets/ serves a panel with every
+    # stylesheet and script 404ing, and nothing logs it.
+    src_n="$(awk 'END{print NR}' "$src")"
+    out_n="$(awk 'END{print NR}' "$out")"
+    if [ "$out_n" -ne "$((src_n + 2))" ]; then
+      echo "ERROR: generated $tpl is $out_n lines, expected $((src_n + 2)) (stock + 2)." >&2
+      return 1
+    fi
+    # After the rewrite the template must not reference the active theme AT ALL.
+    # If a future ISPConfig uses current_theme for something other than an asset
+    # path, that path would resolve into classic's non-existent directory too —
+    # so this check failing means "look at it", not "loosen the check".
+    if grep -q "current_theme" "$out"; then
+      echo "ERROR: $tpl still references current_theme after the rewrite:" >&2
+      grep -n "current_theme" "$out" >&2
+      echo "       Under classic those paths resolve into themes/classic/, which holds" >&2
+      echo "       no assets. Refusing to install a shell that would 404 everything." >&2
+      return 1
+    fi
+    if ! grep -q -F "themes/classic/brand.php" "$out" || ! grep -q -F "themes/classic/title.php" "$out"; then
+      echo "ERROR: the brand endpoints are missing from the generated $tpl." >&2
+      return 1
+    fi
+  done
+}
+
 # --- warn about a previous split installation -------------------------------
 # Before v3.0.0 this shipped as two repos (clarity-theme-ispconfig and
 # ispconfig-customizer), typically cloned to /root/clarity-theme and
@@ -226,47 +421,94 @@ INSTALL_STARTED=1
 
 # --- theme ------------------------------------------------------------------
 if [ -n "$WANT_THEME" ]; then
-  SRC="$ROOT/themes/$THEME_NAME"
-  DEST="$THEMES_DIR/$THEME_NAME"
-
-  say "Design ($THEME_NAME):"
-  [ -d "$SRC" ] || { echo "ERROR: source theme not found at $SRC" >&2; exit 1; }
   [ -d "$THEMES_DIR" ] || { echo "ERROR: $THEMES_DIR not found — is ISPCONFIG_ROOT correct?" >&2; exit 1; }
-  [ -d "$THEMES_DIR/default" ] || { echo "ERROR: $THEMES_DIR/default missing — Clarity inherits vendor assets from it." >&2; exit 1; }
+  # Both designs lean on the stock theme: Clarity inherits its vendor assets,
+  # classic inherits everything AND is generated from its templates.
+  [ -d "$THEMES_DIR/default" ] || { echo "ERROR: $THEMES_DIR/default missing — the designs inherit vendor assets from it." >&2; exit 1; }
 
-  check_stray "$SRC"
-  deploy "$SRC" "$DEST" "$ROOT/themes" "$THEME_NAME"
-
-  # --- detect ISPC_APP_VERSION and stamp the gate --------------------------
+  # --- detect ISPC_APP_VERSION once, stamp every design with it ------------
   # `|| true`: an unmatched grep must fall through to the WARNING branch, not
-  # abort via set -e/pipefail after the theme is already in place.
+  # abort via set -e/pipefail after a theme is already in place.
   VERSION=""
   if [ -f "$CONF" ]; then
     VERSION="$(grep -oE "define\(['\"]ISPC_APP_VERSION['\"],[[:space:]]*['\"][^'\"]+['\"]" "$CONF" \
                | grep -oE "['\"][^'\"]+['\"][[:space:]]*\)?$" | tail -1 | tr -d "'\"" || true)"
   fi
 
-  if [ -n "$VERSION" ]; then
-    printf '%s' "$VERSION" > "$DEST/ispconfig_version"
-    printf '%s' "$VERSION" > "$DEST/ISPC_VERSION"
-    # deploy() chowned the tree before these two existed, so chown them too —
-    # otherwise they are the only root-owned files in an ispconfig-owned theme
-    if [ "$MODE" = "copy" ] && id -u ispconfig >/dev/null 2>&1; then
-        chown ispconfig:ispconfig "$DEST/ispconfig_version" "$DEST/ISPC_VERSION" 2>/dev/null || true
+  for THEME_NAME in $DESIGNS; do
+    SRC="$ROOT/themes/$THEME_NAME"
+    DEST="$THEMES_DIR/$THEME_NAME"
+
+    say "Design ($THEME_NAME):"
+    [ -d "$SRC" ] || { echo "ERROR: source theme not found at $SRC" >&2; exit 1; }
+
+    check_stray "$SRC"
+
+    # classic's shell is built from the panel's own stock templates. Build and
+    # VERIFY it before the directory exists on the panel, not after: between
+    # deploy() and the templates landing, classic would be a theme ISPConfig
+    # lists in its Design picker (a directory with no version file is offered)
+    # whose every asset path resolves into an empty directory. Generating first
+    # shrinks that window to a single move of already-checked files.
+    if [ "$THEME_NAME" = "classic" ]; then
+      CLASSIC_TPL_TMP="$(mktemp -d)"
+      if ! generate_classic_templates "$CLASSIC_TPL_TMP"; then
+        echo "ERROR: could not generate classic's shell templates — nothing was installed" >&2
+        echo "       for this design." >&2
+        exit 1
+      fi
     fi
-    say "  stamped ispconfig_version + ISPC_VERSION = '$VERSION'"
-  else
-    # Leave NO stale stamp behind: a version file from a previous install against
-    # a different panel is worse than none — it makes the theme look selectable
-    # and then silently resets every user at login.
-    rm -f "$DEST/ispconfig_version" "$DEST/ISPC_VERSION"
-    echo "WARNING: could not detect ISPC_APP_VERSION from $CONF." >&2
-    echo "         Removed any stale stamps. Create BOTH files with your exact version:" >&2
-    echo "           V=\$(php -r \"require '$CONF'; echo ISPC_APP_VERSION;\")" >&2
-    echo "           printf '%s' \"\$V\" > $DEST/ispconfig_version" >&2
-    echo "           printf '%s' \"\$V\" > $DEST/ISPC_VERSION" >&2
-    echo "         Without ispconfig_version, ISPConfig resets the theme to 'default' at login." >&2
-  fi
+
+    deploy "$SRC" "$DEST" "$ROOT/themes" "$THEME_NAME"
+
+    if [ "$THEME_NAME" = "classic" ]; then
+      # In symlink mode this writes THROUGH the link into the clone, which is
+      # where the generated templates belong (themes/classic/.gitignore keeps
+      # them out of git). Replaced wholesale every run, so a template left over
+      # from an older ISPConfig can never survive an upgrade.
+      rm -rf "$DEST/templates"
+      mkdir -p "$DEST/templates"
+      cp "$CLASSIC_TPL_TMP/main.tpl.htm" "$CLASSIC_TPL_TMP/main_login.tpl.htm" "$DEST/templates/"
+      rm -rf "$CLASSIC_TPL_TMP"; CLASSIC_TPL_TMP=""
+      # Explicit modes, because these are the only files here created from
+      # scratch rather than unpacked by tar (which restores the archived mode and
+      # ignores the umask). Under a hardened root umask such as 027 they would
+      # otherwise land unreadable to the panel's web user, and an unreadable
+      # shell template renders the entire panel from the stock fallback with
+      # every asset path pointing into themes/classic/ — a blank panel.
+      chmod 755 "$DEST/templates" 2>/dev/null || true
+      chmod 644 "$DEST/templates/main.tpl.htm" "$DEST/templates/main_login.tpl.htm" 2>/dev/null || true
+      if [ "$MODE" = "copy" ] && id -u ispconfig >/dev/null 2>&1; then
+        chown -R ispconfig:ispconfig "$DEST/templates" 2>/dev/null || true
+      fi
+      say "  generated templates/main.tpl.htm + main_login.tpl.htm from this panel's"
+      say "  stock shell (verified: stock markup, asset paths pinned to themes/default,"
+      say "  brand endpoints linked)."
+    fi
+
+    if [ -n "$VERSION" ]; then
+      printf '%s' "$VERSION" > "$DEST/ispconfig_version"
+      printf '%s' "$VERSION" > "$DEST/ISPC_VERSION"
+      # deploy() chowned the tree before these two existed, so chown them too —
+      # otherwise they are the only root-owned files in an ispconfig-owned theme
+      if [ "$MODE" = "copy" ] && id -u ispconfig >/dev/null 2>&1; then
+          chown ispconfig:ispconfig "$DEST/ispconfig_version" "$DEST/ISPC_VERSION" 2>/dev/null || true
+      fi
+      say "  stamped ispconfig_version + ISPC_VERSION = '$VERSION'"
+    else
+      # Leave NO stale stamp behind: a version file from a previous install against
+      # a different panel is worse than none — it makes the theme look selectable
+      # and then silently resets every user at login.
+      rm -f "$DEST/ispconfig_version" "$DEST/ISPC_VERSION"
+      echo "WARNING: could not detect ISPC_APP_VERSION from $CONF." >&2
+      echo "         Removed any stale stamps from $THEME_NAME. Create BOTH files with your exact version:" >&2
+      echo "           V=\$(php -r \"require '$CONF'; echo ISPC_APP_VERSION;\")" >&2
+      echo "           printf '%s' \"\$V\" > $DEST/ispconfig_version" >&2
+      echo "           printf '%s' \"\$V\" > $DEST/ISPC_VERSION" >&2
+      echo "         Without ispconfig_version, ISPConfig resets the theme to 'default' at login." >&2
+    fi
+    say
+  done
 
   # --- version-disclosure advisory -----------------------------------------
   # Those two files sit inside a directory the panel serves statically, so
@@ -275,12 +517,12 @@ if [ -n "$WANT_THEME" ]; then
   # reads those exact names), so the fix belongs in the web server. This matters
   # more here than for a stock theme: the Branding page offers a "hide the
   # version" toggle, and serving it as a static file undercuts that entirely.
-  say
-  say "  SECURITY NOTE: $DEST/ispconfig_version and ISPC_VERSION are served over"
-  say "  HTTP and disclose your exact ISPConfig version to anyone who can reach the"
-  say "  login page. Deny them at the web-server layer."
+  say "  SECURITY NOTE: ispconfig_version and ISPC_VERSION in each design directory"
+  say "  are served over HTTP and disclose your exact ISPConfig version to anyone who"
+  say "  can reach the login page. Deny them at the web-server layer."
   if [ -d "$ROOT/contrib/webserver" ]; then
-    say "  Ready-made Apache and nginx snippets: contrib/webserver/ (see its README)."
+    say "  Ready-made Apache and nginx snippets: contrib/webserver/ (see its README —"
+    say "  the rules match any design directory, so they cover classic too)."
   fi
   say
 fi
@@ -336,16 +578,24 @@ INSTALL_COMPLETED=1
   # is more than one thing installed here.
   say "Next steps:"
   STEP=0
+  # The design to put in the config example. With more than one installed the
+  # first requested wins — a config file holds exactly one theme, and guessing
+  # differently from the operator's own flag order would be worse than picking.
+  PRIMARY_DESIGN="${DESIGNS%% *}"
   if [ -n "$WANT_THEME" ]; then
     STEP=$((STEP + 1))
-    say "  $STEP. Per user:  Tools > User Settings > Design > select \"$THEME_NAME\" > Save."
+    if [ "$DESIGNS" = "$PRIMARY_DESIGN" ]; then
+      say "  $STEP. Per user:  Tools > User Settings > Design > select \"$PRIMARY_DESIGN\" > Save."
+    else
+      say "  $STEP. Per user:  Tools > User Settings > Design > select one of \"$DESIGNS\" > Save."
+    fi
     say "                Core updates your session and reloads the page, so it"
     say "                applies immediately. If the frame still looks stock,"
     say "                hard-refresh (Ctrl+Shift+R) to drop the cached CSS."
     STEP=$((STEP + 1))
     say "  $STEP. System wide + login screen — set in BOTH config files:"
     say
-    say "       \$conf['theme'] = '$THEME_NAME';"
+    say "       \$conf['theme'] = '$PRIMARY_DESIGN';"
     say
     say "     interface/lib/config.inc.php   takes effect immediately (login page +"
     say "                                    default for new users)"
@@ -362,16 +612,28 @@ INSTALL_COMPLETED=1
     say "  $STEP. Open Branding and set your logo, panel name, colours and login details."
     say "     Logo, panel name and the news-feed toggle also apply to the STOCK ISPConfig"
     say "     theme — core reads those itself. Accent colour, login background and version"
-    say "     hiding need a brand-aware design such as Clarity, installed by --theme."
+    say "     hiding need a brand-aware design: clarity, or classic if you want to keep"
+    say "     the stock look (--design=classic)."
   fi
   say
   if [ -n "$WANT_THEME" ]; then
     say "IMPORTANT — after ANY ISPConfig upgrade, including patch releases such as"
     say "3.3.1p1 -> 3.3.1p2, re-run this script so the version gate is re-stamped."
-    say "Skip it and the theme silently reverts to 'default' at every login."
-    say "Then diff the six overridden templates (three shell + three dashboard"
-    say "dashlets) against the new stock ones — they are listed with their pinned"
-    say "contracts in themes/$THEME_NAME/BUILT-AGAINST.txt."
+    say "Skip it and the design silently reverts to 'default' at every login."
+    for d in $DESIGNS; do
+      case "$d" in
+        classic)
+          say "For classic that same run also regenerates its two shell templates from the"
+          say "new stock ones, so it stays the stock look by construction — there is"
+          say "nothing to diff by hand."
+          ;;
+        *)
+          say "For $d, then diff the six overridden templates (three shell + three dashboard"
+          say "dashlets) against the new stock ones — they are listed with their pinned"
+          say "contracts in themes/$d/BUILT-AGAINST.txt."
+          ;;
+      esac
+    done
     say
   fi
   say "No ISPConfig core file was modified."

@@ -11,6 +11,20 @@ mockup/webroot/
 # link, so these land in the working tree. They are install-specific.
 themes/clarity/ispconfig_version
 themes/clarity/ISPC_VERSION
+themes/classic/ispconfig_version
+themes/classic/ISPC_VERSION
+
+# classic's two shell templates are GENERATED from the target panel's own stock
+# templates at install time (see themes/classic/README.md), so they are never
+# committed — a stored copy would pin one ISPConfig version's markup and diverge
+# from the panel silently.
+#
+# These rules live HERE rather than in a themes/classic/.gitignore on purpose:
+# that directory is deployed verbatim into the panel's web root, and a dotfile
+# naming install.sh and templates/ fingerprints the extension on a panel whose
+# whole point is to carry someone else's brand. Keeping the rules in the repo
+# root means nothing extra ships.
+themes/classic/templates/
 
 # Agent / tooling runtime state — never commit (leaks local paths + session ids)
 .omc/
