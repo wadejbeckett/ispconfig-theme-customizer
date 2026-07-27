@@ -1,0 +1,52 @@
+<?php
+$wb['customizer_title'] = 'Branding';
+$wb['page_head_txt'] = 'Branding';
+$wb['customizer_desc_txt'] = 'Gestalten Sie dieses Control Panel als Ihre eigene Marke — Logo, Name und Farben werden in ISPConfig gespeichert und bleiben bei Panel- und Theme-Updates erhalten.';
+$wb['settings_saved_txt'] = 'Einstellungen gespeichert. Farbänderungen erscheinen nach einem vollständigen Neuladen der Seite (F5).';
+
+$wb['logo_head_txt'] = 'Logo';
+$wb['logo_txt'] = 'Logo-Datei';
+$wb['logo_hint_txt'] = 'Wählen Sie eine Datei und klicken Sie dann auf „Logo hochladen" — das Logo wird eigenständig hochgeladen, getrennt von der Schaltfläche „Speichern" unten. SVG, PNG, JPEG, GIF oder WebP, unter 45 KB. Helle Grafiken funktionieren am besten — das Logo sitzt auf der dunklen Seitenleiste und im Anmeldebereich.';
+$wb['upload_txt'] = 'Logo hochladen';
+$wb['logo_url_txt'] = 'Logo-URL / -Pfad (Überschreibung)';
+$wb['logo_url_hint_txt'] = 'Optional. Ein serverrelativer Pfad (empfohlen — z. B. /themes/custom/logo.svg für eine Datei, die Sie auf dem Server abgelegt haben) oder eine https://-URL. Wenn gesetzt, verwenden Branding-fähige Themes diese anstelle des hochgeladenen Logos; das Standard-Theme und die Anmeldeseite verwenden stets das hochgeladene Logo. SVG oder ein 2x-PNG von etwa 500&times;160 funktioniert am besten (es wird etwa 26 px hoch angezeigt). Eine externe URL bindet Ihre Anmeldeseite an diesen Host und gibt ihm die IP-Adressen Ihrer Besucher preis — ein lokaler Pfad ist vorzuziehen.';
+$wb['logo_url_error_regex'] = 'Die Logo-Überschreibung muss ein serverrelativer Pfad (/…) oder eine https://-URL sein, ohne Leerzeichen, Anführungszeichen oder Klammern.';
+$wb['logo_remove_txt'] = 'Entfernen';
+$wb['used_logo_txt'] = 'Aktuelles Logo';
+
+$wb['brand_head_txt'] = 'Name & Farben';
+$wb['company_name_txt'] = 'Panel-Name';
+$wb['company_name_hint_txt'] = 'Wird im Browser-Titel und in der Fußzeile angezeigt.';
+$wb['accent_hex_txt'] = 'Akzentfarbe';
+$wb['rail_hex_txt'] = 'Farbe der Seitenleiste';
+$wb['login_bg_txt'] = 'Anmelde-Hintergrund';
+$wb['colour_hint_txt'] = 'Hex-Wert wie #0065AB. Leer lassen, um die Theme-Vorgabe beizubehalten.';
+
+$wb['login_head_txt'] = 'Anmeldebildschirm';
+$wb['custom_login_text_txt'] = 'Fußnotentext der Anmeldung';
+$wb['custom_login_link_txt'] = 'Fußnotenlink der Anmeldung';
+
+$wb['credits_head_txt'] = 'Namensnennung';
+$wb['credits_hint_txt'] = 'Diese steuern die optionalen Hinweiszeilen in der Fußzeile. Die Open-Source-Lizenzhinweise im Quellcode und in der Dokumentation bleiben stets erhalten — das Ausschalten einer Zeile entfernt sie nie.';
+$wb['show_ispconfig_credit_txt'] = '„powered by ISPConfig" anzeigen';
+$wb['show_theme_credit_txt'] = 'Theme-Hinweis anzeigen';
+$wb['show_version_txt'] = 'Software-Version anzeigen';
+$wb['show_version_hint_txt'] = 'Der Abschnitt „Über ISPConfig" und die Versionszeile unter Hilfe. Das Ausblenden gilt für alle Administratoren — auch für Sie selbst — damit Demos sauber bleiben (ein Branding-fähiges Theme blendet die Anzeige visuell aus; die Seite selbst bleibt über die direkte URL erreichbar).';
+$wb['show_news_feed_txt'] = 'News-Feed anzeigen';
+$wb['show_news_feed_hint_txt'] = 'Die Seitenleiste „Aktuelle News" auf dem Dashboard (standardmäßig der ISPConfig-Projekt-Feed). Ausschalten blendet sie für alle Rollen aus; erneutes Einschalten stellt den Standard-Feed wieder her, behält aber eigene Feed-URLs bei, die Sie unter System > Interface-Konfiguration festgelegt haben. Benutzer sehen die Änderung bei der nächsten Anmeldung.';
+
+$wb['accent_hex_error_regex'] = 'Die Akzentfarbe muss ein Hex-Wert wie #0065AB sein.';
+$wb['rail_hex_error_regex'] = 'Die Farbe der Seitenleiste muss ein Hex-Wert wie #01243D sein.';
+$wb['login_bg_error_regex'] = 'Der Anmelde-Hintergrund muss ein Hex-Wert wie #17252B sein.';
+$wb['login_link_error_regex'] = 'Der Fußnotenlink der Anmeldung muss mit http:// oder https:// beginnen.';
+
+$wb['logo_uploaded_txt'] = 'Logo aktualisiert.';
+$wb['logo_removed_txt'] = 'Logo entfernt.';
+$wb['logo_bad_type_txt'] = 'Nicht unterstütztes Bild. Verwenden Sie SVG (unkompliziert, ohne Skripte), PNG, JPEG, GIF oder WebP.';
+$wb['logo_too_large_txt'] = 'Dieses Bild ist zu groß. Halten Sie es unter 45 KB — ein optimiertes PNG oder WebP funktioniert am besten.';
+$wb['no_file_uploaded_error'] = 'Es wurde keine Datei ausgewählt.';
+$wb['upload_failed_txt'] = 'Der Upload wurde nicht abgeschlossen. Bitte versuchen Sie es erneut.';
+$wb['demo_mode_txt'] = 'Diese Funktion ist im Demo-Modus deaktiviert.';
+
+$wb['btn_save_txt'] = 'Speichern';
+$wb['btn_cancel_txt'] = 'Abbrechen';

@@ -1,0 +1,54 @@
+<?php
+$wb['customizer_title'] = 'Branding';
+$wb['page_head_txt'] = 'Customizer';
+$wb['customizer_desc_txt'] = 'Brand this control panel as your own — the logo, name and colours are stored in ISPConfig and survive panel and theme updates.';
+$wb['settings_saved_txt'] = 'Settings saved. Colour changes appear after a full page refresh (F5).';
+
+$wb['logo_head_txt'] = 'Logo';
+$wb['logo_txt'] = 'Logo file';
+$wb['logo_hint_txt'] = 'Choose a file, then click "Upload logo" — the logo uploads on its own, separately from the Save button at the bottom. SVG, PNG, JPEG, GIF or WebP, under 45 KB. Light artwork works best — it sits on the dark sidebar and login band.';
+$wb['upload_txt'] = 'Upload logo';
+$wb['logo_url_txt'] = 'Logo URL / path (override)';
+$wb['logo_url_hint_txt'] = 'Optional. A root-relative path (recommended — e.g. /themes/custom/logo.svg for a file you placed on the server) or an https:// URL. When set, brand-aware themes use it instead of the uploaded logo; the stock theme and the login page always use the uploaded one. SVG or a 2x PNG around 500&times;160 works best (it displays about 26px tall). A remote URL ties your login page to that host and reveals visitor IPs to it — prefer a local path.';
+$wb['logo_url_error_regex'] = 'The logo override must be a root-relative path (/…) or an https:// URL, without spaces, quotes, brackets or parentheses.';
+$wb['logo_remove_txt'] = 'Remove';
+$wb['used_logo_txt'] = 'Current logo';
+// no_logo_set_txt is resolved via $app->lng(), which reads lib/lang/en.lng — the
+// copy that used to live here was dead (this file feeds the tform wordbook only).
+
+$wb['brand_head_txt'] = 'Name & colours';
+$wb['company_name_txt'] = 'Panel name';
+$wb['company_name_hint_txt'] = 'Shown in the browser title and footer.';
+$wb['accent_hex_txt'] = 'Accent colour';
+$wb['rail_hex_txt'] = 'Sidebar colour';
+$wb['login_bg_txt'] = 'Login background';
+$wb['colour_hint_txt'] = 'Hex value like #0065AB. Leave blank to keep the theme default.';
+
+$wb['login_head_txt'] = 'Login screen';
+$wb['custom_login_text_txt'] = 'Login footnote text';
+$wb['custom_login_link_txt'] = 'Login footnote link';
+
+$wb['credits_head_txt'] = 'Attribution';
+$wb['credits_hint_txt'] = 'These control the optional courtesy lines in the footer. The open-source licence notices in the source and documentation are always kept — turning a line off never removes them.';
+$wb['show_ispconfig_credit_txt'] = 'Show "powered by ISPConfig"';
+$wb['show_theme_credit_txt'] = 'Show the theme credit';
+$wb['show_version_txt'] = 'Show the software version';
+$wb['show_version_hint_txt'] = 'The "About ISPConfig" section and version line under Help. Hiding it applies to every admin — including you — so demos stay clean (a brand-aware theme hides it visually; the page itself stays reachable by direct URL).';
+$wb['show_news_feed_txt'] = 'Show the news feed';
+$wb['show_news_feed_hint_txt'] = 'The "Latest news" sidebar on the dashboard (the ISPConfig project feed by default). Turning it off hides it for every role; turning it back on restores the default feed but keeps any custom feed URLs you set under System > Interface Config. Users see the change at their next login.';
+
+$wb['accent_hex_error_regex'] = 'Accent colour must be a hex value like #0065AB.';
+$wb['rail_hex_error_regex'] = 'Sidebar colour must be a hex value like #01243D.';
+$wb['login_bg_error_regex'] = 'Login background must be a hex value like #17252B.';
+$wb['login_link_error_regex'] = 'The login footnote link must start with http:// or https://.';
+
+$wb['logo_uploaded_txt'] = 'Logo updated.';
+$wb['logo_removed_txt'] = 'Logo removed.';
+$wb['logo_bad_type_txt'] = 'Unsupported image. Use SVG (plain, script-free), PNG, JPEG, GIF or WebP.';
+$wb['logo_too_large_txt'] = 'That image is too large. Keep it under 45 KB — an optimised PNG or WebP works best.';
+$wb['no_file_uploaded_error'] = 'No file was selected.';
+$wb['upload_failed_txt'] = 'The upload did not complete. Please try again.';
+$wb['demo_mode_txt'] = 'This function is disabled in demo mode.';
+
+$wb['btn_save_txt'] = 'Save';
+$wb['btn_cancel_txt'] = 'Cancel';

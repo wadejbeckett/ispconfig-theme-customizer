@@ -1,0 +1,52 @@
+<?php
+$wb['customizer_title'] = 'Branding';
+$wb['page_head_txt'] = 'Customizer';
+$wb['customizer_desc_txt'] = 'Voorzie dit controlepaneel van uw eigen merk — het logo, de naam en de kleuren worden in ISPConfig opgeslagen en blijven behouden bij updates van het paneel en het thema.';
+$wb['settings_saved_txt'] = 'Instellingen opgeslagen. Kleurwijzigingen verschijnen na een volledige vernieuwing van de pagina (F5).';
+
+$wb['logo_head_txt'] = 'Logo';
+$wb['logo_txt'] = 'Logobestand';
+$wb['logo_hint_txt'] = 'Kies een bestand en klik vervolgens op "Logo uploaden" — het logo wordt direct geüpload, los van de knop Opslaan onderaan. SVG, PNG, JPEG, GIF of WebP, kleiner dan 45 KB. Lichte afbeeldingen werken het best — het logo staat op de donkere zijbalk en de aanmeldbalk.';
+$wb['upload_txt'] = 'Logo uploaden';
+$wb['logo_url_txt'] = 'Logo-URL / -pad (overschrijving)';
+$wb['logo_url_hint_txt'] = 'Optioneel. Een root-relatief pad (aanbevolen — bijv. /themes/custom/logo.svg voor een bestand dat u op de server hebt geplaatst) of een https://-URL. Indien ingesteld, gebruiken merkbewuste thema’s dit in plaats van het geüploade logo; het standaardthema en de aanmeldpagina gebruiken altijd het geüploade logo. SVG of een 2x-PNG van ongeveer 500&times;160 werkt het best (het wordt ongeveer 26px hoog weergegeven). Een externe URL koppelt uw aanmeldpagina aan die host en geeft de IP-adressen van uw bezoekers aan die host prijs — geef de voorkeur aan een lokaal pad.';
+$wb['logo_url_error_regex'] = 'De logo-overschrijving moet een root-relatief pad (/…) of een https://-URL zijn, zonder spaties, aanhalingstekens, vierkante haken of ronde haken.';
+$wb['logo_remove_txt'] = 'Verwijderen';
+$wb['used_logo_txt'] = 'Huidig logo';
+
+$wb['brand_head_txt'] = 'Naam & kleuren';
+$wb['company_name_txt'] = 'Paneelnaam';
+$wb['company_name_hint_txt'] = 'Wordt weergegeven in de browsertitel en de voettekst.';
+$wb['accent_hex_txt'] = 'Accentkleur';
+$wb['rail_hex_txt'] = 'Zijbalkkleur';
+$wb['login_bg_txt'] = 'Aanmeldachtergrond';
+$wb['colour_hint_txt'] = 'Hex-waarde zoals #0065AB. Laat leeg om de themastandaard te behouden.';
+
+$wb['login_head_txt'] = 'Aanmeldscherm';
+$wb['custom_login_text_txt'] = 'Tekst aanmeldvoetnoot';
+$wb['custom_login_link_txt'] = 'Link aanmeldvoetnoot';
+
+$wb['credits_head_txt'] = 'Naamsvermelding';
+$wb['credits_hint_txt'] = 'Deze bepalen de optionele beleefdheidsregels in de voettekst. De open-source licentievermeldingen in de broncode en de documentatie blijven altijd behouden — het uitschakelen van een regel verwijdert deze nooit.';
+$wb['show_ispconfig_credit_txt'] = '"powered by ISPConfig" tonen';
+$wb['show_theme_credit_txt'] = 'De themavermelding tonen';
+$wb['show_version_txt'] = 'De softwareversie tonen';
+$wb['show_version_hint_txt'] = 'Het gedeelte "Over ISPConfig" en de versieregel onder Help. Het verbergen geldt voor elke beheerder — ook voor uzelf — zodat demo’s overzichtelijk blijven (een merkbewust thema verbergt het visueel; de pagina zelf blijft bereikbaar via de directe URL).';
+$wb['show_news_feed_txt'] = 'De nieuwsfeed tonen';
+$wb['show_news_feed_hint_txt'] = 'De zijbalk "Laatste nieuws" op het dashboard (standaard de ISPConfig-projectfeed). Uitschakelen verbergt deze voor elke rol; opnieuw inschakelen herstelt de standaardfeed, maar behoudt eventuele aangepaste feed-URL’s die u hebt ingesteld onder System > Interface Config. Gebruikers zien de wijziging bij hun volgende aanmelding.';
+
+$wb['accent_hex_error_regex'] = 'De accentkleur moet een hex-waarde zoals #0065AB zijn.';
+$wb['rail_hex_error_regex'] = 'De zijbalkkleur moet een hex-waarde zoals #01243D zijn.';
+$wb['login_bg_error_regex'] = 'De aanmeldachtergrond moet een hex-waarde zoals #17252B zijn.';
+$wb['login_link_error_regex'] = 'De link van de aanmeldvoetnoot moet beginnen met http:// of https://.';
+
+$wb['logo_uploaded_txt'] = 'Logo bijgewerkt.';
+$wb['logo_removed_txt'] = 'Logo verwijderd.';
+$wb['logo_bad_type_txt'] = 'Niet-ondersteunde afbeelding. Gebruik SVG (eenvoudig, zonder scripts), PNG, JPEG, GIF of WebP.';
+$wb['logo_too_large_txt'] = 'Die afbeelding is te groot. Houd deze onder de 45 KB — een geoptimaliseerde PNG of WebP werkt het best.';
+$wb['no_file_uploaded_error'] = 'Er is geen bestand geselecteerd.';
+$wb['upload_failed_txt'] = 'De upload is niet voltooid. Probeer het opnieuw.';
+$wb['demo_mode_txt'] = 'Deze functie is uitgeschakeld in de demomodus.';
+
+$wb['btn_save_txt'] = 'Opslaan';
+$wb['btn_cancel_txt'] = 'Annuleren';

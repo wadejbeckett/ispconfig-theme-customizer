@@ -1,0 +1,191 @@
+<?php
+/**
+ * ispconfig-customizer — standalone white-label branding for ISPConfig.
+ * https://github.com/wadejbeckett/ispconfig-customizer
+ * Copyright (c) 2026 Wade Beckett. MIT License — see LICENSE.
+ *
+ * Built for ISPConfig (ispconfig.org, BSD-3-Clause). Not affiliated with or
+ * endorsed by the ISPConfig project.
+ *
+ * The single global row sys_ini (sysini_id = 1) is the store. The controller
+ * (customizer_edit.php) reads/writes two INI sections inside sys_ini.config:
+ *   [branding]  logo_url, accent_hex, rail_hex, login_bg,
+ *               show_ispconfig_credit, show_theme_credit, show_version
+ *   [misc]      company_name, custom_login_text, custom_login_link, and the
+ *               three dashboard_atom_url_* keys via the news-feed toggle
+ *               (all existing core keys)
+ * The logo lives in the sys_ini.custom_logo column (handled by logo_upload.php).
+ */
+
+//* Both empty ON PURPOSE: tform_base builds form_hint from title + description
+//* and the stock tabbed_form wrapper renders that INSIDE a <h1> above the tab
+//* strip (the description at heading size was the "text size is weird" bug).
+//* With an empty form_hint the wrapper header is suppressed and the page header
+//* in templates/customizer_edit.htm is the single source of title + description.
+$form["title"]        = "";
+$form["description"]  = "";
+$form["name"]         = "customizer";
+$form["action"]       = "customizer_edit.php";
+$form["db_table"]     = "sys_ini";
+$form["db_table_idx"] = "sysini_id";
+$form["db_history"]   = "no";
+$form["tab_default"]  = "branding";
+//* after a save the framework redirects here; msg=saved makes the page show a
+//* confirmation banner (there is no list view for this singleton form)
+$form["list_default"] = "customizer_edit.php?id=1&msg=saved";
+$form["auth"]         = 'yes';
+
+$form["auth_preset"]["userid"]     = 0;
+$form["auth_preset"]["groupid"]    = 0;
+$form["auth_preset"]["perm_user"]  = 'riud';
+$form["auth_preset"]["perm_group"] = 'riud';
+$form["auth_preset"]["perm_other"] = '';
+
+$form["tabs"]['branding'] = array(
+    'title'    => "customizer_title",
+    'width'    => 100,
+    'template' => "templates/customizer_edit.htm",
+    'fields'   => array(
+
+        'company_name' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'TEXT',
+            'filters'  => array(
+                0 => array('event' => 'SAVE', 'type' => 'STRIPTAGS'),
+                1 => array('event' => 'SAVE', 'type' => 'STRIPNL'),
+            ),
+            'default' => '',
+            'value'   => ''
+        ),
+
+        'logo_url' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'TEXT',
+            //* TRIM only — deliberately NOT the STRIPTAGS+STRIPNL pair the free-text
+            //* fields use. tform_base::encode() runs filters BEFORE validators, so a
+            //* STRIPNL here would splice an embedded newline out of the middle of the
+            //* value ("/img/a\nb" -> "/img/ab") and hand the validator something that
+            //* passes, silently storing a path the admin never typed. The regex below
+            //* rejects an embedded newline outright and that is the behaviour we want.
+            //* Surrounding whitespace is different: a browser does not strip a trailing
+            //* space from a text input, so a pasted "/img/logo.png " would fail the
+            //* anchored regex with an opaque error on a field that looks correct — and
+            //* a trailing "\n" is worse still, because PCRE "$" also matches just before
+            //* a final newline, so it validates and only breaks later (db->quote() turns
+            //* the LF into a literal backslash-n, then the stripslashes() in getconf /
+            //* the theme's brand.php collapses that to a bare "n" -> "/img/logo.pngn",
+            //* a 404 with no error ever shown). trim() at SAVE removes both cases before
+            //* either can happen.
+            'filters'  => array(
+                0 => array('event' => 'SAVE', 'type' => 'TRIM'),
+            ),
+            //* consumed inside a CSS url("...") by brand-aware themes: forbid
+            //* every character that could break out of that context. Only a
+            //* root-relative path or an https URL (no http: an https panel
+            //* would hit mixed-content blocking anyway). The (?!\/) lookahead
+            //* rejects protocol-relative "//host/..." — browsers treat that as
+            //* a REMOTE url, defeating the local-path privacy contract.
+            //* The /D modifier makes "$" mean true end-of-subject instead of
+            //* "end, or before a final newline"; belt-and-braces with the TRIM
+            //* above so the anchor stays absolute even if this field is ever
+            //* validated on a path that does not run the filters. (tform_base
+            //* appends "s" to every REGEX validator, giving "/…/Ds" — both are
+            //* valid PCRE modifiers and order between them is irrelevant.)
+            'validators' => array(
+                0 => array('type' => 'REGEX', 'regex' => '/^(https:\/\/[^\s"\'<>()\\\\]+|\/(?!\/)[^\s"\'<>()\\\\]+)?$/D', 'errmsg' => 'logo_url_error_regex'),
+            ),
+            'default' => '',
+            'value'   => ''
+        ),
+
+        'accent_hex' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'TEXT',
+            'validators' => array(
+                0 => array('type' => 'REGEX', 'regex' => '/^(#[0-9A-Fa-f]{6})?$/', 'errmsg' => 'accent_hex_error_regex'),
+            ),
+            'default' => '',
+            'value'   => ''
+        ),
+
+        'rail_hex' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'TEXT',
+            'validators' => array(
+                0 => array('type' => 'REGEX', 'regex' => '/^(#[0-9A-Fa-f]{6})?$/', 'errmsg' => 'rail_hex_error_regex'),
+            ),
+            'default' => '',
+            'value'   => ''
+        ),
+
+        'login_bg' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'TEXT',
+            'validators' => array(
+                0 => array('type' => 'REGEX', 'regex' => '/^(#[0-9A-Fa-f]{6})?$/', 'errmsg' => 'login_bg_error_regex'),
+            ),
+            'default' => '',
+            'value'   => ''
+        ),
+
+        'custom_login_text' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'TEXT',
+            'filters'  => array(
+                0 => array('event' => 'SAVE', 'type' => 'STRIPTAGS'),
+                1 => array('event' => 'SAVE', 'type' => 'STRIPNL'),
+            ),
+            'default' => '',
+            'value'   => ''
+        ),
+
+        'custom_login_link' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'TEXT',
+            'filters'  => array(
+                0 => array('event' => 'SAVE', 'type' => 'STRIPTAGS'),
+                1 => array('event' => 'SAVE', 'type' => 'STRIPNL'),
+            ),
+            //* core login/index.php renders this unescaped inside <a href="...">, so the
+            //* value must not contain a quote/space/angle-bracket that could break out of
+            //* the attribute. Anchored, and no attribute-breaking chars allowed.
+            'validators' => array(
+                0 => array('type' => 'REGEX', 'regex' => '/^(https?:\/\/[^\s"\'<>]+)?$/', 'errmsg' => 'login_link_error_regex'),
+            ),
+            'default' => '',
+            'value'   => ''
+        ),
+
+        'show_ispconfig_credit' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'CHECKBOX',
+            'default'  => '1',
+            'value'    => array(0 => '0', 1 => '1')
+        ),
+
+        //* not stored under this name: maps onto the three stock [misc]
+        //* dashboard_atom_url_* keys in onUpdateSave (off = blank all three,
+        //* on = restore the default feed only where a key is empty)
+        'show_news_feed' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'CHECKBOX',
+            'default'  => '1',
+            'value'    => array(0 => '0', 1 => '1')
+        ),
+
+        'show_theme_credit' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'CHECKBOX',
+            'default'  => '1',
+            'value'    => array(0 => '0', 1 => '1')
+        ),
+
+        'show_version' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'CHECKBOX',
+            'default'  => '1',
+            'value'    => array(0 => '0', 1 => '1')
+        ),
+
+    )
+);

@@ -1,0 +1,270 @@
+<div class="page-header">
+  <h1>{tmpl_var name='page_head_txt'}</h1>
+  <p>{tmpl_var name='customizer_desc_txt'}</p>
+</div>
+
+<!-- upload feedback lands here: ispconfig.js injects the iframe response's
+     #OKMsg/#errorMsg near the BOTTOM of the form (before input[name=id]) where
+     nobody sees it — the observer script below relocates it into this slot -->
+<div id="nz-msg-slot"></div>
+
+<style>
+  /* keep the hex field and its colour swatch on one line (form-control is a
+     100%-width block in both the stock theme and Clarity) */
+  #pageContent input.nz-hexfield { display: inline-block; width: 9em; vertical-align: middle; }
+  #pageContent input.nz-hexpick  { height: 36px; width: 48px; padding: 2px 3px; margin-left: 8px;
+                                   vertical-align: middle; border: 0; background: none; cursor: pointer; }
+</style>
+
+<!-- Upload feedback only (logo_upload.php's iframe response — the uploader
+     driver scrapes #OKMsg/#errorMsg out of it). Deliberately NOT named msg/error:
+     the tabbed_form wrapper renders those vars itself, so reusing the names
+     would show every save/validation banner twice. -->
+<tmpl_if name="upload_msg">
+  <div id="OKMsg" class="alert alert-success clear"><tmpl_var name="upload_msg"></div>
+</tmpl_if>
+<tmpl_if name="upload_error">
+  <div id="errorMsg" class="alert alert-danger clear"><tmpl_var name="upload_error"></div>
+</tmpl_if>
+
+<fieldset>
+  <legend>{tmpl_var name='logo_head_txt'}</legend>
+
+  <div class="form-group">
+    <label class="col-sm-3 control-label">{tmpl_var name='used_logo_txt'}</label>
+    <div class="col-sm-9" id="used_logo">{tmpl_var name='used_logo'}</div>
+  </div>
+  <div class="form-group">
+    <label for="file" class="col-sm-3 control-label">{tmpl_var name='logo_txt'}</label>
+    <div class="col-sm-6 col-text">
+      <input name="file" id="file" size="30" type="file" class="fileUpload" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,.svg" />
+      <p class="help-block">{tmpl_var name='logo_hint_txt'}</p>
+    </div>
+    <div class="col-sm-3">
+      <!-- Not wired to the stock iframe uploader (no data-submit-form /
+           data-form-upload, no formbutton-success): the page-render CSRF token
+           it depends on can be silently lost to ISPConfig's lock-free session
+           store, and the stock Enter-key handler must not trigger uploads.
+           The fetch flow below mints its own token at click time instead. -->
+      <button class="btn btn-default" type="button" id="nz-logo-upload">{tmpl_var name='upload_txt'}</button>
+      <a href="javascript:void(0);" class="btn btn-default" id="nz-logo-remove">{tmpl_var name='logo_remove_txt'}</a>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="logo_url" class="col-sm-3 control-label">{tmpl_var name='logo_url_txt'}</label>
+    <div class="col-sm-9">
+      <input type="text" name="logo_url" id="logo_url" value="{tmpl_var name='logo_url'}" class="form-control" placeholder="/themes/custom/logo.svg" />
+      <p class="help-block">{tmpl_var name='logo_url_hint_txt'}</p>
+    </div>
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend>{tmpl_var name='brand_head_txt'}</legend>
+
+  <div class="form-group">
+    <label for="company_name" class="col-sm-3 control-label">{tmpl_var name='company_name_txt'}</label>
+    <div class="col-sm-9">
+      <input type="text" name="company_name" id="company_name" value="{tmpl_var name='company_name'}" class="form-control" />
+      <p class="help-block">{tmpl_var name='company_name_hint_txt'}</p>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="accent_hex" class="col-sm-3 control-label">{tmpl_var name='accent_hex_txt'}</label>
+    <div class="col-sm-9">
+      <input type="text" name="accent_hex" id="accent_hex" value="{tmpl_var name='accent_hex'}" class="form-control nz-hexfield" placeholder="#0065AB" />
+      <input type="color" id="accent_hex_pick" value="#0065AB" class="nz-hexpick" aria-label="Pick accent colour" />
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="rail_hex" class="col-sm-3 control-label">{tmpl_var name='rail_hex_txt'}</label>
+    <div class="col-sm-9">
+      <input type="text" name="rail_hex" id="rail_hex" value="{tmpl_var name='rail_hex'}" class="form-control nz-hexfield" placeholder="#01243D" />
+      <input type="color" id="rail_hex_pick" value="#01243D" class="nz-hexpick" aria-label="Pick sidebar colour" />
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="login_bg" class="col-sm-3 control-label">{tmpl_var name='login_bg_txt'}</label>
+    <div class="col-sm-9">
+      <input type="text" name="login_bg" id="login_bg" value="{tmpl_var name='login_bg'}" class="form-control nz-hexfield" placeholder="#17252B" />
+      <input type="color" id="login_bg_pick" value="#17252B" class="nz-hexpick" aria-label="Pick login background colour" />
+      <p class="help-block">{tmpl_var name='colour_hint_txt'}</p>
+    </div>
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend>{tmpl_var name='login_head_txt'}</legend>
+
+  <div class="form-group">
+    <label for="custom_login_text" class="col-sm-3 control-label">{tmpl_var name='custom_login_text_txt'}</label>
+    <div class="col-sm-9"><input type="text" name="custom_login_text" id="custom_login_text" value="{tmpl_var name='custom_login_text'}" class="form-control" /></div>
+  </div>
+  <div class="form-group">
+    <label for="custom_login_link" class="col-sm-3 control-label">{tmpl_var name='custom_login_link_txt'}</label>
+    <div class="col-sm-9"><input type="text" name="custom_login_link" id="custom_login_link" value="{tmpl_var name='custom_login_link'}" class="form-control" placeholder="https://" /></div>
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend>{tmpl_var name='credits_head_txt'}</legend>
+
+  <div class="form-group">
+    <label class="col-sm-3 control-label">{tmpl_var name='show_ispconfig_credit_txt'}</label>
+    <div class="col-sm-9">{tmpl_var name='show_ispconfig_credit'}</div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label">{tmpl_var name='show_theme_credit_txt'}</label>
+    <div class="col-sm-9">{tmpl_var name='show_theme_credit'}</div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label">{tmpl_var name='show_version_txt'}</label>
+    <div class="col-sm-9">
+      {tmpl_var name='show_version'}
+      <p class="help-block">{tmpl_var name='show_version_hint_txt'}</p>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label">{tmpl_var name='show_news_feed_txt'}</label>
+    <div class="col-sm-9">
+      {tmpl_var name='show_news_feed'}
+      <p class="help-block">{tmpl_var name='show_news_feed_hint_txt'}</p>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-9 col-sm-offset-3"><p class="help-block">{tmpl_var name='credits_hint_txt'}</p></div>
+  </div>
+</fieldset>
+
+<input type="hidden" name="id" value="{tmpl_var name='id'}" />
+
+<div class="clear">
+  <div class="right">
+    <button class="btn btn-default formbutton-success" type="button" data-submit-form="pageForm" data-form-action="customizer/customizer_edit.php">{tmpl_var name='btn_save_txt'}</button>
+    <button class="btn btn-default formbutton-default" type="button" data-load-content="dashboard/dashboard.php">{tmpl_var name='btn_cancel_txt'}</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  function sync(txtId, pickId) {
+    var t = document.getElementById(txtId), p = document.getElementById(pickId);
+    if (!t || !p) return;
+    var re = /^#[0-9A-Fa-f]{6}$/;
+    if (re.test(t.value)) p.value = t.value;
+    // 'input' alone is NOT enough: Firefox's native colour dialog only fires
+    // 'change' when it closes, so a picker-chosen colour never reached the
+    // named text field and every save posted an empty value.
+    function fromPick() { t.value = p.value.toUpperCase(); }
+    p.addEventListener('input', fromPick);
+    p.addEventListener('change', fromPick);
+    t.addEventListener('input', function () { if (re.test(t.value)) p.value = t.value; });
+    // tolerate a pasted colour without the leading '#'
+    t.addEventListener('blur', function () {
+      var v = t.value.trim();
+      if (/^[0-9A-Fa-f]{6}$/.test(v)) v = '#' + v;
+      if (re.test(v)) { v = v.toUpperCase(); t.value = v; p.value = v; }
+    });
+  }
+  sync('accent_hex', 'accent_hex_pick');
+  sync('rail_hex', 'rail_hex_pick');
+  sync('login_bg', 'login_bg_pick');
+
+  // The iframe uploader injects #OKMsg/#errorMsg just above the hidden id input
+  // at the bottom of the form, off-screen on this page — pull any injected
+  // message up into the slot under the page header, where the admin is looking.
+  //
+  // MUST self-disconnect. ISPConfig.loadContent() swaps #pageContent's children on
+  // every in-panel navigation but leaves #pageForm — and this observer — alive. A
+  // stale observer would keep firing on other modules' pages and move THEIR #OKMsg
+  // into our now-detached slot, so saves elsewhere in the panel would silently show
+  // no confirmation at all (and every revisit here would stack another observer).
+  // Bail out the moment the slot leaves the document.
+  var slot = document.getElementById('nz-msg-slot');
+  if (slot && window.MutationObserver) {
+    var relocate = function () {
+      var moved = false;
+      ['errorMsg', 'OKMsg'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el && el.parentNode !== slot) { slot.appendChild(el); moved = true; }
+      });
+      if (moved) slot.scrollIntoView({ block: 'nearest' });
+    };
+    var ob = new MutationObserver(function () {
+      if (!document.body.contains(slot)) { ob.disconnect(); return; }
+      relocate();
+    });
+    ob.observe(document.getElementById('pageForm') || document.body, { childList: true, subtree: true });
+    relocate();
+  }
+
+  // Upload: two-step fetch. Step 1 mints a FRESH CSRF pair (the page-render
+  // token can be silently erased by ISPConfig's lock-free REPLACE-based session
+  // store when concurrent requests race the render — the classic random "CSRF
+  // attempt blocked"). Step 2 posts the file with that pair, then applies the
+  // response's messages, logo preview, and replacement tokens to the page.
+  var upBtn = document.getElementById('nz-logo-upload');
+  if (upBtn && window.fetch && window.FormData && window.DOMParser) {
+    upBtn.addEventListener('click', function () {
+      var fileInput = document.getElementById('file');
+      var slot = document.getElementById('nz-msg-slot');
+      upBtn.disabled = true;
+      fetch('customizer/logo_upload.php', { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (tok) {
+          var fd = new FormData();
+          fd.append('_csrf_id', tok.csrf_id);
+          fd.append('_csrf_key', tok.csrf_key);
+          if (fileInput && fileInput.files.length > 0) fd.append('file', fileInput.files[0]);
+          return fetch('customizer/logo_upload.php', { method: 'POST', body: fd, credentials: 'same-origin' });
+        })
+        .then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.text();
+        })
+        .then(function (html) {
+          var doc = new DOMParser().parseFromString(html, 'text/html');
+          // Collect BEFORE clearing the slot: an unexpected body (PHP fatal
+          // behind a proxy, a bare die() text) must not silently erase
+          // whatever banner is currently showing.
+          var msgs = [];
+          ['errorMsg', 'OKMsg'].forEach(function (id) {
+            var m = doc.getElementById(id);
+            if (m) msgs.push(m);
+          });
+          if (msgs.length === 0) throw new Error('unexpected response');
+          if (slot) {
+            slot.innerHTML = '';
+            msgs.forEach(function (m) { slot.appendChild(m); });
+            slot.scrollIntoView({ block: 'nearest' });
+          }
+          var freshPrev = doc.getElementById('used_logo');
+          var curPrev = document.getElementById('used_logo');
+          if (freshPrev && curPrev) curPrev.innerHTML = freshPrev.innerHTML;
+        })
+        .catch(function () {
+          if (slot) slot.innerHTML = '<div id="errorMsg" class="alert alert-danger clear">Upload failed — the server did not accept it. Check the panel error log and try again.</div>';
+        })
+        .then(function () { upBtn.disabled = false; });
+    });
+  }
+
+  // Remove-logo: send the page's CSRF token as query params so logo_delete.php
+  // can enforce csrf_token_check('GET') (loadContent issues a same-origin XHR).
+  var rm = document.getElementById('nz-logo-remove');
+  if (rm && window.ISPConfig && typeof ISPConfig.loadContent === 'function') {
+    rm.addEventListener('click', function () {
+      var idf = document.querySelector('#pageForm input[name="_csrf_id"]');
+      var keyf = document.querySelector('#pageForm input[name="_csrf_key"]');
+      ISPConfig.loadContent('customizer/logo_delete.php', {
+        _csrf_id: idf ? idf.value : '',
+        _csrf_key: keyf ? keyf.value : ''
+      });
+    });
+  }
+})();
+</script>

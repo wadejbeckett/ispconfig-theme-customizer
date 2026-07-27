@@ -1,0 +1,5 @@
+<?php
+$wb['top_menu_customizer'] = 'Branding';
+$wb['White-label'] = 'White-label';
+$wb['Branding'] = 'Branding';
+$wb['no_logo_set_txt'] = 'Nenhum logótipo personalizado definido — o tema apresenta a sua própria predefinição.';

@@ -1,0 +1,5 @@
+<?php
+$wb['top_menu_customizer'] = 'Branding';
+$wb['White-label'] = 'Marque blanche';
+$wb['Branding'] = 'Branding';
+$wb['no_logo_set_txt'] = 'Aucun logo personnalisé défini — le thème affiche son propre logo par défaut.';
