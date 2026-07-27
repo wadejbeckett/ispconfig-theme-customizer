@@ -72,6 +72,18 @@ class page_action extends tform_actions {
                                          || (isset($misc['dashboard_atom_url_reseller']) && $misc['dashboard_atom_url_reseller'] !== '')
                                          || (isset($misc['dashboard_atom_url_client']) && $misc['dashboard_atom_url_client'] !== '')) ? '1' : '0',
             );
+        } else {
+            //* Redisplay after a validation error: dataRecord IS the raw POST, and an
+            //* unchecked checkbox is simply absent from a POST. tform_base::getHTML then
+            //* falls back to each field's 'default' ('1'), so every white-label toggle the
+            //* admin had just switched OFF re-renders as ON — and the next save writes
+            //* those '1's back, silently un-white-labelling the panel. Normalise absent
+            //* checkboxes to their explicit "off" value, exactly as onUpdateSave does.
+            foreach($app->tform->formDef['tabs'][$this->active_tab]['fields'] as $key => $field) {
+                if($field['formtype'] == 'CHECKBOX' && !isset($this->dataRecord[$key])) {
+                    $this->dataRecord[$key] = $field['value'][0];
+                }
+            }
         }
 
         $record = $app->tform->getHTML($this->dataRecord, $this->active_tab, 'EDIT');
@@ -95,6 +107,19 @@ class page_action extends tform_actions {
     //* the leading '#' (and colour pickers hand back lowercase) — normalise here
     //* so the REGEX validators accept what any reasonable person types.
     function onBeforeUpdate() {
+        global $app, $conf;
+
+        //* Demo mode writes nothing — refuse HERE rather than in onUpdateSave.
+        //* tform_actions::onUpdate() tests errorMessage at line 118, BEFORE it calls
+        //* onUpdateSave at line 123, and its redirect to list_default (which is
+        //* "customizer_edit.php?id=1&msg=saved") at line 167 is unconditional. A message
+        //* raised any later therefore cannot stop the panel cheerfully printing
+        //* "Settings saved." over values that were never written, which makes a
+        //* deliberately disabled demo panel look like a broken one.
+        if($conf['demo_mode'] == true) {
+            $app->tform->errorMessage .= $app->tform->lng('demo_mode_txt');
+        }
+
         foreach(array('accent_hex', 'rail_hex', 'login_bg') as $k) {
             if(isset($this->dataRecord[$k]) && is_string($this->dataRecord[$k])) {
                 $v = trim($this->dataRecord[$k]);
@@ -123,8 +148,26 @@ class page_action extends tform_actions {
         //* filter/validate the edited fields
         $clean = $app->tform->encode($this->dataRecord, $tab);
 
-        //* read the WHOLE config, then set only our keys -> everything else survives
-        $config = $app->getconf->get_global_config();
+        //* Read the WHOLE config, then set only our keys -> everything else survives.
+        //*
+        //* Read the RAW column and parse it WITHOUT stripslashes — do NOT use
+        //* getconf::get_global_config() here. That method does
+        //* parse_ini_string(stripslashes($row['config'])), and NOTHING re-applies the
+        //* escaping on the way back: ini_parser::get_ini_string() writes values verbatim
+        //* and db::datalogUpdate() binds the blob as a query parameter. So a
+        //* read-modify-write through getconf silently eats one backslash level from
+        //* EVERY value in the file on EVERY save — including sections this module has no
+        //* business touching, e.g. [mail] smtp_pass, where 'pa\ss' degrades to 'pass'
+        //* and outbound mail authentication starts failing with nothing to explain it.
+        //*
+        //* Core's own admin/system_config_edit.php:143-188 has the identical shape, but
+        //* that page is saved once in a blue moon while a branding page invites a dozen
+        //* colour tweaks in a sitting — so we must not inherit it. Parsing the raw string
+        //* means every value we do not own is carried through byte-identical, which is
+        //* the only way to guarantee this module cannot alter ISPConfig's behaviour.
+        //* bin/purge_branding.php already reads the column this way.
+        $raw = $app->db->queryOneRecord("SELECT config FROM sys_ini WHERE sysini_id = 1");
+        $config = $app->ini_parser->parse_ini_string(isset($raw['config']) ? (string)$raw['config'] : '');
         if(!is_array($config)) $config = array();
         if(!isset($config['branding']) || !is_array($config['branding'])) $config['branding'] = array();
         if(!isset($config['misc']) || !is_array($config['misc']))         $config['misc'] = array();
@@ -137,29 +180,61 @@ class page_action extends tform_actions {
         }
 
         //* News feed toggle -> the three stock per-role [misc] atom keys.
-        //* Off blanks all three (core hides the sidebar feed on empty URL);
-        //* on restores the default feed ONLY where a key is empty, so custom
-        //* feed URLs set in System > Interface Config survive the round-trip.
-        $atom_keys = array('dashboard_atom_url_admin', 'dashboard_atom_url_reseller', 'dashboard_atom_url_client');
+        //*
+        //* Core hides the dashboard feed for a role whose URL is empty, so "off" has to
+        //* blank all three. Those keys are CORE-owned though — an admin may have set a
+        //* private feed under System > Interface Config, and may deliberately have left
+        //* reseller/client blank so those roles see nothing at all. Blanking without a
+        //* copy destroys both choices, and refilling all three with the ISPConfig default
+        //* on the way back re-leaks ISPConfig branding to exactly the roles a white-label
+        //* panel must not show it to.
+        //*
+        //* So: stash each non-empty URL into module-owned [branding] keys before blanking,
+        //* and restore from that stash on the off->on transition. A role that had no URL
+        //* stays empty. The ISPConfig default is written only when there is nothing to
+        //* restore at all (i.e. a first-ever enable). This makes the round trip lossless,
+        //* which is what the field's hint text has always promised.
+        $atom_keys = array(
+            'dashboard_atom_url_admin'    => 'news_url_admin',
+            'dashboard_atom_url_reseller' => 'news_url_reseller',
+            'dashboard_atom_url_client'   => 'news_url_client',
+        );
         $show_news = isset($clean['show_news_feed']) ? $clean['show_news_feed'] : '1';
         if($show_news === '0') {
-            foreach($atom_keys as $k) {
+            foreach($atom_keys as $k => $stash) {
+                if(isset($config['misc'][$k]) && $config['misc'][$k] !== '') {
+                    $config['branding'][$stash] = $config['misc'][$k];
+                }
                 $config['misc'][$k] = '';
             }
         } else {
-            //* restore defaults ONLY on the off->on transition (all three empty).
-            //* While the feed is already on, leave every key untouched — an admin
-            //* may have deliberately blanked a single role's URL in System >
-            //* Interface Config, and refilling it on unrelated saves would
+            //* Only act on the off->on transition (all three empty). While the feed is
+            //* already on, leave every key untouched — an admin may have deliberately
+            //* blanked a single role's URL, and refilling it on unrelated saves would
             //* silently clobber that choice.
             $any_set = false;
-            foreach($atom_keys as $k) {
+            foreach($atom_keys as $k => $stash) {
                 if(isset($config['misc'][$k]) && $config['misc'][$k] !== '') { $any_set = true; break; }
             }
             if(!$any_set) {
-                foreach($atom_keys as $k) {
-                    $config['misc'][$k] = 'https://www.ispconfig.org/atom';
+                $restored = false;
+                foreach($atom_keys as $k => $stash) {
+                    if(isset($config['branding'][$stash]) && $config['branding'][$stash] !== '') {
+                        $config['misc'][$k] = $config['branding'][$stash];
+                        $restored = true;
+                    }
                 }
+                //* nothing was ever stashed -> first-ever enable, seed the stock feed
+                if(!$restored) {
+                    foreach($atom_keys as $k => $stash) {
+                        $config['misc'][$k] = 'https://www.ispconfig.org/atom';
+                    }
+                }
+            }
+            //* the stash has served its purpose (or is stale) — drop it so a later manual
+            //* edit under System > Interface Config is never resurrected by a future toggle
+            foreach($atom_keys as $k => $stash) {
+                unset($config['branding'][$stash]);
             }
         }
 
@@ -173,7 +248,12 @@ class page_action extends tform_actions {
         global $app;
         $sys_ini = $app->db->queryOneRecord("SELECT custom_logo FROM sys_ini WHERE sysini_id = 1");
         $logo = (is_array($sys_ini) && isset($sys_ini['custom_logo'])) ? $sys_ini['custom_logo'] : '';
-        return customizer_logo_preview_html($logo, $app->lng('no_logo_set_txt'));
+        //* pass the override too: a valid logo_url is what the panel actually renders,
+        //* so previewing custom_logo alone would contradict the live panel
+        $app->uses('getconf');
+        $branding = $app->getconf->get_global_config('branding');
+        $logo_url = (is_array($branding) && isset($branding['logo_url'])) ? $branding['logo_url'] : '';
+        return customizer_logo_preview_html($logo, $app->lng('no_logo_set_txt'), $logo_url);
     }
 }
 
