@@ -315,8 +315,20 @@ if($data_uri !== null) {
 
 $resolved      = customizer_logo_resolve($stored);
 $no_logo_txt   = $app->lng('no_logo_set_txt');
-$preview_light = customizer_logo_preview_html($resolved['on_light'], 'on_light', $no_logo_txt, $app->lng('logo_fallback_from_dark_txt'));
-$preview_dark  = customizer_logo_preview_html($resolved['on_dark'],  'on_dark',  $no_logo_txt, $app->lng('logo_fallback_from_light_txt'));
+
+//* Same surface list the settings page builds, from the same active design, so
+//* an upload redraws the previews exactly as a full page load would — this
+//* endpoint replaces those two nodes in place and any disagreement between the
+//* two renderers would show up as a swatch that changes colour on upload.
+//* $branding is the blob read above; the operator's colour choices are already
+//* in it, and the two logo_variant_* keys with them.
+$surfaces      = customizer_logo_surfaces(
+    isset($_SESSION['s']['theme']) ? $_SESSION['s']['theme'] : '',
+    $branding,
+    array('nav' => $app->lng('surface_nav_txt'), 'login' => $app->lng('surface_login_txt'))
+);
+$preview_light = customizer_logo_preview_html($resolved['on_light'], 'on_light', $no_logo_txt, $app->lng('logo_fallback_from_dark_txt'), $surfaces);
+$preview_dark  = customizer_logo_preview_html($resolved['on_dark'],  'on_dark',  $no_logo_txt, $app->lng('logo_fallback_from_light_txt'), $surfaces);
 $app->tpl->setVar('used_logo', $preview_light);
 $app->tpl->setVar('used_logo_on_dark', $preview_dark);
 

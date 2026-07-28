@@ -122,6 +122,8 @@ these:
 | `logo_url` | **light-background** logo by reference (root-relative path or `https` URL); wins over the uploaded `custom_logo` |
 | `logo_on_dark` | **dark-background** logo, uploaded (a data URI). Core has no second logo column and this extension adds none, so this one rides in the config blob — see the note below |
 | `logo_url_on_dark` | **dark-background** logo by reference; wins over `logo_on_dark`, and keeps the image out of the config blob entirely |
+| `logo_variant_nav` | which of the two marks the **navigation bar** uses: unset = automatic (the default), or pin it to the light-background or the dark-background one |
+| `logo_variant_login` | the same choice for the **login screen**, set independently |
 | `favicon` | the **tab icon**, uploaded (a data URI: SVG, PNG or ICO, under 15 KB) |
 | `favicon_url` | the tab icon by reference; wins over `favicon`, and keeps the image out of the config blob |
 | `show_version` | hides the version surfaces on the Help page — read [Version disclosure](#version-disclosure) before relying on it |
@@ -130,10 +132,36 @@ these:
 **Two logos, named after the background they sit on.** One panel runs designs
 whose headers disagree about brightness — clarity's rail is navy and wants a
 white mark, classic's header is stock's `#f2f5f7` and wants a dark one — so a
-single logo cannot serve both. Each design asks for the variant matching its own
-background and **falls back to the other one when that variant is unset**, which
-is what makes this non-breaking: a panel with only the historical `custom_logo`
-renders exactly as it always did. Within a variant, a reference beats an upload.
+single logo cannot serve both. Each surface asks for the variant matching the
+background it sits on and **falls back to the other one when that variant is
+unset**, which is what makes this non-breaking: a panel with only the historical
+`custom_logo` renders exactly as it always did. Within a variant, a reference
+beats an upload.
+
+**Which of the two a surface uses is worked out for you — and you can overrule
+it.** Left on **Automatic**, which is the default and what an unset value means,
+each surface picks the mark that will read against its own background: the
+navigation bar looks at `rail_hex`, the login screen at `login_bg`, and where
+you have set neither, the design's own colours decide — on clarity that means
+the login mark follows the viewer's light or dark mode, exactly as it does
+today. The reason the override
+exists is that those two settings can falsify the design's assumption — clarity
+puts the logo on a navy rail and so wants the white mark, but set `rail_hex` to
+white and the white mark is what you would get, on a white rail. Set
+`logo_variant_nav` or `logo_variant_login` and that surface is pinned to the
+mark you name, independently of the other.
+
+On classic, neither colour reaches a logo, so neither is read: `rail_hex`
+recolours the navigation band *below* the header strip the logo sits in, and
+`login_bg` paints the page *behind* the login card rather than the card's own
+light header the mark sits inside. Automatic therefore stays on the
+light-background mark on both of classic's surfaces, and the explicit setting is
+how you change it.
+
+**With a single logo this setting does nothing, which is the intent.** It only
+chooses between two marks you have both stored; the fallback above is unchanged,
+so naming a variant you have not filled still renders the one you did rather
+than nothing.
 
 The cost of `logo_on_dark`, stated plainly: it is stored in `sys_ini.config`
 rather than a column, so it is re-read whenever the panel loads a global setting

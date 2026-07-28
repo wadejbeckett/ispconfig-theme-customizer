@@ -5,5 +5,7 @@ $wb['Branding'] = 'Branding';
 $wb['no_logo_set_txt'] = 'Nenhum logótipo personalizado definido — o tema apresenta a sua própria predefinição.';
 $wb['logo_fallback_from_dark_txt'] = 'Não está definido nenhum logótipo para fundos claros, pelo que é aqui apresentado o de fundos escuros — é isso que um design claro irá mostrar. Carregue uma versão escura ou a cores para o alterar.';
 $wb['logo_fallback_from_light_txt'] = 'Não está definido nenhum logótipo para fundos escuros, pelo que é aqui apresentado o de fundos claros — é isso que um design escuro irá mostrar. Carregue uma versão clara ou branca para o alterar.';
+$wb['surface_nav_txt'] = 'Navegação';
+$wb['surface_login_txt'] = 'Ecrã de início de sessão';
 $wb['no_favicon_set_txt'] = 'Nenhum favicon personalizado definido — o design apresenta o seu.';
 $wb['favicon_url_wins_txt'] = 'Este é o caminho do favicon definido abaixo, que tem prioridade sobre o ficheiro carregado — a mesma regra dos caminhos do logótipo. Limpe o campo e guarde para usar o ícone carregado.';

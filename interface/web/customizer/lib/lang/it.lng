@@ -5,5 +5,7 @@ $wb['Branding'] = 'Branding';
 $wb['no_logo_set_txt'] = 'Nessun logo personalizzato impostato — il tema mostra il proprio logo predefinito.';
 $wb['logo_fallback_from_dark_txt'] = 'Nessun logo per sfondi chiari impostato, quindi qui viene mostrato quello per sfondi scuri — è ciò che mostrerà un design chiaro. Carichi una versione scura o a colori per cambiarlo.';
 $wb['logo_fallback_from_light_txt'] = 'Nessun logo per sfondi scuri impostato, quindi qui viene mostrato quello per sfondi chiari — è ciò che mostrerà un design scuro. Carichi una versione chiara o bianca per cambiarlo.';
+$wb['surface_nav_txt'] = 'Navigazione';
+$wb['surface_login_txt'] = 'Schermata di accesso';
 $wb['no_favicon_set_txt'] = 'Nessun favicon personalizzato impostato — il design mostra il proprio.';
 $wb['favicon_url_wins_txt'] = 'Questo è il percorso del favicon impostato qui sotto, che ha la precedenza sul file caricato — la stessa regola dei percorsi del logo. Svuoti il campo e salvi per usare invece l’icona caricata.';

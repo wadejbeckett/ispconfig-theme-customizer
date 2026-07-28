@@ -9,7 +9,8 @@
  *
  * The single global row sys_ini (sysini_id = 1) is the store. The controller
  * (customizer_edit.php) reads/writes two INI sections inside sys_ini.config:
- *   [branding]  logo_url, logo_url_on_dark, favicon_url, accent_hex, rail_hex,
+ *   [branding]  logo_url, logo_url_on_dark, logo_variant_nav,
+ *               logo_variant_login, favicon_url, accent_hex, rail_hex,
  *               login_bg, show_ispconfig_credit, show_theme_credit, show_version
  *   [misc]      company_name, custom_login_text, custom_login_link, and the
  *               three dashboard_atom_url_* keys via the news-feed toggle
@@ -137,6 +138,93 @@ $form["tabs"]['branding'] = array(
             ),
             'default' => '',
             'value'   => ''
+        ),
+
+        //* WHICH of the two marks above a surface uses. Scoped by SURFACE, not by
+        //* design, so a third design inherits the behaviour without a third field.
+        //*
+        //* These exist because the answer used to be hardcoded per design —
+        //* clarity's brand.php preferred the dark-background mark on the strength
+        //* of its navy rail, classic's preferred the light-background one — and
+        //* rail_hex / login_bg let the operator falsify exactly that assumption. A
+        //* white rail_hex on clarity painted the white mark onto a white rail. '' is
+        //* the default and means automatic: the reader derives the answer from the
+        //* colour actually in force. The two explicit values are the escape hatch
+        //* for the cases the reader cannot see (an image whose own background is
+        //* baked in, a design surface no stored hex describes).
+        //*
+        //* The three option labels are lng KEYS, not English text, and they localise
+        //* by a mechanism that is not the usual lng() call: tform_base.inc.php:505
+        //* substitutes the wordbook entry when the label string is itself a wordbook
+        //* key ($this->wordbook = the interface-global lng merged with this module's
+        //* lib/lang/<lang>_customizer.lng, built at tform_base.inc.php:127-156).
+        //* Core's own precedent has the identical shape down to the empty-string key
+        //* for the default option — admin/form/system_config.tform.php:256-261 with
+        //* admin/lib/lang/en_system_config.lng:83-85. Two consequences: the resolved
+        //* label is emitted UNESCAPED (htmlentities at :506 runs only in the else
+        //* branch, i.e. only for a label that is NOT a wordbook key), so no
+        //* translation of these three may contain markup; and no translation may set
+        //* one to an EMPTY string — .github/scripts/lang_check.php asserts key parity
+        //* only, never non-emptiness, and select2 3.5.2 (armed on every select in
+        //* #pageContent by ispconfig.js:100 whenever [misc] use_combobox = 'y', a
+        //* hook clarity carries too at themes/clarity/templates/main.tpl.htm:181)
+        //* treats a first option with an empty value AND an empty label as its
+        //* placeholder — the "Automatic" choice would vanish from the dropdown and
+        //* be replaced by a clear-"x".
+        //*
+        //* '' is listed FIRST deliberately. tform_base.inc.php:504 marks an option
+        //* SELECTED by comparing the array KEY against the stored value, so a value
+        //* that matches no key (a hand-edited blob, a downgrade) selects nothing and
+        //* the browser falls back to showing the first option — with Automatic first,
+        //* garbage reads as the default and one Save heals it.
+        //*
+        //* No 'filters'. encode() runs TWICE per save in this module (once via
+        //* tform_actions.inc.php:117 -> getSQL -> _getSQL, once from
+        //* customizer_edit.php's own onUpdateSave), so any SAVE filter is applied
+        //* twice; there is nothing to trim here anyway, a <select> can only post one
+        //* of its own option values.
+        //*
+        //* The validator is load-bearing rather than cosmetic: without it any string
+        //* reaches [branding] logo_variant_*, which themes/*/brand.php reads PRE-AUTH.
+        //* The readers compare with === against the two literals and never
+        //* interpolate the value into CSS text, so a bad value cannot reach a CSS
+        //* context — but the anchored pattern is what keeps that a design rather than
+        //* a coincidence. /D is written into the literal because tform_base.inc.php:1011
+        //* appends only "s"; without /D, PCRE "$" also matches just before a trailing
+        //* newline, so "on_dark\n" would validate and be stored. (Both modifiers are
+        //* valid together and their order is irrelevant.)
+        'logo_variant_nav' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'SELECT',
+            'validators' => array(
+                0 => array('type' => 'REGEX', 'regex' => '/^(on_light|on_dark)?$/D', 'errmsg' => 'logo_variant_nav_error_regex'),
+            ),
+            'default' => '',
+            'value'   => array(
+                ''         => 'logo_variant_auto_txt',
+                'on_light' => 'logo_variant_on_light_txt',
+                'on_dark'  => 'logo_variant_on_dark_txt',
+            )
+        ),
+
+        //* The login-screen twin of the field above. Same three values, same
+        //* validator character for character, only the errmsg differs so the
+        //* operator is told which of the two they got wrong. The pair is deliberately
+        //* symmetrical: the surfaces differ in which stored colour describes them
+        //* (rail_hex vs login_bg, and on classic neither does), and that is knowledge
+        //* the READERS hold, not this form.
+        'logo_variant_login' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'SELECT',
+            'validators' => array(
+                0 => array('type' => 'REGEX', 'regex' => '/^(on_light|on_dark)?$/D', 'errmsg' => 'logo_variant_login_error_regex'),
+            ),
+            'default' => '',
+            'value'   => array(
+                ''         => 'logo_variant_auto_txt',
+                'on_light' => 'logo_variant_on_light_txt',
+                'on_dark'  => 'logo_variant_on_dark_txt',
+            )
         ),
 
         //* The favicon by reference. Same mechanism as the two logo paths above
