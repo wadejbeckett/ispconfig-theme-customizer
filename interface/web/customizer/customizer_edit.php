@@ -50,7 +50,7 @@ class page_action extends tform_actions {
      * re-parses the stored blob and only assigns the keys named below. Same
      * reasoning as sys_ini.custom_logo, which is a column and was never a
      * candidate for this list. */
-    private $branding_keys = array('logo_url', 'logo_url_on_dark', 'favicon_url', 'accent_hex', 'rail_hex', 'login_bg', 'show_ispconfig_credit', 'show_theme_credit', 'show_version');
+    private $branding_keys = array('logo_url', 'logo_url_on_dark', 'logo_variant_nav', 'logo_variant_login', 'favicon_url', 'accent_hex', 'rail_hex', 'login_bg', 'show_ispconfig_credit', 'show_theme_credit', 'show_version');
     private $misc_keys      = array('company_name', 'custom_login_text', 'custom_login_link');
 
     function onShowEdit() {
@@ -68,6 +68,18 @@ class page_action extends tform_actions {
                 'company_name'          => isset($misc['company_name']) ? $misc['company_name'] : '',
                 'logo_url'              => isset($branding['logo_url']) ? $branding['logo_url'] : '',
                 'logo_url_on_dark'      => isset($branding['logo_url_on_dark']) ? $branding['logo_url_on_dark'] : '',
+                //* Whitelisted rather than passed through, for two reasons that are not
+                //* the usual paranoia. (1) These two MUST be present in this array:
+                //* tform_base::_decode reads $record[$key] unguarded at
+                //* tform_base.inc.php:196 and only pre-seeds the index when the field
+                //* carries 'filters' (:190-191) — these carry none, so an omitted key is
+                //* a PHP 8 "Undefined array key" warning printed into the settings page.
+                //* (2) An unrecognised stored value would match no option key at
+                //* tform_base.inc.php:504, select nothing, and leave the browser showing
+                //* the first option anyway — collapsing it to '' here means the field the
+                //* admin is looking at agrees with what the next Save will write.
+                'logo_variant_nav'      => (isset($branding['logo_variant_nav'])   && ($branding['logo_variant_nav']   === 'on_light' || $branding['logo_variant_nav']   === 'on_dark')) ? $branding['logo_variant_nav']   : '',
+                'logo_variant_login'    => (isset($branding['logo_variant_login']) && ($branding['logo_variant_login'] === 'on_light' || $branding['logo_variant_login'] === 'on_dark')) ? $branding['logo_variant_login'] : '',
                 'favicon_url'           => isset($branding['favicon_url']) ? $branding['favicon_url'] : '',
                 'accent_hex'            => isset($branding['accent_hex']) ? $branding['accent_hex'] : '',
                 'rail_hex'              => isset($branding['rail_hex']) ? $branding['rail_hex'] : '',
@@ -90,6 +102,20 @@ class page_action extends tform_actions {
             //* admin had just switched OFF re-renders as ON — and the next save writes
             //* those '1's back, silently un-white-labelling the panel. Normalise absent
             //* checkboxes to their explicit "off" value, exactly as onUpdateSave does.
+            //*
+            //* Deliberately CHECKBOX only — do not widen this test to the SELECT
+            //* fields. A <select> is a successful control, so it posts on every real
+            //* submit including when the chosen value is the empty "automatic" one,
+            //* and ISPConfig submits with jQuery .serialize() (ispconfig.js:164),
+            //* which includes it; there is nothing here to repair. Widening it would
+            //* break something instead: $field['value'][0] is the checkbox "off"
+            //* value, and a variant field has no index 0 at all (its option keys are
+            //* '', 'on_light', 'on_dark'), so a SELECT swept into this loop would get
+            //* an undefined-index warning and a null. The one case a real POST cannot
+            //* produce — a crafted POST that omits the field — is handled earlier in
+            //* onBeforeUpdate, which runs before this branch can be reached. Its twin
+            //* in onUpdateSave also tests `== ''`, which is a second reason to keep
+            //* the two loops CHECKBOX-only: '' is what "automatic" is STORED as.
             foreach($app->tform->formDef['tabs'][$this->active_tab]['fields'] as $key => $field) {
                 if($field['formtype'] == 'CHECKBOX' && !isset($this->dataRecord[$key])) {
                     $this->dataRecord[$key] = $field['value'][0];
@@ -114,9 +140,12 @@ class page_action extends tform_actions {
         parent::onShowEnd();
     }
 
-    //* Runs before the framework validates the POST. Users paste colours without
-    //* the leading '#' (and colour pickers hand back lowercase) — normalise here
-    //* so the REGEX validators accept what any reasonable person types.
+    //* Runs before the framework validates the POST, which is the only place a
+    //* value can still be repaired. Two jobs: users paste colours without the
+    //* leading '#' (and colour pickers hand back lowercase), so normalise those
+    //* into what the REGEX validators accept; and make sure every field the
+    //* validators are about to run on is actually a string, which a POST is not
+    //* obliged to be.
     function onBeforeUpdate() {
         global $app, $conf;
 
@@ -139,6 +168,31 @@ class page_action extends tform_actions {
                 $this->dataRecord[$k] = $v;
             }
         }
+
+        //* The two logo-variant selects: guarantee a STRING is present before the
+        //* framework touches the POST. Neither case below is reachable from a browser
+        //* — a <select> always posts, and only ever one of its own option values — but
+        //* both are one crafted POST away from an authenticated admin, and neither
+        //* fails softly:
+        //*   absent  -> tform_base::_decode reads $record[$key] unguarded
+        //*              (tform_base.inc.php:196; the pre-seed at :190-191 needs
+        //*              'filters', which these fields deliberately do not have), so
+        //*              the error-redisplay render prints a PHP 8 warning into the page;
+        //*   an array (logo_variant_nav[]=x) -> tform_base::_encode converts arrays to
+        //*              strings for RADIO and CHECKBOX only (:819-823) and hands the
+        //*              array straight to validateField, where preg_match() with a
+        //*              non-string subject is a TypeError on PHP 8 — a fatal on an
+        //*              admin page instead of a validation error.
+        //* A non-empty STRING is left untouched on purpose: the REGEX validator must
+        //* stay the thing that rejects a bad token, so a wrong value is reported rather
+        //* than silently healed into "automatic". '' is a legitimate posted value here
+        //* (it IS automatic) and must survive this method unchanged.
+        foreach(array('logo_variant_nav', 'logo_variant_login') as $k) {
+            if(!isset($this->dataRecord[$k]) || !is_string($this->dataRecord[$k])) {
+                $this->dataRecord[$k] = '';
+            }
+        }
+
         parent::onBeforeUpdate();
     }
 
@@ -149,7 +203,14 @@ class page_action extends tform_actions {
 
         $tab = $app->tform->getCurrentTab();
 
-        //* unchecked checkboxes are absent from POST -> force their "off" value
+        //* unchecked checkboxes are absent from POST -> force their "off" value.
+        //* CHECKBOX only, and the `== ''` half of the test is why it must stay that
+        //* way: '' is the STORED value of an "automatic" logo variant, so extending
+        //* this loop to SELECT would rewrite the admin's Automatic choice on every
+        //* save and make the setting impossible to turn back off. A SELECT needs no
+        //* equivalent here — it always posts, and if a crafted POST omits it,
+        //* _encode already yields '' for a missing VARCHAR (tform_base.inc.php:830)
+        //* and the $branding_keys loop below writes '' for a missing $clean key.
         foreach($app->tform->formDef['tabs'][$tab]['fields'] as $key => $field) {
             if($field['formtype'] == 'CHECKBOX' && (!isset($this->dataRecord[$key]) || $this->dataRecord[$key] == '')) {
                 $this->dataRecord[$key] = $field['value'][0];
@@ -280,12 +341,27 @@ class page_action extends tform_actions {
             'logo_url_on_dark' => isset($branding['logo_url_on_dark']) ? $branding['logo_url_on_dark'] : '',
         ));
 
-        //* $app->lng(), not $app->tform->lng(): these four live in the module
+        //* Which surfaces of the ACTIVE design use which mark, so each preview is
+        //* drawn on the colour that will really be behind it rather than on a
+        //* design-neutral guess. $_SESSION['s']['theme'] is core's own record of
+        //* the design this admin is looking at (app.inc.php:140), and it is the
+        //* right input precisely because the theme is per-user
+        //* (sys_user.app_theme): the operator is previewing against the panel
+        //* they can see. A design this extension does not ship returns an empty
+        //* list and every preview falls back to its pre-surface swatch, so a
+        //* third-party theme degrades instead of being described wrongly.
+        $surfaces = customizer_logo_surfaces(
+            isset($_SESSION['s']['theme']) ? $_SESSION['s']['theme'] : '',
+            $branding,
+            array('nav' => $app->lng('surface_nav_txt'), 'login' => $app->lng('surface_login_txt'))
+        );
+
+        //* $app->lng(), not $app->tform->lng(): these six live in the module
         //* wordbook (lib/lang/<lang>.lng) rather than the tform one, because
         //* logo_upload.php renders the same previews and has no tform at all.
         $no_logo_txt = $app->lng('no_logo_set_txt');
-        $app->tpl->setVar('used_logo', customizer_logo_preview_html($resolved['on_light'], 'on_light', $no_logo_txt, $app->lng('logo_fallback_from_dark_txt')));
-        $app->tpl->setVar('used_logo_on_dark', customizer_logo_preview_html($resolved['on_dark'], 'on_dark', $no_logo_txt, $app->lng('logo_fallback_from_light_txt')));
+        $app->tpl->setVar('used_logo', customizer_logo_preview_html($resolved['on_light'], 'on_light', $no_logo_txt, $app->lng('logo_fallback_from_dark_txt'), $surfaces));
+        $app->tpl->setVar('used_logo_on_dark', customizer_logo_preview_html($resolved['on_dark'], 'on_dark', $no_logo_txt, $app->lng('logo_fallback_from_light_txt'), $surfaces));
 
         //* getconf's blob is fine to read the favicon values from — this is a
         //* pure READ path, so its stripslashes has no missing counterpart to

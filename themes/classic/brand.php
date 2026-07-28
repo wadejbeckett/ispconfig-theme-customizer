@@ -18,15 +18,23 @@
  *     config [branding] logo_url       -> LIGHT-background mark, by reference
  *     config [branding] logo_on_dark   -> DARK-background mark, uploaded
  *     config [branding] logo_url_on_dark -> DARK-background mark, by reference
+ *     config [branding] logo_variant_nav   -> ''|'on_light'|'on_dark': which
+ *     config [branding] logo_variant_login    variant each SURFACE asks for.
+ *                                         '' — and absent — mean AUTOMATIC.
  *   Resolution, identical to themes/clarity/brand.php and to the customizer's
  *   lib/preview.inc.php:
  *     1. within a variant, a valid reference beats an uploaded data URI;
- *     2. this design asks for the variant matching ITS OWN background and falls
- *        back to the other when that variant is empty.
- *   classic's header is stock's #F2F5F7 and its login card is white, so the
- *   wanted variant here is the LIGHT-background one — which is exactly the
- *   column core already renders, so in the common case this file still emits
- *   nothing at all for the logo.
+ *     2. each SURFACE asks for the variant matching its own background and
+ *        falls back to the other when the asked-for variant is empty.
+ *   Which variant a surface wanted used to be hardcoded here — "classic is the
+ *   light design, therefore the light-background mark" — and that is an
+ *   assumption the operator's own colour settings can falsify. It is now
+ *   resolved per surface. On classic the answer still comes out LIGHT on both
+ *   surfaces, because neither of its logo slots sits on a colour the operator
+ *   can set; that is a finding backed by stock's markup and sheets, and the
+ *   evidence is recorded in the logo block below so it is not "fixed" back.
+ *   The light-background mark is exactly the column core already renders, so in
+ *   the common case this file still emits nothing at all for the logo.
  *
  *   config [branding] accent_hex  -> primary action, links, focus, active nav
  *   config [branding] rail_hex    -> the main-navigation band (+ mobile menu)
@@ -207,7 +215,16 @@ header('Content-Type: text/css; charset=utf-8');
  * NOT cache it — otherwise a transient outage would blank the host's branding
  * for the whole max-age window even after the DB recovers.
  * The scene is part of the validator: the two scenes are different URLs, but an
- * ETag that ignored it would let a stale revalidation cross them. */
+ * ETag that ignored it would let a stale revalidation cross them. It carries a
+ * second job since the logo variant became per-surface — the two scenes now
+ * resolve their logos independently, so their sheets can differ by more than
+ * the login-only rules.
+ * The two logo_variant_* keys need no term of their own here: the contract
+ * stores them in [branding], serialize($branding) already hashes them, and
+ * flipping either one therefore moves this validator. That is the ONLY thing
+ * keeping them cached correctly — move either key out of the [branding]
+ * section and this line has to name it by hand, or a saved change would sit
+ * behind a stale 304 for the whole max-age window. */
 if ($read_ok) {
     $etag = '"' . md5($scene . '|' . serialize($branding) . '|' . md5($custom_logo) . '|' . $company_name) . '"';
     header('ETag: ' . $etag);
@@ -374,12 +391,60 @@ if ($rail !== '') {
 /* =========================================================================
  * logo + wordmark
  * -------------------------------------------------------------------------
- * Same two-variant model as Clarity, read against the opposite background.
- * classic's header is stock's #F2F5F7 and its login card is white, so this
- * design asks for the LIGHT-background mark and falls back to the dark one only
- * if the operator has set nothing else. The panel name becomes the wordmark
- * only when there is no logo of either variant.
+ * Same two-variant model as Clarity, resolved per SURFACE rather than per
+ * design. classic has two logo slots and they are never live in the same
+ * response — install.sh:384 hands ?scene=login to the login shell alone — so
+ * one request paints one surface and resolves one preference. The panel name
+ * becomes the wordmark only when there is no logo of either variant.
  *
+ * ---- WHAT AUTOMATIC MEASURES ON CLASSIC: nothing, on either surface --------
+ * The resolver takes the background colour as a parameter because the mapping
+ * from surface to background is a property of the DESIGN, not of the feature.
+ * Clarity hands it rail_hex and login_bg because its two slots genuinely sit on
+ * those colours. classic hands it '' for BOTH, because neither of its slots
+ * does, and automatic therefore falls through to this design's default of
+ * 'on_light'. That is a determination with evidence, not an omission — do not
+ * "finish" it by wiring rail_hex and login_bg in:
+ *
+ *   LOGIN — the mark is inside a Bootstrap card whose header paints itself.
+ *   .refs/ispconfig3/interface/web/themes/default/templates/main_login.tpl.htm
+ *   :39-40 is  <div class="panel-heading" style="background: linear-gradient(
+ *   to bottom, white, #eef0f2);text-align:center;">  with the <img> as its
+ *   direct child. That gradient is an INLINE style attribute, so no external
+ *   sheet can move it without !important, and nothing tries: the login block
+ *   further down emits `body { background: … }` and nothing else, stock's
+ *   login-only sheet (themes/default/assets/stylesheets/login.css, linked at
+ *   main_login.tpl.htm:31) carries no background rule at all, and Bootstrap's
+ *   own .panel-default > .panel-heading is overridden by the inline value.
+ *   login_bg paints the page BEHIND the card. The login mark thus sits on
+ *   white-to-#eef0f2 — relative luminance 1.00 down to 0.86 — in every
+ *   configuration, so login_bg's luminance is an INVALID input here and
+ *   automatic must ignore it, including (in fact especially) when it IS set.
+ *
+ *   NAV — #logo is in the header strip, which rail_hex does not reach. It sits
+ *   in main.tpl.htm:51 inside #inner-wrapper, a sibling of #headerbar, while
+ *   #main-navigation is a separate band injected into #topnav-container at
+ *   main.tpl.htm:102 and pushed clear of the strip by ispconfig.css:112-113
+ *   (`#main-navigation { margin-top: 24px; }`). The rail block above selects
+ *   only `#main-navigation a…`, `#main-navigation .icon` and `.pushy…` — never
+ *   #logo, an ancestor of it, or body — and #logo is not inside .pushy either
+ *   (that is the off-canvas drawer at main.tpl.htm:40). Nothing else paints the
+ *   strip: ispconfig.css:75-80 has #logo's own background COMMENTED OUT, and no
+ *   stock sheet gives #container, #main-wrapper, #inner-wrapper or
+ *   #topnav-container a background at all (grepped ispconfig.css, responsive*,
+ *   pushy*, login.css and themes/default/theme*.css). The only paint under the
+ *   header strip is themes/default/theme.css:4-6 `body { background: #f2f5f7 }`,
+ *   which this file replaces in the LOGIN scene only. So rail_hex's luminance is
+ *   an invalid input for this surface too, and #logo's backdrop is stock's
+ *   #F2F5F7 whatever the operator sets — the same value the customizer already
+ *   uses as its on_light preview swatch (lib/preview.inc.php).
+ *
+ * Ignoring the hexes narrows nothing, because the operator's explicit
+ * logo_variant_nav / logo_variant_login is checked FIRST and wins outright: a
+ * panel whose login card has been restyled dark by a third-party module still
+ * has a full escape hatch, it just has to be told rather than guessed at.
+ *
+ * ---- the $core_logo guard, and why it became per-surface -------------------
  * The uploaded LIGHT-background mark needs NO rule here in the ordinary case:
  * it lives in sys_ini.custom_logo, and core reads that column itself and inlines
  * it into the stock shell (index.php writes a data URI into #logo's style
@@ -393,6 +458,32 @@ if ($rail !== '') {
  *     i.e. the stock ISPConfig logo, which is the single thing a white-label
  *     panel must never show;
  *   - both, in which case the reference wins as it always has.
+ *
+ * That test used to run against ONE surface-agnostic $logo_src computed before
+ * the scene was consulted. Once two surfaces can resolve to DIFFERENT artwork
+ * that is no longer one question, and asking it once was a live bug: with both
+ * variants stored, logo_variant_login = 'on_dark' and nav left automatic, the
+ * global $logo_src resolved to the on_light upload — which IS $core_logo — the
+ * guard suppressed, and the LOGIN scene emitted nothing. The operator's
+ * explicit choice silently did nothing while core kept painting the light mark.
+ * $logo_src is now derived BELOW the scene decision from that surface's own
+ * preference, so the comparison suppresses exactly the surface whose resolved
+ * image is byte-identical to core's and leaves the other free to emit.
+ *
+ * ONE $core_logo is still correct: it can only ever be the on_light upload
+ * (core has no idea the dark-background variant exists), but core paints that
+ * same single value on BOTH shells, so the right-hand side never varies by
+ * surface — only the left-hand side does. Keep it a BYTE comparison and do not
+ * "simplify" it to "the resolved variant is on_light": a logo_url reference is
+ * a URL string and can never equal a data URI, so it must always emit even
+ * though it is the light-background variant; and $core_logo is '' whenever
+ * custom_logo is empty or unparseable, which is what forces an emit and stops
+ * core's default_logo from reaching a white-labelled panel.
+ *
+ * The cross-variant fallback is untouched: a preference says which variant to
+ * ASK for, never which to require, so a preference for a slot the operator has
+ * not filled still renders the other mark. The single-logo panel — which is
+ * every panel in the field — sees no change from any of this.
  *
  * Overriding core costs !important: core's logo is an INLINE style attribute,
  * which outranks every declaration in an external sheet no matter how specific.
@@ -417,7 +508,31 @@ $logo_on_dark = brand_logo_variant(
     isset($branding['logo_url_on_dark']) ? $branding['logo_url_on_dark'] : '',
     isset($branding['logo_on_dark'])     ? $branding['logo_on_dark']     : ''
 );
-$logo_src = ($logo_on_light !== '') ? $logo_on_light : $logo_on_dark;
+
+// Does the operator have ANY artwork? The wordmark branch keys off this rather
+// than off "$logo_src came out empty". The two are equivalent only while the
+// cross-variant fallback below survives, and that is too quiet a coupling to
+// rely on: drop the fallback and a preference for an unfilled slot would leave
+// $logo_src empty, fall into the wordmark branch, and emit
+// `#logo { background-image: none !important; }` — actively ERASING a logo the
+// operator does have. Stating the real condition makes that edit fail loudly.
+$has_logo = ($logo_on_light !== '' || $logo_on_dark !== '');
+
+// Which of classic's two logo slots this response is painting. The scene is the
+// surface here: ?scene=login reaches the login shell alone (install.sh:384), so
+// nothing after this point has to consider the other slot.
+$surface = ($scene === 'login') ? 'login' : 'nav';
+
+// '' for the background hex on both surfaces, and 'on_light' as the design
+// default — the determination and its evidence are in the block comment above.
+$logo_pref = brand_logo_variant_pref($surface, $branding, '', 'on_light');
+
+// Ask for the preferred variant, fall back to the other. The fallback is what
+// keeps a preference honest: it expresses which mark suits this surface, not a
+// demand that the operator upload two.
+$logo_want  = ($logo_pref === 'on_dark') ? $logo_on_dark  : $logo_on_light;
+$logo_other = ($logo_pref === 'on_dark') ? $logo_on_light : $logo_on_dark;
+$logo_src   = ($logo_want !== '') ? $logo_want : $logo_other;
 
 if ($logo_src !== '' && $logo_src !== $core_logo) {
     if ($scene === 'login') {
@@ -432,7 +547,7 @@ if ($logo_src !== '' && $logo_src !== $core_logo) {
         $css .= "#logo { background-image: url(\"{$logo_src}\") !important; background-repeat: no-repeat !important; "
               . "background-position: left center !important; background-size: contain !important; }\n";
     }
-} elseif ($logo_src === '' && $company_name !== '') {
+} elseif (!$has_logo && $company_name !== '') {
     // No logo of either kind, but the panel is named: the NAME becomes the
     // wordmark. Without this the stock ISPConfig logo keeps rendering — core
     // falls back to sys_ini.default_logo — which is the one thing a white-label
@@ -632,6 +747,95 @@ function brand_logo_variant($ref, $data)
         return $data;
     }
     return '';
+}
+
+/**
+ * Which logo VARIANT one surface should ask for: 'on_light' (the mark drawn FOR
+ * light backgrounds) or 'on_dark' (the mark drawn FOR dark ones).
+ *
+ * $surface  'nav' or 'login'; names the stored key, logo_variant_<surface>.
+ * $branding the parsed [branding] array.
+ * $bg_hex   the colour that slot's background actually ends up, or '' when the
+ *           design cannot know it. Caller-supplied on purpose: which colour a
+ *           logo sits on is a property of the DESIGN, not of this feature.
+ *           Clarity passes rail_hex / login_bg; classic passes '' for both.
+ * $default  the variant to use when nothing else decides.
+ *
+ * The operator's explicit choice is checked FIRST and is absolute. Automatic is
+ * a convenience, not a policy: someone who has looked at their own panel and
+ * disagreed with the guess has to win, or the feature is just a second
+ * hardcoded assumption wearing a select box.
+ *
+ * Anything that is not one of the two literals means automatic, which folds
+ * three cases into one test: the key absent (never saved), the key present and
+ * EMPTY (saved once while on automatic — the writer emits the line
+ * unconditionally, so ini_parser::parse_ini_string returns '' rather than
+ * nothing, and absent/empty must behave alike), and a value hand-edited into
+ * the blob that this build does not recognise.
+ *
+ * The result is only ever compared with ===; it is never interpolated into CSS,
+ * which is what keeps this field out of the escaping contract that governs
+ * every colour and URL in this file.
+ *
+ * Byte-identical to themes/clarity/brand.php's copy and to the customizer's
+ * lib/preview.inc.php, for the same reason brand_logo_variant() is: a pre-auth
+ * reader cannot include the module's code, so the copies are duplicated and
+ * must be changed together.
+ */
+function brand_logo_variant_pref($surface, $branding, $bg_hex, $default)
+{
+    $key = 'logo_variant_' . $surface;
+    if (isset($branding[$key]) && ($branding[$key] === 'on_light' || $branding[$key] === 'on_dark')) {
+        return $branding[$key];
+    }
+    if (is_string($bg_hex) && preg_match('/^#[0-9A-Fa-f]{6}$/D', $bg_hex)) {
+        return brand_is_dark($bg_hex) ? 'on_dark' : 'on_light';
+    }
+    return $default;
+}
+
+/**
+ * Is $hex a dark background — i.e. does the mark drawn for DARK backgrounds
+ * belong on it?
+ *
+ * WCAG 2.x relative luminance, not HSL lightness. Lightness is a hue-blind
+ * midpoint: #0000FF and #FFFF00 both sit at lightness 50 while the yellow is
+ * about thirteen times as bright, so choosing artwork by lightness would put
+ * the white mark on the yellow. Each channel is normalised to 0..1,
+ * gamma-expanded out of sRGB, then weighted 0.2126 / 0.7152 / 0.0722.
+ *
+ * The 0.5 threshold is deliberately NOT the 0.184 pivot brand_readable() uses.
+ * That one picks INK for a surface and has to respect a contrast ratio; this
+ * one picks between two finished artworks whose internal contrast is the
+ * operator's business, so the question is the plain one — is this background
+ * more dark than light.
+ *
+ * A malformed or empty hex returns FALSE (treat it as light) instead of
+ * warning. This is a pre-auth endpoint that emits text/css: a PHP notice would
+ * be printed INTO the stylesheet and corrupt every rule after it. Callers
+ * validate before calling, so the guard is defence in depth, and "light" is the
+ * safer guess — the light-background mark is the one every panel has, because
+ * it is the variant core itself stores in sys_ini.custom_logo.
+ *
+ * Byte-identical to themes/clarity/brand.php's copy and to the customizer's
+ * lib/preview.inc.php; all copies change together. Self-contained rather than
+ * built on brand_luminance(), which is one of the contrast helpers that exist
+ * only in this file.
+ */
+function brand_is_dark($hex)
+{
+    if (!is_string($hex) || !preg_match('/^#[0-9A-Fa-f]{6}$/D', $hex)) {
+        return false;
+    }
+    $c = ltrim($hex, '#');
+    $w = array(0.2126, 0.7152, 0.0722);
+    $y = 0.0;
+    for ($i = 0; $i < 3; $i++) {
+        $v = hexdec(substr($c, $i * 2, 2)) / 255;
+        $v = ($v <= 0.03928) ? ($v / 12.92) : pow((($v + 0.055) / 1.055), 2.4);
+        $y += $w[$i] * $v;
+    }
+    return ($y < 0.5);
 }
 
 /** Return a validated #rrggbb value from the branding array, or '' if absent/invalid. */

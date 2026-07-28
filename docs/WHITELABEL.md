@@ -59,7 +59,7 @@ when each surface was closed, not as versions you can install today.
 | Surface | Audience | How |
 |---|---|---|
 | Browser tab `Name :: ISPConfig` | all | theme v2.1.5 — a set panel name replaces the product title (main + login + reset pages) |
-| Logo everywhere (frame, login, OTP, reset) | all | two variants named after the background they sit on: light-background = native `custom_logo` (uploader) or `[branding] logo_url`; dark-background = `[branding] logo_on_dark` or `logo_url_on_dark`. Each design takes the one matching its own header and falls back to the other |
+| Logo everywhere (frame, login, OTP, reset) | all | two variants named after the background they sit on: light-background = native `custom_logo` (uploader) or `[branding] logo_url`; dark-background = `[branding] logo_on_dark` or `logo_url_on_dark`. Each surface takes the one matching the background it sits on and falls back to the other. That choice is automatic — it reads the operator's own `rail_hex` / `login_bg`, which can falsify a design's assumption about its own brightness — and `[branding] logo_variant_nav` / `logo_variant_login` pin a surface to one variant when it gets it wrong |
 | Accent / rail / login colours | all | `[branding]` + brand.php |
 | Footer credits ("powered by ISPConfig", theme credit) | all | the two attribution toggles (default ON — courtesy lines only) |
 | Login footnote text/link, panel name | all | stock `[misc]` keys the Branding page writes |

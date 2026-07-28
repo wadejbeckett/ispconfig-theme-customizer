@@ -186,14 +186,18 @@ The script parses `.lng` files as text and never `include()`s them — they are
 PHP, and they arrive through pull requests. Keep it that way.
 
 A separate CI step, **Brand-token contract parity**, greps *every*
-`themes/*/brand.php` for each of the eight keys on CI's hard-coded contract list
+`themes/*/brand.php` for each of the ten keys on CI's hard-coded contract list
 (`accent_hex`, `rail_hex`, `login_bg`, `logo_url`, `logo_url_on_dark`,
-`logo_on_dark`, `show_version`, `company_name` — the Branding page writes more
-than these; the list is the subset a design must read) and fails if one is
-missing. The two `*_on_dark` logo keys are listed separately from `logo_url`
-because `logo_on_dark` is not a substring of `logo_url_on_dark`, so each name
-genuinely has to appear: a design implementing only one of the pair would render
-the wrong-brightness mark on half its surfaces, and no other check would see it. The loop walks the directory rather
+`logo_on_dark`, `logo_variant_nav`, `logo_variant_login`, `show_version`,
+`company_name` — the Branding page writes more than these; the list is the
+subset a design must read) and fails if one is missing. The two `*_on_dark` logo
+keys are listed separately from `logo_url` because `logo_on_dark` is not a
+substring of `logo_url_on_dark`, so each name genuinely has to appear: a design
+implementing only one of the pair would render the wrong-brightness mark on half
+its surfaces, and no other check would see it. The two `logo_variant_*` keys are
+the operator's per-surface override of which mark a slot uses; a design that
+ignores them silently overrides the operator's explicit choice with its own
+assumption about its chrome — which is the bug they were added to fix. The loop walks the directory rather
 than naming a design on purpose: both `clarity` and `classic` have to satisfy
 it, and a third design must not quietly opt out. This is the check that keeps
 the two sides one product. Adding a key means adding it to every design in the

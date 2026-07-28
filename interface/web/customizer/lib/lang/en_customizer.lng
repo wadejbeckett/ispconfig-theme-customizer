@@ -33,6 +33,31 @@ $wb['used_logo_txt'] = 'Current logo';
 // no tform at all, so they cannot live in this file (which feeds the tform
 // wordbook only). A copy here would be dead.
 
+// Which of the two slots above each SURFACE uses. Scoped by surface rather than
+// by design, because the sidebar and login-background colours let the operator
+// recolour the very backgrounds the designs used to assume — a white sidebar
+// colour painted the white mark onto a white rail. Automatic reads that colour
+// and decides; the two explicit values are the escape hatch for surfaces whose
+// real backdrop is not the colour you set (the stock login mark sits inside
+// Bootstrap's own white panel heading, which the login background never reaches).
+// TRANSLATORS: the three option labels below are resolved through the tform
+// wordbook, not $app->lng() — tform_base.inc.php:505 swaps a SELECT option label
+// for its translation only when the label string is a key in this file. Two
+// consequences: the value is emitted into the <option> UNESCAPED, so keep markup
+// out of it, and it must never be empty — select2 treats a first option with an
+// empty value AND an empty label as a placeholder and drops "Automatic" out of
+// the list entirely, which lang_check.php cannot catch because it compares key
+// sets and never looks at a value.
+$wb['logo_variant_nav_txt'] = 'Logo on the navigation bar';
+$wb['logo_variant_nav_hint_txt'] = 'Which of the two marks above the sidebar and the header use. Automatic reads the sidebar colour you set below and picks the mark that stays readable on it; with no colour set, each design keeps its own — the stock look draws the logo on a light grey header, Clarity on a dark navy rail. Change this only if you have set a colour that makes the automatic choice wrong, such as a white sidebar, where the mark for dark backgrounds would disappear. Either way a slot you have not filled still borrows from the other one, so a single logo keeps working.';
+$wb['logo_variant_login_txt'] = 'Logo on the login screen';
+$wb['logo_variant_login_hint_txt'] = 'The same choice for the login page. Automatic reads the login background colour you set below and picks the mark that stays readable on it. Left on Automatic with no login background set, Clarity follows the viewer’s own light/dark mode — the mark for light backgrounds in light mode, the mark for dark backgrounds in dark mode — while the stock look keeps its light login card. Change this only if the colour you chose makes the automatic choice wrong; an unfilled slot still borrows from the other one.';
+$wb['logo_variant_auto_txt'] = 'Automatic — match the background';
+$wb['logo_variant_on_light_txt'] = 'Always the mark for light backgrounds';
+$wb['logo_variant_on_dark_txt'] = 'Always the mark for dark backgrounds';
+$wb['logo_variant_nav_error_regex'] = 'The navigation bar logo choice must be Automatic, the mark for light backgrounds, or the mark for dark backgrounds.';
+$wb['logo_variant_login_error_regex'] = 'The login screen logo choice must be Automatic, the mark for light backgrounds, or the mark for dark backgrounds.';
+
 // The favicon: one slot, not two. A tab strip is a tab strip whatever the
 // design's header looks like, so the light/dark model above does not apply.
 $wb['favicon_head_txt'] = 'Favicon';

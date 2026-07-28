@@ -108,7 +108,34 @@ jobs:
             # implemented only one of the two would render the wrong-brightness
             # mark on half its surfaces, which is the bug the variant exists to
             # fix and is invisible to every other check here.
-            for key in accent_hex rail_hex login_bg logo_url logo_url_on_dark logo_on_dark show_version company_name; do
+            #
+            # logo_variant_nav / logo_variant_login are the operator's override
+            # of WHICH of those two marks a surface uses, and they are listed
+            # for a different reason. Both are optional at runtime — unset means
+            # "automatic", which is also what a design that ignored them
+            # entirely would do — so a reader that silently dropped them still
+            # renders a logo, still passes every other check here, and simply
+            # does nothing when the operator picks a mark by hand. They exist
+            # because the automatic choice is falsifiable by the operator's own
+            # rail_hex / login_bg (a white rail_hex on clarity paints the white
+            # mark onto a white rail), so the override is the ONLY escape from a
+            # logo that has become invisible: losing it silently is a worse
+            # failure than losing a colour. They are keyed by surface rather
+            # than by design so a further design inherits the behaviour, which
+            # is exactly why they belong on a list every design is measured
+            # against.
+            #
+            # Both names must appear LITERALLY, and neither is a substring of
+            # the other — but be clear about what that matches today. clarity
+            # spells them at the call site; classic composes the key inside
+            # brand_logo_variant_pref() ('logo_variant_' . $surface), so there
+            # the only literal occurrence is the key list in the file's header
+            # comment. A composed lookup is invisible to grep, which makes that
+            # header load-bearing rather than decorative: it is the one place a
+            # rename on the writer side can still be caught. As with every key
+            # on this list, presence is what is proven — not that the value is
+            # read, and not that it is honoured.
+            for key in accent_hex rail_hex login_bg logo_url logo_url_on_dark logo_on_dark logo_variant_nav logo_variant_login show_version company_name; do
               if ! grep -q "$key" "$reader"; then
                 echo "::error file=$reader::brand token '$key' is written by the module but not read by $reader"
                 missing=1

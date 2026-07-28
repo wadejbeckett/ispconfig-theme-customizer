@@ -18,16 +18,24 @@
  *                                         (a data URI; core has no column for
  *                                         it and we may not add one)
  *     config [branding] logo_url_on_dark -> DARK-background mark, by reference
+ *     config [branding] logo_variant_nav   -> ''|'on_light'|'on_dark'
+ *     config [branding] logo_variant_login -> ''|'on_light'|'on_dark'
+ *                                         the operator's override of WHICH mark
+ *                                         a SURFACE uses; '' (and anything
+ *                                         unrecognised) means automatic
  *   Resolution, which must stay identical to themes/classic/brand.php and to
  *   the customizer's lib/preview.inc.php:
  *     1. within a variant, a valid reference beats an uploaded data URI (the
  *        precedence logo_url has always had over custom_logo);
- *     2. this design asks for the variant matching ITS OWN background and falls
- *        back to the other when that variant is empty.
- *   Clarity's rail and topbar are navy in both colour modes, so the wanted
- *   variant here is the DARK-background one. Rule 2 is what keeps this change
- *   non-breaking: a panel with only the historical custom_logo still renders it
- *   everywhere, exactly as before.
+ *     2. each SURFACE asks for the variant matching the background IT actually
+ *        has: the operator's explicit choice first, else the luminance of the
+ *        colour they set for that surface, else this design's default;
+ *     3. it falls back to the other variant when the wanted one is empty.
+ *   Rule 2 used to be a constant here ("clarity is navy, so always the
+ *   dark-background mark"), which the operator's own rail_hex / login_bg could
+ *   falsify — a white rail_hex painted the white mark onto a white rail. Rule 3
+ *   is what keeps the two-variant model non-breaking: a panel with only the
+ *   historical custom_logo still renders it on every surface, exactly as before.
  *
  *   config [branding] accent_hex  -> re-hues the blue ramp + accents
  *   config [branding] rail_hex    -> the navy brand rail
@@ -165,7 +173,14 @@ header('Content-Type: text/css; charset=utf-8');
  * appears within max-age or on a hard refresh. 'private' keeps it out of shared
  * / reverse-proxy caches. On a DB fault we still emit an (empty) sheet but must
  * NOT cache it — otherwise a transient outage would blank the host's branding
- * for the whole max-age window even after the DB recovers. */
+ * for the whole max-age window even after the DB recovers.
+ *
+ * serialize($branding) covers the WHOLE [branding] section, so every key this
+ * file reads from it — including logo_variant_nav / logo_variant_login — already
+ * invalidates the ETag when it changes. That stays true only while the variant a
+ * surface uses is DERIVED from stored keys rather than stored itself: a derived
+ * value that leaked into a column this hash does not cover would let a changed
+ * preference serve a stale 304 for the whole max-age window. */
 if ($read_ok) {
     $etag = '"' . md5(serialize($branding) . '|' . md5($custom_logo) . '|' . $company_name) . '"';
     header('ETag: ' . $etag);
@@ -265,49 +280,162 @@ $logo_on_light = brand_logo_variant(
     isset($branding['logo_url']) ? $branding['logo_url'] : '',
     $custom_logo
 );
-// Clarity's brand slots sit on the navy rail, the navy topbar and the login
-// band, so this design wants the DARK-background mark — and falls back to the
-// light-background one when the operator has only set that. One logo in
-// custom_logo, which is every panel in the field today, therefore renders
-// exactly as it did before this second variant existed.
-$logo_src = ($logo_on_dark !== '') ? $logo_on_dark : $logo_on_light;
+// Gate the branches below on the SLOTS, not on a resolved value. A surface
+// preference chooses between the two marks; it must never be able to decide
+// there is no mark at all and drop the panel into the company-name branch,
+// whose rules would replace a logo the operator does have with their panel's
+// name. See brand_logo_for_pref() for the other half of that guarantee.
+$has_logo = ($logo_on_light !== '' || $logo_on_dark !== '');
 
-if ($logo_src !== '') {
-    // Emit the value ONCE into a custom property and reference it from each slot.
-    // An uploaded logo is a base64 data URI up to the 45 KB cap, so repeating it
-    // inline per selector multiplied the stylesheet by the number of slots — with
-    // both variants supplied that was ~240 KB of CSS, served UNAUTHENTICATED on
-    // every login page render. A custom property costs one copy and the browser
-    // resolves it at each use site.
-    $css .= ":root { --nz-brand-logo: url(\"{$logo_src}\"); }\n";
+// WHICH variant a slot wants is a property of the SURFACE, not of the design —
+// so a third design inherits this without adding a case. Both surfaces are
+// resolved on EVERY request because clarity's shells link this file with no
+// ?scene= (main.tpl.htm:59 and main_login.tpl.htm:47 emit the identical URL) and
+// the ETag above carries no scene either: one cached response body serves the
+// app frame and the login screen, so the split can only be expressed as
+// selectors sitting side by side in one sheet. (themes/classic/brand.php does
+// have ?scene= and resolves one surface per request; do not copy that here.)
+//
+// NAV — #logo img on the rail and .nz-topbar-brand img on the mobile header
+// chip. Both are painted var(--nz-rail): app.css:121 and app.css:710, which
+// rail_hex overrides through brand_rail_vars() above. --nz-rail is declared
+// exactly once, at tokens.css:88, and the light scope (tokens.css:215-302)
+// never redeclares it — the rail is navy in both colour modes by design
+// (tokens.css:210) — so this surface is MODE-INVARIANT and one fixed rule is
+// always right. Note it is the CHIP that is navy in the header, not the bar:
+// .nz-topbar reads --nz-topbar-bg (app.css:326), an ink-derived translucent
+// that rail_hex never touches.
+$nav_pref = brand_logo_variant_pref(
+    isset($branding['logo_variant_nav']) ? $branding['logo_variant_nav'] : '',
+    $rail,
+    'on_dark'
+);
+
+// LOGIN — .nzl-brand img. main_login.tpl.htm:54-57 makes .nzl-brand a SIBLING
+// above .nzl-card, and it and .nzl-scene are both transparent (login.css:67-83),
+// so the mark sits directly on body.nz-login — the surface login_bg repaints in
+// the block above. login_bg is therefore a real luminance input here (the accent
+// radial gradients laid over it are alpha 0.38/0.10 dark and 0.14/0.05 light, a
+// tint too faint to move the decision). That is clarity-specific: on classic the
+// login mark is inside a Bootstrap card carrying its own inline light gradient,
+// which login_bg cannot reach, so that design passes '' instead.
+//
+// '' is passed as the design default as a SENTINEL, not as a variant: getting it
+// back means neither the operator nor login_bg spoke, and that is the one case
+// with no single answer — $base falls back to var(--nz-page), which is #17252B
+// dark and #F1F6F8 light (tokens.css:80, tokens.css:219). Every other case pins
+// one backdrop across both colour modes and gets one fixed rule.
+$login_pref = brand_logo_variant_pref(
+    isset($branding['logo_variant_login']) ? $branding['logo_variant_login'] : '',
+    $login_bg,
+    ''
+);
+$login_follows_mode = ($login_pref === '');
+if ($login_follows_mode) {
+    $login_pref = 'on_dark'; // the base rule is the dark mode; light gets the override below
+}
+
+if ($has_logo) {
+    $nav_src   = brand_logo_for_pref($nav_pref,   $logo_on_light, $logo_on_dark);
+    $login_src = brand_logo_for_pref($login_pref, $logo_on_light, $logo_on_dark);
+    // What LIGHT colour mode puts in the login slot. Where the backdrop is
+    // pinned this is the same mark as the base rule and only the filter below
+    // depends on it; where the backdrop follows the colour mode, light mode is a
+    // light page and asks for the light-background mark.
+    $light_want = $login_follows_mode ? 'on_light' : $login_pref;
+    $light_src  = brand_logo_for_pref($light_want, $logo_on_light, $logo_on_dark);
+
+    // Emit each DISTINCT value ONCE into a custom property and reference it from
+    // the use sites. An uploaded logo is a base64 data URI up to the 45 KB cap,
+    // so repeating it inline per selector multiplied the stylesheet by the number
+    // of slots — with both variants supplied that was ~240 KB of CSS, served
+    // UNAUTHENTICATED on every login page render. Resolving per surface adds use
+    // sites but no artworks: there are only ever the two variant slots, so the
+    // map below holds at most two entries and nav+login resolving alike still
+    // costs one copy. Custom properties resolve order-independently, so this
+    // block can precede the rules that use it.
+    $logo_vars = array();
+    $nav_var   = brand_logo_var($nav_src,   $logo_vars);
+    $login_var = brand_logo_var($login_src, $logo_vars);
+    $light_var = brand_logo_var($light_src, $logo_vars);
+    $logo_root = '';
+    foreach ($logo_vars as $src => $prop) {
+        $logo_root .= "  {$prop}: url(\"{$src}\");\n";
+    }
+    $css .= ":root {\n{$logo_root}}\n";
+
     // both dimensions auto + a max box -> the logo keeps its aspect ratio and fits,
     // for any width (the base rules pin a fixed height, which would distort wide logos).
-    $css .= "#logo img { content: var(--nz-brand-logo); height: auto; width: auto; max-height: 26px; max-width: 180px; }\n";
-    $css .= ".nz-topbar-brand img { content: var(--nz-brand-logo); height: auto; width: auto; max-height: 18px; max-width: 120px; }\n";
-    $css .= ".nzl-brand img { content: var(--nz-brand-logo); height: auto; width: auto; max-height: 36px; max-width: 100%; }\n";
-    // The rail and topbar are navy in BOTH colour modes, so the mark above is
-    // right for them everywhere. The LOGIN slot is the one exception: in light
-    // mode .nzl-brand sits on a light page, which is the same background/artwork
-    // mismatch this two-variant model exists to fix, one slot further down.
+    $css .= "#logo img { content: var({$nav_var}); height: auto; width: auto; max-height: 26px; max-width: 180px; }\n";
+    $css .= ".nz-topbar-brand img { content: var({$nav_var}); height: auto; width: auto; max-height: 18px; max-width: 120px; }\n";
+    $css .= ".nzl-brand img { content: var({$login_var}); height: auto; width: auto; max-height: 36px; max-width: 100%; }\n";
+
+    // The light-mode login rule is NOT optional once any logo exists.
+    // login.css:95 applies filter: brightness(0.22) saturate(0.9) to
+    // :root[data-nz-theme='light'] .nzl-brand img unconditionally, to ink-darken
+    // the SHIPPED white wordmark; left standing it crushes a custom coloured mark
+    // to near-black on the light login page. The selector is identical and this
+    // sheet is linked after login.css (main_login.tpl.htm:43 then :47), so the
+    // win is on source order — every path through here must set `filter`.
     //
-    // So when the operator has genuinely supplied both variants, give the light
-    // mode's login slot the light-background mark — and drop the halo with it,
-    // because a mark that suits its background does not need rescuing. When only
-    // one variant is set the two resolve to the same value, the condition is
-    // false, and the halo is emitted exactly as it always was.
-    if ($logo_on_light !== '' && $logo_on_dark !== '' && $logo_on_light !== $logo_src) {
-        $css .= ":root { --nz-brand-logo-light: url(\"{$logo_on_light}\"); }\n";
-        $css .= ":root[data-nz-theme='light'] .nzl-brand img { content: var(--nz-brand-logo-light); filter: none; }\n";
-    } else {
-        // custom logos keep their own colours in light mode: undo the theme's
-        // ink-darkening of the shipped wordmark, add a soft halo for legibility
-        $css .= ":root[data-nz-theme='light'] .nzl-brand img { filter: drop-shadow(0 1px 6px rgba(2, 26, 43, 0.35)); }\n";
+    // The halo is a rescue, not decoration: it is what makes a mark readable on a
+    // background it was not drawn for, so it belongs with the FALLBACK — the case
+    // where the wanted slot is empty and the other variant is standing in. A mark
+    // that is the one this backdrop asked for keeps its own colours and needs
+    // nothing beyond cancelling the ink filter.
+    //
+    // A panel that stores only ONE variant keeps the halo, which is why the
+    // second clause below exists. It is tempting to read a filled
+    // light-background slot as the operator asserting the artwork suits a light
+    // background — but with one logo stored they asserted nothing, because
+    // sys_ini.custom_logo is the ONLY logo column ISPConfig has ever had and
+    // every panel branded before this extension shipped put its mark there with
+    // no variant to choose between. What that single mark was drawn for depends
+    // entirely on the design it was uploaded against: on stock, whose header is
+    // #F2F5F7, it is almost certainly dark; on clarity, whose rail is navy, it is
+    // almost certainly WHITE — and a white mark with `filter: none` on clarity's
+    // #F1F6F8 light-mode login page is an invisible logo. That is the population
+    // this endpoint exists to serve, so one stored variant is treated as no
+    // information and the rescue stays on.
+    //
+    // With BOTH variants stored the assertion is real — the operator filled two
+    // slots labelled by background — so a mark matched to its backdrop keeps its
+    // own colours and only needs the ink filter cancelled. That also holds when
+    // the operator has FORCED a variant here: an "Always X" control that
+    // second-guessed itself by luminance would have no function, and the halo
+    // would not rescue it anyway (drop-shadow leaves white artwork white on
+    // #F1F6F8, adding an aura rather than legibility).
+    $light_decl = '';
+    if ($light_src !== $login_src) {
+        $light_decl .= "content: var({$light_var}); ";
     }
+    $light_slot   = ($light_want === 'on_dark') ? $logo_on_dark : $logo_on_light;
+    $one_variant  = ($logo_on_light === '' || $logo_on_dark === '');
+    $light_decl  .= ($light_slot !== '' && !$one_variant)
+        ? 'filter: none;'
+        : 'filter: drop-shadow(0 1px 6px rgba(2, 26, 43, 0.35));';
+    $css .= ":root[data-nz-theme='light'] .nzl-brand img { {$light_decl} }\n";
+
     // mask the content swap: on a hard refresh the SHIPPED wordmark paints for
     // a frame or two before the custom image decodes — a white-label leak. The
     // brand slots start invisible and fade in once the swap has had its beat.
-    $css .= "@keyframes nzBrandIn { to { opacity: 1; } }\n";
-    $css .= "#logo img, .nz-topbar-brand img, .nzl-brand img { opacity: 0; animation: nzBrandIn 0.18s ease 0.05s forwards; }\n";
+    //
+    // Gated on prefers-reduced-motion: NO-PREFERENCE — the idiom at
+    // login.css:157 — and that gate is a fix, not tidying. app.css:779-786 and
+    // login.css:366-371 both emit `animation: none !important` under
+    // (prefers-reduced-motion: reduce); an !important author declaration beats
+    // this rule's normal `animation` at any specificity and from any source
+    // order, while its `opacity: 0` had nothing competing with it anywhere. Every
+    // reduced-motion visitor to a panel with a custom logo was therefore served
+    // opacity: 0 with nothing left to animate it back — no logo at all, on the
+    // rail, the mobile chip and the login screen. Outside the gate they now get
+    // the mark immediately, paying the one-frame flash the fade exists to hide,
+    // which is the right way round: a masked swap is a nicety, a missing brand
+    // is the failure this endpoint exists to prevent.
+    $css .= "@media (prefers-reduced-motion: no-preference) {\n";
+    $css .= "  @keyframes nzBrandIn { to { opacity: 1; } }\n";
+    $css .= "  #logo img, .nz-topbar-brand img, .nzl-brand img { opacity: 0; animation: nzBrandIn 0.18s ease 0.05s forwards; }\n";
+    $css .= "}\n";
 } elseif ($company_name !== '') {
     // no logo uploaded/referenced, but the panel is named: the NAME becomes the
     // wordmark (CSS text content on the brand slots). Rail/topbar are navy in
@@ -432,6 +560,158 @@ function brand_logo_variant($ref, $data)
     return '';
 }
 
+/**
+ * Which logo VARIANT one surface wants: 'on_light' (the mark drawn FOR light
+ * backgrounds, i.e. the dark artwork) or 'on_dark' (the mark drawn for dark
+ * ones). This chooses a preference only; brand_logo_for_pref() turns it into a
+ * value and is where the cross-variant fallback lives.
+ *
+ * $stored          the operator's [branding] logo_variant_nav /
+ *                  logo_variant_login value, already read by the caller
+ * $bg_hex          the colour THIS surface is actually painted, '' when the
+ *                  operator has not set one — or when the setting that looks
+ *                  like it belongs to this surface does not in fact reach it, as
+ *                  in themes/classic/brand.php, where neither hex touches either
+ *                  brand slot and both surfaces pass ''
+ * $design_default  the answer when nothing else has spoken
+ *
+ * The precedence is load-bearing. The operator's explicit choice is checked
+ * BEFORE the colour so that it is a real escape hatch and not a hint the
+ * luminance can overrule: the automatic answer is a guess about a background,
+ * and when it guesses wrong the mark is invisible with no other way out.
+ *
+ * Anything but the two literals — absent, empty, or garbage from a hand-edited
+ * blob — is "automatic". Empty is the normal case, not a corner one: saving
+ * "Automatic" writes the key with an empty value rather than dropping it
+ * (ini_parser's writer emits `logo_variant_nav=` and its reader's
+ * /^([\w\d_]+)=(.*)$/ reads it back as present-and-empty), so absent and empty
+ * must be indistinguishable here. The === comparisons are also what keeps
+ * mandate 4 out of play for this field: a value that is not one of the two
+ * literals is never interpolated into the sheet, it only selects a branch.
+ *
+ * Duplicated as themes/classic/brand.php's brand_logo_variant_pref() and the
+ * customizer's customizer_logo_variant_for_surface(), for the reason
+ * brand_logo_variant() is: this is a pre-authentication endpoint that must keep
+ * working with the customizer uninstalled, so it cannot include the module's
+ * code. Same three checks, same order, same === comparisons, same fall-through
+ * — a copy that disagrees shows the operator a preview of a logo the panel will
+ * not render.
+ *
+ * The PLUMBING differs by one parameter and an auditor should expect it: the
+ * other two take ($surface, $branding, …) and compose 'logo_variant_' . $surface
+ * internally, while this copy is handed the value. Two reasons, both local to
+ * this design. It resolves BOTH surfaces in one request — clarity's shells link
+ * this sheet with no ?scene=, so there is no single $surface to compose from —
+ * and reading the two keys at the call sites is what puts both names LITERALLY
+ * in this file, which CI's "Brand-token contract parity" check
+ * (.github/workflows/ci.yml) requires of every design's reader precisely so that
+ * a renamed key cannot pass unnoticed. The same note is recorded on the
+ * customizer's copy.
+ */
+function brand_logo_variant_pref($stored, $bg_hex, $design_default)
+{
+    if ($stored === 'on_light' || $stored === 'on_dark') {
+        return $stored;
+    }
+    if (is_string($bg_hex) && preg_match('/^#[0-9A-Fa-f]{6}$/D', $bg_hex)) {
+        return brand_is_dark($bg_hex) ? 'on_dark' : 'on_light';
+    }
+    return $design_default;
+}
+
+/**
+ * Is $hex dark enough that the mark drawn for dark backgrounds is the readable
+ * one on it?
+ *
+ * WCAG 2.x relative luminance — the same maths behind every contrast ratio:
+ * normalise each channel to 0..1, undo the sRGB transfer function, then weight
+ * the linear channels by human luminous sensitivity. Averaging the raw bytes
+ * instead gets this visibly wrong in both directions at once: #00FF00 and
+ * #0000FF have the identical byte average of 85, yet their luminances are 0.715
+ * and 0.072 — one wants the dark mark and the other wants the white one, and a
+ * byte average cannot tell them apart at all.
+ *
+ * The 0.5 threshold is in LUMINANCE, not lightness, so it does not fall at the
+ * middle of the byte range: measured, it sits between #BBBBBB and #BCBCBC, and
+ * everything from there down counts as dark. That bias is deliberate — a light
+ * mark on a slightly-too-light background disappears, while a dark mark on a
+ * slightly-too-dark one is merely low-contrast.
+ *
+ * A malformed or empty hex returns FALSE — "not dark", which resolves to the
+ * light-background mark. No call site here can reach that (brand_hex() has
+ * already validated anything that gets this far, and the caller re-checks), and
+ * the guard exists so that a future one gets a documented answer instead of a
+ * PHP warning: on this endpoint a warning is emitted INTO a text/css response,
+ * where it corrupts the stylesheet for every visitor including the login screen.
+ * "Light" is also the safer of the two guesses — the light-background mark is
+ * the one every panel already has, because it is the variant core itself stores
+ * in sys_ini.custom_logo.
+ *
+ * BYTE-IDENTICAL to themes/classic/brand.php's brand_is_dark() and to the
+ * customizer's customizer_hex_is_dark() (same arithmetic under this file's
+ * naming convention). The prefix may differ between copies; the arithmetic and
+ * the 0.5 constant may not. A copy that decided differently would make the
+ * module's preview promise a mark the panel does not render, which is the one
+ * thing that preview exists to prevent. All three change together.
+ */
+function brand_is_dark($hex)
+{
+    if (!is_string($hex) || !preg_match('/^#[0-9A-Fa-f]{6}$/D', $hex)) {
+        return false;
+    }
+    $c = ltrim($hex, '#');
+    $w = array(0.2126, 0.7152, 0.0722);
+    $y = 0.0;
+    for ($i = 0; $i < 3; $i++) {
+        $v = hexdec(substr($c, $i * 2, 2)) / 255;
+        $v = ($v <= 0.03928) ? ($v / 12.92) : pow((($v + 0.055) / 1.055), 2.4);
+        $y += $w[$i] * $v;
+    }
+    return ($y < 0.5);
+}
+
+/**
+ * The value a surface renders: the variant it asked for, or the other one when
+ * that slot is empty.
+ *
+ * The fallback is what makes a preference safe to expose at all. Every panel in
+ * the field has exactly one logo, so a preference for the slot the operator has
+ * not filled must render the one they have — never nothing. Dropping it would
+ * also be worse than a blank slot on this design: with no image the sheet emits
+ * no content: override, and the shipped ISPConfig-era wordmark paints in the
+ * brand slots of a panel that has been white-labelled.
+ *
+ * These two lines are inlined rather than shared in themes/classic/brand.php,
+ * which resolves ONE surface per request (?scene=login) and so needs them once;
+ * this sheet carries both surfaces plus light mode's login slot and needs them
+ * three times. Same expression, and it must stay that way.
+ */
+function brand_logo_for_pref($pref, $on_light, $on_dark)
+{
+    $primary = ($pref === 'on_dark') ? $on_dark  : $on_light;
+    $other   = ($pref === 'on_dark') ? $on_light : $on_dark;
+    return ($primary !== '') ? $primary : $other;
+}
+
+/**
+ * Name the custom property carrying $src, registering it on first use so each
+ * distinct artwork is emitted exactly once. $vars is the value => property map,
+ * by reference; iterate it in insertion order to emit the :root block.
+ *
+ * Two names cannot run out: every use site draws from the same two variant
+ * slots, so the map holds at most two entries however many slots reference them.
+ * Nor can a registered property go unused — the only caller that can add the
+ * second entry is the one whose value differs from the rules already emitted,
+ * which is exactly the condition under which it emits a reference to it.
+ */
+function brand_logo_var($src, &$vars)
+{
+    if (!isset($vars[$src])) {
+        $vars[$src] = empty($vars) ? '--nz-brand-logo' : '--nz-brand-logo-alt';
+    }
+    return $vars[$src];
+}
+
 /** The two rail custom-properties, emitted identically wherever rail is set. */
 function brand_rail_vars($rail)
 {
@@ -439,10 +719,19 @@ function brand_rail_vars($rail)
            '  --nz-rail-active: ' . brand_shade($rail, 15) . ";\n";
 }
 
-/** Return a validated #rrggbb value from the branding array, or '' if absent/invalid. */
+/**
+ * Return a validated #rrggbb value from the branding array, or '' if absent/invalid.
+ *
+ * The D modifier is here for the reason spelled out on brand_logo_variant():
+ * without it PCRE's `$` also matches BEFORE a final newline, so "#FFFFFF\n"
+ * validates and the raw LF is emitted into this sheet. It was benign while these
+ * values only ever landed in a declaration (`background: #FFFFFF\n;` is legal
+ * CSS); it is not benign now that the same values also decide which logo each
+ * surface gets, where a hex that validates by accident silently picks a mark.
+ */
 function brand_hex($branding, $key)
 {
-    if (isset($branding[$key]) && preg_match('/^#[0-9A-Fa-f]{6}$/', $branding[$key])) {
+    if (isset($branding[$key]) && preg_match('/^#[0-9A-Fa-f]{6}$/D', $branding[$key])) {
         return $branding[$key];
     }
     return '';

@@ -23,6 +23,14 @@
   #pageContent .nz-logo-variant + .nz-logo-variant { border-top: 1px solid rgba(128,128,128,0.25);
                                                      padding-top: 14px; margin-top: 18px; }
   #pageContent .nz-logo-variant h4 { margin: 0 0 4px; font-size: 15px; font-weight: 700; }
+  /* The placement block is a third sub-block of the same fieldset and takes the
+     same rule above it, because it is where the two marks are ASSIGNED to
+     surfaces and that decision belongs with them. It gets its own class rather
+     than a third .nz-logo-variant: it is not a third artwork slot, has no
+     preview and no h4, and reusing the class would make the sibling rule and
+     the heading rule above describe something they no longer describe. */
+  #pageContent .nz-logo-variant + .nz-logo-placement { border-top: 1px solid rgba(128,128,128,0.25);
+                                                       padding-top: 14px; margin-top: 18px; }
 </style>
 
 <!-- Upload feedback only (logo_upload.php's iframe response — the uploader
@@ -114,6 +122,42 @@
       <div class="col-sm-9">
         <input type="text" name="logo_url_on_dark" id="logo_url_on_dark" value="{tmpl_var name='logo_url_on_dark'}" class="form-control" placeholder="/themes/custom/logo-on-dark.svg" />
         <p class="help-block">{tmpl_var name='logo_url_on_dark_hint_txt'}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Placement, not artwork: which of the two marks above each surface uses.
+       It lives at the end of this fieldset rather than inside either variant
+       block because it is a statement ABOUT the pair — putting it under one of
+       them would read as a property of that mark alone.
+
+       Only the <option> list comes from tform (tform_base.inc.php:510 assigns
+       nothing but <option> tags to the field's own tmpl_var); the <select> shell
+       is written here, which is core's idiom too — admin/templates/
+       system_config_sites_edit.htm:103-109. Keep class="form-control": clarity
+       styles body.nz select.form-control with its own arrow SVG at
+       assets/stylesheets/clarity/components.css:754-762, and a bare select falls
+       through to the different, list-header-sized rule at :772-786.
+
+       logo_upload.php renders this same template with no tform at all
+       (logo_upload.php:73-74), so there both tmpl_vars are unknown and
+       vlibTemplate's default UNKNOWNS behaviour removes them (tpl.inc.php:49,
+       :1215-1218) — that response carries two empty <select>s. Harmless, because
+       the uploader driver below only scrapes #OKMsg/#errorMsg and the three
+       preview divs out of it; but nothing here may assume these options exist. -->
+  <div class="nz-logo-placement">
+    <div class="form-group">
+      <label for="logo_variant_nav" class="col-sm-3 control-label">{tmpl_var name='logo_variant_nav_txt'}</label>
+      <div class="col-sm-9">
+        <select name="logo_variant_nav" id="logo_variant_nav" class="form-control">{tmpl_var name='logo_variant_nav'}</select>
+        <p class="help-block">{tmpl_var name='logo_variant_nav_hint_txt'}</p>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="logo_variant_login" class="col-sm-3 control-label">{tmpl_var name='logo_variant_login_txt'}</label>
+      <div class="col-sm-9">
+        <select name="logo_variant_login" id="logo_variant_login" class="form-control">{tmpl_var name='logo_variant_login'}</select>
+        <p class="help-block">{tmpl_var name='logo_variant_login_hint_txt'}</p>
       </div>
     </div>
   </div>

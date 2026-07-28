@@ -70,13 +70,34 @@
  * second variant is uploaded every design still resolves to it and renders it
  * exactly as it does now.
  *
+ * ---- WHICH SURFACE ASKS FOR WHICH VARIANT ------------------------------
+ * Resolution above answers "what is stored"; this answers "which of the two a
+ * given SURFACE wants". That used to be hardcoded per design — clarity asked
+ * for on_dark because its rail is navy, classic for on_light because stock's
+ * header is grey — and the operator's own [branding] rail_hex and login_bg
+ * falsify exactly that assumption: a white rail_hex on clarity painted the
+ * white mark onto a white rail, which is the bug this preference exists to fix.
+ *
+ * So the preference is stored per SURFACE rather than per design, and a third
+ * design inherits the behaviour for free:
+ *
+ *   logo_variant_nav     [branding]  the rail / header / topbar slot
+ *   logo_variant_login   [branding]  the login-screen slot
+ *
+ * Each holds '' (automatic — and an ABSENT key means the same thing), 'on_light'
+ * or 'on_dark'. The vocabulary is the one this file already uses for the
+ * variants themselves, deliberately: a surface asks for a variant BY NAME, so
+ * there is nothing to translate between the two halves of the model.
+ *
  * ---- WHY THE PREVIEW SHOWS BOTH ----------------------------------------
  * This page is the only place a wrong upload can be caught before a customer
- * sees it, so each variant is drawn on a swatch of the background it is FOR:
- * the light row on stock's own header grey, the dark row on clarity's rail
- * navy. A white mark dropped into the light slot then looks wrong here
- * immediately, which is the whole point. The preview also resolves through the
- * same fallback the themes use, so it shows what the panel will actually
+ * sees it, so each variant is drawn on the background it will really sit on:
+ * the operator's own rail_hex / login_bg wherever those colours reach the slot,
+ * and the design's real constant otherwise (clarity's rail navy, stock's header
+ * grey, the near-white gradient inside stock's login card). A white mark
+ * dropped into the light slot then looks wrong here immediately, which is the
+ * whole point. The preview resolves through the same fallback AND the same
+ * surface preference the themes do, so it shows what the panel will actually
  * render — never merely what is stored in one slot.
  */
 
@@ -178,36 +199,323 @@ function customizer_logo_resolve($stored) {
 }
 
 /**
- * One preview thumbnail, drawn on the background its variant is meant for.
+ * Is this background colour dark enough that the surface wants the mark made
+ * FOR dark backgrounds (the light/white artwork)?
+ *
+ * Proper WCAG relative luminance: each channel to 0..1, the sRGB gamma
+ * expansion, then the 0.2126/0.7152/0.0722 weighting. Dark below 0.5.
+ *
+ * MIRRORED by brand_is_dark() in themes/clarity/brand.php and in
+ * themes/classic/brand.php (the brand_* prefix those files use; classic's older
+ * brand_luminance() is this same arithmetic, line for line). They are pre-auth
+ * endpoints that must keep working with this module uninstalled, so they cannot
+ * include this file. The prefix may differ, the ARITHMETIC may not: a copy that
+ * decides differently makes this page disagree with the panel about which mark
+ * a surface gets, which is the single thing the preview exists to prevent. All
+ * three copies change together.
+ *
+ * A malformed or empty value returns FALSE — documented, so nothing here has to
+ * raise a warning out of substr()/hexdec() on a tampered config value. Every
+ * caller validates the hex first (see customizer_logo_variant_for_surface), so
+ * this is only reached by a copy that forgot to, and "not dark" is the safer
+ * guess: every stock ISPConfig surface is light, and on_light is the variant
+ * every panel in the field already has.
+ *
+ * 0.5 is NOT the contrast crossover — black ink beats white below L ~= 0.179 —
+ * so a mid-tone in [0.179, 0.5), a #999999 rail say, is called dark and gets the
+ * light mark where the dark one would read marginally better. That band is
+ * precisely what the explicit on_light/on_dark setting is for. The constant is
+ * fixed by the brand-token contract and must never be "improved" in one copy.
+ */
+function customizer_hex_is_dark($hex) {
+    if(!is_string($hex) || preg_match('/^#[0-9A-Fa-f]{6}$/D', $hex) !== 1) return false;
+
+    $c = ltrim($hex, '#');
+    $w = array(0.2126, 0.7152, 0.0722);
+    $y = 0.0;
+    for($i = 0; $i < 3; $i++) {
+        $v = hexdec(substr($c, $i * 2, 2)) / 255;
+        $v = ($v <= 0.03928) ? ($v / 12.92) : pow((($v + 0.055) / 1.055), 2.4);
+        $y += $w[$i] * $v;
+    }
+    return ($y < 0.5);
+}
+
+/**
+ * Which variant a SURFACE asks for: the operator's explicit choice, else the
+ * luminance of the colour that will be behind it, else the design's default.
+ *
+ * $surface        'nav' or 'login' — also names the stored key
+ * $branding       the [branding] section as stored
+ * $bg_hex         the colour that will really be behind THIS slot, or '' when no
+ *                 operator-settable colour reaches it (see below)
+ * $design_default the variant the design wants when nothing else decides
+ *
+ * The ORDER is the contract, not an implementation detail. The explicit choice
+ * is read first so that it wins over a colour the operator set earlier and
+ * forgot about; the colour is only consulted when the choice is automatic; the
+ * design default only when neither has anything to say.
+ *
+ * WHY $bg_hex IS A PARAMETER instead of being read from $branding right here:
+ * the mapping surface -> colour is per DESIGN, and it is not universal.
+ *   - clarity's nav slots sit on --nz-rail (app.css:121 for the rail, app.css:710
+ *     for the mobile .nz-topbar-brand chip), which rail_hex repaints; and its
+ *     login mark sits DIRECTLY on body.nz-login (login.css:35), because
+ *     .nzl-brand is a sibling ABOVE .nzl-card in main_login.tpl.htm and both it
+ *     and .nzl-scene are transparent — which login_bg repaints. clarity passes
+ *     rail_hex and login_bg.
+ *   - classic's logo is reached by NEITHER colour. Its rail block repaints only
+ *     #main-navigation and .pushy — a band injected BELOW the header strip that
+ *     holds #logo (core's main.tpl.htm:102-103 vs :51) — and no stock sheet
+ *     paints that strip at all: ispconfig.css:75-80 has #logo's own background
+ *     commented out, leaving body's #f2f5f7 (themes/default/theme.css:5). And
+ *     classic's login mark is an <img> inside .panel-heading, whose
+ *     "linear-gradient(to bottom, white, #eef0f2)" is an INLINE style attribute
+ *     on core's own template (main_login.tpl.htm:39) that no external sheet can
+ *     reach; login_bg paints only body, which is the page BEHIND that card.
+ *     classic passes '' for both surfaces and falls to its design default.
+ * Reading the hex in here would therefore flip classic's login mark to white the
+ * moment an operator chose a dark login background — for a mark still sitting on
+ * a white Bootstrap card. The operator's explicit choice is still honoured on
+ * classic, because it is tested before any hex: the escape hatch stays open.
+ *
+ * An ABSENT key and a stored '' both mean automatic, and both occur in the
+ * field: the key is absent until the first save and present-but-empty after it
+ * (customizer_edit.php writes every branding key on every save, and ini_parser
+ * round-trips the resulting "logo_variant_nav=" back as ''). Comparing with ===
+ * against the two literals collapses those two states into one and, in the same
+ * stroke, keeps any other value — a hand edit, a downgrade — out of the decision
+ * entirely.
+ *
+ * MIRRORED by brand_logo_variant_pref() in themes/clarity/brand.php and in
+ * themes/classic/brand.php — same three checks, in this order, with the same
+ * === comparisons and the same fall-through. The PLUMBING differs by one
+ * parameter and an auditor should expect it: classic composes the key from the
+ * surface exactly as here, clarity is handed the already-read stored value
+ * because its single sheet resolves both surfaces in one request and reads both
+ * keys at its call sites. See customizer_hex_is_dark() for why the copies exist
+ * at all and why the three move together.
+ */
+function customizer_logo_variant_for_surface($surface, $branding, $bg_hex, $design_default) {
+    if(!is_array($branding)) $branding = array();
+
+    $key      = 'logo_variant_' . $surface;
+    $explicit = (isset($branding[$key]) && is_string($branding[$key])) ? $branding[$key] : '';
+    if($explicit === 'on_light' || $explicit === 'on_dark') return $explicit;
+
+    //* The same anchored hex pattern the whole module uses, carrying /D: without
+    //* it PCRE's `$` also matches before a final newline, so "#FF0000\n" would be
+    //* accepted here while the pre-auth readers reject it — and this preview
+    //* would then promise a mark the panel does not show.
+    if(is_string($bg_hex) && preg_match('/^#[0-9A-Fa-f]{6}$/D', $bg_hex) === 1) {
+        return customizer_hex_is_dark($bg_hex) ? 'on_dark' : 'on_light';
+    }
+
+    return $design_default;
+}
+
+/**
+ * What a given design will really do with the two variants, one entry per thing
+ * the operator can look at.
+ *
+ * $design    'clarity' or 'classic' — the design whose chrome is being described
+ * $branding  the [branding] section as stored
+ * $labels    array('nav' => …, 'login' => …), ALREADY LOCALISED, naming the two
+ *            surfaces to the operator. logo_variant_nav_txt and
+ *            logo_variant_login_txt say exactly this and live in the tform
+ *            wordbook that BOTH preview callers load (customizer_edit.php has a
+ *            tform; logo_upload.php loads the same _customizer.lng by hand), so
+ *            they are the labels to pass. Omit them and the swatches are still
+ *            drawn on the true colours, just unlabelled.
+ *
+ * Returns a list of array('surface', 'label', 'variant', 'bg') — one entry per
+ * (surface, background) pair, because one surface can have two backgrounds; see
+ * the mode note below. 'bg' is always a valid #rrggbb.
+ *
+ * An unknown $design returns an EMPTY list rather than a guess. A panel can run
+ * a third-party theme that has no brand.php at all, in which case nothing here
+ * applies and the honest preview is the generic one — saying nothing beats
+ * describing chrome we have never seen. A caller that wants to describe two
+ * installed designs calls this once per design and concatenates; the preview
+ * draws one swatch per entry, so the labels should then name the design too.
+ *
+ * The table below is the ONLY place the two designs' chrome is written down on
+ * this side of the extension, and every value in it is a citation:
+ *
+ *   clarity nav    --nz-rail, declared once at tokens.css:88 as --nz-blue-1100
+ *                  (#01243D, tokens.css:47) and NOT redeclared in the light-mode
+ *                  block at tokens.css:215+ — the rail is navy in both colour
+ *                  modes, which is why this surface never needs a mode split.
+ *   clarity login  body.nz-login is var(--nz-page) (login.css:35), and --nz-page
+ *                  IS mode-dependent: --nz-ink-1100 #17252B dark (tokens.css:61,
+ *                  :80) against #F1F6F8 light (tokens.css:219). With login_bg
+ *                  set, clarity's login-background block paints that one colour
+ *                  in both modes — the same $base in the base rule and in the
+ *                  :root[data-nz-theme='light'] one — and the split collapses
+ *                  to a single swatch.
+ *   classic nav    #f2f5f7 — body's own background (themes/default/theme.css:5);
+ *                  #logo has no background of its own (ispconfig.css:75-80, the
+ *                  stock one commented out) and rail_hex never reaches it.
+ *   classic login  the DARKER stop of core's inline white -> #eef0f2 gradient on
+ *                  .panel-heading (main_login.tpl.htm:39). The two stops are a
+ *                  hair apart and averaging them would print a number that
+ *                  exists nowhere; the darker stop is the honest one to show.
+ */
+function customizer_logo_surfaces($design, $branding, $labels = array()) {
+    if(!is_array($branding)) $branding = array();
+    if(!is_array($labels))   $labels   = array();
+
+    //* 'bg_key' is the [branding] colour that repaints this slot's backdrop, or
+    //* '' when no operator-settable colour reaches it — the parameter argument
+    //* in customizer_logo_variant_for_surface() spelled as data. 'modes' is the
+    //* variant => colour pair for a slot whose backdrop follows the viewer's
+    //* own light/dark mode, and is empty for every slot that has one backdrop.
+    $chrome = array(
+        'clarity' => array(
+            'nav'   => array('default' => 'on_dark', 'bg_key' => 'rail_hex', 'bg' => '#01243D', 'modes' => array()),
+            'login' => array('default' => 'on_dark', 'bg_key' => 'login_bg', 'bg' => '',
+                             'modes'   => array('on_dark' => '#17252B', 'on_light' => '#F1F6F8')),
+        ),
+        'classic' => array(
+            'nav'   => array('default' => 'on_light', 'bg_key' => '', 'bg' => '#F2F5F7', 'modes' => array()),
+            'login' => array('default' => 'on_light', 'bg_key' => '', 'bg' => '#EEF0F2', 'modes' => array()),
+        ),
+    );
+
+    if(!is_string($design) || !isset($chrome[$design])) return array();
+
+    $out = array();
+    foreach($chrome[$design] as $surface => $spec) {
+        $label = (isset($labels[$surface]) && is_string($labels[$surface])) ? $labels[$surface] : '';
+
+        $bg_hex = '';
+        if($spec['bg_key'] !== '' && isset($branding[$spec['bg_key']]) && is_string($branding[$spec['bg_key']])
+            && preg_match('/^#[0-9A-Fa-f]{6}$/D', $branding[$spec['bg_key']]) === 1) {
+            $bg_hex = $branding[$spec['bg_key']];
+        }
+
+        //* Called with an EMPTY design default so the fall-through is visible:
+        //* '' coming back means neither the explicit choice nor a known colour
+        //* decided, which is the only state in which a mode-following slot shows
+        //* two different marks. Re-reading logo_variant_<surface> here instead
+        //* would be a second copy of the resolver's first check — the very line
+        //* that has to stay identical to the two brand.php readers.
+        $variant = customizer_logo_variant_for_surface($surface, $branding, $bg_hex, '');
+        $auto    = ($variant === '');
+        if($auto) $variant = $spec['default'];
+
+        //* A slot with no single backdrop is previewed once per colour mode, on
+        //* that mode's real page colour. On automatic each mode also gets its
+        //* own mark — clarity's $login_follows_mode branch, which emits a base
+        //* rule plus a :root[data-nz-theme='light'] override, and the reason
+        //* this function passes '' as a sentinel default just above. With an
+        //* explicit choice the SAME mark is drawn on both backdrops instead,
+        //* matching what that branch then does ($light_want falls back to the
+        //* chosen preference), and showing the operator the thing they most need
+        //* to see before committing: their forced mark sitting on the colour
+        //* mode they did not have in mind.
+        if($bg_hex === '' && !empty($spec['modes'])) {
+            foreach($spec['modes'] as $mode_variant => $mode_bg) {
+                $out[] = array('surface' => $surface, 'label' => $label,
+                               'variant' => ($auto ? $mode_variant : $variant), 'bg' => $mode_bg);
+            }
+            continue;
+        }
+
+        $out[] = array('surface' => $surface, 'label' => $label, 'variant' => $variant,
+                       'bg' => ($bg_hex !== '' ? $bg_hex : $spec['bg']));
+    }
+    return $out;
+}
+
+/**
+ * One preview row: this variant's mark, drawn on every surface that will use it.
  *
  * $resolved      one entry of customizer_logo_resolve()
  * $want          'on_light' or 'on_dark' — which row this is
  * $no_logo_text  already-localised text for "nothing set anywhere"
  * $fallback_text already-localised note, shown only when this row is displaying
  *                the OTHER variant; pass '' to suppress it
+ * $surfaces      customizer_logo_surfaces() output (any design, or several
+ *                concatenated). One swatch is drawn per entry whose 'variant' is
+ *                $want, on that entry's real colour and captioned with its
+ *                label. Omit it and the row falls back to a single swatch on the
+ *                design-neutral colour of its own kind, which is exactly what
+ *                this function did before surfaces existed.
+ *
+ * The swatch IS the feature: a mark is judged against the thing behind it, so a
+ * white logo dropped into the light slot has to LOOK wrong here. Which is why
+ * the swatch has to be the operator's own rail_hex / login_bg wherever those
+ * reach the slot — the hardcoded #F2F5F7 / #01243D pair this replaced assumed
+ * exactly the design defaults those two colours can falsify, so on a panel with
+ * a recoloured rail the preview drew the mark on a background the panel no
+ * longer has. A preview that is confidently wrong is worse than none.
+ *
+ * The labels are emitted unescaped, exactly as $no_logo_text and $fallback_text
+ * always have been: all three are wordbook entries, and this wordbook uses named
+ * entities (&times;) deliberately, so escaping them would print the source.
  */
-function customizer_logo_preview_html($resolved, $want, $no_logo_text, $fallback_text = '') {
+function customizer_logo_preview_html($resolved, $want, $no_logo_text, $fallback_text = '', $surfaces = array()) {
     $src  = (is_array($resolved) && isset($resolved['src']))  ? (string)$resolved['src']  : '';
     $from = (is_array($resolved) && isset($resolved['from'])) ? (string)$resolved['from'] : '';
 
     if($src === '') return '<em>' . $no_logo_text . '</em>';
 
-    //* The swatch IS the feature. #F2F5F7 is stock's own page/header grey
-    //* (theme.min.css) and #01243D is clarity's rail navy, so each row shows the
-    //* mark against the surface it will really sit on. The 1px edge keeps the
-    //* light swatch visible against the (also light) form background — without
-    //* it a white logo on light grey reads as an empty box rather than as a
-    //* logo that has disappeared, and those two look identical for the wrong
-    //* reason.
-    $bg   = ($want === 'on_dark') ? '#01243D' : '#F2F5F7';
-    $edge = ($want === 'on_dark') ? '#01243D' : '#D5DDE3';
+    $boxes = array();
+    if(is_array($surfaces)) {
+        foreach($surfaces as $s) {
+            if(!is_array($s) || !isset($s['variant']) || $s['variant'] !== $want) continue;
+            $bg = (isset($s['bg']) && is_string($s['bg'])
+                && preg_match('/^#[0-9A-Fa-f]{6}$/D', $s['bg']) === 1) ? $s['bg'] : '';
+            $boxes[] = array('bg' => $bg, 'label' => (isset($s['label']) && is_string($s['label'])) ? $s['label'] : '');
+        }
+    }
+
+    //* No surface asks for this variant — every slot resolved to the other one.
+    //* Draw the generic swatch and say nothing rather than label the row as
+    //* unused: core renders sys_ini.custom_logo on the stock theme's own header
+    //* and login page whatever this extension prefers, and the panel may have
+    //* the other design installed for other users. "Unused" would be a claim we
+    //* cannot support; a swatch of the right kind is one we can.
+    if(!$boxes) $boxes[] = array('bg' => '', 'label' => '');
 
     //* htmlspecialchars is a no-op on a valid data URI — the base64 alphabet and
     //* the "data:image/…;base64," prefix contain none of & < > " ' — so escaping
     //* unconditionally costs nothing and removes the need for the reader of this
     //* line to know which of the two kinds of value it is holding.
-    $html = '<img src="' . htmlspecialchars($src, ENT_QUOTES) . '" alt="" style="max-height:48px;max-width:220px;'
-          . 'background:' . $bg . ';padding:6px 12px;border-radius:4px;border:1px solid ' . $edge . '" />';
+    $esc  = htmlspecialchars($src, ENT_QUOTES);
+    $html = '<span style="display:inline-flex;gap:12px;flex-wrap:wrap;align-items:flex-start">';
+
+    foreach($boxes as $b) {
+        //* The design-neutral colours are the pair this row was drawn on before
+        //* surfaces existed: stock's own page/header grey (themes/default/
+        //* theme.css:5) and clarity's rail navy (tokens.css:47). They are only
+        //* reached when nothing better is known.
+        $bg = ($b['bg'] !== '') ? $b['bg'] : (($want === 'on_dark') ? '#01243D' : '#F2F5F7');
+
+        //* One luminance test decides the frame and the caption ink, so an
+        //* operator colour gets the same treatment as the built-in swatches. The
+        //* 1px edge keeps a LIGHT swatch visible against the (also light) form
+        //* background — without it a white logo on light grey reads as an empty
+        //* box rather than as a logo that has disappeared, and those two look
+        //* identical for the wrong reason. A dark swatch delimits itself, so its
+        //* edge is its own colour.
+        $dark = customizer_hex_is_dark($bg);
+        $edge = $dark ? $bg : '#D5DDE3';
+        $ink  = $dark ? '#93A9BA' : '#5A6B78';
+
+        $html .= '<span style="display:inline-block;background:' . $bg . ';border:1px solid ' . $edge
+               . ';border-radius:4px;padding:6px 12px;text-align:center;line-height:1">'
+               . '<img src="' . $esc . '" alt="" style="max-height:48px;max-width:220px;vertical-align:bottom" />';
+        if($b['label'] !== '') {
+            //* Capped so a long translation cannot stretch the swatch past the
+            //* thumbnail it belongs to; it wraps inside the box instead.
+            $html .= '<span style="display:block;margin-top:6px;font-size:11px;line-height:1.3;'
+                   . 'max-width:240px;color:' . $ink . '">' . $b['label'] . '</span>';
+        }
+        $html .= '</span>';
+    }
+    $html .= '</span>';
 
     //* Say so when this row is borrowing the other variant, otherwise the two
     //* rows show the same mark twice and look like a bug rather than like the
