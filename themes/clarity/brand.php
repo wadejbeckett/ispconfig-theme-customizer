@@ -221,7 +221,9 @@ if ($accent !== '') {
     $base   = brand_shade($accent, 34); // ~ blue-700
 
     if ($rail !== '') {
-        $root .= brand_rail_vars($rail);
+        //* $bright is this ramp's blue-400 role. Handing it over keeps the rail's
+        //* indicator on the brand accent instead of re-deriving one beside it.
+        $root .= brand_rail_vars($rail, $bright);
     }
     $root .= '  --nz-focus-ring: '   . brand_rgba($bright, 0.40) . ";\n";
     $root .= '  --nz-selection-bg: ' . brand_rgba($bright, 0.35) . ";\n";
@@ -247,8 +249,8 @@ if ($accent !== '') {
     $light .= '  --nz-info-surface: '   . brand_shade($accent, 94) . ";\n";
     $css   .= ":root[data-nz-theme='light'] {\n{$light}}\n";
 } elseif ($rail !== '') {
-    // rail set without an accent — just the navy band
-    $css .= ":root {\n" . brand_rail_vars($rail) . "}\n";
+    // rail set without an accent — the band and the ink that has to read on it
+    $css .= ":root {\n" . brand_rail_vars($rail, '') . "}\n";
 }
 
 /* ---- login background ---- */
@@ -409,11 +411,7 @@ if ($has_logo) {
     if ($light_src !== $login_src) {
         $light_decl .= "content: var({$light_var}); ";
     }
-    $light_slot   = ($light_want === 'on_dark') ? $logo_on_dark : $logo_on_light;
-    $one_variant  = ($logo_on_light === '' || $logo_on_dark === '');
-    $light_decl  .= ($light_slot !== '' && !$one_variant)
-        ? 'filter: none;'
-        : 'filter: drop-shadow(0 1px 6px rgba(2, 26, 43, 0.35));';
+    $light_decl  .= brand_login_light_filter($logo_on_light, $logo_on_dark);
     $css .= ":root[data-nz-theme='light'] .nzl-brand img { {$light_decl} }\n";
 
     // mask the content swap: on a hard refresh the SHIPPED wordmark paints for
@@ -438,9 +436,21 @@ if ($has_logo) {
     $css .= "}\n";
 } elseif ($company_name !== '') {
     // no logo uploaded/referenced, but the panel is named: the NAME becomes the
-    // wordmark (CSS text content on the brand slots). Rail/topbar are navy in
-    // both modes -> white text; the login slot inherits the theme's light-mode
-    // ink filter, which correctly darkens this text too.
+    // wordmark (CSS text content on the brand slots).
+    //
+    // The two RAIL slots take the rail's own ink token, not a literal. They sit
+    // on --nz-rail, which rail_hex repaints, so a hardcoded white is a wordmark
+    // that disappears the moment the operator chooses a light sidebar — the same
+    // defect the rail ink family exists to fix, and the panel NAME is the worst
+    // place in the interface to lose. --nz-rail-text-hover is #FFFFFF at
+    // tokens.css:91 and brand_rail_vars() restates it verbatim on every dark
+    // rail, so nothing moves for the navy or for any dark custom rail.
+    //
+    // The LOGIN slot keeps a literal white and is emitted separately. It does
+    // not sit on the rail at all, and login.css:95 ink-darkens it in light mode
+    // — the filter this branch relies on to make the name readable there. A rail
+    // token would follow the sidebar's colour onto a surface the sidebar does
+    // not touch.
     //
     // Escape for the CSS string context rather than deleting: inside content:"…"
     // only " (which would close the string) and \ (which would start an escape
@@ -455,10 +465,12 @@ if ($has_logo) {
     // ("Host > Cloud" lost its arrow, '"Acme" Hosting' lost its quotes) while
     // title.php's tab title on the same screen rendered them intact.
     $wordmark_css = str_replace(array('\\', '"'), array('\\\\', '\\"'), $company_name);
-    $css .= "#logo img, .nz-topbar-brand img, .nzl-brand img { content: \"{$wordmark_css}\"; "
-          . "font: 600 15px/1.3 'Inter', -apple-system, sans-serif; color: #fff; "
+    $css .= "#logo img, .nz-topbar-brand img { content: \"{$wordmark_css}\"; "
+          . "font: 600 15px/1.3 'Inter', -apple-system, sans-serif; color: var(--nz-rail-text-hover); "
           . "white-space: nowrap; letter-spacing: 0.01em; }\n";
-    $css .= ".nzl-brand img { font-size: 19px; }\n";
+    $css .= ".nzl-brand img { content: \"{$wordmark_css}\"; "
+          . "font: 600 19px/1.3 'Inter', -apple-system, sans-serif; color: #fff; "
+          . "white-space: nowrap; letter-spacing: 0.01em; }\n";
 }
 
 /* ---- attribution courtesy lines (source license notices are untouched) ---- */
@@ -597,23 +609,26 @@ function brand_logo_variant($ref, $data)
  * — a copy that disagrees shows the operator a preview of a logo the panel will
  * not render.
  *
- * The PLUMBING differs by one parameter and an auditor should expect it: the
- * other two take ($surface, $branding, …) and compose 'logo_variant_' . $surface
- * internally, while this copy is handed the value. Two reasons, both local to
- * this design. It resolves BOTH surfaces in one request — clarity's shells link
- * this sheet with no ?scene=, so there is no single $surface to compose from —
- * and reading the two keys at the call sites is what puts both names LITERALLY
+ * All three copies take the SAME ($stored, $bg_hex, $design_default): the
+ * already-read value, never the key. That is what makes "diff the three copies"
+ * an audit somebody can actually run, and tests/brand/run.php pins the shape on
+ * every push by driving all three over one grid.
+ *
+ * Reading the key at the CALL SITE rather than in here is deliberate, for two
+ * reasons that outlive the signature. This design resolves BOTH surfaces in one
+ * request — clarity's shells link this sheet with no ?scene=, so there is no
+ * single $surface to compose from — and spelling the keys at the call sites
+ * (:310 and :330) is what puts logo_variant_nav and logo_variant_login LITERALLY
  * in this file, which CI's "Brand-token contract parity" check
  * (.github/workflows/ci.yml) requires of every design's reader precisely so that
- * a renamed key cannot pass unnoticed. The same note is recorded on the
- * customizer's copy.
+ * a renamed key cannot pass unnoticed.
  */
 function brand_logo_variant_pref($stored, $bg_hex, $design_default)
 {
     if ($stored === 'on_light' || $stored === 'on_dark') {
         return $stored;
     }
-    if (is_string($bg_hex) && preg_match('/^#[0-9A-Fa-f]{6}$/D', $bg_hex)) {
+    if (is_string($bg_hex) && preg_match('/^#[0-9A-Fa-f]{6}$/D', $bg_hex) === 1) {
         return brand_is_dark($bg_hex) ? 'on_dark' : 'on_light';
     }
     return $design_default;
@@ -649,16 +664,38 @@ function brand_logo_variant_pref($stored, $bg_hex, $design_default)
  *
  * BYTE-IDENTICAL to themes/classic/brand.php's brand_is_dark() and to the
  * customizer's customizer_hex_is_dark() (same arithmetic under this file's
- * naming convention). The prefix may differ between copies; the arithmetic and
- * the 0.5 constant may not. A copy that decided differently would make the
- * module's preview promise a mark the panel does not render, which is the one
- * thing that preview exists to prevent. All three change together.
+ * naming convention). The prefix may differ between copies; the guard, the
+ * delegation and the 0.5 constant may not. A copy that decided differently would
+ * make the module's preview promise a mark the panel does not render, which is
+ * the one thing that preview exists to prevent. All three change together, and
+ * tests/brand/run.php diffs their decisions on every push so that "they agree"
+ * is executed rather than asserted.
+ *
+ * The sRGB arithmetic itself lives in brand_luminance() and is called, not
+ * repeated: a second copy of the transfer function inside this function — which
+ * is what this used to be — could be left behind by a fix applied to the other,
+ * and the two would then disagree about the same colour on the same page.
  */
 function brand_is_dark($hex)
 {
-    if (!is_string($hex) || !preg_match('/^#[0-9A-Fa-f]{6}$/D', $hex)) {
+    if (!is_string($hex) || preg_match('/^#[0-9A-Fa-f]{6}$/D', $hex) !== 1) {
         return false;
     }
+    return (brand_luminance($hex) < 0.5);
+}
+
+/**
+ * WCAG relative luminance of a hex colour (0.0 .. 1.0) — normalise each channel,
+ * undo the sRGB transfer function, weight by luminous sensitivity.
+ *
+ * The single definition behind every brightness decision in this file:
+ * brand_is_dark()'s 0.5 artwork pivot, brand_rail_vars()'s 0.184 ink pivot and
+ * brand_contrast()'s ratio. Callers validate their input; this one trusts it,
+ * because on a pre-auth text/css endpoint a PHP warning is printed INTO the
+ * stylesheet and corrupts every rule after it.
+ */
+function brand_luminance($hex)
+{
     $c = ltrim($hex, '#');
     $w = array(0.2126, 0.7152, 0.0722);
     $y = 0.0;
@@ -667,7 +704,57 @@ function brand_is_dark($hex)
         $v = ($v <= 0.03928) ? ($v / 12.92) : pow((($v + 0.055) / 1.055), 2.4);
         $y += $w[$i] * $v;
     }
-    return ($y < 0.5);
+    return $y;
+}
+
+/** WCAG 2.x contrast ratio between two hex colours (1.0 .. 21.0). */
+function brand_contrast($a, $b)
+{
+    $la = brand_luminance($a);
+    $lb = brand_luminance($b);
+    return (max($la, $lb) + 0.05) / (min($la, $lb) + 0.05);
+}
+
+/**
+ * A shade of $hex, starting at lightness $l and walking AWAY from $bg until the
+ * pair clears $min contrast (WCAG 2.x ratio: 4.5 for body text, 3.0 for a
+ * non-text indicator such as an icon or an active marker).
+ *
+ * This is what makes an arbitrary rail_hex safe to print navigation on. The
+ * shipped lightness ladder was chosen for a navy; the same rung in yellow or
+ * lime is far brighter, and hue-swapping alone would produce labels nobody can
+ * read. Walking in 2-point steps keeps the result as close to the operator's
+ * chosen colour as the ratio allows, so a branded rail still looks branded.
+ *
+ * The walk is bounded and returns the best it reached: no ink clears 4.5:1 on a
+ * mid grey, and returning the closest available beats returning nothing.
+ *
+ * Byte-identical to themes/classic/brand.php's brand_readable(), where it does
+ * the same job for stock's light surfaces.
+ */
+function brand_readable($hex, $l, $bg, $min)
+{
+    //* Walk toward whichever end of the ramp actually reads better on $bg,
+    //* measured rather than pivoted: the crossover is at luminance 0.1791, and a
+    //* rounded 0.184 pivot sends colours in between — #767676 is one — walking
+    //* the wrong way, away from contrast instead of toward it.
+    $dir  = (brand_contrast('#FFFFFF', $bg) > brand_contrast('#000000', $bg)) ? 1 : -1;
+    $last = brand_shade($hex, $l);
+    for ($i = 0; $i <= 50; $i++) {
+        $try_l = $l + ($dir * 2 * $i);
+        $last  = brand_shade($hex, $try_l);
+        if (brand_contrast($last, $bg) >= $min) {
+            return $last;
+        }
+        //* Stop at the end of the ramp IN THE DIRECTION OF TRAVEL. Testing both
+        //* ends would end the walk on its first step whenever $l starts at a
+        //* boundary — which is exactly what a white rail (lightness 100) does —
+        //* returning the colour it was asked to walk away from.
+        if (($dir < 0 && $try_l <= 0) || ($dir > 0 && $try_l >= 100)) {
+            break;
+        }
+    }
+    return $last;
 }
 
 /**
@@ -712,11 +799,211 @@ function brand_logo_var($src, &$vars)
     return $vars[$src];
 }
 
-/** The two rail custom-properties, emitted identically wherever rail is set. */
-function brand_rail_vars($rail)
+/**
+ * The rail's whole token family, emitted identically wherever rail_hex is set.
+ *
+ * $accent_bright is the blue-400-role colour the accent ladder has already
+ * derived, or '' when the operator set no accent_hex. It is passed in rather
+ * than re-derived so the indicator below cannot drift from the ramp emitted
+ * beside it.
+ *
+ * This used to emit --nz-rail and --nz-rail-active alone, and that was a bug
+ * with a wide blast radius. The rail is a SURFACE and the navigation is printed
+ * on it, but every ink token — --nz-rail-text, --nz-rail-text-hover,
+ * --nz-rail-heading, --nz-rail-edge, --nz-rail-accent — was a white-family
+ * constant declared once in tokens.css:89-95 for the navy the design ships. An
+ * operator who set a light rail_hex got the background they asked for and white
+ * text, white group headings and white icons on it: the entire navigation
+ * invisible, with no error and nothing in the preview to show it. The logo had
+ * the same problem and was given an escape hatch (logo_variant_nav); the ink had
+ * none, so the field's own help text — "such as a white sidebar" — was inviting
+ * operators into a panel they could not read.
+ *
+ * The pivot is 0.184, NOT brand_is_dark()'s 0.5. The two questions differ in the
+ * way themes/classic/brand.php spells out on brand_readable(): 0.5 asks "is this
+ * background more dark than light", which is the right question when choosing
+ * between two finished artworks, while choosing INK for a surface has to respect
+ * a contrast RATIO, and 0.184 is where black and white are equally readable.
+ *
+ * On a dark rail every value below is tokens.css's own, restated verbatim, so
+ * the shipped navy and every dark custom rail render exactly as they always
+ * have — the ink family is a rescue for colours the design never anticipated and
+ * must be invisible to everyone else. On a light rail the inks are walked out of
+ * the rail's own hue until they clear a ratio, which keeps them recognisably the
+ * operator's colour instead of dropping to black.
+ *
+ * No ink clears 4.5:1 on every possible rail — a mid grey tops out at 4.69:1
+ * against pure black — so the walk targets the ratio and settles for the best
+ * the colour allows. tests/brand/probe_clarity.php holds it to exactly that:
+ * 4.5:1 wherever 4.5:1 exists, and no worse than the best ink otherwise.
+ */
+function brand_rail_vars($rail, $accent_bright = '')
 {
-    return "  --nz-rail: {$rail};\n" .
-           '  --nz-rail-active: ' . brand_shade($rail, 15) . ";\n";
+    //* The indicator keeps the brand accent where there is one. #2EA9FF is
+    //* tokens.css:95's own --nz-blue-400, so with no accent_hex the white-ink
+    //* branch re-emits the value the sheet already had and nothing moves.
+    $accent_src = ($accent_bright !== '') ? $accent_bright : '#2EA9FF';
+
+    $out = "  --nz-rail: {$rail};\n";
+
+    //* Which ink direction by MEASUREMENT, not by a lightness pivot. The
+    //* crossover where black and white read equally well sits at luminance
+    //* 0.1791 (sqrt(1.05 * 0.05) - 0.05), which is close enough to the 0.184
+    //* figure quoted for ink pivots that rails between the two — #767676 is one —
+    //* get handed the WORSE of the two inks by a rule that rounds. Comparing the
+    //* two ratios is exact, needs no constant, and is the shape
+    //* themes/classic/brand.php's brand_ink() already uses.
+    if (brand_contrast('#FFFFFF', $rail) >= brand_contrast('#000000', $rail)) {
+        //* A dark rail: tokens.css's own values, so the shipped navy and every
+        //* rail dark enough to carry them render exactly as they always have.
+        //*
+        //* Verified rather than assumed, because "dark" is a range and the alphas
+        //* were chosen for one navy. On a mid-dark rail such as #0065AB the 0.66
+        //* group-heading ink flattens to 3.57:1 — readable-looking in a mockup,
+        //* below AA in fact — so each ink walks up the design's own alpha ladder
+        //* until it clears the ratio and only then falls back to solid white. The
+        //* ladder is ordered so the FIRST entry is the shipped value: a rail that
+        //* never needed help never sees a different number.
+        $active = brand_shade($rail, 15);
+
+        //* The hover tint lightens the rail, and on a rail near the ink
+        //* crossover that is enough to push the white ink under AA even at full
+        //* opacity: an ordinary brand blue like #0970DC reads 4.44:1 on its own
+        //* hovered row. Tinting the other way costs nothing — the row still
+        //* changes, just downward — and buys back the ratio. The shipped navy
+        //* reads 11:1 on the lightening tint and keeps it, so nothing moves for
+        //* the panels in the field.
+        $hover     = 'rgba(255, 255, 255, 0.05)';
+        $hover_hex = brand_flatten('#FFFFFF', 0.05, $rail);
+        if (brand_contrast('#FFFFFF', $hover_hex) < 4.5) {
+            $hover     = 'rgba(0, 0, 0, 0.05)';
+            $hover_hex = brand_flatten('#000000', 0.05, $rail);
+        }
+
+        //* White ink is hardest to read on the LIGHTEST thing it is printed on,
+        //* and the ink is printed on all three: the rail, the selected row and
+        //* the hover tint. Choosing against the rail alone would leave the ink
+        //* legible everywhere except the row under the pointer.
+        $hard = $rail;
+        foreach (array($active, $hover_hex) as $bg) {
+            if (brand_luminance($bg) > brand_luminance($hard)) $hard = $bg;
+        }
+
+        return $out
+            . "  --nz-rail-active: {$active};\n"
+            . "  --nz-rail-edge: rgba(255, 255, 255, 0.07);\n"
+            . '  --nz-rail-text: ' . brand_rail_white($hard, array(0.88, 1.0), 4.5) . ";\n"
+            . "  --nz-rail-text-hover: #FFFFFF;\n"
+            . "  --nz-rail-hover: {$hover};\n"
+            . '  --nz-rail-heading: ' . brand_rail_white($hard, array(0.66, 0.78, 0.88, 1.0), 4.5) . ";\n"
+            . '  --nz-rail-accent: ' . (brand_contrast($accent_src, $rail) >= 3.0
+                    ? $accent_src
+                    : brand_readable($accent_src, 59, $rail, 3.0)) . ";\n";
+    }
+
+    //* A light rail — the case tokens.css has no values for at all, because the
+    //* design never had a light rail. The inks are walked out of the rail's OWN
+    //* hue rather than dropped to black, so a branded rail still looks branded.
+    list(, , $l) = brand_hex_to_hsl($rail);
+
+    //* The strata move AWAY from the ink, i.e. lighter, so they can never erode
+    //* the contrast the ink is about to be chosen for. They are SHADES, not the
+    //* black tints the dark rail uses: a black tint pushes the backdrop toward
+    //* the crossover, and on a rail sitting near it — #767676 — that is enough to
+    //* flip which ink reads better, leaving the hovered row the one place the
+    //* navigation cannot be read.
+    //*
+    //* Direction comes from the HEADROOM, not from a threshold. Clamping to 100
+    //* instead collapsed both strata onto pure white for every rail above
+    //* lightness 92 — #FAFAFA, #F5F5F5, #F2F5F7, the near-whites an operator
+    //* actually types for a light sidebar — so a hovered row and the selected
+    //* row were painted the same colour as each other and as nothing else.
+    //* Stepping down when there is no room to step up keeps them distinct, and
+    //* is safe precisely because a rail with no headroom is nowhere near the
+    //* crossover.
+    $dir    = (($l + 8.0) > 100.0) ? -1 : 1;
+    $active = brand_shade($rail, $l + $dir * 8);
+    $hover  = brand_shade($rail, $l + $dir * 4);
+
+    //* Dark ink is hardest to read on the DARKEST thing it is printed on.
+    $hard = $rail;
+    foreach (array($active, $hover) as $bg) {
+        if (brand_luminance($bg) < brand_luminance($hard)) $hard = $bg;
+    }
+
+    return $out
+        . "  --nz-rail-active: {$active};\n"
+        . "  --nz-rail-edge: rgba(0, 0, 0, 0.12);\n"
+        . '  --nz-rail-text: ' . brand_readable($rail, $l, $hard, 7.0) . ";\n"
+        . '  --nz-rail-text-hover: ' . brand_readable($rail, $l, $hard, 10.0) . ";\n"
+        . "  --nz-rail-hover: {$hover};\n"
+        . '  --nz-rail-heading: ' . brand_readable($rail, $l, $hard, 4.5) . ";\n"
+        . '  --nz-rail-accent: ' . brand_readable($accent_src, 59, $hard, 3.0) . ";\n";
+}
+
+/**
+ * The first white ink on $alphas that clears $min against $bg, else solid white.
+ *
+ * Separated out so the alpha ladder is written once and reads as what it is: a
+ * preference for the design's own restrained inks, with legibility as the
+ * override rather than the other way round.
+ */
+function brand_rail_white($bg, $alphas, $min)
+{
+    foreach ($alphas as $a) {
+        //* Measure the COMPOSITED colour — a contrast ratio taken on the
+        //* un-composited white would score every alpha 21:1 and the ladder would
+        //* always stop at its first rung.
+        if (brand_contrast(brand_flatten('#FFFFFF', $a, $bg), $bg) >= $min) {
+            return brand_rgba('#FFFFFF', $a);
+        }
+    }
+    return '#FFFFFF';
+}
+
+/** $hex at $alpha over an opaque $bg, as the #rrggbb the eye actually receives. */
+function brand_flatten($hex, $alpha, $bg)
+{
+    $f = ltrim($hex, '#');
+    $b = ltrim($bg, '#');
+    $out = '#';
+    for ($i = 0; $i < 3; $i++) {
+        $out .= sprintf('%02X', (int)round(
+            hexdec(substr($f, $i * 2, 2)) * $alpha + hexdec(substr($b, $i * 2, 2)) * (1 - $alpha)
+        ));
+    }
+    return $out;
+}
+
+/**
+ * What light colour mode does to the login mark: cancel the theme's ink filter,
+ * or keep the rescue halo.
+ *
+ * login.css:95 ink-darkens .nzl-brand img unconditionally to suit the SHIPPED
+ * white wordmark, so every path through the logo branch must set `filter` or a
+ * custom coloured mark is crushed to near-black. The halo is what makes a mark
+ * readable on a background it was not drawn for, so it belongs with the
+ * FALLBACK — the case where the wanted slot is empty and the other variant is
+ * standing in.
+ *
+ * ONE stored variant means the operator asserted nothing: sys_ini.custom_logo is
+ * the only logo column ISPConfig has ever had, and what that single mark was
+ * drawn for depends on the design it was uploaded against. So one variant keeps
+ * the rescue. With BOTH stored the assertion is real — two slots labelled by
+ * background — and the mark keeps its own colours.
+ *
+ * The caller used to ask this as `$light_slot !== '' && !$one_variant`, where
+ * $light_slot was by construction one of the two variants: whenever both were
+ * non-empty the left half could not be false, so it read as two independent
+ * guards while being one. Asking the real question by name is what stops a
+ * future edit from dropping the half that was actually load-bearing.
+ */
+function brand_login_light_filter($logo_on_light, $logo_on_dark)
+{
+    if ($logo_on_light !== '' && $logo_on_dark !== '') {
+        return 'filter: none;';
+    }
+    return 'filter: drop-shadow(0 1px 6px rgba(2, 26, 43, 0.35));';
 }
 
 /**

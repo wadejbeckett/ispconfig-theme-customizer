@@ -53,6 +53,18 @@ jobs:
         # arbitrary code execution in the runner.
         run: php .github/scripts/lang_check.php
 
+      - name: Brand readers — rail ink, surfaces, and three-copy resolver parity
+        # The logo-variant resolver and the luminance maths are duplicated across
+        # themes/clarity/brand.php, themes/classic/brand.php and the module's
+        # lib/preview.inc.php, because the theme endpoints run PRE-AUTH and cannot
+        # include the module. Every copy's docblock says they must decide alike;
+        # this runs that comparison over a shared grid instead of trusting an eye,
+        # and it is what catches the class of drift that makes the preview promise
+        # a mark the panel does not render. It also holds the rail's ink family to
+        # a contrast ratio on every rail colour, which is the check that a light
+        # rail_hex no longer paints white text on a white sidebar.
+        run: php tests/brand/run.php
+
       - name: SVG upload screen — adversarial corpus
         # 29 bypass attempts that defeated the previous byte-scanning
         # implementation, plus 12 shapes real editors emit. SECURITY.md cites
@@ -126,15 +138,18 @@ jobs:
             # against.
             #
             # Both names must appear LITERALLY, and neither is a substring of
-            # the other — but be clear about what that matches today. clarity
-            # spells them at the call site; classic composes the key inside
-            # brand_logo_variant_pref() ('logo_variant_' . $surface), so there
-            # the only literal occurrence is the key list in the file's header
-            # comment. A composed lookup is invisible to grep, which makes that
-            # header load-bearing rather than decorative: it is the one place a
-            # rename on the writer side can still be caught. As with every key
-            # on this list, presence is what is proven — not that the value is
-            # read, and not that it is honoured.
+            # the other. Both designs now spell them at the CALL SITE, which is
+            # what gives this grep something real to find: classic used to
+            # compose the key inside brand_logo_variant_pref()
+            # ('logo_variant_' . $surface), and a composed lookup is invisible to
+            # grep — the only matches in that file were prose, so a rename on the
+            # writer side would have passed here while classic silently stopped
+            # honouring the operator. tests/brand/probe_classic.php tokenises the
+            # file and asserts the keys appear in CODE rather than in a comment,
+            # because that is the part this grep still cannot tell apart.
+            #
+            # As with every key on this list, presence is what is proven here —
+            # not that the value is read, and not that it is honoured.
             for key in accent_hex rail_hex login_bg logo_url logo_url_on_dark logo_on_dark logo_variant_nav logo_variant_login show_version company_name; do
               if ! grep -q "$key" "$reader"; then
                 echo "::error file=$reader::brand token '$key' is written by the module but not read by $reader"

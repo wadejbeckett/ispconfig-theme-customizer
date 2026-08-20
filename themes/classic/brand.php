@@ -525,7 +525,16 @@ $surface = ($scene === 'login') ? 'login' : 'nav';
 
 // '' for the background hex on both surfaces, and 'on_light' as the design
 // default — the determination and its evidence are in the block comment above.
-$logo_pref = brand_logo_variant_pref($surface, $branding, '', 'on_light');
+//
+// Both key names are spelled out here rather than composed from $surface. CI's
+// brand-token contract check greps every themes/*/brand.php for them so a rename
+// on the writer side cannot pass unnoticed, and a composed lookup would leave it
+// matching nothing but prose — green while this design quietly stopped honouring
+// the operator.
+$stored_pref = ($surface === 'login')
+    ? (isset($branding['logo_variant_login']) ? $branding['logo_variant_login'] : '')
+    : (isset($branding['logo_variant_nav'])   ? $branding['logo_variant_nav']   : '');
+$logo_pref = brand_logo_variant_pref($stored_pref, '', 'on_light');
 
 // Ask for the preferred variant, fall back to the other. The fallback is what
 // keeps a preference honest: it expresses which mark suits this surface, not a
@@ -753,8 +762,8 @@ function brand_logo_variant($ref, $data)
  * Which logo VARIANT one surface should ask for: 'on_light' (the mark drawn FOR
  * light backgrounds) or 'on_dark' (the mark drawn FOR dark ones).
  *
- * $surface  'nav' or 'login'; names the stored key, logo_variant_<surface>.
- * $branding the parsed [branding] array.
+ * $stored   the operator's [branding] logo_variant_nav / logo_variant_login
+ *           value, already read by the caller.
  * $bg_hex   the colour that slot's background actually ends up, or '' when the
  *           design cannot know it. Caller-supplied on purpose: which colour a
  *           logo sits on is a property of the DESIGN, not of this feature.
@@ -780,15 +789,26 @@ function brand_logo_variant($ref, $data)
  * Byte-identical to themes/clarity/brand.php's copy and to the customizer's
  * lib/preview.inc.php, for the same reason brand_logo_variant() is: a pre-auth
  * reader cannot include the module's code, so the copies are duplicated and
- * must be changed together.
+ * must be changed together. tests/brand/run.php diffs the three copies'
+ * decisions over a shared grid on every push, so that claim is executed rather
+ * than left to an eye.
+ *
+ * It has not always been true. This copy took ($surface, $branding, …) and
+ * composed the key itself while the docblock above said it was byte-identical to
+ * clarity's ($stored, …) — so a maintainer who believed the instruction and
+ * pasted clarity's body in would have handed $stored the string 'nav', which
+ * never matches either literal, and every explicit preference on this design
+ * would have fallen through to the default in silence. Taking the value rather
+ * than the key is also what puts both key names LITERALLY at the call site,
+ * which is what CI's brand-token contract check needs in order to catch a
+ * rename: a composed lookup is invisible to grep.
  */
-function brand_logo_variant_pref($surface, $branding, $bg_hex, $default)
+function brand_logo_variant_pref($stored, $bg_hex, $default)
 {
-    $key = 'logo_variant_' . $surface;
-    if (isset($branding[$key]) && ($branding[$key] === 'on_light' || $branding[$key] === 'on_dark')) {
-        return $branding[$key];
+    if ($stored === 'on_light' || $stored === 'on_dark') {
+        return $stored;
     }
-    if (is_string($bg_hex) && preg_match('/^#[0-9A-Fa-f]{6}$/D', $bg_hex)) {
+    if (is_string($bg_hex) && preg_match('/^#[0-9A-Fa-f]{6}$/D', $bg_hex) === 1) {
         return brand_is_dark($bg_hex) ? 'on_dark' : 'on_light';
     }
     return $default;
@@ -818,24 +838,24 @@ function brand_logo_variant_pref($surface, $branding, $bg_hex, $default)
  * it is the variant core itself stores in sys_ini.custom_logo.
  *
  * Byte-identical to themes/clarity/brand.php's copy and to the customizer's
- * lib/preview.inc.php; all copies change together. Self-contained rather than
- * built on brand_luminance(), which is one of the contrast helpers that exist
- * only in this file.
+ * lib/preview.inc.php; all copies change together, and tests/brand/run.php
+ * diffs their decisions on every push.
+ *
+ * The sRGB arithmetic is called, not repeated. This function used to carry its
+ * own copy of the transfer function — the same loop, the same weights, the same
+ * knee — eighty lines from brand_luminance(), which already had it and which
+ * brand_readable() already used. Two copies in ONE file is the drift that has
+ * nothing to catch it: a contrast fix applied to the gamma curve in one leaves
+ * the other behind, and the two then disagree about the same colour on the same
+ * page. Cross-FILE parity never required that; it requires the guard, the
+ * delegation and the 0.5 constant to match, which they do.
  */
 function brand_is_dark($hex)
 {
-    if (!is_string($hex) || !preg_match('/^#[0-9A-Fa-f]{6}$/D', $hex)) {
+    if (!is_string($hex) || preg_match('/^#[0-9A-Fa-f]{6}$/D', $hex) !== 1) {
         return false;
     }
-    $c = ltrim($hex, '#');
-    $w = array(0.2126, 0.7152, 0.0722);
-    $y = 0.0;
-    for ($i = 0; $i < 3; $i++) {
-        $v = hexdec(substr($c, $i * 2, 2)) / 255;
-        $v = ($v <= 0.03928) ? ($v / 12.92) : pow((($v + 0.055) / 1.055), 2.4);
-        $y += $w[$i] * $v;
-    }
-    return ($y < 0.5);
+    return (brand_luminance($hex) < 0.5);
 }
 
 /** Return a validated #rrggbb value from the branding array, or '' if absent/invalid. */
@@ -868,7 +888,11 @@ function brand_shade($hex, $l)
  */
 function brand_readable($hex, $l, $bg, $min)
 {
-    $dir  = (brand_luminance($bg) > 0.184) ? -1 : 1; // dark ink on a light background
+    //* Walk toward whichever end of the ramp actually reads better on $bg,
+    //* measured rather than pivoted: the crossover is at luminance 0.1791, and a
+    //* rounded 0.184 pivot sends colours in between — #767676 is one — walking
+    //* the wrong way, away from contrast instead of toward it.
+    $dir  = (brand_contrast('#FFFFFF', $bg) > brand_contrast('#000000', $bg)) ? 1 : -1;
     $last = brand_shade($hex, $l);
     for ($i = 0; $i <= 50; $i++) {
         $try_l = $l + ($dir * 2 * $i);
@@ -876,7 +900,10 @@ function brand_readable($hex, $l, $bg, $min)
         if (brand_contrast($last, $bg) >= $min) {
             return $last;
         }
-        if ($try_l <= 0 || $try_l >= 100) {
+        //* Stop at the end of the ramp IN THE DIRECTION OF TRAVEL. Testing both
+        //* ends would end the walk on its first step whenever $l starts at a
+        //* boundary, returning the colour it was asked to walk away from.
+        if (($dir < 0 && $try_l <= 0) || ($dir > 0 && $try_l >= 100)) {
             break;
         }
     }

@@ -229,7 +229,21 @@ function customizer_logo_resolve($stored) {
  */
 function customizer_hex_is_dark($hex) {
     if(!is_string($hex) || preg_match('/^#[0-9A-Fa-f]{6}$/D', $hex) !== 1) return false;
+    return (customizer_luminance($hex) < 0.5);
+}
 
+/**
+ * WCAG relative luminance of a validated #rrggbb (0.0 .. 1.0).
+ *
+ * Split out of customizer_hex_is_dark() so the sRGB transfer function is written
+ * once per file rather than once per question — the theme readers carry the same
+ * split (brand_luminance()), which is what lets all three be compared as the
+ * contract above requires.
+ *
+ * Trusts its input: the caller has already matched the hex pattern, and every
+ * call site here is reached only through customizer_hex_is_dark().
+ */
+function customizer_luminance($hex) {
     $c = ltrim($hex, '#');
     $w = array(0.2126, 0.7152, 0.0722);
     $y = 0.0;
@@ -238,15 +252,16 @@ function customizer_hex_is_dark($hex) {
         $v = ($v <= 0.03928) ? ($v / 12.92) : pow((($v + 0.055) / 1.055), 2.4);
         $y += $w[$i] * $v;
     }
-    return ($y < 0.5);
+    return $y;
 }
 
 /**
  * Which variant a SURFACE asks for: the operator's explicit choice, else the
  * luminance of the colour that will be behind it, else the design's default.
  *
- * $surface        'nav' or 'login' — also names the stored key
- * $branding       the [branding] section as stored
+ * $stored         the operator's [branding] logo_variant_nav / logo_variant_login
+ *                 value, already read by the caller — customizer_logo_variant_stored()
+ *                 is what reads it
  * $bg_hex         the colour that will really be behind THIS slot, or '' when no
  *                 operator-settable colour reaches it (see below)
  * $design_default the variant the design wants when nothing else decides
@@ -289,19 +304,15 @@ function customizer_hex_is_dark($hex) {
  *
  * MIRRORED by brand_logo_variant_pref() in themes/clarity/brand.php and in
  * themes/classic/brand.php — same three checks, in this order, with the same
- * === comparisons and the same fall-through. The PLUMBING differs by one
- * parameter and an auditor should expect it: classic composes the key from the
- * surface exactly as here, clarity is handed the already-read stored value
- * because its single sheet resolves both surfaces in one request and reads both
- * keys at its call sites. See customizer_hex_is_dark() for why the copies exist
- * at all and why the three move together.
+ * === comparisons, the same fall-through and, since the signatures were unified,
+ * the same parameters. All three take the already-read stored VALUE rather than
+ * the key, which is what makes "diff the three copies" an audit somebody can
+ * actually run; tests/brand/run.php runs the behavioural half of it on every
+ * push by comparing all three decisions over a shared grid. See
+ * customizer_hex_is_dark() for why the copies exist at all.
  */
-function customizer_logo_variant_for_surface($surface, $branding, $bg_hex, $design_default) {
-    if(!is_array($branding)) $branding = array();
-
-    $key      = 'logo_variant_' . $surface;
-    $explicit = (isset($branding[$key]) && is_string($branding[$key])) ? $branding[$key] : '';
-    if($explicit === 'on_light' || $explicit === 'on_dark') return $explicit;
+function customizer_logo_variant_for_surface($stored, $bg_hex, $design_default) {
+    if($stored === 'on_light' || $stored === 'on_dark') return $stored;
 
     //* The same anchored hex pattern the whole module uses, carrying /D: without
     //* it PCRE's `$` also matches before a final newline, so "#FF0000\n" would be
@@ -315,18 +326,89 @@ function customizer_logo_variant_for_surface($surface, $branding, $bg_hex, $desi
 }
 
 /**
+ * Read one surface's stored variant out of [branding], as a string.
+ *
+ * The composition the resolver used to do internally, kept here so the resolver
+ * itself stays identical to the two theme copies. An absent key and a stored ''
+ * both mean automatic and both occur in the field — the key is absent until the
+ * first save and present-but-empty after it — so they must be indistinguishable,
+ * which is what returning '' for anything non-string achieves.
+ */
+function customizer_logo_variant_stored($surface, $branding) {
+    if(!is_array($branding)) return '';
+    $key = 'logo_variant_' . $surface;
+    return (isset($branding[$key]) && is_string($branding[$key])) ? $branding[$key] : '';
+}
+
+/**
+ * Normalise a POSTED logo-variant value so the VALIDATOR decides its fate.
+ *
+ * onBeforeUpdate has to guarantee a string reaches the framework: tform's
+ * _encode converts arrays to strings for RADIO and CHECKBOX only, so an array
+ * posted into one of these SELECTs reaches validateField and makes preg_match()
+ * a TypeError — a fatal on an admin page rather than a validation error.
+ *
+ * It used to guarantee that by rewriting the array to '', and '' is the VALID
+ * value meaning "Automatic". So the REGEX validator passed, the save went
+ * through, the page redirected to "Settings saved." and the operator's stored
+ * choice had been silently reset to automatic — a bad POST healed into a
+ * successful write of the wrong thing, which is the exact failure the comment
+ * beside that loop said must not happen. Returning a token the validator
+ * REJECTS puts the decision back where the rest of the form keeps it.
+ *
+ * A missing field still becomes '': there is no value to report in that case,
+ * and the framework already treats a missing VARCHAR as '' one layer down.
+ */
+function customizer_logo_variant_posted($raw) {
+    if($raw === null)   return '';
+    if(is_string($raw)) return $raw;
+
+    //* Any other type — an array is the reachable one — becomes a token that
+    //* matches neither 'on_light', 'on_dark' nor '', so the field's own REGEX
+    //* validator reports it like any other bad value.
+    return 'invalid';
+}
+
+/**
+ * The stored [branding] with the two variant keys overlaid from a POST.
+ *
+ * On a validation error tform redisplays the RAW POST, so the two selects show
+ * what the operator just chose while the previews, which read the stored blob,
+ * were still drawing the old choice: one page holding two answers about the same
+ * setting, which is precisely the contradiction
+ * customizer_logo_preview_html()'s own note says a preview exists to remove.
+ *
+ * ONLY the two variant keys are taken from the POST. Everything else — colours,
+ * logos, the favicon — is either already reflected by its own control or is not
+ * something the preview reads, and letting arbitrary posted keys into a blob
+ * that gets handed to the resolvers would be a much wider contract than this
+ * needs.
+ */
+function customizer_branding_with_posted_variants($stored, $posted) {
+    if(!is_array($stored)) $stored = array();
+    if(!is_array($posted)) return $stored;
+
+    foreach(array('logo_variant_nav', 'logo_variant_login') as $key) {
+        if(isset($posted[$key]) && is_string($posted[$key])) $stored[$key] = $posted[$key];
+    }
+    return $stored;
+}
+
+/**
  * What a given design will really do with the two variants, one entry per thing
  * the operator can look at.
  *
  * $design    'clarity' or 'classic' — the design whose chrome is being described
  * $branding  the [branding] section as stored
  * $labels    array('nav' => …, 'login' => …), ALREADY LOCALISED, naming the two
- *            surfaces to the operator. logo_variant_nav_txt and
- *            logo_variant_login_txt say exactly this and live in the tform
- *            wordbook that BOTH preview callers load (customizer_edit.php has a
- *            tform; logo_upload.php loads the same _customizer.lng by hand), so
- *            they are the labels to pass. Omit them and the swatches are still
- *            drawn on the true colours, just unlabelled.
+ *            surfaces to the operator. surface_nav_txt and surface_login_txt say
+ *            exactly this and live in the MODULE wordbook (lib/lang/<lang>.lng),
+ *            which is the one both callers can reach: $app->lng() loads
+ *            web/customizer/lib/lang/<lang>.lng (core app.inc.php:252-266) and
+ *            cannot address the _customizer.lng tform wordbook by key at all, so
+ *            a caller following any other instruction gets the key string back
+ *            and prints it under the swatch. Omit them and the swatches are
+ *            still drawn on the true colours, just unlabelled.
  *
  * Returns a list of array('surface', 'label', 'variant', 'bg') — one entry per
  * (surface, background) pair, because one surface can have two backgrounds; see
@@ -335,12 +417,23 @@ function customizer_logo_variant_for_surface($surface, $branding, $bg_hex, $desi
  * An unknown $design returns an EMPTY list rather than a guess. A panel can run
  * a third-party theme that has no brand.php at all, in which case nothing here
  * applies and the honest preview is the generic one — saying nothing beats
- * describing chrome we have never seen. A caller that wants to describe two
- * installed designs calls this once per design and concatenates; the preview
- * draws one swatch per entry, so the labels should then name the design too.
+ * describing chrome we have never seen. customizer_logo_surfaces_all() is the
+ * caller that describes several installed designs at once.
  *
- * The table below is the ONLY place the two designs' chrome is written down on
- * this side of the extension, and every value in it is a citation:
+ * Be exact about how far "keyed by surface, not by design" reaches. It is true
+ * of the READERS: logo_variant_nav / logo_variant_login name surfaces, so a
+ * design that implements them inherits the operator's choice with no change
+ * here, and CI holds every design to that. It is NOT true of the table below,
+ * which is this module's hand-written knowledge of two specific designs. A third
+ * design gets the correct MARK and no per-surface SWATCH until someone adds an
+ * entry here — it degrades to the design-neutral preview rather than describing
+ * chrome wrongly, which is the intended failure but is a failure to describe,
+ * not a free inheritance. Moving the table into a per-design declaration the
+ * designs themselves ship is the obvious next step and deliberately not taken
+ * here: it would put a design-named path into an include, and this file is
+ * reached from an admin page.
+ *
+ * Every value in the table is a citation:
  *
  *   clarity nav    --nz-rail, declared once at tokens.css:88 as --nz-blue-1100
  *                  (#01243D, tokens.css:47) and NOT redeclared in the light-mode
@@ -370,10 +463,17 @@ function customizer_logo_surfaces($design, $branding, $labels = array()) {
     //* in customizer_logo_variant_for_surface() spelled as data. 'modes' is the
     //* variant => colour pair for a slot whose backdrop follows the viewer's
     //* own light/dark mode, and is empty for every slot that has one backdrop.
+    //*
+    //* 'default' is only ever reached by a slot with ONE backdrop. A slot with a
+    //* 'modes' map has two, and on automatic each mode shows its own mark, so the
+    //* per-mode variant below replaces whatever the default said — which is why
+    //* clarity's login carries '' here rather than a variant name. It was
+    //* 'on_dark', unreachable by any combination of stored values, and reading
+    //* like the authoritative default a third design would copy.
     $chrome = array(
         'clarity' => array(
             'nav'   => array('default' => 'on_dark', 'bg_key' => 'rail_hex', 'bg' => '#01243D', 'modes' => array()),
-            'login' => array('default' => 'on_dark', 'bg_key' => 'login_bg', 'bg' => '',
+            'login' => array('default' => '', 'bg_key' => 'login_bg', 'bg' => '',
                              'modes'   => array('on_dark' => '#17252B', 'on_light' => '#F1F6F8')),
         ),
         'classic' => array(
@@ -400,7 +500,8 @@ function customizer_logo_surfaces($design, $branding, $labels = array()) {
         //* two different marks. Re-reading logo_variant_<surface> here instead
         //* would be a second copy of the resolver's first check — the very line
         //* that has to stay identical to the two brand.php readers.
-        $variant = customizer_logo_variant_for_surface($surface, $branding, $bg_hex, '');
+        $variant = customizer_logo_variant_for_surface(
+            customizer_logo_variant_stored($surface, $branding), $bg_hex, '');
         $auto    = ($variant === '');
         if($auto) $variant = $spec['default'];
 
@@ -424,6 +525,88 @@ function customizer_logo_surfaces($design, $branding, $labels = array()) {
 
         $out[] = array('surface' => $surface, 'label' => $label, 'variant' => $variant,
                        'bg' => ($bg_hex !== '' ? $bg_hex : $spec['bg']));
+    }
+    return $out;
+}
+
+/**
+ * Every installed design's surfaces at once, which is the only honest way to
+ * preview a setting that every installed design obeys.
+ *
+ * logo_variant_nav and logo_variant_login are stored ONCE in [branding] and read
+ * by every design on the panel — but "nav" does not mean one colour. It is navy
+ * on clarity and stock's #F2F5F7 on classic, which is the whole reason two logo
+ * variants exist. So an operator who pins on_dark to rescue a recoloured clarity
+ * rail is, in the same keystroke, painting the white mark onto classic's light
+ * header; and while this preview described only $_SESSION['s']['theme'], there
+ * was nowhere on the page that could show it happening. They would find out from
+ * a client.
+ *
+ * $designs   the designs to describe, in display order. The CALLER decides what
+ *            is installed — install.sh deploys clarity, classic or both, so
+ *            listing every design this file knows would describe chrome the
+ *            panel does not have, which is the failure mode the single-design
+ *            function is careful to avoid.
+ * $labels    as customizer_logo_surfaces(), and prefixed with the design's own
+ *            name once there is more than one design to tell apart. The name is
+ *            a proper noun and is not translated; the surface half still is.
+ *
+ * Each entry carries a 'design' key so a caller can group or filter; entries are
+ * otherwise exactly customizer_logo_surfaces()'s, and a design with no chrome
+ * entry contributes nothing rather than a guess.
+ */
+function customizer_logo_surfaces_all($designs, $branding, $labels = array()) {
+    if(!is_array($designs)) $designs = array();
+    if(!is_array($labels))  $labels  = array();
+
+    //* Only name the design when there are two or more to tell apart: on the
+    //* overwhelmingly common single-design panel the prefix would be noise
+    //* repeated under every swatch.
+    $named = count($designs) > 1;
+
+    $out = array();
+    foreach($designs as $design) {
+        if(!is_string($design) || $design === '') continue;
+
+        $these = $labels;
+        if($named) {
+            foreach($these as $surface => $text) {
+                $these[$surface] = ucfirst($design) . ' · ' . $text;
+            }
+        }
+
+        foreach(customizer_logo_surfaces($design, $branding, $these) as $entry) {
+            $entry['design'] = $design;
+            $out[] = $entry;
+        }
+    }
+    return $out;
+}
+
+/**
+ * The designs this panel actually has installed, in display order.
+ *
+ * ISPC_THEMES_PATH is core's own answer to "where do designs live" and
+ * is_dir() against it is core's own test — tools/user_settings.php uses exactly
+ * this shape before it will let a user select a theme. Asking the filesystem
+ * rather than __DIR__ matters because install.sh's default mode SYMLINKS a
+ * design into the panel: __DIR__ would resolve back into the git clone, where
+ * every design this repository ships exists whether or not it was deployed.
+ *
+ * The active design comes first — it is the one the operator is looking at — and
+ * is included even if the directory check cannot see it, so that a panel whose
+ * paths are laid out in some way not anticipated here still previews the design
+ * in front of the admin instead of nothing at all.
+ */
+function customizer_installed_designs($active) {
+    $known = array('clarity', 'classic');
+
+    $out = array();
+    if(is_string($active) && in_array($active, $known, true)) $out[] = $active;
+
+    foreach($known as $design) {
+        if(in_array($design, $out, true)) continue;
+        if(defined('ISPC_THEMES_PATH') && @is_dir(ISPC_THEMES_PATH . '/' . $design)) $out[] = $design;
     }
     return $out;
 }
