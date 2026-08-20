@@ -50,7 +50,7 @@ Two designs ship, and which one you are looking at changes the rules:
 
 | Design | What it is |
 |---|---|
-| `themes/clarity/` | A ground-up dark and light interface: six overridden templates, its own CSS, fonts and icons, every stock contract pinned in `BUILT-AGAINST.txt`. |
+| `themes/clarity/` | A ground-up dark and light interface: seven overridden templates, its own CSS, fonts and icons, every stock contract pinned in `BUILT-AGAINST.txt`. |
 | `themes/classic/` | The stock ISPConfig look, made brandable. `brand.php`, `title.php` and a README — no stylesheets, no images, no fonts, and its two shell templates are **generated at install time**, not committed. |
 
 Both read the same brand keys from the same Branding page, and every option on
@@ -65,14 +65,14 @@ to *all* designs, because uninstalling has to clear whatever might be there.
 
 #### `themes/clarity/`
 
-Six template overrides plus plain CSS and one JS file, loaded in this order:
+Seven template overrides plus plain CSS and one JS file, loaded in this order:
 
 | File | Role |
 |---|---|
 | `themes/clarity/templates/` | The three shell templates: `main.tpl.htm` (app frame), `topnav.tpl.htm` (module rail), `main_login.tpl.htm` (login scene). |
-| `themes/clarity/templates/dashboard/` | Three dashlet overrides: `dashboard.htm`, `modules.htm`, `metrics.htm`, replacing `interface/web/dashboard/templates/dashboard.htm` and `interface/web/dashboard/dashlets/templates/{modules,metrics}.htm`. |
+| `themes/clarity/templates/dashboard/` | Four overrides: `dashboard.htm`, `modules.htm`, `metrics.htm`, `donate.htm`, replacing `interface/web/dashboard/templates/dashboard.htm` and `interface/web/dashboard/dashlets/templates/{modules,metrics,donate}.htm`. |
 
-Those six are the complete set — everything else falls back to
+Those seven are the complete set — everything else falls back to
 `themes/default`. Each one's contract with the stock template it replaces (the
 `tmpl_var`s it must provide, the click handlers it must preserve) is pinned in
 `themes/clarity/BUILT-AGAINST.txt`, and CI fails if an override is added

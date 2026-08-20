@@ -90,6 +90,8 @@ $wb['show_version_txt'] = 'Show the software version';
 $wb['show_version_hint_txt'] = 'The "About ISPConfig" section and version line under Help. Hiding it applies to every admin — including you — so demos stay clean (a brand-aware theme hides it visually; the page itself stays reachable by direct URL).';
 $wb['show_news_feed_txt'] = 'Show the news feed';
 $wb['show_news_feed_hint_txt'] = 'The "Latest news" sidebar on the dashboard (the ISPConfig project feed by default). Turning it off hides it for every role; turning it back on restores the default feed but keeps any custom feed URLs you set under System > Interface Config. Users see the change at their next login.';
+$wb['show_donation_dashlet_txt'] = 'Show the ISPConfig donation panel';
+$wb['show_donation_dashlet_hint_txt'] = 'The donation appeal ISPConfig places at the top of the dashboard. Only administrators ever see it — it is never shown to resellers or clients — so this is about your own dashboard, not what your customers see. Turning it off writes the same setting ISPConfig\'s own "Hide" button writes, so the panel never builds the block at all; the difference is that this one does not expire after a year. Turn it back on and it returns immediately.';
 
 $wb['accent_hex_error_regex'] = 'Accent colour must be a hex value like #0065AB.';
 $wb['rail_hex_error_regex'] = 'Sidebar colour must be a hex value like #01243D.';

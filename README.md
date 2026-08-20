@@ -86,8 +86,9 @@ either one.
 ### The Branding page
 
 One admin-only page, labelled **Branding** in the top navigation (not
-"Customizer" — that is only the directory name). It writes to the existing
-`sys_ini` row and nothing else; it creates no tables and no columns. (The
+"Customizer" — that is only the directory name). It writes core's own settings — the existing
+`sys_ini` row, plus (for the donation-dashlet switch) the `sys_config` row
+ISPConfig's own Hide button already uses; it creates no tables and no columns. (The
 module-list grant lives in `bin/assign_module.php`, run by the installer, not in
 the page itself.)
 The UI ships in seven locales: English, German, French, Spanish, Italian, Dutch
@@ -103,6 +104,7 @@ panel that is staying on the stock `default` theme:
 | `company_name` | browser title prefix |
 | `custom_login_text` / `custom_login_link` | the extra line on the login screen |
 | `dashboard_atom_url_admin` / `_reseller` / `_client` | the per-role dashboard news feed, which the page's news toggle drives |
+| `hide_donation_dashlet` (`sys_config`) | the donation appeal on the admin dashboard — core checks it at `dashboard.php:222-228` before building the dashlet, and its own Hide button writes the same row |
 
 The uploader exists because the stock panel's own logo upload is currently
 non-functional. The field it writes is ISPConfig's, not a new one.
@@ -188,8 +190,15 @@ not clarity-only: `install.sh` splits stock's single footer line while it
 generates classic's shell, so each credit is individually hideable there too.
 
 Attribution defaults to **on**, on both designs, and neither toggle touches a
-licence notice. The donate dashlet and the admin update notice are left exactly
-as ISPConfig ships them.
+licence notice. The admin update notice is left exactly as ISPConfig ships it.
+
+The donation dashlet has a switch of its own, also defaulting to **on**. It is
+admin-only in core, so no reseller or client ever saw it — this is about your own
+dashboard, not what your customers see. Switching it off writes the same
+`sys_config` row ISPConfig's own **Hide** button writes, so the panel never
+builds the block rather than hiding it after the fact; the difference is that it
+does not expire after a year. clarity also restyles the dashlet, keeping the
+appeal, the donation link and the Hide button exactly where core puts them.
 
 ## Install
 
@@ -286,7 +295,7 @@ so a bare re-run leaves a `classic` install unstamped, and the installer warns
 when it finds a design directory it did not stamp.
 
 After a **major** upgrade (3.3 -> 3.4), not every patch release, also diff
-**clarity**'s six overridden templates against the stock
+**clarity**'s seven overridden templates against the stock
 ones for your new version before trusting the upgrade. Compare against your own
 panel's `interface/web/themes/default/templates/` and
 `interface/web/dashboard/**/templates/`, or against the ISPConfig source for

@@ -330,6 +330,19 @@ $form["tabs"]['branding'] = array(
             'value'    => array(0 => '0', 1 => '1')
         ),
 
+        //* Not a [branding] key. This one is written straight into core's
+        //* sys_config['interface']['hide_donation_dashlet'] row, which is what
+        //* ISPConfig itself consults before it builds the dashlet — so switching
+        //* it off means the dashlet is never rendered rather than hidden after
+        //* the fact. customizer_edit.php derives the shown state on display and
+        //* writes the row on save; see lib/dashlets.inc.php.
+        'show_donation_dashlet' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'CHECKBOX',
+            'default'  => '1',
+            'value'    => array(0 => '0', 1 => '1')
+        ),
+
         'show_theme_credit' => array(
             'datatype' => 'VARCHAR',
             'formtype' => 'CHECKBOX',

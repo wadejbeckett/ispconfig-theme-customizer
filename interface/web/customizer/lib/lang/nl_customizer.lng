@@ -62,6 +62,8 @@ $wb['show_version_txt'] = 'De softwareversie tonen';
 $wb['show_version_hint_txt'] = 'Het gedeelte "Over ISPConfig" en de versieregel onder Help. Het verbergen geldt voor elke beheerder — ook voor uzelf — zodat demo’s overzichtelijk blijven (een merkbewust thema verbergt het visueel; de pagina zelf blijft bereikbaar via de directe URL).';
 $wb['show_news_feed_txt'] = 'De nieuwsfeed tonen';
 $wb['show_news_feed_hint_txt'] = 'De zijbalk "Laatste nieuws" op het dashboard (standaard de ISPConfig-projectfeed). Uitschakelen verbergt deze voor elke rol; opnieuw inschakelen herstelt de standaardfeed, maar behoudt eventuele aangepaste feed-URL’s die u hebt ingesteld onder System > Interface Config. Gebruikers zien de wijziging bij hun volgende aanmelding.';
+$wb['show_donation_dashlet_txt'] = 'Het ISPConfig-donatievak tonen';
+$wb['show_donation_dashlet_hint_txt'] = 'De donatieoproep die ISPConfig boven aan het dashboard plaatst. Alleen beheerders zien deze — hij wordt nooit aan resellers of klanten getoond — dus dit gaat over uw eigen dashboard, niet over wat uw klanten zien. Uitschakelen schrijft dezelfde instelling als de knop "Verbergen" van ISPConfig, zodat het blok helemaal niet wordt opgebouwd; het verschil is dat deze niet na een jaar verloopt. Zet u hem weer aan, dan verschijnt hij meteen.';
 
 $wb['accent_hex_error_regex'] = 'De accentkleur moet een hex-waarde zoals #0065AB zijn.';
 $wb['rail_hex_error_regex'] = 'De zijbalkkleur moet een hex-waarde zoals #01243D zijn.';

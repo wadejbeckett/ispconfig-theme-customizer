@@ -55,10 +55,11 @@ THE ispconfig_version FILE IS REQUIRED — and is install-specific.
 ISPConfig gates themes by an EXACT match of ISPC_APP_VERSION under two
 filenames (ispconfig_version gates login + user pickers; ISPC_VERSION gates
 the admin default-settings picker). ../../install.sh stamps both; re-run it
-after every ISPConfig upgrade, and re-diff ALL SIX overridden templates against
+after every ISPConfig upgrade, and re-diff ALL SEVEN overridden templates against
 the new stock ones: the three shell templates (main.tpl.htm, topnav.tpl.htm,
-main_login.tpl.htm) and the three dashboard dashlets pinned below
-(dashboard.htm, modules.htm, metrics.htm).
+main_login.tpl.htm) and the four dashboard templates pinned below
+(dashboard.htm, modules.htm, metrics.htm, donate.htm — dashboard.htm is the
+dashboard PAGE template; the other three are dashlets).
 
 --- v2.2 dashlet template overrides (templates/dashboard/, added 2026-07-21) ---
 dashboard.htm   <- interface/web/dashboard/templates/dashboard.htm (3.3.1p1)
@@ -72,4 +73,16 @@ metrics.htm     <- interface/web/dashboard/dashlets/templates/metrics.htm (3.3.1
                    vars: label_chart_title, label, loadchart_label|_data, memchart_label|_data,
                    rxchart_label|_data, txchart_label|_data. Canvas ids loadchart|memchart|
                    rxchart|txchart preserved (nz-theme.js re-theme + stock JS key on them).
-On ISPConfig upgrade: diff these three stock files against the pins above before re-stamping.
+donate.htm      <- interface/web/dashboard/dashlets/templates/donate.htm (3.3.1p1)
+                   vars: donate_txt, more_btn_txt, donate2_txt, hide_btn_txt, donate_btn_txt.
+                   Hide contract: <a data-load-content='dashboard/dashboard.php?hide=donate'>,
+                   which is what makes core write its hide_donation_dashlet timeout into
+                   sys_config (dashboard.php:37-47) — keep the target byte-identical.
+                   Stock's inline <script> is deliberately NOT carried over: it binds
+                   $("button").click() with no scope, so every button on the dashboard
+                   toggles this dashlet. A <details>/<summary> disclosure replaces it and
+                   needs no JS. Stock's inline background-color:#FFFFFF, its <h4> wrapper,
+                   its unclosed <p> and its page-global id='description' are dropped for
+                   the same class of reason; all five are written up in
+                   docs/UPSTREAM-PATCHES.md as candidates for core.
+On ISPConfig upgrade: diff these four stock files against the pins above before re-stamping.

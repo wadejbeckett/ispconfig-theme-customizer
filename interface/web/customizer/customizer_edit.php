@@ -17,6 +17,7 @@ $tform_def_file = "form/customizer.tform.php";
 require_once '../../lib/config.inc.php';
 require_once '../../lib/app.inc.php';
 require_once __DIR__ . '/lib/preview.inc.php';
+require_once __DIR__ . '/lib/dashlets.inc.php';
 
 //* admin-only
 $app->auth->check_module_permissions('customizer');
@@ -90,6 +91,11 @@ class page_action extends tform_actions {
                 'show_ispconfig_credit' => (isset($branding['show_ispconfig_credit']) && $branding['show_ispconfig_credit'] === '0') ? '0' : '1',
                 'show_theme_credit'     => (isset($branding['show_theme_credit']) && $branding['show_theme_credit'] === '0') ? '0' : '1',
                 'show_version'          => (isset($branding['show_version']) && $branding['show_version'] === '0') ? '0' : '1',
+                //* derived, not stored: this switch owns a row in sys_config, not
+                //* a key in the INI blob, because that row is what ISPConfig
+                //* itself consults before it builds the dashlet. See
+                //* lib/dashlets.inc.php.
+                'show_donation_dashlet' => $this->donation_dashlet_shown() ? '1' : '0',
                 // derived, not stored: checked while ANY per-role news feed URL is set
                 'show_news_feed'        => ((isset($misc['dashboard_atom_url_admin']) && $misc['dashboard_atom_url_admin'] !== '')
                                          || (isset($misc['dashboard_atom_url_reseller']) && $misc['dashboard_atom_url_reseller'] !== '')
@@ -321,7 +327,52 @@ class page_action extends tform_actions {
         $config_str = $app->ini_parser->get_ini_string($config);
         if($conf['demo_mode'] != true) {
             $app->db->datalogUpdate('sys_ini', array("config" => $config_str), 'sysini_id', 1);
+            //* Not part of the INI blob: this one lives in sys_config, because
+            //* that row is what ISPConfig reads before it builds the dashlet.
+            $this->save_donation_dashlet(isset($clean['show_donation_dashlet']) ? $clean['show_donation_dashlet'] : '1');
         }
+    }
+
+    /**
+     * Is ISPConfig currently showing its donation dashlet?
+     *
+     * $app->conf() is core's own accessor for the sys_config table
+     * (app.inc.php:171-185) and returns null when the row does not exist, which
+     * is exactly the state customizer_donation_shown() is documented to treat as
+     * "shown". Going through it rather than hand-writing the SELECT keeps this
+     * on a supported interface and keeps the reserved word `group` core's
+     * problem rather than ours.
+     */
+    private function donation_dashlet_shown() {
+        global $app;
+        $stored = $app->conf('interface', 'hide_donation_dashlet');
+        return customizer_donation_shown(($stored === null) ? null : (string)$stored, time());
+    }
+
+    /**
+     * Write the operator's choice into core's own row.
+     *
+     * Same accessor, which issues REPLACE INTO — correct and atomic here because
+     * sys_config's PRIMARY KEY is (`group`, `name`) (install/sql/ispconfig3.sql:
+     * 1657-1662), so the replace matches the existing row rather than adding a
+     * second one.
+     *
+     * "Shown" writes '0' rather than deleting the row. Core reads a missing row
+     * and an expired one identically (dashboard.php:225), so both express the
+     * same thing, and an explicit past timestamp says "this operator chose to
+     * show it" where a missing row cannot be told apart from a panel that has
+     * never been touched.
+     *
+     * Deliberately NOT datalogUpdate(): sys_config is interface-local state that
+     * no server-side plugin consumes, and both of core's own writers — the
+     * dashboard's Hide button and $app->conf() itself — use a plain query. A
+     * datalog entry here would queue a job on every server in the installation
+     * because an admin ticked a checkbox about their own dashboard.
+     */
+    private function save_donation_dashlet($show) {
+        global $app;
+        $app->conf('interface', 'hide_donation_dashlet',
+            customizer_donation_hide_value($show === '1', time()));
     }
 
     /**

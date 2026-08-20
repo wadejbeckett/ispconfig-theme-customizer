@@ -1,6 +1,6 @@
 # Upstream contributions for ISPConfig core
 
-Four core issues surfaced while building this extension against ISPConfig 3.3
+Five core issues surfaced while building this extension against ISPConfig 3.3
 (dev/3.3.1p1). None are bugs in the extension — they're in core
 — so rather than work around them silently we're offering them back to the
 project. Each was located and quoted against the real 3.3 source and then
@@ -19,6 +19,8 @@ Verification status:
   approach + artifacts, not a one-hunk diff.
 - **#3 session locking / CSRF race** — verified; design-sensitive, presented as
   analysis + a candidate direction with a lower-risk alternative.
+- **#5 donation dashlet markup/JS** — verified verbatim; candidate patch ready.
+  Cosmetic and admin-only, but the reproduction is one click.
 
 ---
 
@@ -273,12 +275,104 @@ have not verified it.
 
 ---
 
+## 5. Donation dashlet: an unscoped `$("button")` handler hijacks every button on the dashboard
+
+**Affected:** `interface/web/dashboard/dashlets/templates/donate.htm` (whole file,
+quoted verbatim below).
+
+```html
+	<div style="background-color:#FFFFFF;padding:1em;">
+		<h4>{tmpl_var name='donate_txt'}<button type="button" class="btn btn-link btn-xs">{tmpl_var name='more_btn_txt'}</button></h4>
+		<p id="description">{tmpl_var name='donate2_txt'}<p>
+		<p style="text-align:right;">
+			<a href="#" class="btn btn-default" data-load-content="dashboard/dashboard.php?hide=donate">{tmpl_var name='hide_btn_txt'}</a>
+			<a href="https://www.ispconfig.org/donation/" target="_blank" class="btn btn-success">{tmpl_var name='donate_btn_txt'}</a>
+		</p>
+	</div>
+<script>
+$(document).ready(function(){
+    $("#description").toggle();
+	$("button").click(function(){
+        $("#description").toggle();
+    });
+});
+</script>
+```
+
+**The bug.** `$("button")` selects every `<button>` in the document, not the one
+in this dashlet. The dashlet's markup is grabbed by `dashlet_donate::show()` and
+embedded in the dashboard page, so the handler binds to all of them.
+
+Reproducible on a stock 3.3.1p1 admin dashboard: `dashboard/templates/dashboard.htm`
+has three `<button class="close" data-dismiss="alert">` elements (lines 7, 15, 23)
+and `themes/default/templates/main.tpl.htm` has four more, including
+`#logout-button`. Dismissing an info banner therefore also expands or collapses
+the donation text, and so does clicking Logout on the way out. Because the state
+is a toggle, whether the description ends up open or closed depends on how many
+unrelated buttons the admin happened to click.
+
+Four smaller things in the same file:
+
+- `<p id="description">…<p>` never closes, and the stray second `<p>` is what the
+  browser's error recovery turns into an empty paragraph in the rendered DOM.
+- `id="description"` is a page-global identifier on a dashlet core prepends to a
+  column shared with other dashlets — any future element with that id collides.
+- `style="background-color:#FFFFFF"` is an inline declaration, so no stylesheet
+  can override it without `!important`. On any dark theme this is a white slab.
+  The same pattern is on `metrics.htm`'s four `<canvas>` elements, so a dark
+  theme has to replace both templates rather than restyle them.
+- `target="_blank"` without `rel="noopener"`.
+
+**Candidate patch** — a `<details>` disclosure removes the script entirely, which
+disposes of the global handler and the id in one move, and it works with
+JavaScript disabled:
+
+```html
+	<div class="dashlet-donate" style="padding:1em;">
+		<p>{tmpl_var name='donate_txt'}</p>
+		<details>
+			<summary>{tmpl_var name='more_btn_txt'}</summary>
+			<p>{tmpl_var name='donate2_txt'}</p>
+		</details>
+		<p style="text-align:right;">
+			<a href="#" class="btn btn-default" data-load-content="dashboard/dashboard.php?hide=donate">{tmpl_var name='hide_btn_txt'}</a>
+			<a href="https://www.ispconfig.org/donation/" target="_blank" rel="noopener" class="btn btn-success">{tmpl_var name='donate_btn_txt'}</a>
+		</p>
+	</div>
+```
+
+If the `<button>` is worth keeping for visual consistency with the rest of the
+panel, the minimal fix is to scope the selector to the dashlet and drop the
+global id — e.g. wrap in `<div class="dashlet-donate">`, then
+`$(".dashlet-donate button").click(function(){ $(this).closest('.dashlet-donate').find('.donate-description').toggle(); })`.
+
+Either way the `background-color` belongs in a stylesheet rather than the
+attribute, so themes can restyle it; the `padding` is harmless where it is.
+
+**Note on scope.** The dashlet is admin-only — `dashboard.php:223` gates it on
+`is_admin()` and `dashlets/donate.php` checks again — so no reseller or client is
+affected. It is the panel operator's own dashboard, which is also why this is a
+polish issue rather than an urgent one.
+
+**Verification status:** verified verbatim against 3.3.1p1; candidate patch
+ready. The `$("button")` reach was confirmed by counting the other `<button>`
+elements that share the dashboard DOM, not merely by reading the selector.
+
+*(This repository's `clarity` design ships its own override of this template —
+`themes/clarity/templates/dashboard/donate.htm` — which fixes all five points for
+that design. That is a workaround for one theme, not a fix for the project; hence
+this entry.)*
+
+---
+
 ## Suggested submission order
 
 1. **#1 SVG guard** — smallest, safest, obviously correct; a good first MR.
 2. **#4 config escaping** — small diff, reproducible in two steps, and it
    silently corrupts mail credentials today. Arguably the most valuable of the
    four despite being found last.
-3. **#2 logo setter** — completes a half-shipped feature; medium size.
-4. **#3 session locking** — open as a discussion issue first (with the analysis
+3. **#5 donation dashlet** — self-contained, one template, no PHP touched, and
+   the reproduction is a single click. Good alongside #1 as an easy pair.
+4. **#2 logo setter** — completes a half-shipped feature; medium size.
+5. **#3 session locking** — open as a discussion issue first (with the analysis
    and both fix options) rather than a patch; let the maintainers steer.

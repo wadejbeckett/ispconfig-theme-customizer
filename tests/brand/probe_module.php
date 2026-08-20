@@ -9,6 +9,62 @@
 
 require_once __DIR__ . '/harness.php';
 require_once __DIR__ . '/../../interface/web/customizer/lib/preview.inc.php';
+require_once __DIR__ . '/../../interface/web/customizer/lib/dashlets.inc.php';
+
+/* ---- the donation dashlet toggle ----------------------------------------
+ * ISPConfig shows its donation appeal to ADMINS only, and it already has a
+ * "Hide" button that writes a one-year timeout into
+ * sys_config['interface']['hide_donation_dashlet'] (dashboard.php:37-47) and
+ * reads it back at dashboard.php:224-228. The toggle drives that same row
+ * rather than hiding the dashlet with CSS, so the panel never renders something
+ * the operator has switched off and core's own button keeps working.
+ *
+ * These two functions are the whole decision, kept pure so the comparison can
+ * be tested against core's semantics without a database.
+ */
+$now = 1787000000; // a fixed "now"; the helpers must never call time() themselves
+
+t_ok('customizer_donation_shown() exists', function_exists('customizer_donation_shown'));
+if (function_exists('customizer_donation_shown')) {
+    //* Core: shown unless a row exists AND its value is still in the future.
+    t_eq('no row at all means shown', customizer_donation_shown(null, $now), true);
+    t_eq('an expired timeout means shown', customizer_donation_shown((string)($now - 1), $now), true);
+    t_eq('a future timeout means hidden', customizer_donation_shown((string)($now + 1), $now), false);
+
+    //* The exact boundary core uses is `value < time()`, so value == now is NOT
+    //* yet expired and the dashlet stays hidden. Matching it matters: a toggle
+    //* that disagreed with core by one second would render a checkbox that
+    //* contradicts the dashboard beside it.
+    t_eq('a timeout exactly at now is still hidden', customizer_donation_shown((string)$now, $now), false);
+
+    //* Core's own Hide button writes now + 31536000.
+    t_eq('core\'s one-year Hide reads as hidden', customizer_donation_shown((string)($now + 31536000), $now), false);
+
+    //* A hand-edited or malformed value must not be fatal, and "shown" is the
+    //* safe answer — it is what an untouched panel does.
+    t_eq('an empty value means shown', customizer_donation_shown('', $now), true);
+    t_eq('a non-numeric value means shown', customizer_donation_shown('later', $now), true);
+    t_eq('zero means shown', customizer_donation_shown('0', $now), true);
+}
+
+t_ok('customizer_donation_hide_value() exists', function_exists('customizer_donation_hide_value'));
+if (function_exists('customizer_donation_hide_value')) {
+    //* Switching the dashlet ON must write a value core reads as expired.
+    $on = customizer_donation_hide_value(true, $now);
+    t_ok('showing writes a value core treats as not hidden', customizer_donation_shown($on, $now), $on);
+
+    //* Switching it OFF must outlast core's own one-year Hide, or the operator's
+    //* deliberate choice would silently expire and the appeal would come back.
+    $off = customizer_donation_hide_value(false, $now);
+    t_ok('hiding writes a value core treats as hidden', !customizer_donation_shown($off, $now), $off);
+    t_ok('hiding outlasts core\'s own one-year button', (int)$off > $now + 31536000, $off);
+    t_ok('hiding stays inside a 64-bit timestamp', (int)$off < 4102444800, $off); // < year 2100
+
+    //* Round trip, which is the property the settings page depends on.
+    t_eq('off then on is shown again',
+        customizer_donation_shown(customizer_donation_hide_value(true, $now), $now), true);
+    t_ok('the written value is a string, as sys_config stores it', is_string($off) && is_string($on));
+}
 
 /* ---- luminance is defined once, here too --------------------------------- */
 t_ok('customizer_luminance() exists', function_exists('customizer_luminance'));

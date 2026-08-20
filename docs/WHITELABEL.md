@@ -165,7 +165,9 @@ offer upstream:
   clients never see it. Stays untouched.
 - **Donate dashlet**: admin-only, funds upstream. Stays visible by default; an
   optional hide would write the *exact* `sys_config` row core's own Hide
-  button writes — same mechanism, same 1-year TTL.
+  button writes — same mechanism, but a ten-year timeout rather than core's one
+  year, so a switch the operator deliberately turned off does not turn itself
+  back on while they are not looking.
 - **Attribution toggles default ON**; turning them off hides courtesy lines
   only — LICENSE files and source headers are never touched, structurally.
 - **Help/support module**: keep assigned; the support-message inbox is

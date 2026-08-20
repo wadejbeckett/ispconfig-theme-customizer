@@ -40,13 +40,15 @@ version number.
 in a theme directory and a module directory — **no core file is ever modified**,
 and no database schema is added — so an `ispconfig_update.sh` run never
 overwrites or deletes it. (The version stamp does have to be re-applied after
-every panel update — see the compatibility section; it's one command.) Every
-setting is stored in ISPConfig's own `sys_ini` table.
+every panel update — see the compatibility section; it's one command.) Almost every
+setting is stored in ISPConfig's own `sys_ini` table; the one exception is the
+donation-dashlet switch, which writes the `sys_config` row ISPConfig itself uses
+for that dashlet.
 
 **Out of the box nothing is hidden.** The "powered by ISPConfig" credit, the
 admin update notice, the version line and the donate dashlet are all left exactly
-as core ships them. There *are* toggles to hide the footer credits, the news feed
-and the version line — handy when you're demoing to a client — and every one of
+as core ships them. There *are* toggles to hide the footer credits, the news feed,
+the version line and the (admin-only) donation dashlet — handy when you're demoing to a client — and every one of
 them ships **on**. Nothing disappears until an administrator deliberately turns
 it off, and the open-source licence notices are never touchable. The goal is to
 make ISPConfig an easier "yes" for people who'd otherwise reach for Plesk or

@@ -15,10 +15,11 @@ to both designs. That shared contract is why there is a single version number.
 
 What's inside:
 
-- `templates/` — the only six templates overridden. Three shell templates:
+- `templates/` — the only seven templates overridden. Three shell templates:
   `main.tpl.htm` (app frame), `topnav.tpl.htm` (rail module nav),
-  `main_login.tpl.htm` (login scene). Three dashboard dashlet templates:
-  `dashboard/dashboard.htm`, `dashboard/modules.htm`, `dashboard/metrics.htm`.
+  `main_login.tpl.htm` (login scene). Four dashboard templates:
+  `dashboard/dashboard.htm` (the page), and the `dashboard/modules.htm`,
+  `dashboard/metrics.htm` and `dashboard/donate.htm` dashlets.
   Everything else renders from the stock `default` theme's templates and is
   styled by CSS alone.
 - `assets/stylesheets/clarity/` — load order matters:

@@ -1536,3 +1536,114 @@ body.nz .panel-group .panel-body {
   padding: 18px 16px 8px;
   border-top: 0;
 }
+
+/* ---------- donation dashlet (Clarity override of dashlets/donate.htm) ------
+   Stock paints this block on an inline white background and sets the appeal in
+   <h4>, so on a dark dashboard it arrives as a white slab of heading-sized
+   prose above everything else on the page. It is an aside, not a headline: a
+   quiet card, body-sized text, and the CTA carrying the only colour.
+
+   Every colour here is a token, so the block follows a rebranded panel — see
+   themes/clarity/brand.php on why a literal would not.                       */
+.nz-donate {
+  margin-bottom: 22px;
+  padding: 16px 18px;
+  background: var(--nz-card);
+  border: 1px solid var(--nz-border);
+  border-radius: var(--nz-radius-card);
+}
+
+.nz-donate-lede {
+  margin: 0;
+  color: var(--nz-text-secondary);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* The disclosure replaces stock's <button> + global jQuery toggle. Styled as a
+   link because that is what it reads as; the marker is dropped rather than
+   hidden with display:none, which would take the summary out of the a11y tree
+   in some engines. */
+.nz-donate-more { margin: 8px 0 0; }
+
+.nz-donate-more > summary {
+  display: inline-block;
+  color: var(--nz-link);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.nz-donate-more > summary::-webkit-details-marker { display: none; }
+.nz-donate-more > summary:hover { color: var(--nz-link-hover); }
+/* colour and offset come from the global body.nz :focus-visible ring (app.css:58);
+   only the radius is local, because the summary has no box of its own to shape it */
+.nz-donate-more > summary:focus-visible { border-radius: var(--nz-radius-ctl); }
+
+.nz-donate-more > p {
+  margin: 8px 0 0;
+  color: var(--nz-text-muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.nz-donate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 14px 0 0;
+}
+
+/* `body.nz` is load-bearing on every rule below that sets `color`. These are
+   anchors, and app.css:47 `body.nz a { color: var(--nz-link) }` is (0,1,2) —
+   a bare `.nz-donate-cta` is (0,1,0) and loses on specificity no matter how much
+   later this file is loaded. Without the prefix the donate button rendered
+   link-blue on green at 1.22:1. Same reach as the launcher pattern above. */
+body.nz .nz-donate-dismiss,
+body.nz .nz-donate-cta {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: var(--nz-radius-ctl);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+body.nz .nz-donate-dismiss {
+  color: var(--nz-text-muted);
+  border: 1px solid var(--nz-border);
+}
+body.nz .nz-donate-dismiss:hover,
+body.nz .nz-donate-dismiss:focus {
+  color: var(--nz-text);
+  border-color: var(--nz-border-strong);
+  text-decoration: none;
+}
+
+/* --nz-action, not --nz-success. Stock uses Bootstrap's btn-success, but this
+   theme's lime is a STATUS colour: tokens.css:114 reserves white text for
+   --nz-action ("primary fill: white text = 4.5:1"), and white on --nz-success
+   measures 2.09:1 in dark mode. The token comment is the contract. */
+body.nz .nz-donate-cta {
+  color: var(--nz-text-on-action);
+  background: var(--nz-action);
+  border: 1px solid var(--nz-action);
+}
+body.nz .nz-donate-cta:hover,
+body.nz .nz-donate-cta:focus {
+  color: var(--nz-text-on-action);
+  background: var(--nz-action-hover);
+  border-color: var(--nz-action-hover);
+  text-decoration: none;
+}
+
+/* the actions stack rather than crowd once the column is narrow */
+@media (max-width: 520px) {
+  .nz-donate-actions { justify-content: stretch; }
+  body.nz .nz-donate-dismiss,
+  body.nz .nz-donate-cta { flex: 1 1 auto; text-align: center; }
+}
