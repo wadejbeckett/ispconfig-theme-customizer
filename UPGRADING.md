@@ -163,10 +163,10 @@ priority over both (`interface/lib/classes/tpl.inc.php`, `_fileSearch`). Nothing
 in core is patched, and any template a design does not provide falls through to
 stock.
 
-### clarity: six overrides, checked by hand
+### clarity: seven overrides, checked by hand
 
-clarity overrides **six** stock templates. Three are the application shell,
-three are dashboard dashlets:
+clarity overrides **seven** stock templates. Three are the application shell,
+one is the dashboard page, and three are dashboard dashlets:
 
 | Override | Replaces |
 |---|---|
@@ -176,8 +176,9 @@ three are dashboard dashlets:
 | `templates/dashboard/dashboard.htm` | `interface/web/dashboard/templates/dashboard.htm` |
 | `templates/dashboard/modules.htm` | `interface/web/dashboard/dashlets/templates/modules.htm` |
 | `templates/dashboard/metrics.htm` | `interface/web/dashboard/dashlets/templates/metrics.htm` |
+| `templates/dashboard/donate.htm` | `interface/web/dashboard/dashlets/templates/donate.htm` |
 
-`themes/clarity/BUILT-AGAINST.txt` pins all six against the exact stock contract
+`themes/clarity/BUILT-AGAINST.txt` pins all seven against the exact stock contract
 each one consumes: template variables, loop names, the `data-capp` click contract
 on the module tiles, the four canvas ids the metrics charts key on, and the JS
 hooks the stock shell scripts (`pushy.js`, `ispconfig.js`, `responsive.js`)
@@ -197,6 +198,7 @@ diff themes/default/templates/topnav.tpl.htm     themes/clarity/templates/topnav
 diff dashboard/templates/dashboard.htm           themes/clarity/templates/dashboard/dashboard.htm
 diff dashboard/dashlets/templates/modules.htm    themes/clarity/templates/dashboard/modules.htm
 diff dashboard/dashlets/templates/metrics.htm    themes/clarity/templates/dashboard/metrics.htm
+diff dashboard/dashlets/templates/donate.htm     themes/clarity/templates/dashboard/donate.htm
 ```
 
 These overrides are full rewrites, so the diffs are large — a clean diff is not

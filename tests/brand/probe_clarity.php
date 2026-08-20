@@ -137,6 +137,86 @@ if ($app_css !== false) {
     }
     t_ok('no rule painted with a rail token hardcodes its ink',
         empty($bad), implode('; ', $bad));
+
+    //* Any rule colouring one of the dashlet's ANCHORS has to out-specify
+    //* app.css's `body.nz a { color: var(--nz-link) }`, which is (0,1,2). A bare
+    //* `.nz-donate-cta` is (0,1,0) and loses regardless of source order — which
+    //* is how the donate button first shipped rendering link-blue on its own
+    //* fill at 1.22:1. Specificity bugs are invisible in the source and obvious
+    //* only on screen, so the guard belongs here.
+    //*
+    //* The donate rules live in components.css, NOT in app.css — the first
+    //* version of this assertion scanned app.css, found no donate rules at all,
+    //* and passed vacuously while the defect was still in the tree.
+    //* Comments are stripped first. A selector capture runs from the previous
+    //* brace, so it swallows any comment sitting above the rule — and the
+    //* comment above this very block names .nz-donate-cta while explaining the
+    //* fix, which made the assertion report the explanation as the defect.
+    $comp = (string)@file_get_contents(__DIR__ . '/../../themes/clarity/assets/stylesheets/clarity/components.css');
+    $comp = preg_replace('#/\*.*?\*/#s', '', $comp);
+    t_ok('components.css is readable and carries the donate block',
+        strpos($comp, '.nz-donate') !== false);
+
+    $weak = array();
+    if (preg_match_all('/([^{}]*\.nz-donate-(?:cta|dismiss)[^{}]*)\{([^{}]*)\}/', $comp, $rules, PREG_SET_ORDER)) {
+        foreach ($rules as $rule) {
+            if (!preg_match('/(?<![-\w])color\s*:/', $rule[2])) continue;
+            foreach (explode(',', $rule[1]) as $sel) {
+                $sel = trim($sel);
+                if ($sel === '' || strpos($sel, '.nz-donate-') === false) continue;
+                if (strpos($sel, 'body.nz') !== 0) $weak[] = $sel;
+            }
+        }
+    }
+    t_ok('every donate anchor rule out-specifies body.nz a',
+        empty($weak), implode('; ', $weak));
+}
+
+/* ---- the donation dashlet override keeps core's contract ------------------
+ * A dashlet override is a template swap: core still resolves the same five
+ * tmpl_vars and still expects its own Hide link to be there. Drop a var and that
+ * text silently vanishes from the panel; change the Hide target and the button
+ * stops writing core's hide_donation_dashlet row, so the block can never be
+ * dismissed. Neither failure is visible without an admin looking at a dashboard.
+ */
+$donate = @file_get_contents(__DIR__ . '/../../themes/clarity/templates/dashboard/donate.htm');
+t_ok('the donate override exists', $donate !== false);
+if ($donate !== false) {
+    //* Assert against the MARKUP, not the file: the header comment quotes stock's
+    //* own <h4>, its id and its inline background-color in order to explain why
+    //* each one is gone, and a whole-file scan reports the explanation as the
+    //* defect it is describing.
+    $markup = preg_replace('/<!--.*?-->/s', '', $donate);
+
+    foreach (array('donate_txt', 'more_btn_txt', 'donate2_txt', 'hide_btn_txt', 'donate_btn_txt') as $var) {
+        t_ok("donate override keeps {tmpl_var $var}",
+            strpos($markup, "name='" . $var . "'") !== false);
+    }
+
+    t_ok('donate override keeps core\'s exact Hide target',
+        strpos($markup, "data-load-content=\"dashboard/dashboard.php?hide=donate\"") !== false);
+
+    //* The reason this override exists: stock's inline script binds
+    //* $("button").click() with no scope, so every button on the dashboard
+    //* toggles the dashlet. Carrying any script back in would risk reinstating
+    //* it, and <details>/<summary> needs none.
+    t_ok('donate override ships no script at all', stripos($markup, '<script') === false);
+    t_ok('donate override uses a disclosure rather than a toggle handler',
+        strpos($markup, '<details') !== false && strpos($markup, '<summary') !== false);
+
+    //* Stock's white slab is an inline declaration no stylesheet can beat.
+    t_ok('donate override sets no inline background', stripos($markup, 'background-color') === false);
+    t_ok('donate override introduces no page-global id', !preg_match('/\sid=/', $markup));
+    t_ok('donate override does not wrap prose in a heading', !preg_match('/<h[1-6][\s>]/i', $markup));
+    t_ok('donate override gives the outbound link rel=noopener',
+        strpos($markup, 'rel="noopener"') !== false);
+
+    //* A theme cannot add or shadow ISPConfig lang keys, so any visible word
+    //* written here would be English on a translated panel. Everything the
+    //* operator reads has to arrive through a tmpl_var.
+    $body = preg_replace('/<[^>]*>/', '', $markup);               // strip tags
+    $body = preg_replace('/\{tmpl_var[^}]*\}/', '', $body);       // strip the vars
+    t_ok('donate override has no hardcoded visible text', trim($body) === '', trim($body));
 }
 
 /* ---- luminance is defined once ------------------------------------------

@@ -400,8 +400,8 @@ tab-icon link and it is ours — and aborts rather than deploy a shell it cannot
 account for.
 
 There are **no schema changes**: no new tables, no new columns, no `CREATE` or
-`ALTER` anywhere in the repository. Every write is an `UPDATE` of a row and
-column ISPConfig already has.
+`ALTER` anywhere in the repository. Every write targets a row and column
+ISPConfig already has.
 
 | What | When | Written by |
 |---|---|---|
@@ -412,8 +412,17 @@ column ISPConfig already has.
 | `sys_user.modules` | install / uninstall | `bin/assign_module.php` (only `typ='admin'` rows), `bin/unassign_module.php` |
 | `sys_user.startmodule` | uninstall | `bin/unassign_module.php`, and only where it pointed at `customizer` |
 | `sys_user.app_theme` | uninstall with `--reset-users` | `bin/reset_app_theme.php`, and only rows equal to a design being removed (`clarity`, `classic`); the name is validated as a name, and `default` is refused outright |
+| `sys_config` (`group`='interface', `name`='hide_donation_dashlet') — the timeout core reads before it builds the donation dashlet | saving the Branding form; cleared on purge | `customizer_edit.php` via core's own `$app->conf()`, `bin/purge_branding.php` |
 
-Two qualifications, because a flat "no new rows" would not be true:
+Three qualifications, because a flat "no new rows" would not be true:
+
+- The donation-dashlet switch goes through core's `$app->conf()`, which issues
+  `REPLACE INTO sys_config`. On a panel whose admin has never clicked
+  ISPConfig's own **Hide** button that row does not exist yet, so the first save
+  **creates** it — the same row, by the same key, that core writes itself
+  (`dashboard.php:37-47`). `bin/purge_branding.php` deletes it again, but only
+  when the stored value is one this module can have written.
+
 
 - The **form** config write goes through core's own `datalogUpdate()`, which
   appends one row to the **`sys_datalog`** journal per changed save — exactly
@@ -543,7 +552,12 @@ opt into hiding the optional courtesy credits and the Help version line (the
 cover the version file, which is why `contrib/webserver/` exists). Both credit
 toggles work on **both** designs, since `install.sh` splits stock's footer while
 generating classic's shell so each credit is individually hideable. Licence
-notices are never removed, the update notice and the donate dashlet are left
-exactly as core ships them, and every attribution toggle defaults to **on**. If
+notices are never removed, the admin update notice is left exactly as core ships
+it, and every attribution toggle defaults to **on**. The donation dashlet has a
+toggle of its own: it is admin-only (`dashboard.php:223`), so no reseller or
+client ever saw it, and switching it off writes the same `sys_config` row
+ISPConfig's own **Hide** button writes rather than hiding anything with CSS.
+clarity also restyles it — the appeal, the link and the Hide button are all
+still there. If
 the markup a toggle targets is ever absent, the rule matches nothing and the
 credit simply stays visible — the failure mode is "attribution shown".

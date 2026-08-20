@@ -188,8 +188,8 @@ titles 14/600 (micro-header family), weights 400/500/600 only.
 ## 9. Architecture (how it stays upgrade-safe)
 
 - `themes/clarity/` is **self-contained**: own templates — three shell
-  (`main.tpl.htm`, `topnav.tpl.htm`, `main_login.tpl.htm`) and three dashboard
-  dashlets (`templates/dashboard/{dashboard,modules,metrics}.htm`), all six
+  (`main.tpl.htm`, `topnav.tpl.htm`, `main_login.tpl.htm`) and four dashboard
+  (`templates/dashboard/{dashboard,modules,metrics,donate}.htm`), all seven
   pinned with their stock contracts in `BUILT-AGAINST.txt` — own CSS
   (`tokens.css` → `base.css` → `app.css` → `components.css`, login pages:
   `tokens.css` → `login.css`), own fonts/favicons/logo.

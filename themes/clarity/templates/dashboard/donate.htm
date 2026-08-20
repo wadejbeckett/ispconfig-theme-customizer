@@ -1,0 +1,48 @@
+<!-- Clarity override of dashlets/templates/donate.htm.
+     Contract pinned in BUILT-AGAINST.txt: donate_txt, more_btn_txt, donate2_txt,
+     hide_btn_txt, donate_btn_txt — all five stock template variables are kept,
+     and the Hide link keeps stock's exact data-load-content target so core's own
+     mechanism (dashboard.php:37-47, which writes the hide_donation_dashlet
+     timeout into sys_config) still runs untouched.
+
+     EVERY visible string comes from a tmpl_var. A theme cannot add or shadow
+     ISPConfig lang keys — the lang loader only reads the module's own lib/lang
+     directories, never the theme's — so any word written here would be English
+     on a German panel. That is also why there is no heading: the stock dashlet
+     has no title variable, and inventing one would be inventing untranslated
+     text.
+
+     WHAT THIS CHANGES, AND WHY EACH ONE:
+       - the stock markup opens with style="background-color:#FFFFFF" — an inline
+         declaration no stylesheet can override without !important, which paints a
+         white slab across a dark dashboard;
+       - it wraps a full paragraph of prose in <h4>, so the appeal renders at
+         heading size and outweighs every real heading on the page;
+       - <p id="description">…<p> never closes, and the stray second <p> is what
+         the browser's error recovery turns into the empty paragraph visible in
+         the rendered DOM;
+       - id="description" is a page-global identifier for a dashlet that core
+         prepends to a column shared with other dashlets;
+       - its inline script binds $("button").click(...) with NO scope, so every
+         <button> anywhere on the dashboard toggles this dashlet's description —
+         including the close buttons on the alert banners directly above it.
+
+     The disclosure is <details>/<summary> instead: same show/hide, no script, no
+     ids, and nothing that can reach another dashlet. rel='noopener' is added to
+     the outbound link, which stock omits.
+
+     All five points are written up in docs/UPSTREAM-PATCHES.md for ISPConfig
+     itself — this override fixes them for one design, not for the project. -->
+<section class="nz-donate">
+	<p class="nz-donate-lede">{tmpl_var name='donate_txt'}</p>
+
+	<details class="nz-donate-more">
+		<summary>{tmpl_var name='more_btn_txt'}</summary>
+		<p>{tmpl_var name='donate2_txt'}</p>
+	</details>
+
+	<p class="nz-donate-actions">
+		<a href="#" class="nz-donate-dismiss" data-load-content="dashboard/dashboard.php?hide=donate">{tmpl_var name='hide_btn_txt'}</a>
+		<a href="https://www.ispconfig.org/donation/" target="_blank" rel="noopener" class="nz-donate-cta">{tmpl_var name='donate_btn_txt'}</a>
+	</p>
+</section>

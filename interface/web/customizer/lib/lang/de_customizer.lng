@@ -62,6 +62,8 @@ $wb['show_version_txt'] = 'Software-Version anzeigen';
 $wb['show_version_hint_txt'] = 'Der Abschnitt „Über ISPConfig" und die Versionszeile unter Hilfe. Das Ausblenden gilt für alle Administratoren — auch für Sie selbst — damit Demos sauber bleiben (ein Branding-fähiges Theme blendet die Anzeige visuell aus; die Seite selbst bleibt über die direkte URL erreichbar).';
 $wb['show_news_feed_txt'] = 'News-Feed anzeigen';
 $wb['show_news_feed_hint_txt'] = 'Die Seitenleiste „Aktuelle News" auf dem Dashboard (standardmäßig der ISPConfig-Projekt-Feed). Ausschalten blendet sie für alle Rollen aus; erneutes Einschalten stellt den Standard-Feed wieder her, behält aber eigene Feed-URLs bei, die Sie unter System > Interface-Konfiguration festgelegt haben. Benutzer sehen die Änderung bei der nächsten Anmeldung.';
+$wb['show_donation_dashlet_txt'] = 'ISPConfig-Spendenfeld anzeigen';
+$wb['show_donation_dashlet_hint_txt'] = 'Der Spendenaufruf, den ISPConfig oben auf dem Dashboard platziert. Nur Administratoren sehen ihn — Wiederverkäufern und Kunden wird er nie angezeigt —, es geht also um Ihr eigenes Dashboard, nicht darum, was Ihre Kunden sehen. Beim Ausschalten wird dieselbe Einstellung geschrieben wie über die Schaltfläche „Ausblenden" von ISPConfig, sodass der Block gar nicht erst erzeugt wird; der Unterschied ist, dass diese Einstellung nicht nach einem Jahr abläuft. Beim Wiedereinschalten erscheint er sofort wieder.';
 
 $wb['accent_hex_error_regex'] = 'Die Akzentfarbe muss ein Hex-Wert wie #0065AB sein.';
 $wb['rail_hex_error_regex'] = 'Die Farbe der Seitenleiste muss ein Hex-Wert wie #01243D sein.';

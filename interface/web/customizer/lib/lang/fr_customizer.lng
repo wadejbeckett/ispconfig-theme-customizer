@@ -62,6 +62,8 @@ $wb['show_version_txt'] = 'Afficher la version du logiciel';
 $wb['show_version_hint_txt'] = 'La section « À propos d’ISPConfig » et la ligne de version sous Aide. Le masquage s’applique à chaque administrateur — vous y compris — afin que les démonstrations restent nettes (un thème compatible avec la personnalisation la masque visuellement ; la page elle-même reste accessible par URL directe).';
 $wb['show_news_feed_txt'] = 'Afficher le fil d’actualités';
 $wb['show_news_feed_hint_txt'] = 'La barre latérale « Dernières actualités » du tableau de bord (le fil du projet ISPConfig par défaut). La désactiver la masque pour tous les rôles ; la réactiver rétablit le fil par défaut mais conserve les URL de fils personnalisés que vous avez définies sous Système > Configuration de l’interface. Les utilisateurs voient le changement à leur prochaine connexion.';
+$wb['show_donation_dashlet_txt'] = 'Afficher le panneau de dons ISPConfig';
+$wb['show_donation_dashlet_hint_txt'] = 'L’appel aux dons qu’ISPConfig place en haut du tableau de bord. Seuls les administrateurs le voient — il n’est jamais montré aux revendeurs ni aux clients —, il s’agit donc de votre propre tableau de bord, pas de ce que voient vos clients. La désactivation écrit le même réglage que le bouton « Masquer » d’ISPConfig, si bien que le bloc n’est même pas construit ; la différence est que ce réglage-ci n’expire pas au bout d’un an. Réactivez-le et il revient aussitôt.';
 
 $wb['accent_hex_error_regex'] = 'La couleur d’accentuation doit être une valeur hexadécimale comme #0065AB.';
 $wb['rail_hex_error_regex'] = 'La couleur de la barre latérale doit être une valeur hexadécimale comme #01243D.';

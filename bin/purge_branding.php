@@ -22,6 +22,11 @@
  *     stock fields of System > Interface Config)
  *   - clears sys_ini.custom_logo, the uploaded light-background logo
  *     (the theme/login fall back to their defaults)
+ *   - clears the sys_config row ('interface', 'hide_donation_dashlet') when this
+ *     module wrote it, so a purge never leaves ISPConfig's own donation dashlet
+ *     switched off with no UI left to switch it back on. A value core's own Hide
+ *     button could have written is left alone — see the block itself for how the
+ *     two are told apart.
  * Uses the framework ini_parser (loaded from the target install) so the
  * round-trip can never drift from what the panel itself writes. Direct UPDATE,
  * same as the module's own logo writes. Idempotent.
@@ -198,10 +203,52 @@ if((int)$row['logo_len'] > 0) {
     $did[] = "cleared custom_logo (light-background logo)";
 }
 
+//* The donation-dashlet switch is the one setting that does NOT live in sys_ini:
+//* it writes core's own sys_config row ('interface', 'hide_donation_dashlet'),
+//* because that timeout is what ISPConfig consults before it builds the dashlet
+//* (dashboard.php:222-228). Leaving it behind would be the same failure the atom
+//* restore above exists to prevent, only worse: the module's Branding page is
+//* about to be deleted, and the only other way back is the Hide button inside a
+//* dashlet the panel is no longer rendering. The operator would need raw SQL.
+//*
+//* Clear ONLY values this module can have written. Core's own Hide button writes
+//* time() + 31536000 and can never write more, so anything beyond a year out is
+//* provably ours (customizer_donation_hide_value writes ten years); '0' is the
+//* value the switch writes for "shown", which is also ours and leaves a row on a
+//* panel that never had one. A shorter future timeout is the operator's own
+//* click on core's button — deleting that would resurrect a dashlet they
+//* dismissed themselves, so it is left exactly where it is. Same rule as the
+//* atom stash: undo what we set, never overwrite what has been set since.
+$don = $m->query("SELECT `value` FROM `sys_config` WHERE `group` = 'interface' AND `name` = 'hide_donation_dashlet'");
+if($don !== false) {
+    $don_row = $don->fetch_assoc();
+    if(is_array($don_row) && isset($don_row['value'])) {
+        $v = (string)$don_row['value'];
+        $ours = ($v === '0') || (preg_match('/^[0-9]+$/D', $v) && (int)$v > time() + 31536000);
+        if($ours) {
+            if(!$m->query("DELETE FROM `sys_config` WHERE `group` = 'interface' AND `name` = 'hide_donation_dashlet'")) {
+                fwrite(STDERR, "ERROR: clearing the donation-dashlet setting failed: " . $m->error . "\n");
+                exit(1);
+            }
+            $did[] = "restored ISPConfig's donation dashlet (cleared hide_donation_dashlet)";
+        } elseif(preg_match('/^[0-9]+$/D', $v) && (int)$v > time()) {
+            //* A live timeout inside core's own one-year range: their click, not ours.
+            $kept_donation = true;
+        }
+    }
+}
+
 if(count($did) === 0) {
     echo "  nothing to purge — no branding values were set\n";
 } else {
     foreach($did as $d) echo "  - $d\n";
+}
+
+if(isset($kept_donation)) {
+    echo "\n";
+    echo "  NOTE: ISPConfig's donation dashlet is still hidden, but by ISPConfig's own\n";
+    echo "        \"Hide\" button rather than by this module, so it was left alone. It\n";
+    echo "        reappears by itself within a year of that click.\n";
 }
 
 //* Panels branded before the stash existed (module <= v1.0.12) had their atom keys
