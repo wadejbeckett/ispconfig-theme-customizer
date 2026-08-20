@@ -770,8 +770,8 @@ INSTALL_COMPLETED=1
           say "nothing to diff by hand."
           ;;
         *)
-          say "For $d, then diff the six overridden templates (three shell + three dashboard"
-          say "dashlets) against the new stock ones — they are listed with their pinned"
+          say "For $d, then diff the seven overridden templates (three shell + four dashboard)"
+          say "against the new stock ones — they are listed with their pinned"
           say "contracts in themes/$d/BUILT-AGAINST.txt."
           ;;
       esac
