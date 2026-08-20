@@ -181,7 +181,7 @@ body.nz .nz-modnav-item:focus {
 
 body.nz .nz-modnav-item.active {
   background: var(--nz-rail-active);
-  color: #FFFFFF;
+  color: var(--nz-rail-text-hover);
 }
 
 .nz-modnav-item.active .icon { color: var(--nz-rail-accent); }
@@ -286,7 +286,7 @@ body.nz .nz-modnav-item.active {
 /* current page in the tree (marked by nz-theme.js) */
 #sidebar li a.nz-active {
   background: var(--nz-rail-active);
-  color: #FFFFFF;
+  color: var(--nz-rail-text-hover);
   box-shadow: inset 3px 0 0 var(--nz-rail-accent);
 }
 
@@ -740,7 +740,12 @@ body.nz #footer a:hover { color: var(--nz-link); }
 }
 
 .pushy a:hover { background: var(--nz-rail-hover); color: var(--nz-rail-text-hover); }
-.pushy a.active { background: var(--nz-rail-active); color: #FFFFFF; }
+/* the ink is a token, not a literal — the rule for every rail surface, not a
+   note about this one. brand.php repaints --nz-rail and its strata to whatever
+   rail_hex the operator sets, so a literal colour here is an ink that cannot
+   follow the surface under it; tests/brand/probe_clarity.php fails the build if
+   any rule painted with a rail token hardcodes one. */
+.pushy a.active { background: var(--nz-rail-active); color: var(--nz-rail-text-hover); }
 .pushy i.icon { font-size: 16px; width: 18px; text-align: center; }
 
 .pushy ul.subnavi { padding: 2px 0 4px 26px; }
@@ -796,7 +801,9 @@ body.nz #footer a:hover { color: var(--nz-link); }
    name-as-wordmark mode */
 .nz-wordmark-text {
   font: 600 15px/1.3 var(--nz-font);
-  color: #fff;
+  /* sits in the rail's brand slot, so it follows the rail ink; login.css gives
+     .nzl-brand .nz-wordmark-text its own colour and outranks this */
+  color: var(--nz-rail-text-hover);
   white-space: nowrap;
   letter-spacing: 0.01em;
 }

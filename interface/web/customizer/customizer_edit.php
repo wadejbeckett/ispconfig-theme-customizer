@@ -183,14 +183,22 @@ class page_action extends tform_actions {
         //*              array straight to validateField, where preg_match() with a
         //*              non-string subject is a TypeError on PHP 8 — a fatal on an
         //*              admin page instead of a validation error.
-        //* A non-empty STRING is left untouched on purpose: the REGEX validator must
-        //* stay the thing that rejects a bad token, so a wrong value is reported rather
-        //* than silently healed into "automatic". '' is a legitimate posted value here
-        //* (it IS automatic) and must survive this method unchanged.
+        //* A STRING is left untouched on purpose: the REGEX validator must stay the
+        //* thing that rejects a bad token, so a wrong value is reported rather than
+        //* silently healed into "automatic". '' is a legitimate posted value here (it
+        //* IS automatic) and must survive this method unchanged.
+        //*
+        //* The array case is why this goes through a helper rather than assigning ''.
+        //* Rewriting an array to '' satisfied the string requirement by writing a
+        //* VALID value: the validator then passed, onUpdateSave wrote it, and the page
+        //* redirected to "Settings saved." having quietly reset the operator's stored
+        //* choice to automatic. customizer_logo_variant_posted() yields a token the
+        //* validator rejects instead, so a malformed POST is reported like every other
+        //* bad value on this form. Only a genuinely ABSENT field still becomes ''.
         foreach(array('logo_variant_nav', 'logo_variant_login') as $k) {
-            if(!isset($this->dataRecord[$k]) || !is_string($this->dataRecord[$k])) {
-                $this->dataRecord[$k] = '';
-            }
+            $this->dataRecord[$k] = customizer_logo_variant_posted(
+                isset($this->dataRecord[$k]) ? $this->dataRecord[$k] : null
+            );
         }
 
         parent::onBeforeUpdate();
@@ -341,17 +349,37 @@ class page_action extends tform_actions {
             'logo_url_on_dark' => isset($branding['logo_url_on_dark']) ? $branding['logo_url_on_dark'] : '',
         ));
 
-        //* Which surfaces of the ACTIVE design use which mark, so each preview is
-        //* drawn on the colour that will really be behind it rather than on a
-        //* design-neutral guess. $_SESSION['s']['theme'] is core's own record of
-        //* the design this admin is looking at (app.inc.php:140), and it is the
-        //* right input precisely because the theme is per-user
-        //* (sys_user.app_theme): the operator is previewing against the panel
-        //* they can see. A design this extension does not ship returns an empty
-        //* list and every preview falls back to its pre-surface swatch, so a
-        //* third-party theme degrades instead of being described wrongly.
-        $surfaces = customizer_logo_surfaces(
-            isset($_SESSION['s']['theme']) ? $_SESSION['s']['theme'] : '',
+        //* On a validation-error redisplay tform re-renders the RAW POST, so the
+        //* two selects show what the operator just chose while this method reads
+        //* the STORED blob — the swatches would describe the OLD choice under a
+        //* control showing the new one, one page answering the same question two
+        //* ways, which is the contradiction the preview exists to remove.
+        //*
+        //* Applied here rather than above $resolved because the two are different
+        //* questions: $resolved is which ARTWORK exists in each slot, which no
+        //* variant preference can change, while $surfaces is which slot each
+        //* surface asks for — the only thing these keys decide.
+        //*
+        //* On a normal render $this->dataRecord is the stored config re-read by
+        //* onShowEdit, so this is a no-op with one useful exception: onShowEdit
+        //* collapses an unrecognised stored value to '' for the select, and
+        //* taking the value from there makes the preview agree with the control
+        //* about that too.
+        $branding = customizer_branding_with_posted_variants($branding, $this->dataRecord);
+
+        //* Which surfaces of EVERY INSTALLED design use which mark, so each
+        //* preview is drawn on the colour that will really be behind it. It has
+        //* to be every design, not just the active one: logo_variant_* is stored
+        //* once and obeyed by all of them, while "nav" is navy on clarity and
+        //* stock's #F2F5F7 on classic — so a choice made to rescue one design can
+        //* make the other's logo invisible, and the admin needs to see that on
+        //* this page rather than hear it from a client. The active design leads
+        //* because it is the one they are looking at. A design this extension
+        //* does not ship contributes nothing and every preview falls back to its
+        //* pre-surface swatch, so a third-party theme degrades instead of being
+        //* described wrongly.
+        $surfaces = customizer_logo_surfaces_all(
+            customizer_installed_designs(isset($_SESSION['s']['theme']) ? $_SESSION['s']['theme'] : ''),
             $branding,
             array('nav' => $app->lng('surface_nav_txt'), 'login' => $app->lng('surface_login_txt'))
         );
