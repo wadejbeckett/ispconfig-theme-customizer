@@ -43,6 +43,7 @@
  *   config [branding] show_ispconfig_credit (0/1) -> footer courtesy line
  *   config [branding] show_theme_credit     (0/1) -> footer courtesy line
  *   config [branding] show_version (0/1)    -> 0 hides Help's version surfaces
+ *   config [branding] show_design (0/1)     -> 0 hides Design's drop-down list
  *   config [misc] company_name              -> text wordmark when no logo set;
  *                                              alt/failover text via title.php
  *
@@ -488,6 +489,13 @@ if (isset($branding['show_version']) && $branding['show_version'] === '0') {
     $css .= "#sidebar li#help_version, #sidebar ul:has(> li#help_version), "
           . "#sidebar header:has(+ ul > li#help_version) { display: none; }\n";
     $css .= "#pageContent p.frmTextHead { display: none; }\n";
+}
+
+/* ---- user design visibility ---- */
+// [branding] show_design = 0 hides Design's drop-down list for EVERY user,
+// including the operator (CSS cannot see roles).
+if (isset($branding['show_design']) && $branding['show_design'] === '0') {
+    $css .= ".form-group:has(#app_theme) { display: none; }\n";
 }
 
 echo $css;

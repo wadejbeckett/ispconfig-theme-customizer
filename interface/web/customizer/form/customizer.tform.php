@@ -11,7 +11,8 @@
  * (customizer_edit.php) reads/writes two INI sections inside sys_ini.config:
  *   [branding]  logo_url, logo_url_on_dark, logo_variant_nav,
  *               logo_variant_login, favicon_url, accent_hex, rail_hex,
- *               login_bg, show_ispconfig_credit, show_theme_credit, show_version
+ *               login_bg, show_ispconfig_credit, show_theme_credit,
+ *               show_version, show_design
  *   [misc]      company_name, custom_login_text, custom_login_link, and the
  *               three dashboard_atom_url_* keys via the news-feed toggle
  *               (all existing core keys)
@@ -351,6 +352,13 @@ $form["tabs"]['branding'] = array(
         ),
 
         'show_version' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'CHECKBOX',
+            'default'  => '1',
+            'value'    => array(0 => '0', 1 => '1')
+        ),
+
+        'show_design' => array(
             'datatype' => 'VARCHAR',
             'formtype' => 'CHECKBOX',
             'default'  => '1',
