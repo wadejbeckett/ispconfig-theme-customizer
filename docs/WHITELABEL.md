@@ -99,9 +99,9 @@ when each surface was closed, not as versions you can install today.
 
 ## P1 — white-label completeness (Branding-page features)
 
-> **Partly delivered.** Item 5b and the news-feed half of item 5 shipped and are
-> in the current tree; 5's dashlet-layout half and items 6-8 are still open.
-> Status is marked per item.
+> **Partly delivered.** Items 5b and 5c and the news-feed half of item 5 shipped
+> and are in the current tree; 5's dashlet-layout half and items 6-8 are still
+> open. Status is marked per item.
 
 5. *(news-feed half shipped — the Branding page's news-feed toggle owns the
    three `dashboard_atom_url_*` keys and `bin/purge_branding.php` restores
@@ -125,6 +125,18 @@ when each surface was closed, not as versions you can install today.
    note it hides for ALL admin users including the superadmin (CSS cannot
    see roles; the session exposes admin/user type only), and the page stays
    reachable by direct URL. Role-aware hiding would need a core patch.
+5c. *(shipped — the show_design_picker toggle, honoured by each design's
+   brand.php)* **Design-picker hiding:** operators who ship a single branded
+   design do not want every user re-selecting stock under Tools > User
+   Settings. Mechanism: a `[branding]` toggle read by brand.php emitting
+   `#pageContent:has([data-form-action='tools/user_settings.php'])
+   .form-group:has(#app_theme) { display: none }` — scoped to core's
+   `tools/templates/user_settings.htm` so the operator's own Default Theme
+   settings page (`tools/tpl_default.php`, which declares its own `app_theme`
+   SELECT) keeps its control. Same caveats as 5b: it hides for ALL roles
+   including the operator (CSS cannot see roles), and `sys_user.app_theme`
+   stays writable by a crafted POST, so this is cosmetic and not enforcement.
+   Role-aware hiding would need a core patch.
 6. **"Neutralize admin chrome" toggle (default OFF):** CSS/JS relabeling of
    admin-only lang surfaces — Monitor's "ISPConfig Log"/"ISPConfig Cron -
    Log", Help's "About ISPConfig", Tools headings, the fail2ban HowtoForge

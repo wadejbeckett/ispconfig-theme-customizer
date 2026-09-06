@@ -40,7 +40,8 @@
  *   config [branding] rail_hex    -> the main-navigation band (+ mobile menu)
  *   config [branding] login_bg    -> login-screen background
  *   config [branding] show_version (0/1) -> 0 hides Help's version surfaces
- *   config [branding] show_design (0/1)  -> 0 hides Design's drop-down list
+ *   config [branding] show_design_picker (0/1) -> 0 hides the Design picker
+ *                                                 under Tools > User Settings
  *   config [misc] company_name    -> text wordmark when no logo is set;
  *                                    tab title / alt text via title.php
  *
@@ -636,12 +637,22 @@ if (isset($branding['show_version']) && $branding['show_version'] === '0') {
 }
 
 /* =========================================================================
- * user design visibility
+ * design picker visibility
  * =======================================================================*/
-// [branding] show_design = 0 hides Design's drop-down list for EVERY user,
-// including the operator (CSS cannot see roles).
-if (isset($branding['show_design']) && $branding['show_design'] === '0') {
-	$css .= ".form-group:has(#app_theme) { display: none; }\n";
+// [branding] show_design_picker = 0 hides the Design drop-down that core
+// renders in interface/web/tools/templates/user_settings.htm — the per-user
+// picker under Tools > User Settings. That page is what the selector targets,
+// and it is identified by its own Save button (data-form-action) because
+// #app_theme on its own would also match any OTHER page that renders a Design
+// control inside a .form-group: tools/tpl_default.php ("Default Theme
+// settings") declares an app_theme SELECT in form/tpl_default.tform.php, and
+// hiding the operator's default-setting control was never the intent.
+// Hiding is cosmetic and applies to EVERY role including the operator (CSS
+// cannot see roles), so it must be switched back on from the Branding page
+// before anyone can change design; a crafted request can still write the
+// stored theme, which makes this cosmetic and not enforcement.
+if (isset($branding['show_design_picker']) && $branding['show_design_picker'] === '0') {
+	$css .= "#pageContent:has([data-form-action='tools/user_settings.php']) .form-group:has(#app_theme) { display: none; }\n";
 }
 
 /* =========================================================================

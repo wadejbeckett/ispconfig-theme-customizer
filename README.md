@@ -129,6 +129,7 @@ these:
 | `favicon` | the **tab icon**, uploaded (a data URI: SVG, PNG or ICO, under 15 KB) |
 | `favicon_url` | the tab icon by reference; wins over `favicon`, and keeps the image out of the config blob |
 | `show_version` | hides the version surfaces on the Help page — read [Version disclosure](#version-disclosure) before relying on it |
+| `show_design_picker` | hides the **Design** drop-down under Tools > User Settings, so users cannot switch design. Cosmetic, like `show_version`: it applies to every role including you, and the underlying setting stays writable by a crafted request |
 | `show_ispconfig_credit`, `show_theme_credit` | the two footer courtesy lines |
 
 **Two logos, named after the background they sit on.** One panel runs designs
