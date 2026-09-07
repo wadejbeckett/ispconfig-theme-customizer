@@ -3,6 +3,7 @@ $wb['customizer_title'] = 'Branding';
 $wb['page_head_txt'] = 'Personalizador';
 $wb['customizer_desc_txt'] = 'Personalice este panel de control con su propia marca — el logotipo, el nombre y los colores se guardan en ISPConfig y se conservan tras las actualizaciones del panel y del tema.';
 $wb['settings_saved_txt'] = 'Ajustes guardados. Los cambios de color aparecen tras recargar completamente la página (F5).';
+$wb['save_failed_txt'] = 'Los ajustes no se guardaron: la escritura en la base de datos no tuvo efecto. No se cambió nada en esta página; inténtelo de nuevo y revise el registro de errores del panel si vuelve a ocurrir.';
 $wb['logo_head_txt'] = 'Logotipo';
 $wb['logo_txt'] = 'Archivo de logotipo';
 $wb['logo_hint_txt'] = 'La marca que se sitúa SOBRE un fondo claro, por lo que debe ser oscura o a todo color. Es la que usa el propio ISPConfig: la cabecera estándar y la página de inicio de sesión son ambas claras. Elija un archivo y luego haga clic en «Subir logotipo» — el logotipo se sube por sí solo, de forma independiente del botón Guardar situado abajo. SVG, PNG, JPEG, GIF o WebP, menos de 45 KB.';

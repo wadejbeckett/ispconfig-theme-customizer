@@ -3,6 +3,7 @@ $wb['customizer_title'] = 'Branding';
 $wb['page_head_txt'] = 'Branding';
 $wb['customizer_desc_txt'] = 'Personnalisez ce panneau de contrôle aux couleurs de votre marque — le logo, le nom et les couleurs sont enregistrés dans ISPConfig et sont conservés lors des mises à jour du panneau et du thème.';
 $wb['settings_saved_txt'] = 'Paramètres enregistrés. Les changements de couleur apparaissent après un rechargement complet de la page (F5).';
+$wb['save_failed_txt'] = 'Les paramètres n’ont pas été enregistrés : l’écriture en base de données n’a pas pris effet. Rien n’a été modifié sur cette page ; réessayez, et consultez le journal d’erreurs du panneau si cela se reproduit.';
 
 $wb['logo_head_txt'] = 'Logo';
 $wb['logo_txt'] = 'Fichier du logo';

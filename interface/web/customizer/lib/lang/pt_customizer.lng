@@ -3,6 +3,7 @@ $wb['customizer_title'] = 'Branding';
 $wb['page_head_txt'] = 'Personalização';
 $wb['customizer_desc_txt'] = 'Personalize este painel de controlo com a sua própria marca — o logótipo, o nome e as cores são armazenados no ISPConfig e mantêm-se durante as atualizações do painel e do tema.';
 $wb['settings_saved_txt'] = 'Definições guardadas. As alterações de cor aparecem após uma atualização completa da página (F5).';
+$wb['save_failed_txt'] = 'As definições não foram guardadas — a escrita na base de dados não teve efeito. Nada nesta página foi alterado; tente novamente e consulte o registo de erros do painel se voltar a acontecer.';
 $wb['logo_head_txt'] = 'Logótipo';
 $wb['logo_txt'] = 'Ficheiro do logótipo';
 $wb['logo_hint_txt'] = 'A marca que assenta SOBRE um fundo claro, pelo que deve ser escura ou a cores. É a que o próprio ISPConfig utiliza: o cabeçalho predefinido e a página de início de sessão são ambos claros. Escolha um ficheiro e depois clique em «Carregar logótipo» — o logótipo é carregado por si só, separadamente do botão Guardar no fundo. SVG, PNG, JPEG, GIF ou WebP, com menos de 45 KB.';

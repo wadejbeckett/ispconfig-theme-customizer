@@ -3,6 +3,7 @@ $wb['customizer_title'] = 'Branding';
 $wb['page_head_txt'] = 'Customizer';
 $wb['customizer_desc_txt'] = 'Brand this control panel as your own — the logo, name and colours are stored in ISPConfig and survive panel and theme updates.';
 $wb['settings_saved_txt'] = 'Settings saved. Colour changes appear after a full page refresh (F5).';
+$wb['save_failed_txt'] = 'The settings were not saved — the database write did not take effect. Nothing on this page was changed; please try again, and check the panel error log if it happens twice.';
 
 $wb['logo_head_txt'] = 'Logo';
 // The two logo slots are named after the BACKGROUND they sit on, not after the

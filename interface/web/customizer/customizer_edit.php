@@ -279,68 +279,56 @@ class page_action extends tform_actions {
             $config['misc'][$k] = isset($clean[$k]) ? $clean[$k] : '';
         }
 
-        //* News feed toggle -> the three stock per-role [misc] atom keys.
-        //*
-        //* Core hides the dashboard feed for a role whose URL is empty, so "off" has to
-        //* blank all three. Those keys are CORE-owned though — an admin may have set a
-        //* private feed under System > Interface Config, and may deliberately have left
-        //* reseller/client blank so those roles see nothing at all. Blanking without a
-        //* copy destroys both choices, and refilling all three with the ISPConfig default
-        //* on the way back re-leaks ISPConfig branding to exactly the roles a white-label
-        //* panel must not show it to.
-        //*
-        //* So: stash each non-empty URL into module-owned [branding] keys before blanking,
-        //* and restore from that stash on the off->on transition. A role that had no URL
-        //* stays empty. The ISPConfig default is written only when there is nothing to
-        //* restore at all (i.e. a first-ever enable). This makes the round trip lossless,
-        //* which is what the field's hint text has always promised.
-        $atom_keys = array(
-            'dashboard_atom_url_admin'    => 'news_url_admin',
-            'dashboard_atom_url_reseller' => 'news_url_reseller',
-            'dashboard_atom_url_client'   => 'news_url_client',
-        );
-        $show_news = isset($clean['show_news_feed']) ? $clean['show_news_feed'] : '1';
-        if($show_news === '0') {
-            foreach($atom_keys as $k => $stash) {
-                if(isset($config['misc'][$k]) && $config['misc'][$k] !== '') {
-                    $config['branding'][$stash] = $config['misc'][$k];
-                }
-                $config['misc'][$k] = '';
-            }
-        } else {
-            //* Only act on the off->on transition (all three empty). While the feed is
-            //* already on, leave every key untouched — an admin may have deliberately
-            //* blanked a single role's URL, and refilling it on unrelated saves would
-            //* silently clobber that choice.
-            $any_set = false;
-            foreach($atom_keys as $k => $stash) {
-                if(isset($config['misc'][$k]) && $config['misc'][$k] !== '') { $any_set = true; break; }
-            }
-            if(!$any_set) {
-                $restored = false;
-                foreach($atom_keys as $k => $stash) {
-                    if(isset($config['branding'][$stash]) && $config['branding'][$stash] !== '') {
-                        $config['misc'][$k] = $config['branding'][$stash];
-                        $restored = true;
-                    }
-                }
-                //* nothing was ever stashed -> first-ever enable, seed the stock feed
-                if(!$restored) {
-                    foreach($atom_keys as $k => $stash) {
-                        $config['misc'][$k] = 'https://www.ispconfig.org/atom';
-                    }
-                }
-            }
-            //* the stash has served its purpose (or is stale) — drop it so a later manual
-            //* edit under System > Interface Config is never resurrected by a future toggle
-            foreach($atom_keys as $k => $stash) {
-                unset($config['branding'][$stash]);
+        //* News feed toggle -> the three stock per-role [misc] atom keys, and
+        //* the module-owned stash that makes the round trip lossless. The whole
+        //* decision is customizer_news_feed_apply() in lib/dashlets.inc.php,
+        //* where it can be tested without a database; this is the plumbing.
+        $atom_keys = customizer_news_feed_keys();
+        $misc_in   = array();
+        $stash_in  = array();
+        foreach($atom_keys as $k => $stash_key) {
+            $misc_in[$k]        = isset($config['misc'][$k]) ? $config['misc'][$k] : '';
+            $stash_in[$stash_key] = isset($config['branding'][$stash_key]) ? $config['branding'][$stash_key] : '';
+        }
+        $news = customizer_news_feed_apply($misc_in, $stash_in,
+            isset($clean['show_news_feed']) ? $clean['show_news_feed'] : '1');
+
+        foreach($atom_keys as $k => $stash_key) {
+            $config['misc'][$k] = $news['misc'][$k];
+            //* An empty stash is an ABSENT key, not a key with an empty value:
+            //* the stash is ours and it should not appear in the blob at all
+            //* once it has been consumed.
+            if($news['stash'][$stash_key] === '') {
+                unset($config['branding'][$stash_key]);
+            } else {
+                $config['branding'][$stash_key] = $news['stash'][$stash_key];
             }
         }
 
         $config_str = $app->ini_parser->get_ini_string($config);
         if($conf['demo_mode'] != true) {
             $app->db->datalogUpdate('sys_ini', array("config" => $config_str), 'sysini_id', 1);
+
+            //* datalogUpdate() CANNOT report a failure: it discards the return
+            //* value of its own query() and returns true unconditionally
+            //* (db_mysql.inc.php:811-843). And tform_actions::onUpdate()
+            //* redirects to list_default — "customizer_edit.php?id=1&msg=saved"
+            //* — unconditionally at its line 167, so a write that never landed
+            //* printed "Changes saved." over values that were never stored.
+            //*
+            //* Read the column back and compare it byte for byte. Raising
+            //* errorMessage here would not help — the framework tested it
+            //* BEFORE calling this hook, which is the same trap the demo-mode
+            //* refusal in onBeforeUpdate is placed early to avoid. $app->error()
+            //* renders core's error template and die()s, which is the only thing
+            //* at this point in the flow that can stop the page claiming
+            //* success. It also stops before save_donation_dashlet(), which is
+            //* correct: the config write is the one that failed.
+            $after = $app->db->queryOneRecord("SELECT config FROM sys_ini WHERE sysini_id = 1");
+            if(!is_array($after) || !isset($after['config']) || (string)$after['config'] !== $config_str) {
+                $app->error($app->tform->lng('save_failed_txt'));
+            }
+
             //* Not part of the INI blob: this one lives in sys_config, because
             //* that row is what ISPConfig reads before it builds the dashlet.
             $this->save_donation_dashlet(isset($clean['show_donation_dashlet']) ? $clean['show_donation_dashlet'] : '1');

@@ -66,6 +66,93 @@ if (function_exists('customizer_donation_hide_value')) {
     t_ok('the written value is a string, as sys_config stores it', is_string($off) && is_string($on));
 }
 
+/* ---- the news-feed toggle round trip ------------------------------------
+ * "Off" has to blank the three CORE-owned [misc] dashboard_atom_url_* keys,
+ * because core hides the feed for a role whose URL is empty. Blanking without a
+ * copy destroys an operator's private feed URL and their deliberate choice to
+ * leave a role blank; refilling all three with the ISPConfig default on the way
+ * back re-leaks ISPConfig branding to exactly the roles a white-label panel must
+ * not show it to. So each non-empty URL is stashed into a module-owned
+ * [branding] key and restored PER ROLE.
+ *
+ * Per role is the fix. The old rule restored only when ALL THREE were empty and
+ * then dropped every stash entry regardless, so a single role's URL returning by
+ * any other route deleted the other two stashes without ever restoring them.
+ */
+t_ok('customizer_news_feed_keys() exists', function_exists('customizer_news_feed_keys'));
+t_ok('customizer_news_feed_apply() exists', function_exists('customizer_news_feed_apply'));
+if (function_exists('customizer_news_feed_apply')) {
+    $A = 'dashboard_atom_url_admin';
+    $R = 'dashboard_atom_url_reseller';
+    $C = 'dashboard_atom_url_client';
+    $sA = 'news_url_admin';
+    $sR = 'news_url_reseller';
+    $sC = 'news_url_client';
+    $stock = 'https://www.ispconfig.org/atom';
+
+    //* OFF: every non-empty URL is copied out before it is blanked, and a role
+    //* the operator deliberately left empty stays empty rather than gaining one.
+    $off = customizer_news_feed_apply(
+        array($A => 'https://ops.example/feed', $R => '', $C => ''),
+        array($sA => '', $sR => '', $sC => ''), '0');
+    t_eq('off blanks the admin URL', $off['misc'][$A], '');
+    t_eq('off stashes the admin URL', $off['stash'][$sA], 'https://ops.example/feed');
+    t_eq('off leaves an already-empty role empty', $off['misc'][$R], '');
+    t_eq('off stashes nothing for an empty role', $off['stash'][$sR], '');
+
+    //* ON: each role is restored from its OWN stash, and the stash entry is
+    //* dropped only once that role holds a URL again.
+    $on = customizer_news_feed_apply(
+        array($A => '', $R => '', $C => ''),
+        array($sA => 'https://ops.example/feed', $sR => '', $sC => ''), '1');
+    t_eq('on restores the admin URL', $on['misc'][$A], 'https://ops.example/feed');
+    t_eq('on drops the consumed stash', $on['stash'][$sA], '');
+    t_eq('a role that never had a URL is not given one', $on['misc'][$R], '');
+
+    //* THE BUG: one role's URL back by another route must not destroy the other
+    //* roles' stashes. Under the old all-or-nothing gate this returned
+    //* stash = empty for all three with reseller and client never restored.
+    $mixed = customizer_news_feed_apply(
+        array($A => 'https://set-elsewhere.example/feed', $R => '', $C => ''),
+        array($sA => 'https://ops.example/a', $sR => 'https://ops.example/r', $sC => ''), '1');
+    t_eq('a URL set elsewhere is left alone', $mixed['misc'][$A], 'https://set-elsewhere.example/feed');
+    t_eq('...and its now-superseded stash is dropped', $mixed['stash'][$sA], '');
+    t_eq('...while another role IS restored from its own stash', $mixed['misc'][$R], 'https://ops.example/r');
+    t_eq('...and only then is that stash dropped', $mixed['stash'][$sR], '');
+    t_eq('a role with neither a URL nor a stash stays empty', $mixed['misc'][$C], '');
+
+    //* First-ever enable: nothing set and nothing stashed anywhere, so seed the
+    //* stock feed for all three — and ONLY then.
+    $first = customizer_news_feed_apply(
+        array($A => '', $R => '', $C => ''), array($sA => '', $sR => '', $sC => ''), '1');
+    t_eq('a first-ever enable seeds the stock feed for admin', $first['misc'][$A], $stock);
+    t_eq('...for reseller', $first['misc'][$R], $stock);
+    t_eq('...for client', $first['misc'][$C], $stock);
+
+    //* Already on, nothing stashed: an unrelated save must change nothing.
+    $noop = customizer_news_feed_apply(
+        array($A => 'https://ops.example/a', $R => '', $C => ''),
+        array($sA => '', $sR => '', $sC => ''), '1');
+    t_eq('an unrelated save leaves a set URL alone', $noop['misc'][$A], 'https://ops.example/a');
+    t_eq('an unrelated save does not refill a deliberately blank role', $noop['misc'][$R], '');
+
+    //* Off then on is lossless for every role that had a URL — the property the
+    //* field's hint text has always promised.
+    $start = array($A => 'https://a.example/f', $R => 'https://r.example/f', $C => '');
+    $step1 = customizer_news_feed_apply($start, array($sA => '', $sR => '', $sC => ''), '0');
+    $step2 = customizer_news_feed_apply($step1['misc'], $step1['stash'], '1');
+    t_eq('off then on restores admin', $step2['misc'][$A], 'https://a.example/f');
+    t_eq('off then on restores reseller', $step2['misc'][$R], 'https://r.example/f');
+    t_eq('off then on leaves the blank role blank', $step2['misc'][$C], '');
+    t_eq('off then on leaves no stash behind', $step2['stash'], array($sA => '', $sR => '', $sC => ''));
+
+    //* A non-string in either map is not fatal and is read as empty.
+    $junk = customizer_news_feed_apply(array($A => null, $R => array('x'), $C => ''),
+        array($sA => 7, $sR => '', $sC => ''), '0');
+    t_eq('a non-string URL is read as empty', $junk['misc'][$A], '');
+    t_eq('a non-string stash is read as empty', $junk['stash'][$sA], '');
+}
+
 /* ---- luminance is defined once, here too --------------------------------- */
 t_ok('customizer_luminance() exists', function_exists('customizer_luminance'));
 if (function_exists('customizer_luminance')) {

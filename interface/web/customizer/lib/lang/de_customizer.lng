@@ -3,6 +3,7 @@ $wb['customizer_title'] = 'Branding';
 $wb['page_head_txt'] = 'Branding';
 $wb['customizer_desc_txt'] = 'Gestalten Sie dieses Control Panel als Ihre eigene Marke — Logo, Name und Farben werden in ISPConfig gespeichert und bleiben bei Panel- und Theme-Updates erhalten.';
 $wb['settings_saved_txt'] = 'Einstellungen gespeichert. Farbänderungen erscheinen nach einem vollständigen Neuladen der Seite (F5).';
+$wb['save_failed_txt'] = 'Die Einstellungen wurden nicht gespeichert — der Datenbankschreibvorgang ist nicht wirksam geworden. Auf dieser Seite wurde nichts geändert; bitte erneut versuchen und bei wiederholtem Auftreten das Fehlerprotokoll des Panels prüfen.';
 
 $wb['logo_head_txt'] = 'Logo';
 $wb['logo_txt'] = 'Logo-Datei';
