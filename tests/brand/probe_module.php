@@ -510,8 +510,54 @@ if (function_exists('customizer_preview_payload')) {
 
     t_ok('the three preview rows are rendered', isset($p['previews']['used_logo'],
         $p['previews']['used_logo_on_dark'], $p['previews']['used_favicon']));
+    t_ok('...each logo row in the two halves the page has slots for',
+        isset($p['previews']['used_logo_more'], $p['previews']['used_logo_on_dark_more']));
     t_ok('the logo row carries the stored artwork', strpos($p['previews']['used_logo'], $png) !== false);
     t_ok('the favicon row says nothing is set', strpos($p['previews']['used_favicon'], 'NOFAV') !== false);
+
+    /* ---- the split that keeps the mark column inside its 108px ------------
+     * One variant can be asked for by three surfaces once both designs are
+     * installed — clarity's light-mode login, and both of classic's slots —
+     * and all three swatches used to be rendered into the mark column beside
+     * the uploader, where they stacked vertically and ran down over the path
+     * field. The column now gets exactly ONE swatch, the first surface of the
+     * design the operator is looking at (customizer_installed_designs() puts
+     * the active design first), and the rest go to a full-width strip under
+     * the block. Asserted on the MARKUP because the split is what the page's
+     * two slots are for: the sizes are CSS, but which swatch lands in which
+     * slot is decided here.
+     */
+    $two = customizer_preview_payload(
+        array('rail_hex' => '#01243D'), $png, array(), array('clarity', 'classic'),
+        array('nav' => 'Navigation', 'login' => 'Login screen'), $texts);
+
+    $t_light      = $two['previews']['used_logo'];
+    $t_light_more = $two['previews']['used_logo_more'];
+    t_eq('every light surface of both designs is still drawn',
+        substr_count($t_light, '<img') + substr_count($t_light_more, '<img'), 3);
+    t_eq('the mark column gets exactly one swatch', substr_count($t_light, '<img'), 1);
+    t_eq('...and the remaining surfaces go to the strip beneath the block',
+        substr_count($t_light_more, '<img'), 2);
+    t_eq('...keeping their captions', substr_count($t_light_more, 'nz-markcap'), 2);
+    t_ok('the two containers are told apart by class',
+        strpos($t_light, 'nz-mark-primary') !== false
+        && strpos($t_light_more, 'nz-mark-others') !== false
+        && strpos($t_light, 'nz-mark-others') === false);
+
+    //* The borrowed-variant note is a SENTENCE, and a sentence in a 108px
+    //* column is a column of single words — it rides with the strip.
+    t_ok('the borrowed-variant note is rendered under the block',
+        strpos($two['previews']['used_logo_on_dark_more'], 'FBLIGHT') !== false);
+    t_ok('...and not in the mark column',
+        strpos($two['previews']['used_logo_on_dark'], 'FBLIGHT') === false);
+
+    //* Nothing set means nothing to detail: the column says so once and the
+    //* strip is EMPTY, which is what lets the page collapse it (:empty) rather
+    //* than open a blank row under the block.
+    $none = customizer_preview_payload(array(), '', array(), array('clarity'),
+        array('nav' => 'Navigation', 'login' => 'Login screen'), $texts);
+    t_ok('an unset variant says so once', strpos($none['previews']['used_logo'], 'NOLOGO') !== false);
+    t_eq('...and leaves the strip beneath it empty', $none['previews']['used_logo_more'], '');
 
     t_eq('the candidate rail is what the colours block reports', $p['colours']['rail']['hex'], '#FFFFFF');
     t_eq('...with the ink measured for it', $p['colours']['rail']['ink'], '#000000');

@@ -49,6 +49,7 @@ $wb['accent_hex_txt'] = 'Colore d’accento';
 $wb['rail_hex_txt'] = 'Colore della barra laterale';
 $wb['rail_hex_light_txt'] = 'Colore della barra laterale (modalità chiara)';
 $wb['rail_hex_light_hint_txt'] = 'Usato dai design che offrono una modalità chiara; se lo lascia vuoto, il colore della barra laterale sopra vale per entrambe le modalità. Un design senza modalità chiara legge il valore e non ne fa nulla.';
+$wb['rail_hex_light_inherited_txt'] = '(ereditato dal colore della barra laterale)';
 $wb['rail_contrast_txt'] = 'Contrasto del testo della barra laterale:';
 $wb['login_bg_txt'] = 'Sfondo di accesso';
 $wb['colour_hint_txt'] = 'Valore esadecimale come #0065AB. Lasci vuoto per mantenere l’impostazione predefinita del tema.';

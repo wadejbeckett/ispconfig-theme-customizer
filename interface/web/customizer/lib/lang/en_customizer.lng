@@ -78,6 +78,7 @@ $wb['accent_hex_txt'] = 'Accent colour';
 $wb['rail_hex_txt'] = 'Sidebar colour';
 $wb['rail_hex_light_txt'] = 'Sidebar colour (light mode)';
 $wb['rail_hex_light_hint_txt'] = 'Used by designs that offer a light colour mode; leave it blank and the sidebar colour above is used in both modes. A design with no light mode reads this value and does nothing with it.';
+$wb['rail_hex_light_inherited_txt'] = '(inherited from Sidebar colour)';
 $wb['rail_contrast_txt'] = 'Sidebar text contrast:';
 $wb['login_bg_txt'] = 'Login background';
 $wb['colour_hint_txt'] = 'Hex value like #0065AB. Leave blank to keep the theme default.';

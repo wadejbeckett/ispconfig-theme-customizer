@@ -330,10 +330,19 @@ $surfaces      = customizer_logo_surfaces_all(
     $branding,
     array('nav' => $app->lng('surface_nav_txt'), 'login' => $app->lng('surface_login_txt'))
 );
-$preview_light = customizer_logo_preview_html($resolved['on_light'], 'on_light', $no_logo_txt, $app->lng('logo_fallback_from_dark_txt'), $surfaces);
-$preview_dark  = customizer_logo_preview_html($resolved['on_dark'],  'on_dark',  $no_logo_txt, $app->lng('logo_fallback_from_light_txt'), $surfaces);
+//* Each row is drawn in two halves, into the two slots the editor page gives it:
+//* the mark column beside the uploader takes the first surface's swatch and a
+//* full-width strip under the block takes the rest. See $part in
+//* customizer_logo_preview_html(). The banner below embeds the COLUMN's half —
+//* one swatch of the artwork just uploaded, which is what a confirmation needs.
+$preview_light      = customizer_logo_preview_html($resolved['on_light'], 'on_light', $no_logo_txt, $app->lng('logo_fallback_from_dark_txt'), $surfaces, 'first');
+$preview_light_more = customizer_logo_preview_html($resolved['on_light'], 'on_light', $no_logo_txt, $app->lng('logo_fallback_from_dark_txt'), $surfaces, 'more');
+$preview_dark       = customizer_logo_preview_html($resolved['on_dark'],  'on_dark',  $no_logo_txt, $app->lng('logo_fallback_from_light_txt'), $surfaces, 'first');
+$preview_dark_more  = customizer_logo_preview_html($resolved['on_dark'],  'on_dark',  $no_logo_txt, $app->lng('logo_fallback_from_light_txt'), $surfaces, 'more');
 $app->tpl->setVar('used_logo', $preview_light);
+$app->tpl->setVar('used_logo_more', $preview_light_more);
 $app->tpl->setVar('used_logo_on_dark', $preview_dark);
+$app->tpl->setVar('used_logo_on_dark_more', $preview_dark_more);
 
 //* The favicon preview is refreshed on EVERY upload, not only a favicon one.
 //* It costs one more render and it keeps the response body a complete, current

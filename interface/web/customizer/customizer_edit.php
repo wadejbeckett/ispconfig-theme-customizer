@@ -442,8 +442,17 @@ class page_action extends tform_actions {
         //* wordbook (lib/lang/<lang>.lng) rather than the tform one, because
         //* logo_upload.php renders the same previews and has no tform at all.
         $no_logo_txt = $app->lng('no_logo_set_txt');
-        $app->tpl->setVar('used_logo', customizer_logo_preview_html($resolved['on_light'], 'on_light', $no_logo_txt, $app->lng('logo_fallback_from_dark_txt'), $surfaces));
-        $app->tpl->setVar('used_logo_on_dark', customizer_logo_preview_html($resolved['on_dark'], 'on_dark', $no_logo_txt, $app->lng('logo_fallback_from_light_txt'), $surfaces));
+        //* Each logo row is rendered in TWO halves into two slots: the 108px
+        //* mark column beside the uploader takes the first surface's swatch, and
+        //* the full-width strip under the block takes every other surface's. One
+        //* container held all of them and, on a panel with both designs
+        //* installed, stacked three swatches down over the path field below.
+        $fb_dark  = $app->lng('logo_fallback_from_dark_txt');
+        $fb_light = $app->lng('logo_fallback_from_light_txt');
+        $app->tpl->setVar('used_logo', customizer_logo_preview_html($resolved['on_light'], 'on_light', $no_logo_txt, $fb_dark, $surfaces, 'first'));
+        $app->tpl->setVar('used_logo_more', customizer_logo_preview_html($resolved['on_light'], 'on_light', $no_logo_txt, $fb_dark, $surfaces, 'more'));
+        $app->tpl->setVar('used_logo_on_dark', customizer_logo_preview_html($resolved['on_dark'], 'on_dark', $no_logo_txt, $fb_light, $surfaces, 'first'));
+        $app->tpl->setVar('used_logo_on_dark_more', customizer_logo_preview_html($resolved['on_dark'], 'on_dark', $no_logo_txt, $fb_light, $surfaces, 'more'));
 
         //* getconf's blob is fine to read the favicon values from — this is a
         //* pure READ path, so its stripslashes has no missing counterpart to

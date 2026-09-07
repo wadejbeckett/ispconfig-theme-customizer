@@ -183,10 +183,11 @@ function wb_all_values($src) {
 }
 
 /**
- * customizer_edit.htm interpolates exactly these eight tform-wordbook keys
+ * customizer_edit.htm interpolates exactly these nine tform-wordbook keys
  * into DOUBLE-QUOTED HTML attributes with no escaping at the call site:
- * preview_failed_txt into data-preview-failed, and the other seven into an
- * aria-label each (logo_txt, logo_on_dark_txt, favicon_txt, accent_hex_txt,
+ * preview_failed_txt into data-preview-failed and rail_hex_light_inherited_txt
+ * into data-rail-light-inherited, and the other seven into an aria-label each
+ * (logo_txt, logo_on_dark_txt, favicon_txt, accent_hex_txt,
  * rail_hex_txt, rail_hex_light_txt, login_bg_txt). A value containing '"'
  * breaks out of the attribute; a value containing '<' opens a tag inside it.
  * Neither is stoppable once the string is in the template, so it is enforced
@@ -196,7 +197,8 @@ function wb_all_values($src) {
  * never placed inside an attribute.
  */
 $HTML_ATTR_WB_KEYS = array(
-    'preview_failed_txt', 'logo_txt', 'logo_on_dark_txt', 'favicon_txt',
+    'preview_failed_txt', 'rail_hex_light_inherited_txt',
+    'logo_txt', 'logo_on_dark_txt', 'favicon_txt',
     'accent_hex_txt', 'rail_hex_txt', 'rail_hex_light_txt', 'login_bg_txt',
 );
 
