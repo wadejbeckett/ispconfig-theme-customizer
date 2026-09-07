@@ -983,12 +983,15 @@ function customizer_logo_preview_html($resolved, $want, $no_logo_text, $fallback
 
         $html .= '<span style="display:inline-block;background:' . $bg . ';border:1px solid ' . $edge
                . ';border-radius:4px;padding:6px 12px;text-align:center;line-height:1">'
-               . '<img src="' . $esc . '" alt="" style="max-height:48px;max-width:220px;vertical-align:bottom" />';
+               . '<img src="' . $esc . '" alt="" />';
         if($b['label'] !== '') {
-            //* Capped so a long translation cannot stretch the swatch past the
-            //* thumbnail it belongs to; it wraps inside the box instead.
-            $html .= '<span style="display:block;margin-top:6px;font-size:11px;line-height:1.3;'
-                   . 'max-width:240px;color:' . $ink . '">' . $b['label'] . '</span>';
+            //* Only the INK is inline, because it is a measured value: the
+            //* luminance test above chose it for this swatch's own background.
+            //* Everything about the caption's SIZE is a rule in the page's style
+            //* block (.nz-markcap) — an inline max-width beats every selector,
+            //* and this row now lives in a 108px grid column that the page, not
+            //* this function, is entitled to decide the width of.
+            $html .= '<span class="nz-markcap" style="color:' . $ink . '">' . $b['label'] . '</span>';
         }
         $html .= '</span>';
     }
