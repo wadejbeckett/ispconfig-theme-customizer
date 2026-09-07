@@ -286,4 +286,35 @@ t_eq('every nav-brand slot is cleared when nothing resolves',
 t_ok('the drop zone names its chosen file to a screen reader',
     strpos($js, "setAttribute('aria-describedby', lineId)") !== false);
 
+/* The file-less drop. dragover is cancelled unconditionally, so the zone has
+ * already told the browser it accepts the drag; a drop handler that returned
+ * before preventDefault would leave a dragged LINK to the browser's own
+ * default, which navigates away from the page being edited — the exact loss
+ * the two handlers above it exist to prevent. Order, not presence: both lines
+ * are there either way, and only their order decides whether the page survives.
+ */
+$dropAt  = strpos($js, "zone.addEventListener('drop'");
+$handler = ($dropAt !== false) ? substr($js, $dropAt, 800) : '';
+$pd      = strpos($handler, 'e.preventDefault();');
+$guard   = strpos($handler, 'files.length) return;');
+t_ok('a drop is cancelled before the files guard, not after',
+    $pd !== false && $guard !== false && $pd < $guard);
+
+/* The chosen filename is written into a line the operator can SEE, and the
+ * input's description points at it; neither announces a drop, which moves no
+ * focus. aria-live does. It is the drop LINE and nothing else: a live preview
+ * column would narrate every keystroke's repaint. */
+foreach (array('nz-drop-line-logo', 'nz-drop-line-logo-on-dark',
+               'nz-drop-line-favicon') as $id) {
+    t_ok("the drop line announces a change: $id",
+        strpos($src, 'id="' . $id . '" aria-live="polite"') !== false);
+}
+t_eq('...and nothing else on the page is a live region',
+    substr_count($src, 'aria-live'), 3);
+//* A live region announces what is WRITTEN to it, so writing the idle
+//* instruction back on load — or the same filename twice — would speak for no
+//* reason. Only a real change is written.
+t_ok('the drop line is only written when it really changes',
+    strpos($js, 'if (line.textContent !== next) line.textContent = next;') !== false);
+
 t_done();

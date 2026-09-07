@@ -984,7 +984,7 @@
          store, and the stock Enter-key handler must not trigger uploads. The
          fetch flow in the script below mints its own token at click time. -->
     <label class="nz-drop">
-      <span class="nz-drop-line" id="nz-drop-line-logo">{tmpl_var name='drop_hint_txt'}</span>
+      <span class="nz-drop-line" id="nz-drop-line-logo" aria-live="polite">{tmpl_var name='drop_hint_txt'}</span>
       <input name="file" id="file" size="30" type="file" class="fileUpload nz-vh" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,.svg" aria-label="{tmpl_var name='logo_txt'}" />
     </label>
     <div class="nz-drop-row">
@@ -1023,7 +1023,7 @@
          this attribute never reaches the server. Distinct names keep three
          file inputs unambiguous in a form that also carries a native Save. -->
     <label class="nz-drop">
-      <span class="nz-drop-line" id="nz-drop-line-logo-on-dark">{tmpl_var name='drop_hint_txt'}</span>
+      <span class="nz-drop-line" id="nz-drop-line-logo-on-dark" aria-live="polite">{tmpl_var name='drop_hint_txt'}</span>
       <input name="file_on_dark" id="file_on_dark" size="30" type="file" class="fileUpload nz-vh" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,.svg" aria-label="{tmpl_var name='logo_on_dark_txt'}" />
     </label>
     <div class="nz-drop-row">
@@ -1167,7 +1167,7 @@
     </div>
     <div class="nz-upload-more" id="used_favicon">{tmpl_var name='used_favicon'}</div>
     <label class="nz-drop">
-      <span class="nz-drop-line" id="nz-drop-line-favicon">{tmpl_var name='drop_hint_txt'}</span>
+      <span class="nz-drop-line" id="nz-drop-line-favicon" aria-live="polite">{tmpl_var name='drop_hint_txt'}</span>
       <input name="file_favicon" id="file_favicon" size="30" type="file" class="fileUpload nz-vh" accept="image/svg+xml,.svg,image/png,image/x-icon,image/vnd.microsoft.icon,.ico" aria-label="{tmpl_var name='favicon_txt'}" />
     </label>
     <div class="nz-drop-row">
@@ -1893,7 +1893,11 @@
 
     function show() {
       var file = (input.files && input.files.length) ? input.files[0] : null;
-      line.textContent = file ? file.name : idle;
+      var next = file ? file.name : idle;
+      // The line is a live region, so only a REAL change may be written to it:
+      // assigning the same string — the instruction on load, or the same
+      // filename chosen twice — would speak it to a screen reader for nothing.
+      if (line.textContent !== next) line.textContent = next;
     }
     input.addEventListener('change', show);
     show();
@@ -1904,8 +1908,14 @@
     zone.addEventListener('dragenter', function (e) { e.preventDefault(); });
     zone.addEventListener('dragover', function (e) { e.preventDefault(); });
     zone.addEventListener('drop', function (e) {
-      if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+      // BEFORE the guard, not after. dragover above is cancelled
+      // unconditionally, so the zone has already told the browser it accepts
+      // this drag; handing a file-less one — a dragged link, a selection of
+      // text — back to the browser's own default navigates away and the
+      // operator loses the page they were editing, which is the whole reason
+      // the two handlers above exist.
       e.preventDefault();
+      if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
       // Wrapped because a browser that refuses the assignment must leave the
       // zone exactly as it was rather than half-changed: the operator can still
       // click it and choose the same file.
