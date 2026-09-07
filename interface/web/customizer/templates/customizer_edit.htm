@@ -574,8 +574,9 @@
   // exist in PHP copies CI proves agree, and a fourth copy in JavaScript would
   // put what this page promises outside that guarantee. They arrive from
   // customizer/preview.php, debounced. Until the first response lands a pane
-  // carries the design's own ink and the ratio readouts say nothing, which is
-  // the honest state rather than a guess that might be contradicted 300ms later.
+  // shows only what a FILLED field says: an empty one paints nothing and the
+  // ratio readouts say nothing, which is the honest state rather than a guess
+  // that might be contradicted 300ms later.
 
   var HEX = /^#[0-9A-Fa-f]{6}$/;
 
@@ -585,56 +586,64 @@
     return document.getElementById('pageForm') || document;
   }
 
-  // A design token as an actual colour, or the fallback — this is how the panes
-  // stay design-agnostic: with no colour set they show the ACTIVE design's own.
-  function token(names, fallback) {
-    var cs = window.getComputedStyle ? getComputedStyle(document.documentElement) : null;
-    for (var i = 0; cs && i < names.length; i++) {
-      var v = (cs.getPropertyValue(names[i]) || '').trim();
-      if (HEX.test(v)) return v;
-    }
-    return fallback;
-  }
-
   // The '#' is tolerated as missing because onBeforeUpdate() prepends it before
-  // the validators run — the pane shows what the SAVE would store, not what the
-  // regex would reject. The field itself is left exactly as it was typed.
-  function fieldValue(id, fallback) {
+  // the validators run — a pane shows what the SAVE would store, not what the
+  // regex would reject. The field itself is left exactly as it was typed. '' is
+  // returned for an empty or unfinished value and means "this field decides
+  // nothing right now", which is a different answer from any colour — hence no
+  // default parameter to paper over it.
+  function fieldValue(id) {
     var el = document.getElementById(id);
-    if (!el) return fallback;
+    if (!el) return '';
     var v = (el.value || '').trim();
     if (/^[0-9A-Fa-f]{6}$/.test(v)) v = '#' + v;
-    return HEX.test(v) ? v.toUpperCase() : fallback;
+    return HEX.test(v) ? v.toUpperCase() : '';
   }
 
+  // An empty field paints NOTHING. There is no design-token fallback here, and
+  // the absence is the fix: themes/classic publishes no custom properties at
+  // all, so a token lookup would hand back the hard-coded literal beside it —
+  // a colour classic never paints — and an inline background, once written,
+  // outranks the design's own stylesheet for the life of the page. The empty
+  // case belongs to the payload, which is the only place that knows what each
+  // installed design really paints (#F2F5F7 for a classic rail, not #2E3A44).
   function paintBg(sel, hex) {
+    if (hex === '') return;
     var els = document.querySelectorAll(sel);
     for (var i = 0; i < els.length; i++) els[i].style.background = hex;
   }
 
+  // textContent, never innerHTML: the panel name is the operator's own text and
+  // has no business being parsed as markup on the page that sets it. Split out
+  // because the name input must repaint the NAME and nothing else: routed
+  // through paintPreview(), a keystroke in a field that says nothing about
+  // colour would decide what colour the panes are.
+  function paintName() {
+    var nameEl = document.getElementById('company_name');
+    var name = (nameEl && nameEl.value) ? nameEl.value.trim() : '';
+    var els = document.querySelectorAll('.nz-prev-name');
+    for (var i = 0; i < els.length; i++) els[i].textContent = name;
+  }
+
   function paintPreview() {
-    var rail   = fieldValue('rail_hex', token(['--pz-band', '--nz-rail'], '#2E3A44'));
-    var accent = fieldValue('accent_hex', token(['--pz-accent', '--nz-blue-400'], '#0065AB'));
-    var login  = fieldValue('login_bg', token(['--pz-ground', '--nz-page'], '#17252B'));
-    // The light rail falls back to the rail, which is what a design with a light
-    // scope does with an empty value — the preview must show that, not nothing.
-    var light  = fieldValue('rail_hex_light', rail);
+    var rail   = fieldValue('rail_hex');
+    var accent = fieldValue('accent_hex');
 
     paintBg('.nz-prev-rail', rail);
-    paintBg('.nz-prev-rail-light', light);
-    paintBg('.nz-prev-login', login);
+    paintBg('.nz-prev-login', fieldValue('login_bg'));
     paintBg('.nz-prev-accent', accent);
+    // The light rail falls back to the rail, which is what a design with a light
+    // scope does with an empty value — the preview must show that, not nothing.
+    // The fallback is the other FIELD, never a token: with both empty this still
+    // paints nothing and the payload's answer stands.
+    paintBg('.nz-prev-rail-light', fieldValue('rail_hex_light') || rail);
 
-    var i, els;
-    els = document.querySelectorAll('.nz-prev-accent-rule');
-    for (i = 0; i < els.length; i++) els[i].style.color = accent;
+    if (accent !== '') {
+      var els = document.querySelectorAll('.nz-prev-accent-rule');
+      for (var i = 0; i < els.length; i++) els[i].style.color = accent;
+    }
 
-    // textContent, never innerHTML: the panel name is the operator's own text and
-    // has no business being parsed as markup on the page that sets it.
-    var nameEl = document.getElementById('company_name');
-    var name   = (nameEl && nameEl.value) ? nameEl.value.trim() : '';
-    els = document.querySelectorAll('.nz-prev-name');
-    for (i = 0; i < els.length; i++) els[i].textContent = name;
+    paintName();
   }
 
   // ---- what only the server can answer -----------------------------------
@@ -675,7 +684,14 @@
   // that whenever login_bg is unset (one entry per colour mode); the pane shows
   // the first, which is the mode the design ships in.
   function paintSurfaces(surfaces) {
-    if (!surfaces || !surfaces.length) return;
+    var pane = document.querySelector('.nz-prev-light-pane');
+    // No installed design this module knows about describes anything, a light
+    // rail included — and a pane left open by an earlier response would go on
+    // claiming otherwise.
+    if (!surfaces || !surfaces.length) {
+      if (pane) pane.hidden = true;
+      return;
+    }
     var lead = surfaces[0].design, nav = [], login = [], i;
     for (i = 0; i < surfaces.length; i++) {
       if (surfaces[i].design !== lead) continue;
@@ -689,7 +705,6 @@
     // from the rail — exactly when the light pane has something to say. With one
     // entry it stays hidden, because a second identical pane would tell the
     // operator they have two rails when they have one.
-    var pane = document.querySelector('.nz-prev-light-pane');
     if (!pane) return;
     if (nav.length > 1) {
       paintSurfacePane('.nz-prev-rail-light', nav[1]);
@@ -893,7 +908,21 @@
   function syncHex(txtId, pickId) {
     var t = document.getElementById(txtId), p = document.getElementById(pickId);
     if (!t) return;
-    if (p && HEX.test(t.value)) p.value = t.value;
+
+    // The swatch follows the same #-tolerant reading the panes use, because the
+    // SERVER does too: onBeforeUpdate() stores a typed "0065ab" as #0065AB, so a
+    // picker still showing the previous colour would describe a value that is
+    // already gone. It READS the field and never writes to it — repairing the
+    // typed text is the server's job, and doing it here is the silent repair
+    // this page deliberately does not perform. An <input type=color> accepts
+    // #rrggbb only, which is why the raw field value cannot simply be assigned.
+    function syncPick() {
+      if (!p) return;
+      var v = fieldValue(txtId);
+      if (v !== '') p.value = v;
+    }
+    syncPick();
+
     // 'input' alone is NOT enough: Firefox's native colour dialog only fires
     // 'change' when it closes, so a picker-chosen colour never reached the
     // named text field and every save posted an empty value.
@@ -906,7 +935,7 @@
       p.addEventListener('change', fromPick);
     }
     t.addEventListener('input', function () {
-      if (p && HEX.test(t.value)) p.value = t.value;
+      syncPick();
       paintPreview();
       schedulePreview();
     });
@@ -919,8 +948,10 @@
     syncHex('rail_hex_light', 'rail_hex_light_pick');
     syncHex('login_bg', 'login_bg_pick');
 
+    // The name, and ONLY the name: this field says nothing about any colour, so
+    // it must not be able to repaint a pane the payload has already answered for.
     var nameInput = document.getElementById('company_name');
-    if (nameInput) nameInput.addEventListener('input', paintPreview);
+    if (nameInput) nameInput.addEventListener('input', paintName);
 
     // The reference paths change WHICH mark a surface gets, which only the
     // server can answer; they are also the second half of the advisory check.
