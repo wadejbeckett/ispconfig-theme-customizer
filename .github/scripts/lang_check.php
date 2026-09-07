@@ -183,23 +183,39 @@ function wb_all_values($src) {
 }
 
 /**
- * customizer_edit.htm interpolates exactly these nine tform-wordbook keys
- * into DOUBLE-QUOTED HTML attributes with no escaping at the call site:
- * preview_failed_txt into data-preview-failed and rail_hex_light_inherited_txt
- * into data-rail-light-inherited, and the other seven into an aria-label each
- * (logo_txt, logo_on_dark_txt, favicon_txt, accent_hex_txt,
- * rail_hex_txt, rail_hex_light_txt, login_bg_txt). A value containing '"'
- * breaks out of the attribute; a value containing '<' opens a tag inside it.
- * Neither is stoppable once the string is in the template, so it is enforced
- * here, at the only point every translation passes through before it ships.
- * Scoped to these keys only — other wordbook values (hint text, error
- * messages) legitimately quote UI labels, e.g. 'click "Upload logo"', and are
- * never placed inside an attribute.
+ * customizer_edit.htm interpolates exactly these tform-wordbook keys into
+ * DOUBLE-QUOTED HTML attributes with no escaping at the call site. A value
+ * containing '"' breaks out of the attribute; a value containing '<' opens a
+ * tag inside it. Neither is stoppable once the string is in the template, so it
+ * is enforced here, at the only point every translation passes through before
+ * it ships.
+ *
+ * Three groups:
+ *
+ *   - data attributes on #nz-brandpage: preview_failed_txt,
+ *     rail_hex_light_inherited_txt.
+ *   - aria-label on a control: the three file inputs (logo_txt,
+ *     logo_on_dark_txt, favicon_txt) and the four colour pickers
+ *     (accent_hex_txt, rail_hex_txt, rail_hex_light_txt, login_bg_txt).
+ *   - aria-label on a "?" disclosure. Each one is hint_more_txt with the label
+ *     of the thing it explains substituted into it (publish_hint_labels() in
+ *     customizer_edit.php), so BOTH halves land in the attribute and both are
+ *     listed: hint_more_txt itself, and the fifteen labels it is filled with.
+ *
+ * Scoped to these keys only — other wordbook values (hint text, error messages)
+ * legitimately quote UI labels, e.g. 'click "Upload logo"', and are never
+ * placed inside an attribute.
  */
 $HTML_ATTR_WB_KEYS = array(
     'preview_failed_txt', 'rail_hex_light_inherited_txt',
     'logo_txt', 'logo_on_dark_txt', 'favicon_txt',
     'accent_hex_txt', 'rail_hex_txt', 'rail_hex_light_txt', 'login_bg_txt',
+    'hint_more_txt',
+    'identity_head_txt', 'logo_on_light_head_txt', 'logo_url_txt',
+    'logo_on_dark_head_txt', 'logo_url_on_dark_txt', 'placement_head_txt',
+    'favicon_head_txt', 'favicon_url_txt',
+    'show_design_picker_txt', 'show_version_txt', 'show_news_feed_txt',
+    'show_donation_dashlet_txt', 'show_theme_credit_txt',
 );
 
 function check_no_html_hostile_chars($file, $src) {

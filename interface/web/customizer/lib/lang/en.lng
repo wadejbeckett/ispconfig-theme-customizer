@@ -20,3 +20,16 @@ $wb['surface_nav_txt'] = 'Navigation';
 $wb['surface_login_txt'] = 'Login screen';
 $wb['no_favicon_set_txt'] = 'No custom favicon set — the design shows its own.';
 $wb['favicon_url_wins_txt'] = 'This is the favicon path set below, which wins over the uploaded file — that is the same rule the logo paths follow. Clear the path and press Save to use the uploaded icon instead.';
+// The three status facts in the Branding page's legend, under the proof. They
+// live in THIS wordbook rather than the tform one for the same reason
+// no_logo_set_txt does: customizer/preview.php rebuilds them after every
+// keystroke and has no tform at all, so it resolves them through $app->lng().
+// %s and %d are filled with str_replace(), never sprintf() — a translation
+// carrying a stray '%' would make sprintf() raise a ValueError, which on an
+// admin page is a fatal raised by a wordbook file.
+$wb['summary_design_txt'] = '%s active';
+$wb['summary_marks_none_txt'] = 'No marks';
+$wb['summary_marks_one_txt'] = '%d mark';
+$wb['summary_marks_txt'] = '%d marks';
+$wb['summary_favicon_txt'] = 'Favicon set';
+$wb['summary_favicon_none_txt'] = 'No favicon';
