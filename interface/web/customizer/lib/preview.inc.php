@@ -571,7 +571,8 @@ function customizer_preview_colour($branding, $key) {
  *                   'no_favicon', 'favicon_url_wins'
  *
  * Returns:
- *   'previews' => array('used_logo' => html, 'used_logo_on_dark' => html,
+ *   'previews' => array('used_logo' => html, 'used_logo_more' => html,
+ *                       'used_logo_on_dark' => html, 'used_logo_on_dark_more' => html,
  *                       'used_favicon' => html)   — the same renderers the page
  *                       and logo_upload.php use, so the three agree by
  *                       construction rather than by inspection

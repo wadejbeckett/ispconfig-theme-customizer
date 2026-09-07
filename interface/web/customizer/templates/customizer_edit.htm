@@ -1180,8 +1180,10 @@
   // showing the artwork that was there before it.
   //
   // It cannot loop: our own writes set selfPaint, the first callback clears it
-  // and returns, and a write only ever happens when we actually painted a slot
-  // — so a flag can never be left standing for a later, real mutation to eat.
+  // and returns. The flag is also set by writes to the unobserved slots, which
+  // is safe only because customizer_logo_preview_html(..., 'first') never
+  // returns '' — an observed mark-slot write always accompanies the flag, so
+  // it can never be left standing for a later, real mutation to eat.
   // Self-disconnects for the same reason the message observer does:
   // ISPConfig.loadContent() swaps #pageContent's children while #pageForm and
   // everything hanging off it stays alive.
