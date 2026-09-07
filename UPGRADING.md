@@ -422,6 +422,48 @@ translation, or a design or script that read those six retired keys, will find
 them absent after this upgrade — there is no compatibility shim, because a
 wordbook key with nothing left to label has nothing to fall back to.
 
+### The Branding page's new layout (v3.5.0)
+
+The page was rebuilt around its own preview: the picture is now the full-width
+thing at the top, with the two supplied marks, the panel name, three status
+facts and the colour chips in a legend beneath it, and the settings in five
+cards under that. Nothing about **what** it stores changed — same keys, same
+`sys_ini` row, same `sys_config` row for the donation switch, no migration, no
+new column. An upgrade is `git checkout <tag>` and `./install.sh`, exactly as
+before.
+
+Three things are worth knowing before you upgrade:
+
+- **The six visibility switches were relabelled.** "Show the software version"
+  is now "Software version", and so on for the other five: a switch already
+  says "show". The settings and their keys are unchanged — only the labels are
+  shorter. All seven shipped locales were updated in the same release.
+- **Seventeen wordbook keys were added**, eleven to the form wordbook
+  (`lib/lang/<lang>_customizer.lng`) and six to the module wordbook
+  (`lib/lang/<lang>.lng`, where the endpoint that refreshes the preview can
+  reach them). If you maintain a translation of your own, add all seventeen:
+  ISPConfig *substitutes* wordbooks rather than merging them, so a file that
+  exists but omits a key renders the raw key name in the UI.
+  `.github/scripts/lang_check.php` lists exactly what is missing.
+- **No design has to change.** The page's own stylesheet is inline and reads
+  design tokens through the same `var(--pz-…, var(--nz-…, …))` chains it always
+  did, and the brand-token contract is untouched.
+
+Downgrading is uneventful in the same way: the older page reads the same stored
+values and simply does not know about the new wordbook keys, which are inert
+where nothing asks for them.
+
+Three more form-wordbook keys are retired in the same release: `rail_contrast_txt`,
+`preview_nav_txt` and `logo_removed_txt`. The new layout's status facts and the
+measured-ratio captions replaced what the first two labelled, and the third
+labelled a standalone "logo removed" confirmation that the inline drop-zone
+line replaced. All three are gone from all seven locales
+(`lib/lang/<lang>_customizer.lng`) — unlike the six keys retired earlier in this
+document, there is no design or script known to read any of them, so the same
+no-shim rule applies: a third-party translation carrying these keys keeps them
+harmlessly, since ISPConfig substitutes a wordbook wholesale rather than
+merging it key by key.
+
 The full usage line:
 
 ```

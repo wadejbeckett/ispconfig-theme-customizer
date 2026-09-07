@@ -55,13 +55,11 @@ $wb['rail_hex_txt'] = 'Farbe der Seitenleiste';
 $wb['rail_hex_light_txt'] = 'Farbe der Seitenleiste (heller Modus)';
 $wb['rail_hex_light_hint_txt'] = 'Wird von Designs mit hellem Farbmodus verwendet; bleibt das Feld leer, gilt die Farbe der Seitenleiste oben in beiden Modi. Ein Design ohne hellen Modus liest den Wert und tut nichts damit.';
 $wb['rail_hex_light_inherited_txt'] = '(von der Farbe der Seitenleiste übernommen)';
-$wb['rail_contrast_txt'] = 'Kontrast des Seitenleistentexts:';
 $wb['login_bg_txt'] = 'Anmelde-Hintergrund';
 $wb['colour_hint_txt'] = 'Hex-Wert wie #0065AB. Leer lassen, um die Theme-Vorgabe beizubehalten.';
 
 $wb['preview_head_txt'] = 'Vorschau';
 $wb['preview_hint_txt'] = 'Farben und der Panel-Name werden während der Eingabe aktualisiert. Welches Logo eine Oberfläche verwendet, ermittelt der Server, damit es dem entspricht, was das Panel tatsächlich anzeigt.';
-$wb['preview_nav_txt'] = 'Navigation';
 $wb['preview_login_txt'] = 'Anmeldebildschirm';
 $wb['preview_tab_txt'] = 'Tab-Symbol';
 $wb['preview_failed_txt'] = 'Die Vorschau konnte nicht aktualisiert werden. Sie sehen den zuletzt vom Server bestätigten Stand.';
@@ -104,7 +102,6 @@ $wb['login_bg_error_regex'] = 'Der Anmelde-Hintergrund muss ein Hex-Wert wie #17
 $wb['login_link_error_regex'] = 'Der Fußnotenlink der Anmeldung muss mit http:// oder https:// beginnen.';
 
 $wb['logo_uploaded_txt'] = 'Logo aktualisiert.';
-$wb['logo_removed_txt'] = 'Logo entfernt.';
 $wb['logo_bad_type_txt'] = 'Nicht unterstütztes Bild. Verwenden Sie SVG (unkompliziert, ohne Skripte), PNG, JPEG, GIF oder WebP.';
 $wb['logo_too_large_txt'] = 'Dieses Bild ist zu groß. Halten Sie es unter 45 KB — ein optimiertes PNG oder WebP funktioniert am besten.';
 $wb['favicon_uploaded_txt'] = 'Favicon aktualisiert. Browser speichern Symbole hartnäckig zwischen — falls das alte bestehen bleibt, laden Sie mit Strg+Umschalt+R neu oder öffnen Sie einen neuen Tab.';

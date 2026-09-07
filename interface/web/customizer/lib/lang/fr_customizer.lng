@@ -55,13 +55,11 @@ $wb['rail_hex_txt'] = 'Couleur de la barre latérale';
 $wb['rail_hex_light_txt'] = 'Couleur de la barre latérale (mode clair)';
 $wb['rail_hex_light_hint_txt'] = 'Utilisée par les designs qui proposent un mode clair ; laissez le champ vide et la couleur de la barre latérale ci-dessus s’applique aux deux modes. Un design sans mode clair lit la valeur sans rien en faire.';
 $wb['rail_hex_light_inherited_txt'] = '(hérité de la couleur de la barre latérale)';
-$wb['rail_contrast_txt'] = 'Contraste du texte de la barre latérale :';
 $wb['login_bg_txt'] = 'Arrière-plan de la connexion';
 $wb['colour_hint_txt'] = 'Valeur hexadécimale comme #0065AB. Laissez vide pour conserver la valeur par défaut du thème.';
 
 $wb['preview_head_txt'] = 'Aperçu';
 $wb['preview_hint_txt'] = 'Les couleurs et le nom du panneau se mettent à jour pendant la saisie. Le logo utilisé par chaque surface est déterminé par le serveur, afin de correspondre à ce que le panneau affichera réellement.';
-$wb['preview_nav_txt'] = 'Navigation';
 $wb['preview_login_txt'] = 'Écran de connexion';
 $wb['preview_tab_txt'] = 'Icône d’onglet';
 $wb['preview_failed_txt'] = 'L’aperçu n’a pas pu être actualisé. Vous voyez la dernière version confirmée par le serveur.';
@@ -104,7 +102,6 @@ $wb['login_bg_error_regex'] = 'L’arrière-plan de la connexion doit être une 
 $wb['login_link_error_regex'] = 'Le lien de la note de bas de page de connexion doit commencer par http:// ou https://.';
 
 $wb['logo_uploaded_txt'] = 'Logo mis à jour.';
-$wb['logo_removed_txt'] = 'Logo supprimé.';
 $wb['logo_bad_type_txt'] = 'Image non prise en charge. Utilisez un SVG (simple, sans script), PNG, JPEG, GIF ou WebP.';
 $wb['logo_too_large_txt'] = 'Cette image est trop volumineuse. Gardez-la en dessous de 45 KB — un PNG ou WebP optimisé convient le mieux.';
 $wb['favicon_uploaded_txt'] = 'Favicon mis à jour. Les navigateurs conservent les icônes en cache avec ténacité — si l’ancienne persiste, rechargez avec Ctrl+Maj+R ou ouvrez un nouvel onglet.';

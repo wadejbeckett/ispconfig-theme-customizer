@@ -6,6 +6,7 @@ node_modules/
 *.tgz
 archive/
 mockup/webroot/
+mockup/__pycache__/
 
 # Version stamps written by install.sh. In symlink mode it stamps THROUGH the
 # link, so these land in the working tree. They are install-specific.

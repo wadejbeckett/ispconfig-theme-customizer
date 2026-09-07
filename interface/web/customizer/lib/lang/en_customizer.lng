@@ -82,20 +82,14 @@ $wb['rail_hex_txt'] = 'Sidebar colour';
 $wb['rail_hex_light_txt'] = 'Sidebar colour (light mode)';
 $wb['rail_hex_light_hint_txt'] = 'Used by designs that offer a light colour mode; leave it blank and the sidebar colour above is used in both modes. A design with no light mode reads this value and does nothing with it.';
 $wb['rail_hex_light_inherited_txt'] = '(inherited from Sidebar colour)';
-$wb['rail_contrast_txt'] = 'Sidebar text contrast:';
 $wb['login_bg_txt'] = 'Login background';
 $wb['colour_hint_txt'] = 'Hex value like #0065AB. Leave blank to keep the theme default.';
 
 $wb['preview_head_txt'] = 'Preview';
 $wb['preview_hint_txt'] = 'Colours and the panel name update as you type. Which logo each surface uses is worked out by the server, so it matches what the panel will really render.';
-$wb['preview_nav_txt'] = 'Navigation';
 $wb['preview_login_txt'] = 'Login screen';
 $wb['preview_tab_txt'] = 'Tab icon';
 $wb['preview_failed_txt'] = 'The preview could not be refreshed. What you see is the last version the server confirmed.';
-// The page draws a browser tab strip, a sidebar and a content card in one
-// frame now, so preview_nav_txt ("Navigation") no longer names what is in it.
-// preview_nav_txt itself stays: the tab strip's visually-hidden label still
-// uses preview_tab_txt, and preview_login_txt still captions the login pull.
 $wb['preview_panel_txt'] = 'Panel';
 // The accessible name of every "?" disclosure on the page, filled with the
 // label of the thing it explains. str_replace fills it, not sprintf — see
@@ -148,7 +142,6 @@ $wb['login_bg_error_regex'] = 'Login background must be a hex value like #17252B
 $wb['login_link_error_regex'] = 'The login footnote link must start with http:// or https://.';
 
 $wb['logo_uploaded_txt'] = 'Logo updated.';
-$wb['logo_removed_txt'] = 'Logo removed.';
 $wb['logo_bad_type_txt'] = 'Unsupported image. Use SVG (plain, script-free), PNG, JPEG, GIF or WebP.';
 $wb['logo_too_large_txt'] = 'That image is too large. Keep it under 45 KB — an optimised PNG or WebP works best.';
 $wb['favicon_uploaded_txt'] = 'Favicon updated. Browsers cache icons hard — if the old one lingers, hard-refresh (Ctrl+Shift+R) or open a new tab.';

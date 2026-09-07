@@ -290,8 +290,12 @@ says it is.
 - **`preview.php` mints no token, and that is deliberate.** It is the Branding
   page's live preview: admin-only, the same three checks in the same order,
   and **read-only** — one `SELECT` against `sys_ini` row 1, and no write of
-  its own: nothing to `sys_ini`, nothing to `sys_config`, nothing to disk. It
-  declares no function of its own either (every rule it applies is one of the
+  its own: nothing to `sys_ini`, nothing to `sys_config`, nothing to disk. Its
+  response carries the rendered preview rows, the surfaces list, the colour
+  blocks and three short status sentences (`summary`) built from the module's
+  own wordbook — no value a request supplied is echoed back, and the operator's
+  panel name never enters the payload at all.
+  It declares no function of its own either (every rule it applies is one of the
   shared resolvers in `lib/preview.inc.php`, so the preview cannot drift from
   what the panel renders). It answers `application/json` with `Cache-Control:
   no-store`, gated on `POST` (`405` otherwise) and on the same

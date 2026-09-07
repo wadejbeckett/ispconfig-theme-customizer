@@ -94,12 +94,19 @@ the page itself.)
 The UI ships in seven locales: English, German, French, Spanish, Italian, Dutch
 and Portuguese.
 
-The page itself is two columns on a wide screen — the settings on the left, a
-live preview on the right showing the navigation bar, the login screen and the
-tab icon — and one column below about 1000px, with the preview above the fields.
-Colours and the panel name update as you type; which logo each surface ends up
-with is worked out by the server, using the same code the panel itself uses, so
-the preview cannot promise a mark the panel will not render.
+The page leads with the picture. A full-width proof at the top shows two pulls
+side by side — the panel (tab strip, sidebar, topbar, a content card) and the
+login screen — and under them, on the same mount, a legend: the two supplied
+marks on the backgrounds they are for, the panel name, three status facts, the
+light-mode sidebar sample when you have set one, and the three colours as
+measured values. The settings follow in five cards, and the save bar is sticky,
+so the one control you are looking for is where you left it. Below about 900px
+of content width the page collapses to one column.
+
+Colours, the panel name and the contrast readouts update as you type; which logo
+each surface ends up with is worked out by the server, using the same code the
+panel itself uses, so the preview cannot promise a mark the panel will not
+render. Every paragraph of inline help is a "?" beside the thing it explains.
 
 **Some of it works with no design installed at all** — these values are read by
 ISPConfig core itself, which is why `install.sh --module` is a real option on a
