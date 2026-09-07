@@ -175,15 +175,35 @@ class page_action extends tform_actions {
         //* elsewhere in this file must stay CHECKBOX-only for the reasons
         //* written beside them. This loop is their exact complement.
         //*
+        //* $this->active_tab is NOT reliable here: tform_actions only sets it in
+        //* onShow() (the display path). The save path is
+        //* onLoad()->onSubmit()->onUpdate()->onBeforeUpdate(), which never touches
+        //* active_tab, so on a real save this method's copy of it is unset/null and
+        //* formDef['tabs'][null] does not exist -> the foreach would iterate
+        //* nothing and every field below would reach trim()/preg_match()
+        //* unguarded. getCurrentTab() reads the session tab pin set at the top of
+        //* this file (and is what onUpdateSave() already keys its own formDef
+        //* lookup on), so use that instead. If it is ever empty, or names a tab
+        //* this form doesn't have, fall back to every tab's fields so the guard
+        //* can never be silently skipped.
+        //*
         //* A STRING is left untouched on purpose: the validator must stay the
         //* thing that rejects a bad token, so a wrong value is reported rather
         //* than silently healed. '' is a legitimate posted value for several of
         //* these fields and must survive unchanged.
-        foreach($app->tform->formDef['tabs'][$this->active_tab]['fields'] as $key => $field) {
-            if($field['formtype'] === 'CHECKBOX') continue;
-            $this->dataRecord[$key] = customizer_posted_string(
-                isset($this->dataRecord[$key]) ? $this->dataRecord[$key] : null
-            );
+        $tab = $app->tform->getCurrentTab();
+        if($tab !== '' && isset($app->tform->formDef['tabs'][$tab])) {
+            $tabs_to_guard = array($tab => $app->tform->formDef['tabs'][$tab]);
+        } else {
+            $tabs_to_guard = $app->tform->formDef['tabs'];
+        }
+        foreach($tabs_to_guard as $tab_def) {
+            foreach($tab_def['fields'] as $key => $field) {
+                if($field['formtype'] === 'CHECKBOX') continue;
+                $this->dataRecord[$key] = customizer_posted_string(
+                    isset($this->dataRecord[$key]) ? $this->dataRecord[$key] : null
+                );
+            }
         }
 
         //* Users paste colours without the leading '#', and colour pickers hand

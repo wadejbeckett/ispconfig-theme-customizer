@@ -267,4 +267,53 @@ foreach (h_variant_matrix() as $row) {
 }
 echo 'MATRIX ' . json_encode($matrix) . "\n";
 
+/* ---- onBeforeUpdate's guard runs on the SAVE path, not the display path --
+ * customizer_edit.php cannot simply be require()d: it die()s outside an admin
+ * session and touches $_SESSION/$app at the top level. So this is a TEXT-level
+ * probe on the source, the same kind probe_tform.php already uses for
+ * structural checks that have no runtime surface of their own.
+ *
+ * $this->active_tab is set by tform_actions ONLY in onShow() (the display
+ * path). The save path is onLoad()->onSubmit()->onUpdate()->onBeforeUpdate(),
+ * which never sets it — so a guard keyed on active_tab silently iterates
+ * nothing on every real save, and the colour-normalisation loop right after it
+ * then runs trim()/preg_match() on whatever a crafted POST handed it,
+ * un-guarded. getCurrentTab() reads the session tab pin this file sets at the
+ * top (the same one onUpdateSave() already keys its own formDef lookup on),
+ * so that — not active_tab — is what onBeforeUpdate's guard must be built on.
+ */
+$edit_src = file_get_contents(__DIR__ . '/../../interface/web/customizer/customizer_edit.php');
+t_ok('customizer_edit.php is readable for the source probes below', $edit_src !== false);
+
+if ($edit_src !== false) {
+    $start = strpos($edit_src, 'function onBeforeUpdate()');
+    t_ok('onBeforeUpdate() is found', $start !== false);
+
+    if ($start !== false) {
+        //* Body ends at the next top-level "function " after this one.
+        $next  = strpos($edit_src, 'function ', $start + strlen('function onBeforeUpdate()'));
+        $body  = ($next !== false) ? substr($edit_src, $start, $next - $start) : substr($edit_src, $start);
+
+        //* The explanatory comment above the fix names active_tab on purpose
+        //* (it explains what NOT to key the guard on), so the probe checks for
+        //* the executable pattern rather than for the bare string: no
+        //* formDef[...][$this->active_tab] lookup left anywhere in the body.
+        t_ok('the guard is keyed on getCurrentTab(), not active_tab',
+            strpos($body, 'getCurrentTab()') !== false
+                && strpos($body, "['tabs'][\$this->active_tab]") === false,
+            $body);
+
+        //* The colour-normalisation loop must still cover exactly these four
+        //* keys — accent_hex, rail_hex, rail_hex_light and login_bg — in one
+        //* place, so a fifth colour field added later cannot be forgotten here
+        //* independently of the fields it is meant to guard.
+        t_ok('the colour-normalisation loop still lists all four colour keys',
+            (bool)preg_match(
+                "/foreach\\(array\\('accent_hex',\\s*'rail_hex',\\s*'rail_hex_light',\\s*'login_bg'\\)\\s*as\\s*\\\$k\\)/",
+                $body
+            ),
+            $body);
+    }
+}
+
 t_done();
