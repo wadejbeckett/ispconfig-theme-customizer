@@ -167,8 +167,9 @@ tells you.** On a design with a light colour mode, setting `rail_hex_light` give
 the navigation bar two backgrounds instead of one — and a mark that reads on a
 navy rail is the mark that disappears on a near-white one. Left on **Automatic**,
 each colour mode gets the variant that reads on *its* background, exactly as the
-login screen already does; the preview draws one swatch per background so you can
-see both before you commit. An explicit `logo_variant_nav` is still obeyed in
+login screen already does; the preview shows a second navigation pane painted
+with the light-mode colour, so you can see both rails and the logo each one
+picks before you commit. An explicit `logo_variant_nav` is still obeyed in
 both modes, because the escape hatch is absolute by design.
 
 On classic, neither colour reaches a logo, so neither is read: `rail_hex`
