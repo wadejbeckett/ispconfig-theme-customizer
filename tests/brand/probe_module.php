@@ -98,6 +98,47 @@ if (function_exists('customizer_logo_variant_posted')) {
     t_ok('...that the validator rejects rather than storing', !preg_match($re, (string)$arr), var_export($arr, true));
 }
 
+/* ---- the same guarantee, for every field on the form ---------------------
+ * The array guard existed for the two SELECTs alone. A crafted POST of
+ * accent_hex[]=x reached trim()/preg_match() with an array subject, which is a
+ * TypeError on PHP 8 — a fatal on an admin page rather than a validation error.
+ * The generalised helper is the same rule with the same token, so a malformed
+ * POST is REPORTED by the field's own validator rather than healed into a valid
+ * value or blown up.
+ */
+t_ok('customizer_posted_string() exists', function_exists('customizer_posted_string'));
+if (function_exists('customizer_posted_string')) {
+    t_eq('a string survives untouched', customizer_posted_string('#0065AB'), '#0065AB');
+    t_eq('an empty string survives untouched', customizer_posted_string(''), '');
+    t_eq('an absent field becomes empty', customizer_posted_string(null), '');
+
+    foreach (array(
+        'array'  => array('#0065AB'),
+        'nested' => array('a' => array('b')),
+        'int'    => 7,
+        'float'  => 1.5,
+        'bool'   => true,
+        'object' => new stdClass(),
+    ) as $label => $raw) {
+        $got = customizer_posted_string($raw);
+        t_ok("a $label POST becomes a string", is_string($got), gettype($got));
+        //* And a string every validator on this form rejects: the hex pattern,
+        //* the reference pattern and the variant pattern must all refuse it.
+        t_ok("...that the hex validator rejects", !preg_match('/^(#[0-9A-Fa-f]{6})?$/D', $got), $got);
+        t_ok("...that the reference validator rejects",
+            !preg_match('/^(https:\/\/[^\s"\'<>()\\\\]+|\/(?!\/)[^\s"\'<>()\\\\]+)?$/D', $got), $got);
+        t_ok("...that the variant validator rejects", !preg_match('/^(on_light|on_dark)?$/D', $got), $got);
+    }
+
+    //* The variant helper keeps its name and its contract, and is now one line
+    //* over the general one — two copies of "coerce to a rejectable token"
+    //* would be exactly the drift this file exists to prevent.
+    t_eq('the variant helper agrees with the general one for an array',
+        customizer_logo_variant_posted(array('on_dark')), customizer_posted_string(array('on_dark')));
+    t_eq('the variant helper agrees for null',
+        customizer_logo_variant_posted(null), customizer_posted_string(null));
+}
+
 /* ---- the preview describes what the CONTROLS say, not what is stored ------
  * On a validation error tform redisplays the raw POST, so the two selects show
  * the operator's new choice while render_image_previews() re-read the stored

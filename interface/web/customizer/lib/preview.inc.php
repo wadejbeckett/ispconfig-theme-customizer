@@ -341,6 +341,36 @@ function customizer_logo_variant_stored($surface, $branding) {
 }
 
 /**
+ * A POSTed field value, guaranteed to be a string, and guaranteed not to have
+ * been healed into a valid one.
+ *
+ * Every validated field on this form is one crafted POST away from a fatal: a
+ * VARCHAR field posted as an array (accent_hex[]=x) reaches tform_base's
+ * filters and validators with an array subject, and trim(), strip_tags() and
+ * preg_match() are all TypeErrors on PHP 8 — an admin page that dies instead of
+ * reporting a bad value. Neither case below is reachable from a browser; both
+ * are one request away from an authenticated admin.
+ *
+ * The coercion has to produce something the field's own validator REJECTS.
+ * Rewriting an array to '' satisfied the string requirement by writing a VALID
+ * value — the validator then passed, the save succeeded, and the page said
+ * "saved" having quietly reset the operator's choice. 'invalid' matches none of
+ * this form's three patterns (the hex, the reference and the variant one), so a
+ * malformed POST is reported like any other bad value.
+ *
+ * A genuinely ABSENT field still becomes '': there is nothing to report in that
+ * case, and the framework already treats a missing VARCHAR as '' one layer down
+ * (tform_base.inc.php:830).
+ *
+ * CHECKBOX fields are deliberately NOT put through this — see the caller.
+ */
+function customizer_posted_string($raw) {
+    if($raw === null)   return '';
+    if(is_string($raw)) return $raw;
+    return 'invalid';
+}
+
+/**
  * Normalise a POSTED logo-variant value so the VALIDATOR decides its fate.
  *
  * onBeforeUpdate has to guarantee a string reaches the framework: tform's
@@ -358,15 +388,13 @@ function customizer_logo_variant_stored($surface, $branding) {
  *
  * A missing field still becomes '': there is no value to report in that case,
  * and the framework already treats a missing VARCHAR as '' one layer down.
+ *
+ * The logo-variant flavour of the above, kept as its own name because the two
+ * SELECTs' contract is documented under it and probe_module tests it by name.
+ * One line, so the two can never disagree about the token.
  */
 function customizer_logo_variant_posted($raw) {
-    if($raw === null)   return '';
-    if(is_string($raw)) return $raw;
-
-    //* Any other type — an array is the reachable one — becomes a token that
-    //* matches neither 'on_light', 'on_dark' nor '', so the field's own REGEX
-    //* validator reports it like any other bad value.
-    return 'invalid';
+    return customizer_posted_string($raw);
 }
 
 /**

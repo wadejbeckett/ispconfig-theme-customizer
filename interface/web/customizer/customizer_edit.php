@@ -51,7 +51,7 @@ class page_action extends tform_actions {
      * re-parses the stored blob and only assigns the keys named below. Same
      * reasoning as sys_ini.custom_logo, which is a column and was never a
      * candidate for this list. */
-    private $branding_keys = array('logo_url', 'logo_url_on_dark', 'logo_variant_nav', 'logo_variant_login', 'favicon_url', 'accent_hex', 'rail_hex', 'login_bg', 'show_ispconfig_credit', 'show_theme_credit', 'show_version', 'show_design_picker');
+    private $branding_keys = array('logo_url', 'logo_url_on_dark', 'logo_variant_nav', 'logo_variant_login', 'favicon_url', 'accent_hex', 'rail_hex', 'rail_hex_light', 'login_bg', 'show_ispconfig_credit', 'show_theme_credit', 'show_version', 'show_design_picker');
     private $misc_keys      = array('company_name', 'custom_login_text', 'custom_login_link');
 
     function onShowEdit() {
@@ -84,6 +84,7 @@ class page_action extends tform_actions {
                 'favicon_url'           => isset($branding['favicon_url']) ? $branding['favicon_url'] : '',
                 'accent_hex'            => isset($branding['accent_hex']) ? $branding['accent_hex'] : '',
                 'rail_hex'              => isset($branding['rail_hex']) ? $branding['rail_hex'] : '',
+                'rail_hex_light'        => isset($branding['rail_hex_light']) ? $branding['rail_hex_light'] : '',
                 'login_bg'              => isset($branding['login_bg']) ? $branding['login_bg'] : '',
                 'custom_login_text'     => isset($misc['custom_login_text']) ? $misc['custom_login_text'] : '',
                 'custom_login_link'     => isset($misc['custom_login_link']) ? $misc['custom_login_link'] : '',
@@ -167,45 +168,37 @@ class page_action extends tform_actions {
             $app->tform->errorMessage .= $app->tform->lng('demo_mode_txt');
         }
 
-        foreach(array('accent_hex', 'rail_hex', 'login_bg') as $k) {
-            if(isset($this->dataRecord[$k]) && is_string($this->dataRecord[$k])) {
-                $v = trim($this->dataRecord[$k]);
-                if(preg_match('/^[0-9A-Fa-f]{6}$/', $v)) $v = '#' . $v;
-                if(preg_match('/^#[0-9A-Fa-f]{6}$/', $v)) $v = strtoupper($v);
-                $this->dataRecord[$k] = $v;
-            }
+        //* Guarantee a STRING reaches the framework for every field it is about
+        //* to filter and validate. CHECKBOX is excluded on purpose: _encode
+        //* already converts arrays to strings for RADIO and CHECKBOX
+        //* (tform_base.inc.php:819-823), and the two CHECKBOX-only loops
+        //* elsewhere in this file must stay CHECKBOX-only for the reasons
+        //* written beside them. This loop is their exact complement.
+        //*
+        //* A STRING is left untouched on purpose: the validator must stay the
+        //* thing that rejects a bad token, so a wrong value is reported rather
+        //* than silently healed. '' is a legitimate posted value for several of
+        //* these fields and must survive unchanged.
+        foreach($app->tform->formDef['tabs'][$this->active_tab]['fields'] as $key => $field) {
+            if($field['formtype'] === 'CHECKBOX') continue;
+            $this->dataRecord[$key] = customizer_posted_string(
+                isset($this->dataRecord[$key]) ? $this->dataRecord[$key] : null
+            );
         }
 
-        //* The two logo-variant selects: guarantee a STRING is present before the
-        //* framework touches the POST. Neither case below is reachable from a browser
-        //* — a <select> always posts, and only ever one of its own option values — but
-        //* both are one crafted POST away from an authenticated admin, and neither
-        //* fails softly:
-        //*   absent  -> tform_base::_decode reads $record[$key] unguarded
-        //*              (tform_base.inc.php:196; the pre-seed at :190-191 needs
-        //*              'filters', which these fields deliberately do not have), so
-        //*              the error-redisplay render prints a PHP 8 warning into the page;
-        //*   an array (logo_variant_nav[]=x) -> tform_base::_encode converts arrays to
-        //*              strings for RADIO and CHECKBOX only (:819-823) and hands the
-        //*              array straight to validateField, where preg_match() with a
-        //*              non-string subject is a TypeError on PHP 8 — a fatal on an
-        //*              admin page instead of a validation error.
-        //* A STRING is left untouched on purpose: the REGEX validator must stay the
-        //* thing that rejects a bad token, so a wrong value is reported rather than
-        //* silently healed into "automatic". '' is a legitimate posted value here (it
-        //* IS automatic) and must survive this method unchanged.
-        //*
-        //* The array case is why this goes through a helper rather than assigning ''.
-        //* Rewriting an array to '' satisfied the string requirement by writing a
-        //* VALID value: the validator then passed, onUpdateSave wrote it, and the page
-        //* redirected to "Settings saved." having quietly reset the operator's stored
-        //* choice to automatic. customizer_logo_variant_posted() yields a token the
-        //* validator rejects instead, so a malformed POST is reported like every other
-        //* bad value on this form. Only a genuinely ABSENT field still becomes ''.
-        foreach(array('logo_variant_nav', 'logo_variant_login') as $k) {
-            $this->dataRecord[$k] = customizer_logo_variant_posted(
-                isset($this->dataRecord[$k]) ? $this->dataRecord[$k] : null
-            );
+        //* Users paste colours without the leading '#', and colour pickers hand
+        //* back lowercase — normalise those into what the REGEX validators
+        //* accept. /D on both patterns for the same reason the validators carry
+        //* it: without it "$" also matches before a final newline, so a pasted
+        //* trailing LF would be '#'-prefixed and upper-cased here and then pass
+        //* a validator that should have rejected it. The SAVE-time TRIM filter
+        //* runs later, inside encode(); this runs on the raw POST, so it does
+        //* its own trim() first.
+        foreach(array('accent_hex', 'rail_hex', 'rail_hex_light', 'login_bg') as $k) {
+            $v = trim($this->dataRecord[$k]);
+            if(preg_match('/^[0-9A-Fa-f]{6}$/D', $v)) $v = '#' . $v;
+            if(preg_match('/^#[0-9A-Fa-f]{6}$/D', $v)) $v = strtoupper($v);
+            $this->dataRecord[$k] = $v;
         }
 
         parent::onBeforeUpdate();
