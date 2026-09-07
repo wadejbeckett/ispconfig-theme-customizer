@@ -66,6 +66,93 @@ if (function_exists('customizer_donation_hide_value')) {
     t_ok('the written value is a string, as sys_config stores it', is_string($off) && is_string($on));
 }
 
+/* ---- the news-feed toggle round trip ------------------------------------
+ * "Off" has to blank the three CORE-owned [misc] dashboard_atom_url_* keys,
+ * because core hides the feed for a role whose URL is empty. Blanking without a
+ * copy destroys an operator's private feed URL and their deliberate choice to
+ * leave a role blank; refilling all three with the ISPConfig default on the way
+ * back re-leaks ISPConfig branding to exactly the roles a white-label panel must
+ * not show it to. So each non-empty URL is stashed into a module-owned
+ * [branding] key and restored PER ROLE.
+ *
+ * Per role is the fix. The old rule restored only when ALL THREE were empty and
+ * then dropped every stash entry regardless, so a single role's URL returning by
+ * any other route deleted the other two stashes without ever restoring them.
+ */
+t_ok('customizer_news_feed_keys() exists', function_exists('customizer_news_feed_keys'));
+t_ok('customizer_news_feed_apply() exists', function_exists('customizer_news_feed_apply'));
+if (function_exists('customizer_news_feed_apply')) {
+    $A = 'dashboard_atom_url_admin';
+    $R = 'dashboard_atom_url_reseller';
+    $C = 'dashboard_atom_url_client';
+    $sA = 'news_url_admin';
+    $sR = 'news_url_reseller';
+    $sC = 'news_url_client';
+    $stock = 'https://www.ispconfig.org/atom';
+
+    //* OFF: every non-empty URL is copied out before it is blanked, and a role
+    //* the operator deliberately left empty stays empty rather than gaining one.
+    $off = customizer_news_feed_apply(
+        array($A => 'https://ops.example/feed', $R => '', $C => ''),
+        array($sA => '', $sR => '', $sC => ''), '0');
+    t_eq('off blanks the admin URL', $off['misc'][$A], '');
+    t_eq('off stashes the admin URL', $off['stash'][$sA], 'https://ops.example/feed');
+    t_eq('off leaves an already-empty role empty', $off['misc'][$R], '');
+    t_eq('off stashes nothing for an empty role', $off['stash'][$sR], '');
+
+    //* ON: each role is restored from its OWN stash, and the stash entry is
+    //* dropped only once that role holds a URL again.
+    $on = customizer_news_feed_apply(
+        array($A => '', $R => '', $C => ''),
+        array($sA => 'https://ops.example/feed', $sR => '', $sC => ''), '1');
+    t_eq('on restores the admin URL', $on['misc'][$A], 'https://ops.example/feed');
+    t_eq('on drops the consumed stash', $on['stash'][$sA], '');
+    t_eq('a role that never had a URL is not given one', $on['misc'][$R], '');
+
+    //* THE BUG: one role's URL back by another route must not destroy the other
+    //* roles' stashes. Under the old all-or-nothing gate this returned
+    //* stash = empty for all three with reseller and client never restored.
+    $mixed = customizer_news_feed_apply(
+        array($A => 'https://set-elsewhere.example/feed', $R => '', $C => ''),
+        array($sA => 'https://ops.example/a', $sR => 'https://ops.example/r', $sC => ''), '1');
+    t_eq('a URL set elsewhere is left alone', $mixed['misc'][$A], 'https://set-elsewhere.example/feed');
+    t_eq('...and its now-superseded stash is dropped', $mixed['stash'][$sA], '');
+    t_eq('...while another role IS restored from its own stash', $mixed['misc'][$R], 'https://ops.example/r');
+    t_eq('...and only then is that stash dropped', $mixed['stash'][$sR], '');
+    t_eq('a role with neither a URL nor a stash stays empty', $mixed['misc'][$C], '');
+
+    //* First-ever enable: nothing set and nothing stashed anywhere, so seed the
+    //* stock feed for all three — and ONLY then.
+    $first = customizer_news_feed_apply(
+        array($A => '', $R => '', $C => ''), array($sA => '', $sR => '', $sC => ''), '1');
+    t_eq('a first-ever enable seeds the stock feed for admin', $first['misc'][$A], $stock);
+    t_eq('...for reseller', $first['misc'][$R], $stock);
+    t_eq('...for client', $first['misc'][$C], $stock);
+
+    //* Already on, nothing stashed: an unrelated save must change nothing.
+    $noop = customizer_news_feed_apply(
+        array($A => 'https://ops.example/a', $R => '', $C => ''),
+        array($sA => '', $sR => '', $sC => ''), '1');
+    t_eq('an unrelated save leaves a set URL alone', $noop['misc'][$A], 'https://ops.example/a');
+    t_eq('an unrelated save does not refill a deliberately blank role', $noop['misc'][$R], '');
+
+    //* Off then on is lossless for every role that had a URL — the property the
+    //* field's hint text has always promised.
+    $start = array($A => 'https://a.example/f', $R => 'https://r.example/f', $C => '');
+    $step1 = customizer_news_feed_apply($start, array($sA => '', $sR => '', $sC => ''), '0');
+    $step2 = customizer_news_feed_apply($step1['misc'], $step1['stash'], '1');
+    t_eq('off then on restores admin', $step2['misc'][$A], 'https://a.example/f');
+    t_eq('off then on restores reseller', $step2['misc'][$R], 'https://r.example/f');
+    t_eq('off then on leaves the blank role blank', $step2['misc'][$C], '');
+    t_eq('off then on leaves no stash behind', $step2['stash'], array($sA => '', $sR => '', $sC => ''));
+
+    //* A non-string in either map is not fatal and is read as empty.
+    $junk = customizer_news_feed_apply(array($A => null, $R => array('x'), $C => ''),
+        array($sA => 7, $sR => '', $sC => ''), '0');
+    t_eq('a non-string URL is read as empty', $junk['misc'][$A], '');
+    t_eq('a non-string stash is read as empty', $junk['stash'][$sA], '');
+}
+
 /* ---- luminance is defined once, here too --------------------------------- */
 t_ok('customizer_luminance() exists', function_exists('customizer_luminance'));
 if (function_exists('customizer_luminance')) {
@@ -96,6 +183,47 @@ if (function_exists('customizer_logo_variant_posted')) {
     $arr = customizer_logo_variant_posted(array('on_dark'));
     t_ok('an array POST becomes a string', is_string($arr), gettype($arr));
     t_ok('...that the validator rejects rather than storing', !preg_match($re, (string)$arr), var_export($arr, true));
+}
+
+/* ---- the same guarantee, for every field on the form ---------------------
+ * The array guard existed for the two SELECTs alone. A crafted POST of
+ * accent_hex[]=x reached trim()/preg_match() with an array subject, which is a
+ * TypeError on PHP 8 — a fatal on an admin page rather than a validation error.
+ * The generalised helper is the same rule with the same token, so a malformed
+ * POST is REPORTED by the field's own validator rather than healed into a valid
+ * value or blown up.
+ */
+t_ok('customizer_posted_string() exists', function_exists('customizer_posted_string'));
+if (function_exists('customizer_posted_string')) {
+    t_eq('a string survives untouched', customizer_posted_string('#0065AB'), '#0065AB');
+    t_eq('an empty string survives untouched', customizer_posted_string(''), '');
+    t_eq('an absent field becomes empty', customizer_posted_string(null), '');
+
+    foreach (array(
+        'array'  => array('#0065AB'),
+        'nested' => array('a' => array('b')),
+        'int'    => 7,
+        'float'  => 1.5,
+        'bool'   => true,
+        'object' => new stdClass(),
+    ) as $label => $raw) {
+        $got = customizer_posted_string($raw);
+        t_ok("a $label POST becomes a string", is_string($got), gettype($got));
+        //* And a string every validator on this form rejects: the hex pattern,
+        //* the reference pattern and the variant pattern must all refuse it.
+        t_ok("...that the hex validator rejects", !preg_match('/^(#[0-9A-Fa-f]{6})?$/D', $got), $got);
+        t_ok("...that the reference validator rejects",
+            !preg_match('/^(https:\/\/[^\s"\'<>()\\\\]+|\/(?!\/)[^\s"\'<>()\\\\]+)?$/D', $got), $got);
+        t_ok("...that the variant validator rejects", !preg_match('/^(on_light|on_dark)?$/D', $got), $got);
+    }
+
+    //* The variant helper keeps its name and its contract, and is now one line
+    //* over the general one — two copies of "coerce to a rejectable token"
+    //* would be exactly the drift this file exists to prevent.
+    t_eq('the variant helper agrees with the general one for an array',
+        customizer_logo_variant_posted(array('on_dark')), customizer_posted_string(array('on_dark')));
+    t_eq('the variant helper agrees for null',
+        customizer_logo_variant_posted(null), customizer_posted_string(null));
 }
 
 /* ---- the preview describes what the CONTROLS say, not what is stored ------
@@ -209,8 +337,224 @@ t_eq('a rail_hex the operator set is what the nav swatch is drawn on',
     customizer_logo_surfaces('clarity', array('rail_hex' => '#FFFFFF'))[0],
     array('surface' => 'nav', 'label' => '', 'variant' => 'on_light', 'bg' => '#FFFFFF'));
 
+//* rail_hex_light gives clarity's nav a SECOND backdrop, exactly as the login
+//* slot has always had one per colour mode — and only when the two rails
+//* actually differ, so a panel that has not set it sees no change at all.
+$cl = customizer_logo_surfaces('clarity', array('rail_hex' => '#01243D', 'rail_hex_light' => '#FFFFFF'));
+t_eq('clarity with two rails: four swatches', count($cl), 4);
+t_eq('clarity nav, dark mode', $cl[0],
+    array('surface' => 'nav', 'label' => '', 'variant' => 'on_dark', 'bg' => '#01243D'));
+t_eq('clarity nav, light mode', $cl[1],
+    array('surface' => 'nav', 'label' => '', 'variant' => 'on_light', 'bg' => '#FFFFFF'));
+
+t_eq('two identical rails are one backdrop, not two',
+    count(customizer_logo_surfaces('clarity', array('rail_hex' => '#01243D', 'rail_hex_light' => '#01243D'))), 3);
+t_eq('a light rail alone still describes both modes',
+    count(customizer_logo_surfaces('clarity', array('rail_hex_light' => '#FFFFFF'))), 4);
+t_eq('an explicit choice is obeyed on both nav backdrops',
+    customizer_logo_surfaces('clarity',
+        array('rail_hex' => '#01243D', 'rail_hex_light' => '#FFFFFF', 'logo_variant_nav' => 'on_dark'))[1]['variant'],
+    'on_dark');
+t_eq('an invalid light rail changes nothing',
+    count(customizer_logo_surfaces('clarity', array('rail_hex' => '#01243D', 'rail_hex_light' => 'nonsense'))), 3);
+t_eq('classic is untouched by the new key',
+    customizer_logo_surfaces('classic', array('rail_hex_light' => '#FFFFFF')),
+    customizer_logo_surfaces('classic', array()));
+
 t_eq('an unknown design is described as nothing rather than guessed at',
     customizer_logo_surfaces('nosuchdesign', array()), array());
+
+/* ---- rail ink, measured rather than pivoted ------------------------------
+ * The Branding page has to tell the operator, while they are typing, what
+ * colour their sidebar text will be. That decision is clarity's
+ * brand_rail_vars(), which compares the white and black contrast ratios rather
+ * than pivoting on a lightness constant — a rail like #767676, sitting between
+ * the two common pivots, is handed the WORSE ink by any rule that rounds.
+ *
+ * brand.php cannot be included (it is a pre-auth endpoint that connects to the
+ * database and prints CSS on include), so the DIRECTION rule is copied here and
+ * run.php cross-compares the two copies over h_rails() via the INKMATRIX line at
+ * the bottom of this file. The ink VALUES are deliberately not copied: clarity
+ * walks those out of the rail's own hue up an alpha ladder, and this preview
+ * promises the direction and the ratio, not the token.
+ */
+t_ok('customizer_contrast() exists', function_exists('customizer_contrast'));
+if (function_exists('customizer_contrast')) {
+    t_ok('black on white is ~21:1', abs(customizer_contrast('#000000', '#FFFFFF') - 21.0) < 0.05);
+    t_ok('a colour against itself is 1:1', abs(customizer_contrast('#0065AB', '#0065AB') - 1.0) < 1e-9);
+    foreach (h_rails() as $hex) {
+        t_ok("contrast against white agrees with the spec for $hex",
+            abs(customizer_contrast('#FFFFFF', $hex) - h_contrast('#FFFFFF', $hex)) < 1e-9);
+    }
+}
+
+t_ok('customizer_rail_ink() exists', function_exists('customizer_rail_ink'));
+if (function_exists('customizer_rail_ink')) {
+    t_eq('a navy rail takes white ink', customizer_rail_ink('#01243D'), '#FFFFFF');
+    t_eq('a white rail takes dark ink', customizer_rail_ink('#FFFFFF'), '#000000');
+    t_eq('a mid grey takes the ink that measures better', customizer_rail_ink('#767676'), '#000000');
+    t_eq('an invalid hex answers nothing rather than guessing', customizer_rail_ink('red'), '');
+    t_eq('a trailing newline is not a valid hex', customizer_rail_ink("#FFFFFF\n"), '');
+    t_eq('a non-string is not fatal', customizer_rail_ink(array('#FFFFFF')), '');
+    foreach (h_rails() as $hex) {
+        $ink = customizer_rail_ink($hex);
+        t_ok("$hex: the chosen ink is the better-measuring of the two",
+            customizer_contrast($ink, $hex) >= customizer_contrast(($ink === '#FFFFFF' ? '#000000' : '#FFFFFF'), $hex),
+            "$ink on $hex");
+    }
+}
+
+/* ---- candidate values from the form, not from the store ------------------
+ * The live preview describes the values the operator is LOOKING AT, which are
+ * not yet stored. The overlay is allowlisted key by key and each candidate is
+ * accepted only if it passes that key's own rule — an invalid candidate falls
+ * back to the stored value, which is exactly what a save would leave in place,
+ * because a save with an invalid value is refused outright.
+ *
+ * This is deliberately a SECOND, wider function beside
+ * customizer_branding_with_posted_variants(): that one takes the two variant
+ * keys alone and is used on the validation-error redisplay, where letting
+ * arbitrary POST keys into the blob would be a much wider contract than that
+ * page needs. This one is the preview endpoint's, and is wider on purpose.
+ */
+t_ok('customizer_branding_with_posted_candidates() exists',
+    function_exists('customizer_branding_with_posted_candidates'));
+if (function_exists('customizer_branding_with_posted_candidates')) {
+    $stored = array('rail_hex' => '#01243D', 'accent_hex' => '#0065AB',
+                    'logo_url' => '/themes/custom/a.svg', 'logo_variant_nav' => '');
+
+    $m = customizer_branding_with_posted_candidates($stored, array('rail_hex' => '#FFFFFF'));
+    t_eq('a valid candidate colour wins', $m['rail_hex'], '#FFFFFF');
+    t_eq('an untouched key keeps its stored value', $m['accent_hex'], '#0065AB');
+
+    t_eq('a hex without its hash is repaired, as onBeforeUpdate repairs it',
+        customizer_branding_with_posted_candidates($stored, array('rail_hex' => 'ffffff'))['rail_hex'], '#FFFFFF');
+    t_eq('a hex with surrounding space is trimmed',
+        customizer_branding_with_posted_candidates($stored, array('rail_hex' => ' #ffffff '))['rail_hex'], '#FFFFFF');
+    t_eq('an invalid candidate colour leaves the stored one showing',
+        customizer_branding_with_posted_candidates($stored, array('rail_hex' => 'nonsense'))['rail_hex'], '#01243D');
+    //* A trailing newline is TRIMMED rather than refused, and that is the point:
+    //* customizer_edit.php's onBeforeUpdate trims the raw POST before the
+    //* validators see it (customizer_edit.php, the accent_hex/rail_hex/
+    //* rail_hex_light/login_bg loop), so a real save of this same POST stores
+    //* '#FFFFFF'. A preview that refused it would be describing a panel that
+    //* does not exist. What must NOT happen is the newline surviving into a
+    //* stored value, and it does not — the /D on both patterns is what stops
+    //* '$' matching before a final LF.
+    t_eq('a trailing newline is trimmed, exactly as a real save trims it',
+        customizer_branding_with_posted_candidates($stored, array('rail_hex' => "#FFFFFF\n"))['rail_hex'], '#FFFFFF');
+    t_eq('an interior newline is not repairable and leaves the stored one showing',
+        customizer_branding_with_posted_candidates($stored, array('rail_hex' => "#FFF\nFFF"))['rail_hex'], '#01243D');
+    t_eq('a blank candidate is a real value — it means "the design\'s own"',
+        customizer_branding_with_posted_candidates($stored, array('rail_hex' => ''))['rail_hex'], '');
+
+    t_eq('the new light rail is carried',
+        customizer_branding_with_posted_candidates($stored, array('rail_hex_light' => '#E7EBF0'))['rail_hex_light'], '#E7EBF0');
+
+    t_eq('a valid reference path is carried',
+        customizer_branding_with_posted_candidates($stored, array('logo_url' => '/themes/custom/b.svg'))['logo_url'],
+        '/themes/custom/b.svg');
+    t_eq('a protocol-relative reference is refused',
+        customizer_branding_with_posted_candidates($stored, array('logo_url' => '//evil.example/b.svg'))['logo_url'],
+        '/themes/custom/a.svg');
+    t_eq('an http reference is refused',
+        customizer_branding_with_posted_candidates($stored, array('logo_url' => 'http://x.example/b.svg'))['logo_url'],
+        '/themes/custom/a.svg');
+
+    t_eq('a variant candidate is carried',
+        customizer_branding_with_posted_candidates($stored, array('logo_variant_nav' => 'on_dark'))['logo_variant_nav'], 'on_dark');
+    t_eq('an unrecognised variant is refused',
+        customizer_branding_with_posted_candidates($stored, array('logo_variant_nav' => 'garbage'))['logo_variant_nav'], '');
+
+    $wide = customizer_branding_with_posted_candidates($stored,
+        array('logo_on_dark' => 'data:image/png;base64,AA', 'favicon' => 'data:image/png;base64,AA',
+              'custom_logo' => 'data:image/png;base64,AA', 'show_version' => '0'));
+    t_ok('an uploaded image cannot be introduced by a POST', !isset($wide['logo_on_dark']) && !isset($wide['favicon']));
+    t_ok('an unrelated key cannot be introduced by a POST', !isset($wide['show_version']));
+    t_ok('a non-array POST is ignored',
+        customizer_branding_with_posted_candidates($stored, null) === $stored);
+}
+
+/* ---- one colour, as the preview column needs it -------------------------- */
+t_ok('customizer_preview_colour() exists', function_exists('customizer_preview_colour'));
+if (function_exists('customizer_preview_colour')) {
+    $c = customizer_preview_colour(array('rail_hex' => '#01243D'), 'rail_hex');
+    t_eq('the hex comes back normalised', $c['hex'], '#01243D');
+    t_eq('with the ink that will be printed on it', $c['ink'], '#FFFFFF');
+    t_ok('and the measured ratio', abs($c['ratio'] - round(h_contrast('#FFFFFF', '#01243D'), 2)) < 1e-9, $c['ratio']);
+
+    $u = customizer_preview_colour(array(), 'rail_hex');
+    t_eq('an unset colour says so rather than inventing one', $u,
+        array('hex' => '', 'ink' => '', 'ratio' => null));
+    t_eq('an invalid stored colour is treated as unset',
+        customizer_preview_colour(array('rail_hex' => 'nonsense'), 'rail_hex'),
+        array('hex' => '', 'ink' => '', 'ratio' => null));
+}
+
+/* ---- the whole payload the endpoint returns ------------------------------
+ * Built here rather than in preview.php so it can be tested without a database,
+ * an HTTP request or a session. preview.php is then an auth-and-IO shell with no
+ * decision of its own in it.
+ */
+t_ok('customizer_preview_payload() exists', function_exists('customizer_preview_payload'));
+if (function_exists('customizer_preview_payload')) {
+    $png = 'data:image/png;base64,iVBORw0KGgo=';
+    $texts = array('no_logo' => 'NOLOGO', 'fallback_from_dark' => 'FBDARK',
+                   'fallback_from_light' => 'FBLIGHT', 'no_favicon' => 'NOFAV',
+                   'favicon_url_wins' => 'FAVURL');
+
+    $p = customizer_preview_payload(
+        array('rail_hex' => '#01243D'), $png,
+        array('rail_hex' => '#FFFFFF'), array('clarity'),
+        array('nav' => 'Navigation', 'login' => 'Login screen'), $texts);
+
+    t_ok('the three preview rows are rendered', isset($p['previews']['used_logo'],
+        $p['previews']['used_logo_on_dark'], $p['previews']['used_favicon']));
+    t_ok('the logo row carries the stored artwork', strpos($p['previews']['used_logo'], $png) !== false);
+    t_ok('the favicon row says nothing is set', strpos($p['previews']['used_favicon'], 'NOFAV') !== false);
+
+    t_eq('the candidate rail is what the colours block reports', $p['colours']['rail']['hex'], '#FFFFFF');
+    t_eq('...with the ink measured for it', $p['colours']['rail']['ink'], '#000000');
+    t_eq('an unset accent is reported unset', $p['colours']['accent']['hex'], '');
+
+    //* rail_hex_light falls back to rail_hex: a design with a light scope paints
+    //* the same rail in both modes until the operator says otherwise, and the
+    //* preview must show the operator that, not an empty box.
+    t_eq('the light rail inherits the rail when it is unset', $p['colours']['rail_light']['hex'], '#FFFFFF');
+    t_eq('...and says that it inherited', $p['colours']['rail_light']['inherited'], true);
+    $p2 = customizer_preview_payload(array(), '', array('rail_hex' => '#01243D', 'rail_hex_light' => '#E7EBF0'),
+        array('clarity'), array(), $texts);
+    t_eq('a set light rail is its own value', $p2['colours']['rail_light']['hex'], '#E7EBF0');
+    t_eq('...and says it did not inherit', $p2['colours']['rail_light']['inherited'], false);
+
+    //* The surfaces list is the resolver's own output, so the caller can show
+    //* which mark each surface of each installed design ends up with.
+    t_ok('the surfaces list is carried', is_array($p['surfaces']) && count($p['surfaces']) > 0);
+    foreach ($p['surfaces'] as $s) {
+        t_ok('every surface entry names a design, a surface, a variant and a colour',
+            isset($s['design'], $s['surface'], $s['variant'], $s['bg']));
+    }
+
+    //* ...and every entry carries the INK for its own backdrop, because the page
+    //* JS paints these panes and does not implement the ink rule at all. The
+    //* direction lives in exactly one place — customizer_rail_ink() — and the
+    //* payload is the only way it reaches the browser.
+    foreach ($p['surfaces'] as $s) {
+        t_ok('every surface entry carries its measured ink and ratio',
+            isset($s['ink'], $s['ratio']) && $s['ink'] === customizer_rail_ink($s['bg'])
+                && abs($s['ratio'] - round(h_contrast($s['ink'], $s['bg']), 2)) < 1e-9,
+            json_encode($s));
+    }
+
+    //* Nothing the operator typed as free text is echoed back. The page renders
+    //* the panel name itself, from the input, as text — a name round-tripped
+    //* through JSON into innerHTML would be a new path for no gain.
+    t_ok('no free text is echoed back', !isset($p['company_name']));
+
+    //* A POST that is not an array, and one carrying nothing this reads.
+    $p3 = customizer_preview_payload(array('rail_hex' => '#01243D'), '', null, array('clarity'), array(), $texts);
+    t_eq('a non-array POST previews the stored values', $p3['colours']['rail']['hex'], '#01243D');
+}
 
 /* ---- one resolver signature across all three copies ---------------------- */
 t_eq('explicit choice beats a contradicting background',
@@ -224,6 +568,83 @@ $matrix = array();
 foreach (h_variant_matrix() as $row) {
     $matrix[] = customizer_logo_variant_for_surface($row[0], $row[1], $row[2]);
 }
+/* The ink DIRECTION on every rail in the shared grid, cross-compared by run.php
+ * against the direction clarity's shipped brand_rail_vars() actually emits.
+ * 'white' or 'dark' — not the token, because the two are allowed to differ in
+ * value and must never differ in direction. */
+$ink = array();
+foreach (h_rails() as $rail) {
+    $ink[] = (customizer_rail_ink($rail) === '#FFFFFF') ? 'white' : 'dark';
+}
+echo 'INKMATRIX ' . json_encode($ink) . "\n";
+
 echo 'MATRIX ' . json_encode($matrix) . "\n";
+
+/* ---- onBeforeUpdate's guard runs on the SAVE path, not the display path --
+ * customizer_edit.php cannot simply be require()d: it die()s outside an admin
+ * session and touches $_SESSION/$app at the top level. So this is a TEXT-level
+ * probe on the source, the same kind probe_tform.php already uses for
+ * structural checks that have no runtime surface of their own.
+ *
+ * $this->active_tab is set by tform_actions ONLY in onShow() (the display
+ * path). The save path is onLoad()->onSubmit()->onUpdate()->onBeforeUpdate(),
+ * which never sets it — so a guard keyed on active_tab silently iterates
+ * nothing on every real save, and the colour-normalisation loop right after it
+ * then runs trim()/preg_match() on whatever a crafted POST handed it,
+ * un-guarded. getCurrentTab() reads the session tab pin this file sets at the
+ * top (the same one onUpdateSave() already keys its own formDef lookup on),
+ * so that — not active_tab — is what onBeforeUpdate's guard must be built on.
+ */
+$edit_src = file_get_contents(__DIR__ . '/../../interface/web/customizer/customizer_edit.php');
+t_ok('customizer_edit.php is readable for the source probes below', $edit_src !== false);
+
+if ($edit_src !== false) {
+    $start = strpos($edit_src, 'function onBeforeUpdate()');
+    t_ok('onBeforeUpdate() is found', $start !== false);
+
+    if ($start !== false) {
+        //* Body ends at the next top-level "function " after this one.
+        $next  = strpos($edit_src, 'function ', $start + strlen('function onBeforeUpdate()'));
+        $body  = ($next !== false) ? substr($edit_src, $start, $next - $start) : substr($edit_src, $start);
+
+        //* The explanatory comment above the fix names active_tab on purpose
+        //* (it explains what NOT to key the guard on), so the probe checks for
+        //* the executable pattern rather than for the bare string: no
+        //* formDef[...][$this->active_tab] lookup left anywhere in the body.
+        t_ok('the guard is keyed on getCurrentTab(), not active_tab',
+            strpos($body, 'getCurrentTab()') !== false
+                && strpos($body, "['tabs'][\$this->active_tab]") === false,
+            $body);
+
+        //* The colour-normalisation loop must still cover exactly these four
+        //* keys — accent_hex, rail_hex, rail_hex_light and login_bg — in one
+        //* place, so a fifth colour field added later cannot be forgotten here
+        //* independently of the fields it is meant to guard.
+        t_ok('the colour-normalisation loop still lists all four colour keys',
+            (bool)preg_match(
+                "/foreach\\(array\\('accent_hex',\\s*'rail_hex',\\s*'rail_hex_light',\\s*'login_bg'\\)\\s*as\\s*\\\$k\\)/",
+                $body
+            ),
+            $body);
+    }
+}
+
+/* ---- bin/purge_branding.php must not keep its own copy of the news-feed map
+ * customizer_news_feed_keys() in lib/dashlets.inc.php IS that mapping. A second,
+ * inline literal of the same 'dashboard_atom_url_*' => 'news_url_*' pairs here
+ * would be exactly the drift the comment above customizer_news_feed_keys()
+ * claims does not exist — two copies of a key-name mapping that can silently
+ * fall out of step. Text-level, like the onBeforeUpdate probes above: this
+ * script die()s outside a real ISPConfig install and cannot simply be required.
+ */
+$purge_src = file_get_contents(__DIR__ . '/../../bin/purge_branding.php');
+t_ok('bin/purge_branding.php is readable for the source probe below', $purge_src !== false);
+
+if ($purge_src !== false) {
+    t_ok('purge_branding.php has no inline duplicate of the atom-key map',
+        !preg_match("/'dashboard_atom_url_[a-z]+'\\s*=>\\s*'news_url_[a-z]+'/", $purge_src));
+    t_ok('purge_branding.php uses customizer_news_feed_keys() instead',
+        strpos($purge_src, 'customizer_news_feed_keys()') !== false);
+}
 
 t_done();

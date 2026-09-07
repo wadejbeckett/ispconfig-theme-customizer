@@ -239,6 +239,22 @@ if (function_exists('brand_contrast')) {
     t_ok('a colour against itself is 1:1', abs(brand_contrast('#0065AB', '#0065AB') - 1.0) < 1e-9);
 }
 
+/* ---- the same hex gate, and the same anchor -----------------------------
+ * The twin of the block in probe_classic.php. classic's copy of brand_hex() was
+ * missing /D and let "#FFFFFF\n" through into a text/css response; this one has
+ * always carried it. Both are asserted from now on, so the pair cannot drift
+ * again in either direction.
+ */
+t_ok('brand_hex() exists', function_exists('brand_hex'));
+if (function_exists('brand_hex')) {
+    t_eq('a valid hex is returned as stored',
+        brand_hex(array('rail_hex' => '#01243D'), 'rail_hex'), '#01243D');
+    t_eq('an absent key is empty', brand_hex(array(), 'rail_hex'), '');
+    t_eq('a missing hash is refused', brand_hex(array('rail_hex' => '01243D'), 'rail_hex'), '');
+    t_eq('a trailing space is refused', brand_hex(array('rail_hex' => '#01243D '), 'rail_hex'), '');
+    t_eq('a trailing newline is refused', brand_hex(array('rail_hex' => "#01243D\n"), 'rail_hex'), '');
+}
+
 /* ---- the light-mode login filter ----------------------------------------
  * Extracted from the endpoint body, where the test read
  * `$light_slot !== '' && !$one_variant`. The left half could never be false when
@@ -269,6 +285,20 @@ $matrix = array();
 foreach (h_variant_matrix() as $row) {
     $matrix[] = brand_logo_variant_pref($row[0], $row[1], $row[2]);
 }
+/* The same direction, read off the SHIPPED output rather than restated: flatten
+ * --nz-rail-text onto the rail and ask whether the ink is lighter or darker than
+ * the thing it is printed on. Restating the branch condition here would be a
+ * test of the test; this is a property of what brand_rail_vars() emits, which is
+ * what the module's preview has to agree with. Any legible ink differs from its
+ * backdrop by far more than a rounding error, so the comparison is unambiguous. */
+$ink = array();
+foreach (h_rails() as $rail) {
+    $d    = h_decls(brand_rail_vars($rail));
+    $flat = h_flatten($d['--nz-rail-text'], $rail);
+    $ink[] = (h_lum($flat) > h_lum($rail)) ? 'white' : 'dark';
+}
+echo 'INKMATRIX ' . json_encode($ink) . "\n";
+
 echo 'MATRIX ' . json_encode($matrix) . "\n";
 
 t_done();

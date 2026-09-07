@@ -9,28 +9,189 @@
 <div id="nz-msg-slot"></div>
 
 <style>
-  /* keep the hex field and its colour swatch on one line (form-control is a
-     100%-width block in both the stock theme and Clarity) */
-  #pageContent input.nz-hexfield { display: inline-block; width: 9em; vertical-align: middle; }
-  #pageContent input.nz-hexpick  { height: 36px; width: 48px; padding: 2px 3px; margin-left: 8px;
-                                   vertical-align: middle; border: 0; background: none; cursor: pointer; }
-  /* The two logo variants are separate sub-blocks of one fieldset, not two
-     fieldsets: they are one decision ("which mark goes on which background"),
-     and a rule between them says so without implying they are unrelated
-     settings. h4 rather than a nested legend so screen-reader users can jump
-     between the variants by heading. */
-  #pageContent .nz-logo-variant { margin-bottom: 6px; }
-  #pageContent .nz-logo-variant + .nz-logo-variant { border-top: 1px solid rgba(128,128,128,0.25);
-                                                     padding-top: 14px; margin-top: 18px; }
-  #pageContent .nz-logo-variant h4 { margin: 0 0 4px; font-size: 15px; font-weight: 700; }
-  /* The placement block is a third sub-block of the same fieldset and takes the
-     same rule above it, because it is where the two marks are ASSIGNED to
-     surfaces and that decision belongs with them. It gets its own class rather
-     than a third .nz-logo-variant: it is not a third artwork slot, has no
-     preview and no h4, and reusing the class would make the sibling rule and
-     the heading rule above describe something they no longer describe. */
-  #pageContent .nz-logo-variant + .nz-logo-placement { border-top: 1px solid rgba(128,128,128,0.25);
-                                                       padding-top: 14px; margin-top: 18px; }
+  /* This page has no stylesheet of its own, by design. Every colour below is
+     var(--pz-…, var(--nz-…, <stock fallback>)) — phosphor's token, then
+     clarity's, then a neutral literal — so the page inherits whichever design is
+     active and looks deliberate under a design that has neither. No rule here
+     may name a colour that belongs to one design.
+
+     Everything is prefixed #nz-brandpage or #pageContent so it beats a design's
+     own rules on specificity rather than with !important, and nothing here
+     styles focus: every design ships a focus indicator and this page must not
+     replace it. */
+
+  /* The two columns. The collapse is measured on the CONTENT column, not the
+     viewport: a rail takes ~232px, so a 1024px window leaves this page far less
+     than 1024px to lay out in and a viewport query would hold two columns in a
+     space that cannot carry them. container-type goes on OUR wrapper — never on
+     #pageContent, which is core's element. The viewport query is the fallback
+     where @container is unsupported, and is set wide enough that it errs toward
+     one column. */
+  #nz-brandpage { container-type: inline-size; container-name: nzbrand; }
+  #nz-brandpage .nz-brandgrid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 28px; align-items: start; }
+  @container nzbrand (max-width: 900px) {
+    #nz-brandpage .nz-brandgrid { grid-template-columns: minmax(0, 1fr); }
+    #nz-brandpage .nz-brandpreview { order: -1; position: static; }
+  }
+  @supports not (container-type: inline-size) {
+    @media (max-width: 1200px) {
+      #nz-brandpage .nz-brandgrid { grid-template-columns: minmax(0, 1fr); }
+      #nz-brandpage .nz-brandpreview { order: -1; position: static; }
+    }
+  }
+  #nz-brandpage .nz-brandfields { min-width: 0; }
+
+  /* The preview column. Sticky under the topbar, whose height is a design token
+     where one exists. */
+  #nz-brandpage .nz-brandpreview {
+    position: sticky;
+    top: calc(var(--pz-topbar-h, var(--nz-topbar-h, 56px)) + 16px);
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid var(--pz-edge, var(--nz-border, rgba(128,128,128,0.25)));
+    border-radius: var(--pz-radius-card, var(--nz-radius-card, 8px));
+    background: var(--pz-glass, var(--nz-card, transparent));
+  }
+  #nz-brandpage .nz-brandpreview h2 { margin: 0 0 4px; font-size: 16px; font-weight: 600; }
+  #nz-brandpage .nz-brandpreview .help-block { margin: 0 0 14px; }
+  #nz-brandpage .nz-prevpane { margin: 0 0 14px; }
+  #nz-brandpage .nz-prevpane:last-child { margin-bottom: 0; }
+  /* The light-mode rail pane ships hidden and the script reveals it only when
+     rail_hex_light carries a value. [hidden] is the mechanism, so no rule in
+     this block may give .nz-prevpane a display — and this rule restates it at
+     our own specificity, because a design that sets `figure { display: block }`
+     would otherwise beat the browser's own [hidden] rule and leak the pane. */
+  #nz-brandpage .nz-prevpane[hidden] { display: none; }
+  #nz-brandpage .nz-prevpane figcaption {
+    margin: 0 0 6px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--pz-ink-muted, var(--nz-text-muted, #6c757d));
+  }
+  #nz-brandpage .nz-prevframe {
+    border: 1px solid var(--pz-edge, var(--nz-border, rgba(128,128,128,0.25)));
+    border-radius: var(--pz-radius-ctl, var(--nz-radius-ctl, 4px));
+    overflow: hidden;
+  }
+  /* The panes are painted by JS from the operator's own colours; these are the
+     shapes only, so an unset colour still draws a recognisable frame. */
+  #nz-brandpage .nz-prevnav { display: flex; min-height: 92px; }
+  #nz-brandpage .nz-prevnav-rail { flex: none; width: 92px; padding: 9px 0; }
+  #nz-brandpage .nz-prevnav-logo { padding: 0 10px 9px; font-size: 11px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #nz-brandpage .nz-prevnav-item { position: relative; padding: 3px 10px; font-size: 10px; }
+  #nz-brandpage .nz-prevnav-item.is-active { font-weight: 600; }
+  #nz-brandpage .nz-prevnav-item.is-active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: currentColor; }
+  #nz-brandpage .nz-prevnav-body { flex: 1 1 auto; padding: 10px; background: var(--pz-ground, var(--nz-page, #ffffff)); }
+  #nz-brandpage .nz-prevbar { height: 7px; margin-bottom: 6px; border-radius: 2px; background: var(--pz-raised, var(--nz-card, rgba(128,128,128,0.18))); }
+  /* The light-mode pane depicts a design's LIGHT colour mode, so its ground is
+     a literal and not --pz-ground: under a dark design that token is dark, and
+     a light rail on a dark ground depicts neither mode. A literal is safe here
+     in a way it would never be on a rail — this is the module's own preview
+     chrome, not ink whose contrast anything is measured against. The value is
+     the stock theme's own page grey, which is what preview.inc.php already
+     falls back to when it draws a light swatch. */
+  #nz-brandpage .nz-prev-light-pane .nz-prevnav-body { background: #F2F5F7; }
+  /* ...and so do the placeholder bars on it, for the same reason: --pz-raised
+     under a dark design is a near-black chip, which on a light ground depicts
+     nothing anyone's light mode looks like. */
+  #nz-brandpage .nz-prev-light-pane .nz-prevbar { background: #DCE3E8; }
+  #nz-brandpage .nz-prevbar.w60 { width: 60%; }
+  #nz-brandpage .nz-prevbar.w40 { width: 40%; }
+  #nz-brandpage .nz-prevbtn { display: inline-block; margin-top: 4px; padding: 3px 9px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+  #nz-brandpage .nz-prevlogin { padding: 16px; text-align: center; }
+  #nz-brandpage .nz-prevlogin-name { margin-bottom: 8px; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #nz-brandpage .nz-prevlogin-card {
+    padding: 10px; border-radius: var(--pz-radius-ctl, var(--nz-radius-ctl, 4px));
+    border: 1px solid var(--pz-edge, var(--nz-border, rgba(128,128,128,0.25)));
+  }
+  #nz-brandpage .nz-prevfield { height: 18px; margin-bottom: 6px; border-radius: 3px; background: var(--pz-raised, var(--nz-card, rgba(128,128,128,0.18))); }
+  #nz-brandpage .nz-prevtab { display: flex; align-items: center; padding: 10px 12px; }
+  #nz-brandpage .nz-prevtab-chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px;
+    border-radius: 5px 5px 0 0; font-size: 11px;
+    background: var(--pz-raised, var(--nz-card, rgba(128,128,128,0.18)));
+  }
+  #nz-brandpage .nz-prevtab-chip img, #nz-brandpage .nz-prevtab-chip .nz-prevtab-icon { width: 16px; height: 16px; flex: none; border-radius: 3px; }
+  /* The ratio readouts: a number, tabular so it does not jump while typing. */
+  #nz-brandpage .nz-ratio { font-variant-numeric: tabular-nums; }
+
+  /* One block per logo variant: the mark on the background it is FOR, beside the
+     file input, the buttons and the by-reference path — so "which artwork, for
+     which background" is one decision an operator can check by eye. */
+  #nz-brandpage .nz-upload {
+    display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 14px;
+    padding: 4px 0 14px;
+  }
+  /* The rule BETWEEN blocks, written as an adjacent-sibling rule rather than as
+     a border on every block cancelled by :first-of-type — :first-of-type
+     compares against every div sibling in the fieldset, and the two .form-group
+     rows above these blocks are divs too, so the first .nz-upload is never the
+     first div of its type and the cancelling rule would never match. */
+  #nz-brandpage .nz-upload + .nz-upload {
+    padding-top: 14px;
+    border-top: 1px solid var(--pz-edge-soft, var(--nz-border-soft, rgba(128,128,128,0.25)));
+  }
+  #nz-brandpage .nz-upload > h3 { grid-column: 1 / -1; margin: 0 0 2px; font-size: 15px; font-weight: 700; }
+  #nz-brandpage .nz-upload > .help-block { grid-column: 1 / -1; margin: 0 0 4px; }
+  #nz-brandpage .nz-upload-mark { min-width: 0; }
+  /* The swatch markup inside this column is GENERATED in lib/preview.inc.php
+     and injected three ways — by tform on load, by the uploader driver after an
+     upload, and by the preview endpoint as the operator types — so its sizing
+     has to be a rule here rather than an inline style there: an inline
+     max-width beats every selector, and the 220px cap that used to ride on the
+     <img> forced this 108px column's content wider than the column and painted
+     the mark over the upload controls beside it. preview.inc.php still writes
+     the per-swatch background, edge and caption ink inline, because those are
+     measured values rather than styling. */
+  #nz-brandpage .nz-upload-mark img { max-width: 100%; max-height: 48px; width: auto; height: auto; vertical-align: bottom; }
+  #nz-brandpage .nz-upload-mark .nz-markcap {
+    display: block; max-width: 100%; margin-top: 6px; font-size: 11px; line-height: 1.3;
+  }
+  #nz-brandpage .nz-upload-fields { min-width: 0; }
+  #nz-brandpage .nz-upload-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 8px; }
+  /* The only place Bootstrap's own columns are overridden, and only inside our
+     block: at this width a 3/9 split leaves nothing for the control, so the
+     label sits above it. The grid itself is untouched everywhere else. */
+  #nz-brandpage .nz-upload-fields .col-sm-3,
+  #nz-brandpage .nz-upload-fields .col-sm-6,
+  #nz-brandpage .nz-upload-fields .col-sm-9 { width: auto; float: none; padding-left: 0; padding-right: 0; text-align: left; }
+  #nz-brandpage .nz-upload-fields .col-sm-9 { width: 100%; }
+
+  /* The hex fields keep their swatch on one line (form-control is a 100%-width
+     block in the stock theme and in clarity). */
+  #pageContent input.nz-hexfield { display: inline-block; width: 9.5em; vertical-align: middle; }
+  #pageContent input.nz-hexpick {
+    width: 48px; height: 36px; padding: 2px 3px; margin-left: 8px; vertical-align: middle;
+    border: 1px solid var(--pz-edge-input, var(--nz-border-strong, rgba(128,128,128,0.45)));
+    border-radius: var(--pz-radius-ctl, var(--nz-radius-ctl, 4px));
+    background: none; cursor: pointer;
+  }
+  /* A field the server rejected. Marked here as well as in the banner, because
+     a banner at the top of a two-column page does not say WHICH control. */
+  #pageContent .nz-invalid input.form-control,
+  #pageContent .nz-invalid select.form-control {
+    border-color: var(--pz-danger, var(--nz-danger, #d9534f));
+  }
+  #pageContent .nz-fielderror { margin-top: 4px; color: var(--pz-danger, var(--nz-danger-text, #d9534f)); }
+
+  #nz-brandpage .nz-actions { margin-top: 18px; text-align: right; }
+
+  @media (max-width: 767px) {
+    #nz-brandpage .nz-upload { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  /* One flash of the preview panes after a save, so "Changes saved" is not the
+     only signal that the panes now describe stored values. It only ADDS a ring
+     and takes nothing away, which is why it is safe to gate on reduced motion:
+     under `reduce` the rule simply never applies and the panes render normally.
+     Nothing here may ever hide an element to animate it back — that is the
+     regression this project fixed at v3.1.1, where a reduced-motion visitor got
+     `opacity: 0` with nothing left to animate. */
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes nzPreviewFlash {
+      from { box-shadow: 0 0 0 2px var(--pz-accent, var(--nz-blue-400, #0065AB)); }
+      to   { box-shadow: 0 0 0 2px transparent; }
+    }
+    #nz-brandpage .nz-prevframe.nz-flash { animation: nzPreviewFlash 600ms ease-out 1; }
+  }
 </style>
 
 <!-- Upload feedback only (logo_upload.php's iframe response — the uploader
@@ -44,167 +205,34 @@
   <div id="errorMsg" class="alert alert-danger clear"><tmpl_var name="upload_error"></div>
 </tmpl_if>
 
+<!-- Two values the script below needs, carried as ATTRIBUTES rather than as an
+     inline var assignment: logo_upload.php renders this same template with no
+     tform, so there both tmpl_vars are unknown, vlibTemplate removes them, and
+     an empty attribute is something the readers cope with while an empty
+     assignment would be a syntax error.
+
+     data-field-errors is the field-to-validation-message map built by
+     publish_field_error_map() in customizer_edit.php. It is quoted with SINGLE
+     quotes and the tmpl_var inside it with double ones, which is the one place
+     in this template that inverts the house style and is not a slip:
+     json_encode's four HEX flags escape a quote INSIDE a JSON string, but JSON's
+     own structural quotes are emitted raw, so `{"logo_url":"…"}` in a
+     double-quoted attribute closes it on the very first key. JSON_HEX_APOS
+     guarantees no apostrophe survives anywhere in the value, which is what makes
+     the single-quoted attribute closeable only by us. -->
+<div id="nz-brandpage" data-field-errors='{tmpl_var name="field_errors_json"}' data-preview-failed="{tmpl_var name='preview_failed_txt'}">
+<div class="nz-brandgrid">
+<div class="nz-brandfields">
+
+<!-- IDENTITY — what the panel is called and what it is marked with. The panel
+     name, both logo variants, where each one goes, and the tab icon: everything
+     an operator answers once, in the order they answer it. The two variants and
+     the placement block are <h3> sub-blocks rather than nested fieldsets so a
+     screen-reader user can jump between them by heading while the group stays
+     one landmark. h3 and not h4: the preview column's heading is the only h2 on
+     this page, so an h4 here would skip a level. -->
 <fieldset>
-  <legend>{tmpl_var name='logo_head_txt'}</legend>
-
-  <!-- Two variants, named by the BACKGROUND each one sits on, because that is
-       what the operator can look at and check. Which artwork is "light enough"
-       is a judgement; which of their designs has a dark header is a fact.
-       Each block previews its variant on a swatch of that background, so a mark
-       dropped into the wrong slot is visibly wrong right here. -->
-  <div class="form-group">
-    <div class="col-sm-9 col-sm-offset-3"><p class="help-block">{tmpl_var name='logo_variants_hint_txt'}</p></div>
-  </div>
-
-  <div class="nz-logo-variant">
-    <div class="form-group">
-      <div class="col-sm-9 col-sm-offset-3"><h4>{tmpl_var name='logo_on_light_head_txt'}</h4></div>
-    </div>
-    <div class="form-group">
-      <label class="col-sm-3 control-label">{tmpl_var name='used_logo_txt'}</label>
-      <div class="col-sm-9" id="used_logo">{tmpl_var name='used_logo'}</div>
-    </div>
-    <div class="form-group">
-      <label for="file" class="col-sm-3 control-label">{tmpl_var name='logo_txt'}</label>
-      <div class="col-sm-6 col-text">
-        <input name="file" id="file" size="30" type="file" class="fileUpload" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,.svg" />
-        <p class="help-block">{tmpl_var name='logo_hint_txt'}</p>
-      </div>
-      <div class="col-sm-3">
-        <!-- Not wired to the stock iframe uploader (no data-submit-form /
-             data-form-upload, no formbutton-success): the page-render CSRF token
-             it depends on can be silently lost to ISPConfig's lock-free session
-             store, and the stock Enter-key handler must not trigger uploads.
-             The fetch flow below mints its own token at click time instead. -->
-        <button class="btn btn-default" type="button" id="nz-logo-upload">{tmpl_var name='upload_txt'}</button>
-        <a href="javascript:void(0);" class="btn btn-default" id="nz-logo-remove">{tmpl_var name='logo_remove_txt'}</a>
-      </div>
-    </div>
-    <div class="form-group">
-      <label for="logo_url" class="col-sm-3 control-label">{tmpl_var name='logo_url_txt'}</label>
-      <div class="col-sm-9">
-        <input type="text" name="logo_url" id="logo_url" value="{tmpl_var name='logo_url'}" class="form-control" placeholder="/themes/custom/logo.svg" />
-        <p class="help-block">{tmpl_var name='logo_url_hint_txt'}</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="nz-logo-variant">
-    <div class="form-group">
-      <div class="col-sm-9 col-sm-offset-3"><h4>{tmpl_var name='logo_on_dark_head_txt'}</h4></div>
-    </div>
-    <div class="form-group">
-      <label class="col-sm-3 control-label">{tmpl_var name='used_logo_on_dark_txt'}</label>
-      <div class="col-sm-9" id="used_logo_on_dark">{tmpl_var name='used_logo_on_dark'}</div>
-    </div>
-    <div class="form-group">
-      <label for="file_on_dark" class="col-sm-3 control-label">{tmpl_var name='logo_on_dark_txt'}</label>
-      <div class="col-sm-6 col-text">
-        <!-- The name is deliberately NOT "file", even though logo_upload.php
-             reads $_FILES['file'] for both slots: the driver below builds its own
-             FormData and appends the chosen file under the name 'file' itself, so
-             this attribute never reaches the server. Giving the two inputs
-             distinct names therefore costs nothing and avoids a duplicate-name
-             footgun in a form that also carries a native Save. (Save is safe
-             regardless — ISPConfig submits via jQuery .serialize(), which omits
-             file inputs entirely — but "safe because of a jQuery detail" is not
-             a thing the next person should have to know.) -->
-        <input name="file_on_dark" id="file_on_dark" size="30" type="file" class="fileUpload" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,.svg" />
-        <p class="help-block">{tmpl_var name='logo_on_dark_hint_txt'}</p>
-      </div>
-      <div class="col-sm-3">
-        <button class="btn btn-default" type="button" id="nz-logo-upload-on-dark">{tmpl_var name='upload_txt'}</button>
-        <a href="javascript:void(0);" class="btn btn-default" id="nz-logo-remove-on-dark">{tmpl_var name='logo_remove_txt'}</a>
-      </div>
-    </div>
-    <div class="form-group">
-      <label for="logo_url_on_dark" class="col-sm-3 control-label">{tmpl_var name='logo_url_on_dark_txt'}</label>
-      <div class="col-sm-9">
-        <input type="text" name="logo_url_on_dark" id="logo_url_on_dark" value="{tmpl_var name='logo_url_on_dark'}" class="form-control" placeholder="/themes/custom/logo-on-dark.svg" />
-        <p class="help-block">{tmpl_var name='logo_url_on_dark_hint_txt'}</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Placement, not artwork: which of the two marks above each surface uses.
-       It lives at the end of this fieldset rather than inside either variant
-       block because it is a statement ABOUT the pair — putting it under one of
-       them would read as a property of that mark alone.
-
-       Only the <option> list comes from tform (tform_base.inc.php:510 assigns
-       nothing but <option> tags to the field's own tmpl_var); the <select> shell
-       is written here, which is core's idiom too — admin/templates/
-       system_config_sites_edit.htm:103-109. Keep class="form-control": clarity
-       styles body.nz select.form-control with its own arrow SVG at
-       assets/stylesheets/clarity/components.css:754-762, and a bare select falls
-       through to the different, list-header-sized rule at :772-786.
-
-       logo_upload.php renders this same template with no tform at all
-       (logo_upload.php:73-74), so there both tmpl_vars are unknown and
-       vlibTemplate's default UNKNOWNS behaviour removes them (tpl.inc.php:49,
-       :1215-1218) — that response carries two empty <select>s. Harmless, because
-       the uploader driver below only scrapes #OKMsg/#errorMsg and the three
-       preview divs out of it; but nothing here may assume these options exist. -->
-  <div class="nz-logo-placement">
-    <div class="form-group">
-      <label for="logo_variant_nav" class="col-sm-3 control-label">{tmpl_var name='logo_variant_nav_txt'}</label>
-      <div class="col-sm-9">
-        <select name="logo_variant_nav" id="logo_variant_nav" class="form-control">{tmpl_var name='logo_variant_nav'}</select>
-        <p class="help-block">{tmpl_var name='logo_variant_nav_hint_txt'}</p>
-      </div>
-    </div>
-    <div class="form-group">
-      <label for="logo_variant_login" class="col-sm-3 control-label">{tmpl_var name='logo_variant_login_txt'}</label>
-      <div class="col-sm-9">
-        <select name="logo_variant_login" id="logo_variant_login" class="form-control">{tmpl_var name='logo_variant_login'}</select>
-        <p class="help-block">{tmpl_var name='logo_variant_login_hint_txt'}</p>
-      </div>
-    </div>
-  </div>
-</fieldset>
-
-<!-- The favicon is its own fieldset, not a third block inside the Logo one:
-     it is a different asset with different rules (one slot, not two — a tab
-     strip is a tab strip whatever the design's header looks like) and its
-     preview answers a different question. Grouping it with the logos would
-     imply the two-background model applies to it as well. -->
-<fieldset>
-  <legend>{tmpl_var name='favicon_head_txt'}</legend>
-
-  <div class="form-group">
-    <div class="col-sm-9 col-sm-offset-3"><p class="help-block">{tmpl_var name='favicon_intro_txt'}</p></div>
-  </div>
-
-  <div class="form-group">
-    <label class="col-sm-3 control-label">{tmpl_var name='used_favicon_txt'}</label>
-    <div class="col-sm-9" id="used_favicon">{tmpl_var name='used_favicon'}</div>
-  </div>
-  <div class="form-group">
-    <label for="file_favicon" class="col-sm-3 control-label">{tmpl_var name='favicon_txt'}</label>
-    <div class="col-sm-6 col-text">
-      <!-- Same reasoning as file_on_dark: the name never reaches the server
-           (the driver appends the file as 'file' itself), so a distinct one
-           costs nothing and keeps three file inputs unambiguous in a form that
-           also carries a native Save. -->
-      <input name="file_favicon" id="file_favicon" size="30" type="file" class="fileUpload" accept="image/svg+xml,.svg,image/png,image/x-icon,image/vnd.microsoft.icon,.ico" />
-      <p class="help-block">{tmpl_var name='favicon_hint_txt'}</p>
-    </div>
-    <div class="col-sm-3">
-      <button class="btn btn-default" type="button" id="nz-favicon-upload">{tmpl_var name='favicon_upload_txt'}</button>
-      <a href="javascript:void(0);" class="btn btn-default" id="nz-favicon-remove">{tmpl_var name='logo_remove_txt'}</a>
-    </div>
-  </div>
-  <div class="form-group">
-    <label for="favicon_url" class="col-sm-3 control-label">{tmpl_var name='favicon_url_txt'}</label>
-    <div class="col-sm-9">
-      <input type="text" name="favicon_url" id="favicon_url" value="{tmpl_var name='favicon_url'}" class="form-control" placeholder="/themes/custom/favicon.svg" />
-      <p class="help-block">{tmpl_var name='favicon_url_hint_txt'}</p>
-    </div>
-  </div>
-</fieldset>
-
-<fieldset>
-  <legend>{tmpl_var name='brand_head_txt'}</legend>
+  <legend>{tmpl_var name='identity_head_txt'}</legend>
 
   <div class="form-group">
     <label for="company_name" class="col-sm-3 control-label">{tmpl_var name='company_name_txt'}</label>
@@ -215,10 +243,139 @@
   </div>
 
   <div class="form-group">
+    <div class="col-sm-9 col-sm-offset-3"><p class="help-block">{tmpl_var name='logo_variants_hint_txt'}</p></div>
+  </div>
+
+  <!-- Named by the BACKGROUND each mark sits on, because that is what the
+       operator can look at and check. Which artwork is "light enough" is a
+       judgement; which of their designs has a dark header is a fact.
+
+       The file inputs carry aria-label rather than a <label for>: the visible
+       label the stock form gave them is gone with the 3/9 row, and a file input
+       with no accessible name is a real defect for a screen-reader user. The
+       three label keys they use are the ones that row used to render. -->
+  <div class="nz-upload">
+    <h3>{tmpl_var name='logo_on_light_head_txt'}</h3>
+    <div class="nz-upload-mark" id="used_logo">{tmpl_var name='used_logo'}</div>
+    <div class="nz-upload-fields">
+      <div class="nz-upload-row">
+        <input name="file" id="file" size="30" type="file" class="fileUpload" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,.svg" aria-label="{tmpl_var name='logo_txt'}" />
+        <!-- Not wired to the stock iframe uploader (no data-submit-form /
+             data-form-upload, no formbutton-success): the page-render CSRF token
+             it depends on can be silently lost to ISPConfig's lock-free session
+             store, and the stock Enter-key handler must not trigger uploads.
+             The fetch flow in the script below mints its own token at click time. -->
+        <button class="btn btn-default" type="button" id="nz-logo-upload">{tmpl_var name='upload_txt'}</button>
+        <a href="javascript:void(0);" class="btn btn-default" id="nz-logo-remove">{tmpl_var name='logo_remove_txt'}</a>
+      </div>
+      <p class="help-block">{tmpl_var name='logo_hint_txt'}</p>
+      <div class="form-group">
+        <label for="logo_url" class="col-sm-3 control-label">{tmpl_var name='logo_url_txt'}</label>
+        <div class="col-sm-9">
+          <input type="text" name="logo_url" id="logo_url" value="{tmpl_var name='logo_url'}" class="form-control" placeholder="/themes/custom/logo.svg" />
+          <p class="help-block">{tmpl_var name='logo_url_hint_txt'}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nz-upload">
+    <h3>{tmpl_var name='logo_on_dark_head_txt'}</h3>
+    <div class="nz-upload-mark" id="used_logo_on_dark">{tmpl_var name='used_logo_on_dark'}</div>
+    <div class="nz-upload-fields">
+      <div class="nz-upload-row">
+        <!-- The name is deliberately NOT "file", even though logo_upload.php
+             reads $_FILES['file'] for both slots: the driver below builds its own
+             FormData and appends the chosen file under the name 'file' itself, so
+             this attribute never reaches the server. Distinct names keep three
+             file inputs unambiguous in a form that also carries a native Save. -->
+        <input name="file_on_dark" id="file_on_dark" size="30" type="file" class="fileUpload" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,.svg" aria-label="{tmpl_var name='logo_on_dark_txt'}" />
+        <button class="btn btn-default" type="button" id="nz-logo-upload-on-dark">{tmpl_var name='upload_txt'}</button>
+        <a href="javascript:void(0);" class="btn btn-default" id="nz-logo-remove-on-dark">{tmpl_var name='logo_remove_txt'}</a>
+      </div>
+      <p class="help-block">{tmpl_var name='logo_on_dark_hint_txt'}</p>
+      <div class="form-group">
+        <label for="logo_url_on_dark" class="col-sm-3 control-label">{tmpl_var name='logo_url_on_dark_txt'}</label>
+        <div class="col-sm-9">
+          <input type="text" name="logo_url_on_dark" id="logo_url_on_dark" value="{tmpl_var name='logo_url_on_dark'}" class="form-control" placeholder="/themes/custom/logo-on-dark.svg" />
+          <p class="help-block">{tmpl_var name='logo_url_on_dark_hint_txt'}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Placement, not artwork: which of the two marks above each surface uses.
+       It stays a third block AFTER both variants rather than moving inside
+       either, because it is scoped by SURFACE and is a statement about the
+       pair — nesting it under one mark would read as a property of that mark.
+
+       Only the <option> list comes from tform (tform_base.inc.php:510 assigns
+       nothing but <option> tags to the field's own tmpl_var); the <select> shell
+       is written here, which is core's idiom too. Keep class="form-control":
+       clarity styles body.nz select.form-control with its own arrow SVG, and a
+       bare select falls through to a different, list-header-sized rule.
+
+       logo_upload.php renders this same template with no tform at all, so there
+       both tmpl_vars are unknown and vlibTemplate removes them — that response
+       carries two empty <select>s. Harmless, because the uploader driver only
+       scrapes #OKMsg/#errorMsg and the three preview blocks out of it; but
+       nothing here may assume these options exist. -->
+  <div class="nz-upload">
+    <h3>{tmpl_var name='placement_head_txt'}</h3>
+    <div class="nz-upload-mark"></div>
+    <div class="nz-upload-fields">
+      <div class="form-group">
+        <label for="logo_variant_nav" class="col-sm-3 control-label">{tmpl_var name='logo_variant_nav_txt'}</label>
+        <div class="col-sm-9">
+          <select name="logo_variant_nav" id="logo_variant_nav" class="form-control">{tmpl_var name='logo_variant_nav'}</select>
+          <p class="help-block">{tmpl_var name='logo_variant_nav_hint_txt'}</p>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="logo_variant_login" class="col-sm-3 control-label">{tmpl_var name='logo_variant_login_txt'}</label>
+        <div class="col-sm-9">
+          <select name="logo_variant_login" id="logo_variant_login" class="form-control">{tmpl_var name='logo_variant_login'}</select>
+          <p class="help-block">{tmpl_var name='logo_variant_login_hint_txt'}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- The favicon is the third brand image and rides the same uploader, but it
+       has ONE slot, not two: a tab strip is a tab strip whatever the design's
+       header looks like. It sits in Identity rather than in a fieldset of its
+       own because it is one more thing the panel is marked with. -->
+  <div class="nz-upload">
+    <h3>{tmpl_var name='favicon_head_txt'}</h3>
+    <div class="nz-upload-mark" id="used_favicon">{tmpl_var name='used_favicon'}</div>
+    <div class="nz-upload-fields">
+      <div class="nz-upload-row">
+        <input name="file_favicon" id="file_favicon" size="30" type="file" class="fileUpload" accept="image/svg+xml,.svg,image/png,image/x-icon,image/vnd.microsoft.icon,.ico" aria-label="{tmpl_var name='favicon_txt'}" />
+        <button class="btn btn-default" type="button" id="nz-favicon-upload">{tmpl_var name='favicon_upload_txt'}</button>
+        <a href="javascript:void(0);" class="btn btn-default" id="nz-favicon-remove">{tmpl_var name='logo_remove_txt'}</a>
+      </div>
+      <p class="help-block">{tmpl_var name='favicon_intro_txt'}</p>
+      <p class="help-block">{tmpl_var name='favicon_hint_txt'}</p>
+      <div class="form-group">
+        <label for="favicon_url" class="col-sm-3 control-label">{tmpl_var name='favicon_url_txt'}</label>
+        <div class="col-sm-9">
+          <input type="text" name="favicon_url" id="favicon_url" value="{tmpl_var name='favicon_url'}" class="form-control" placeholder="/themes/custom/favicon.svg" />
+          <p class="help-block">{tmpl_var name='favicon_url_hint_txt'}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</fieldset>
+
+<!-- COLOUR — the four values every brand-aware design reads. -->
+<fieldset>
+  <legend>{tmpl_var name='colour_head_txt'}</legend>
+
+  <div class="form-group">
     <label for="accent_hex" class="col-sm-3 control-label">{tmpl_var name='accent_hex_txt'}</label>
     <div class="col-sm-9">
       <input type="text" name="accent_hex" id="accent_hex" value="{tmpl_var name='accent_hex'}" class="form-control nz-hexfield" placeholder="#0065AB" />
-      <input type="color" id="accent_hex_pick" value="#0065AB" class="nz-hexpick" aria-label="Pick accent colour" />
+      <input type="color" id="accent_hex_pick" value="#0065AB" class="nz-hexpick" aria-label="{tmpl_var name='accent_hex_txt'}" />
     </div>
   </div>
 
@@ -226,7 +383,18 @@
     <label for="rail_hex" class="col-sm-3 control-label">{tmpl_var name='rail_hex_txt'}</label>
     <div class="col-sm-9">
       <input type="text" name="rail_hex" id="rail_hex" value="{tmpl_var name='rail_hex'}" class="form-control nz-hexfield" placeholder="#01243D" />
-      <input type="color" id="rail_hex_pick" value="#01243D" class="nz-hexpick" aria-label="Pick sidebar colour" />
+      <input type="color" id="rail_hex_pick" value="#01243D" class="nz-hexpick" aria-label="{tmpl_var name='rail_hex_txt'}" />
+      <p class="help-block">{tmpl_var name='rail_contrast_txt'} <span id="nz-rail-ratio" class="nz-ratio">&mdash;</span></p>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="rail_hex_light" class="col-sm-3 control-label">{tmpl_var name='rail_hex_light_txt'}</label>
+    <div class="col-sm-9">
+      <input type="text" name="rail_hex_light" id="rail_hex_light" value="{tmpl_var name='rail_hex_light'}" class="form-control nz-hexfield" placeholder="#E7EBF0" />
+      <input type="color" id="rail_hex_light_pick" value="#E7EBF0" class="nz-hexpick" aria-label="{tmpl_var name='rail_hex_light_txt'}" />
+      <p class="help-block">{tmpl_var name='rail_contrast_txt'} <span id="nz-rail-light-ratio" class="nz-ratio">&mdash;</span></p>
+      <p class="help-block">{tmpl_var name='rail_hex_light_hint_txt'}</p>
     </div>
   </div>
 
@@ -234,7 +402,7 @@
     <label for="login_bg" class="col-sm-3 control-label">{tmpl_var name='login_bg_txt'}</label>
     <div class="col-sm-9">
       <input type="text" name="login_bg" id="login_bg" value="{tmpl_var name='login_bg'}" class="form-control nz-hexfield" placeholder="#17252B" />
-      <input type="color" id="login_bg_pick" value="#17252B" class="nz-hexpick" aria-label="Pick login background colour" />
+      <input type="color" id="login_bg_pick" value="#17252B" class="nz-hexpick" aria-label="{tmpl_var name='login_bg_txt'}" />
       <p class="help-block">{tmpl_var name='colour_hint_txt'}</p>
     </div>
   </div>
@@ -253,8 +421,10 @@
   </div>
 </fieldset>
 
+<!-- PANEL VISIBILITY — six switches over what the panel shows. The two footer
+     credits keep their hint, which is about them alone. -->
 <fieldset>
-  <legend>{tmpl_var name='credits_head_txt'}</legend>
+  <legend>{tmpl_var name='visibility_head_txt'}</legend>
 
   <div class="form-group">
     <label class="col-sm-3 control-label">{tmpl_var name='show_design_picker_txt'}</label>
@@ -262,14 +432,6 @@
       {tmpl_var name='show_design_picker'}
       <p class="help-block">{tmpl_var name='show_design_picker_hint_txt'}</p>
     </div>
-  </div>
-  <div class="form-group">
-    <label class="col-sm-3 control-label">{tmpl_var name='show_ispconfig_credit_txt'}</label>
-    <div class="col-sm-9">{tmpl_var name='show_ispconfig_credit'}</div>
-  </div>
-  <div class="form-group">
-    <label class="col-sm-3 control-label">{tmpl_var name='show_theme_credit_txt'}</label>
-    <div class="col-sm-9">{tmpl_var name='show_theme_credit'}</div>
   </div>
   <div class="form-group">
     <label class="col-sm-3 control-label">{tmpl_var name='show_version_txt'}</label>
@@ -293,43 +455,544 @@
     </div>
   </div>
   <div class="form-group">
-    <div class="col-sm-9 col-sm-offset-3"><p class="help-block">{tmpl_var name='credits_hint_txt'}</p></div>
+    <label class="col-sm-3 control-label">{tmpl_var name='show_ispconfig_credit_txt'}</label>
+    <div class="col-sm-9">{tmpl_var name='show_ispconfig_credit'}</div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label">{tmpl_var name='show_theme_credit_txt'}</label>
+    <div class="col-sm-9">
+      {tmpl_var name='show_theme_credit'}
+      <p class="help-block">{tmpl_var name='credits_hint_txt'}</p>
+    </div>
   </div>
 </fieldset>
 
 <input type="hidden" name="id" value="{tmpl_var name='id'}" />
 
-<div class="clear">
-  <div class="right">
-    <button class="btn btn-default formbutton-success" type="button" data-submit-form="pageForm" data-form-action="customizer/customizer_edit.php">{tmpl_var name='btn_save_txt'}</button>
-    <button class="btn btn-default formbutton-default" type="button" data-load-content="dashboard/dashboard.php">{tmpl_var name='btn_cancel_txt'}</button>
-  </div>
+<div class="nz-actions">
+  <button class="btn btn-default formbutton-success" type="button" data-submit-form="pageForm" data-form-action="customizer/customizer_edit.php">{tmpl_var name='btn_save_txt'}</button>
+  <button class="btn btn-default formbutton-default" type="button" data-load-content="dashboard/dashboard.php">{tmpl_var name='btn_cancel_txt'}</button>
 </div>
+
+</div><!-- /.nz-brandfields -->
+
+<!-- THE PREVIEW COLUMN.
+     Colours, the rail ink and the panel name are painted here in JS as the
+     operator types. Anything depending on VARIANT RESOLUTION is not guessed:
+     that resolver exists in three PHP copies CI proves agree, and a fourth in
+     JavaScript would put what this page promises outside that guarantee — so
+     the marks come from customizer/preview.php.
+
+     Deliberately NOT an ARIA live region: it changes on every keystroke, and
+     announcing that is worse than silence. It is labelled, and the ratio
+     readouts beside the colour fields are plain text, reachable on demand. -->
+<aside class="nz-brandpreview" aria-labelledby="nz-preview-head">
+  <h2 id="nz-preview-head">{tmpl_var name='preview_head_txt'}</h2>
+  <p class="help-block">{tmpl_var name='preview_hint_txt'}</p>
+
+  <figure class="nz-prevpane">
+    <figcaption>{tmpl_var name='preview_nav_txt'}</figcaption>
+    <div class="nz-prevframe">
+      <div class="nz-prevnav">
+        <div class="nz-prevnav-rail nz-prev-rail">
+          <div class="nz-prevnav-logo nz-prev-name"></div>
+          <div class="nz-prevnav-item is-active nz-prev-accent-rule">&nbsp;</div>
+          <div class="nz-prevnav-item">&nbsp;</div>
+          <div class="nz-prevnav-item">&nbsp;</div>
+        </div>
+        <div class="nz-prevnav-body">
+          <div class="nz-prevbar w60"></div>
+          <div class="nz-prevbar w40"></div>
+          <span class="nz-prevbtn nz-prev-accent">{tmpl_var name='btn_save_txt'}</span>
+        </div>
+      </div>
+    </div>
+  </figure>
+
+  <!-- The same rail again in a design's light colour mode, shown ONLY when
+       rail_hex_light carries a value — an operator who leaves it blank has one
+       rail, and a second identical pane would say otherwise. It ships hidden
+       and the script reveals it; the caption is the field's own label, so the
+       pane and the input that fills it name themselves the same way. -->
+  <figure class="nz-prevpane nz-prev-light-pane" hidden>
+    <figcaption>{tmpl_var name='rail_hex_light_txt'}</figcaption>
+    <div class="nz-prevframe">
+      <div class="nz-prevnav">
+        <div class="nz-prevnav-rail nz-prev-rail-light">
+          <div class="nz-prevnav-logo nz-prev-name"></div>
+          <div class="nz-prevnav-item is-active nz-prev-accent-rule">&nbsp;</div>
+          <div class="nz-prevnav-item">&nbsp;</div>
+          <div class="nz-prevnav-item">&nbsp;</div>
+        </div>
+        <div class="nz-prevnav-body">
+          <div class="nz-prevbar w60"></div>
+          <div class="nz-prevbar w40"></div>
+        </div>
+      </div>
+    </div>
+  </figure>
+
+  <figure class="nz-prevpane">
+    <figcaption>{tmpl_var name='preview_login_txt'}</figcaption>
+    <div class="nz-prevframe">
+      <div class="nz-prevlogin nz-prev-login">
+        <div class="nz-prevlogin-name nz-prev-name"></div>
+        <div class="nz-prevlogin-card">
+          <div class="nz-prevfield"></div>
+          <div class="nz-prevfield"></div>
+          <span class="nz-prevbtn nz-prev-accent">&nbsp;</span>
+        </div>
+      </div>
+    </div>
+  </figure>
+
+  <figure class="nz-prevpane">
+    <figcaption>{tmpl_var name='preview_tab_txt'}</figcaption>
+    <div class="nz-prevframe">
+      <div class="nz-prevtab">
+        <span class="nz-prevtab-chip">
+          <span class="nz-prevtab-icon nz-prev-accent"></span>
+          <span class="nz-prev-name"></span>
+        </span>
+      </div>
+    </div>
+  </figure>
+</aside>
+
+</div><!-- /.nz-brandgrid -->
+</div><!-- /#nz-brandpage -->
 
 <script>
 (function () {
-  function sync(txtId, pickId) {
+  // ---- the live preview -------------------------------------------------
+  //
+  // Two halves, and the split is the point. BACKGROUND colour, and the panel
+  // name, are painted here as you type, so a recoloured rail answers the
+  // keystroke with no round trip. Everything a colour does not decide on its
+  // own — the ink that goes on it, the ratio the two measure, and which logo
+  // VARIANT each surface resolves to — is NOT guessed here: those resolvers
+  // exist in PHP copies CI proves agree, and a fourth copy in JavaScript would
+  // put what this page promises outside that guarantee. They arrive from
+  // customizer/preview.php, debounced. Until the first response lands a pane
+  // shows only what a FILLED field says: an empty one paints nothing and the
+  // ratio readouts say nothing, which is the honest state rather than a guess
+  // that might be contradicted 300ms later.
+
+  var HEX = /^#[0-9A-Fa-f]{6}$/;
+
+  // Everything this script reads or writes lives inside the panel's one form;
+  // scoping to it keeps a banner belonging to another part of the chrome out.
+  function formScope() {
+    return document.getElementById('pageForm') || document;
+  }
+
+  // The '#' is tolerated as missing because onBeforeUpdate() prepends it before
+  // the validators run — a pane shows what the SAVE would store, not what the
+  // regex would reject. The field itself is left exactly as it was typed. '' is
+  // returned for an empty or unfinished value and means "this field decides
+  // nothing right now", which is a different answer from any colour — hence no
+  // default parameter to paper over it.
+  function fieldValue(id) {
+    var el = document.getElementById(id);
+    if (!el) return '';
+    var v = (el.value || '').trim();
+    if (/^[0-9A-Fa-f]{6}$/.test(v)) v = '#' + v;
+    return HEX.test(v) ? v.toUpperCase() : '';
+  }
+
+  // An empty field paints NOTHING. There is no design-token fallback here, and
+  // the absence is the fix: themes/classic publishes no custom properties at
+  // all, so a token lookup would hand back the hard-coded literal beside it —
+  // a colour classic never paints — and an inline background, once written,
+  // outranks the design's own stylesheet for the life of the page. The empty
+  // case belongs to the payload, which is the only place that knows what each
+  // installed design really paints (#F2F5F7 for a classic rail, not #2E3A44).
+  function paintBg(sel, hex) {
+    if (hex === '') return;
+    var els = document.querySelectorAll(sel);
+    for (var i = 0; i < els.length; i++) els[i].style.background = hex;
+  }
+
+  // textContent, never innerHTML: the panel name is the operator's own text and
+  // has no business being parsed as markup on the page that sets it. Split out
+  // because the name input must repaint the NAME and nothing else: routed
+  // through paintPreview(), a keystroke in a field that says nothing about
+  // colour would decide what colour the panes are.
+  function paintName() {
+    var nameEl = document.getElementById('company_name');
+    var name = (nameEl && nameEl.value) ? nameEl.value.trim() : '';
+    var els = document.querySelectorAll('.nz-prev-name');
+    for (var i = 0; i < els.length; i++) els[i].textContent = name;
+  }
+
+  function paintPreview() {
+    var rail   = fieldValue('rail_hex');
+    var accent = fieldValue('accent_hex');
+
+    paintBg('.nz-prev-rail', rail);
+    paintBg('.nz-prev-login', fieldValue('login_bg'));
+    paintBg('.nz-prev-accent', accent);
+    // The light rail falls back to the rail, which is what a design with a light
+    // scope does with an empty value — the preview must show that, not nothing.
+    // The fallback is the other FIELD, never a token: with both empty this still
+    // paints nothing and the payload's answer stands.
+    paintBg('.nz-prev-rail-light', fieldValue('rail_hex_light') || rail);
+
+    if (accent !== '') {
+      var els = document.querySelectorAll('.nz-prev-accent-rule');
+      for (var i = 0; i < els.length; i++) els[i].style.color = accent;
+    }
+
+    paintName();
+  }
+
+  // ---- what only the server can answer -----------------------------------
+  //
+  // One debounced, same-origin POST carrying the candidate values. No CSRF token
+  // is minted for it: minting WRITES the lock-free session, this fires while
+  // somebody is typing, and the endpoint writes nothing — see preview.php.
+  var PREVIEW_FIELDS = ['accent_hex', 'rail_hex', 'rail_hex_light', 'login_bg',
+                        'logo_url', 'logo_url_on_dark', 'favicon_url',
+                        'logo_variant_nav', 'logo_variant_login'];
+  var previewTimer = null;
+  var previewAbort = null;
+
+  // The ratio beside a colour field is the SERVER's measurement. This module has
+  // exactly one contrast implementation and it is in PHP; a second one here
+  // could print a number the panel does not agree with.
+  function setRatio(id, block) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = (block && block.hex && typeof block.ratio === 'number')
+      ? (block.ratio.toFixed(2) + ':1') : '—';
+  }
+
+  function paintSurfacePane(sel, entry) {
+    var el = document.querySelector(sel);
+    if (!el || !entry) return;
+    if (HEX.test(entry.bg || '')) el.style.background = entry.bg;
+    if (HEX.test(entry.ink || '')) el.style.color = entry.ink;
+  }
+
+  // The three chrome panes, painted from what the server measured. Entries
+  // arrive one per (design, surface, backdrop) with the ACTIVE design first
+  // (customizer_installed_designs orders them), so the leading design's entries
+  // are the ones these panes describe — the other designs' entries are already
+  // shown, as swatches, inside the server-rendered logo previews.
+  //
+  // A surface with two backdrops contributes two entries. clarity's login does
+  // that whenever login_bg is unset (one entry per colour mode); the pane shows
+  // the first, which is the mode the design ships in.
+  function paintSurfaces(surfaces) {
+    var pane = document.querySelector('.nz-prev-light-pane');
+    // No installed design this module knows about describes anything, a light
+    // rail included — and a pane left open by an earlier response would go on
+    // claiming otherwise.
+    if (!surfaces || !surfaces.length) {
+      if (pane) pane.hidden = true;
+      return;
+    }
+    var lead = surfaces[0].design, nav = [], login = [], i;
+    for (i = 0; i < surfaces.length; i++) {
+      if (surfaces[i].design !== lead) continue;
+      if (surfaces[i].surface === 'nav') nav.push(surfaces[i]);
+      else if (surfaces[i].surface === 'login') login.push(surfaces[i]);
+    }
+    paintSurfacePane('.nz-prev-rail', nav[0]);
+    paintSurfacePane('.nz-prev-login', login[0]);
+
+    // The nav surface splits in two only when rail_hex_light is set AND differs
+    // from the rail — exactly when the light pane has something to say. With one
+    // entry it stays hidden, because a second identical pane would tell the
+    // operator they have two rails when they have one.
+    if (!pane) return;
+    if (nav.length > 1) {
+      paintSurfacePane('.nz-prev-rail-light', nav[1]);
+      pane.hidden = false;
+    } else {
+      pane.hidden = true;
+    }
+  }
+
+  // The trap the observer below self-disconnects for, in its other form:
+  // ISPConfig.loadContent() swaps #pageContent's children while a debounce may
+  // still be pending, so a timer left over from the PREVIOUS instance of this
+  // page can fire against another module's markup. getElementById only finds
+  // elements still in the document, so a null host IS "this page is gone".
+  function pageAlive() {
+    return !!document.getElementById('nz-brandpage');
+  }
+
+  function refreshPreview() {
+    if (!window.fetch || !window.FormData || !pageAlive()) return;
+    var fd = new FormData();
+    for (var i = 0; i < PREVIEW_FIELDS.length; i++) {
+      var el = document.getElementById(PREVIEW_FIELDS[i]);
+      if (el) fd.append(PREVIEW_FIELDS[i], el.value);
+    }
+
+    // Only the newest answer is wanted; an older one landing later would show
+    // the operator a state they have already typed past.
+    var opts = { method: 'POST', body: fd, credentials: 'same-origin',
+                 headers: { 'X-Requested-With': 'XMLHttpRequest' } };
+    if (window.AbortController) {
+      if (previewAbort) previewAbort.abort();
+      previewAbort = new AbortController();
+      opts.signal = previewAbort.signal;
+    }
+
+    fetch('customizer/preview.php', opts)
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.previews) throw new Error('unexpected response');
+        if (!pageAlive()) return;
+        // The three preview rows are SERVER-rendered by the same functions the
+        // page load and the logo uploader use, so the three cannot disagree. This
+        // is the same innerHTML hand-off the uploader already performs on its
+        // own response, and the same trust: the fragment is built by our own
+        // renderers out of validated values and wordbook text.
+        var rows = ['used_logo', 'used_logo_on_dark', 'used_favicon'];
+        for (var i = 0; i < rows.length; i++) {
+          var slot = document.getElementById(rows[i]);
+          if (slot && typeof data.previews[rows[i]] === 'string') slot.innerHTML = data.previews[rows[i]];
+        }
+        paintSurfaces(data.surfaces);
+        if (data.colours) {
+          setRatio('nz-rail-ratio', data.colours.rail);
+          setRatio('nz-rail-light-ratio', data.colours.rail_light);
+          // The accent is not a surface — no design paints its chrome with it —
+          // so its ink comes from the colour block rather than from the list.
+          if (data.colours.accent && HEX.test(data.colours.accent.ink || '')) {
+            var els = document.querySelectorAll('.nz-prev-accent');
+            for (i = 0; i < els.length; i++) els[i].style.color = data.colours.accent.ink;
+          }
+        }
+        previewNote('');
+      })
+      .catch(function (e) {
+        // An aborted request is this function superseding itself, not a failure.
+        if (e && e.name === 'AbortError') return;
+        previewNote(pageText('preview-failed'));
+      });
+  }
+
+  function schedulePreview() {
+    if (previewTimer) clearTimeout(previewTimer);
+    previewTimer = setTimeout(refreshPreview, 350);
+  }
+
+  // A failed refresh is SAID, not swallowed: the panes would otherwise keep
+  // showing a state the server never confirmed, with nothing to indicate it.
+  function previewNote(text) {
+    var box = document.querySelector('.nz-brandpreview');
+    if (!box) return;
+    var note = document.getElementById('nz-preview-note');
+    if (!text) { if (note && note.parentNode) note.parentNode.removeChild(note); return; }
+    if (!note) {
+      note = document.createElement('p');
+      note.id = 'nz-preview-note';
+      note.className = 'help-block nz-fielderror';
+      box.appendChild(note);
+    }
+    note.textContent = text;
+  }
+
+  // ---- inline validation -------------------------------------------------
+  //
+  // Two sources, one decoration. The SERVER's banner is authoritative and is the
+  // reason this exists: it keeps its place under the page header, but on a
+  // two-column page a banner at the top is a message about a control the
+  // operator may not be able to see, so the field is marked as well. The blur
+  // check is an ADVISORY mirror that says the same thing before a round trip.
+  // Neither blocks a submission — the tform validators are the only gate — and
+  // neither repairs what was typed.
+  function pageText(what) {
+    var host = document.getElementById('nz-brandpage');
+    var raw = host ? host.getAttribute('data-' + what) : null;
+    return raw || '';
+  }
+
+  // Each field mapped to the validation message that field would produce,
+  // published by publish_field_error_map() in customizer_edit.php out of the form
+  // definition itself, so it cannot drift from the errmsg keys the validators name.
+  function fieldErrorMap() {
+    var host = document.getElementById('nz-brandpage');
+    if (!host) return {};
+    try { return JSON.parse(host.getAttribute('data-field-errors') || '{}'); }
+    catch (e) { return {}; }
+  }
+
+  var FIELD_ERRORS = fieldErrorMap();
+  var clientInvalid = {};
+
+  // What the SERVER would reject, mirrored — which is not the same as the
+  // validator's own regex. onBeforeUpdate() trims and prepends a missing '#'
+  // before the hex validators run, so "0065ab" is accepted and must not be
+  // advised against: an advisory on a value the server takes is worse than no
+  // advisory at all. Only fields whose filters are TRIM alone are mirrored;
+  // custom_login_link is deliberately absent because STRIPTAGS rewrites it
+  // before its validator sees it, and this check cannot honestly predict that.
+  var PATH_RE = /^(https:\/\/[^\s"'<>()\\]+|\/(?!\/)[^\s"'<>()\\]+)$/;
+  var HEX_RE  = /^#?[0-9A-Fa-f]{6}$/;
+  var ADVISORY = {
+    accent_hex: HEX_RE, rail_hex: HEX_RE, rail_hex_light: HEX_RE, login_bg: HEX_RE,
+    logo_url: PATH_RE, logo_url_on_dark: PATH_RE, favicon_url: PATH_RE
+  };
+
+  function markField(field, on) {
+    var input = document.getElementById(field);
+    if (!input) return;
+    var text = FIELD_ERRORS[field];
+    // Nothing to say means nothing is marked: a red edge with no message is a
+    // worse answer than the banner alone.
+    if (typeof text !== 'string' || text === '') on = false;
+    var group = input.closest ? input.closest('.form-group') : null;
+    if (group) group.className = group.className.replace(/\s*\bnz-invalid\b/g, '') + (on ? ' nz-invalid' : '');
+    var note = document.getElementById('nz-err-' + field);
+    if (on) {
+      if (!note) {
+        note = document.createElement('p');
+        note.id = 'nz-err-' + field;
+        note.className = 'help-block nz-fielderror';
+        if (input.parentNode) input.parentNode.appendChild(note);
+      }
+      note.textContent = text;
+      input.setAttribute('aria-invalid', 'true');
+      input.setAttribute('aria-describedby', 'nz-err-' + field);
+    } else {
+      if (note && note.parentNode) note.parentNode.removeChild(note);
+      input.removeAttribute('aria-invalid');
+      // Removed with the note it pointed at: a describedby aimed at an element
+      // that no longer exists is read out as nothing at all by some screen
+      // readers and as stale text by others.
+      input.removeAttribute('aria-describedby');
+    }
+  }
+
+  // EVERY danger banner in the form, not '#errorMsg'. Core's tabbed_form.tpl.htm
+  // writes the tform validation banner with no id whatsoever (class
+  // 'alert alert-danger clear'), while '#errorMsg' belongs to the UPLOADER's
+  // response — matching on that id alone would mark nothing on the one occasion
+  // this function exists for.
+  function bannerText() {
+    var els = formScope().querySelectorAll('.alert-danger');
+    var out = '';
+    for (var i = 0; i < els.length; i++) out += (els[i].textContent || '') + '\n';
+    return out;
+  }
+
+  function markInvalidFields() {
+    var text = bannerText();
+    for (var field in FIELD_ERRORS) {
+      if (!Object.prototype.hasOwnProperty.call(FIELD_ERRORS, field)) continue;
+      var msg = FIELD_ERRORS[field];
+      markField(field, (msg !== '' && text.indexOf(msg) !== -1) || clientInvalid[field] === true);
+    }
+  }
+
+  // Advisory only, on blur. It never rewrites what was typed: a value the
+  // operator can still see is one they can correct, and silently repairing it
+  // teaches them the field accepts a shape it may not.
+  function validateField(id) {
+    var el = document.getElementById(id);
+    if (!el || !Object.prototype.hasOwnProperty.call(ADVISORY, id)) return;
+    var v = (el.value || '').trim();
+    clientInvalid[id] = (v !== '' && !ADVISORY[id].test(v));
+    markInvalidFields();
+  }
+
+  // ---- wiring ------------------------------------------------------------
+  function syncHex(txtId, pickId) {
     var t = document.getElementById(txtId), p = document.getElementById(pickId);
-    if (!t || !p) return;
-    var re = /^#[0-9A-Fa-f]{6}$/;
-    if (re.test(t.value)) p.value = t.value;
+    if (!t) return;
+
+    // The swatch follows the same #-tolerant reading the panes use, because the
+    // SERVER does too: onBeforeUpdate() stores a typed "0065ab" as #0065AB, so a
+    // picker still showing the previous colour would describe a value that is
+    // already gone. It READS the field and never writes to it — repairing the
+    // typed text is the server's job, and doing it here is the silent repair
+    // this page deliberately does not perform. An <input type=color> accepts
+    // #rrggbb only, which is why the raw field value cannot simply be assigned.
+    function syncPick() {
+      if (!p) return;
+      var v = fieldValue(txtId);
+      if (v !== '') p.value = v;
+    }
+    syncPick();
+
     // 'input' alone is NOT enough: Firefox's native colour dialog only fires
     // 'change' when it closes, so a picker-chosen colour never reached the
     // named text field and every save posted an empty value.
-    function fromPick() { t.value = p.value.toUpperCase(); }
-    p.addEventListener('input', fromPick);
-    p.addEventListener('change', fromPick);
-    t.addEventListener('input', function () { if (re.test(t.value)) p.value = t.value; });
-    // tolerate a pasted colour without the leading '#'
-    t.addEventListener('blur', function () {
-      var v = t.value.trim();
-      if (/^[0-9A-Fa-f]{6}$/.test(v)) v = '#' + v;
-      if (re.test(v)) { v = v.toUpperCase(); t.value = v; p.value = v; }
+    //
+    // Setting t.value in script fires no 'input' event of its own, which is why
+    // this repaints and reschedules rather than leaning on the handler below.
+    function fromPick() { t.value = p.value.toUpperCase(); paintPreview(); validateField(txtId); schedulePreview(); }
+    if (p) {
+      p.addEventListener('input', fromPick);
+      p.addEventListener('change', fromPick);
+    }
+    t.addEventListener('input', function () {
+      syncPick();
+      paintPreview();
+      schedulePreview();
     });
+    t.addEventListener('blur', function () { validateField(txtId); });
   }
-  sync('accent_hex', 'accent_hex_pick');
-  sync('rail_hex', 'rail_hex_pick');
-  sync('login_bg', 'login_bg_pick');
+
+  if (document.getElementById('nz-brandpage')) {
+    syncHex('accent_hex', 'accent_hex_pick');
+    syncHex('rail_hex', 'rail_hex_pick');
+    syncHex('rail_hex_light', 'rail_hex_light_pick');
+    syncHex('login_bg', 'login_bg_pick');
+
+    // The name, and ONLY the name: this field says nothing about any colour, so
+    // it must not be able to repaint a pane the payload has already answered for.
+    var nameInput = document.getElementById('company_name');
+    if (nameInput) nameInput.addEventListener('input', paintName);
+
+    // The reference paths change WHICH mark a surface gets, which only the
+    // server can answer; they are also the second half of the advisory check.
+    ['logo_url', 'logo_url_on_dark', 'favicon_url'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', schedulePreview);
+      el.addEventListener('blur', function () { validateField(id); });
+    });
+    // The two placement selects change nothing this page can paint on its own.
+    ['logo_variant_nav', 'logo_variant_login'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('change', schedulePreview);
+    });
+
+    paintPreview();
+    markInvalidFields();
+
+    // A save redirects back to this page with msg=saved, which core's
+    // tabbed_form.tpl.htm renders as '.alert-notification' — it carries no id,
+    // and '#OKMsg' is the UPLOADER's banner, which arrives later through the
+    // observer below. Flash the panes once so the preview column is part of the
+    // confirmation rather than a bystander to it. Fire-and-forget: the class
+    // comes off after the animation's own duration, and under reduced motion the
+    // rule does not exist, so the class is inert rather than a state something
+    // has to undo.
+    if (formScope().querySelector('.alert-notification, #OKMsg')) {
+      var panes = document.querySelectorAll('.nz-prevframe');
+      for (var pi = 0; pi < panes.length; pi++) panes[pi].className += ' nz-flash';
+      setTimeout(function () {
+        var els = document.querySelectorAll('.nz-prevframe.nz-flash');
+        for (var i = 0; i < els.length; i++) {
+          els[i].className = els[i].className.replace(/\s*\bnz-flash\b/g, '');
+        }
+      }, 700);
+    }
+
+    // One refresh on load so the panes describe the STORED state through the
+    // same code path everything else uses, rather than through a second one.
+    schedulePreview();
+  }
 
   // The iframe uploader injects #OKMsg/#errorMsg just above the hidden id input
   // at the bottom of the form, off-screen on this page — pull any injected
@@ -350,6 +1013,7 @@
         if (el && el.parentNode !== slot) { slot.appendChild(el); moved = true; }
       });
       if (moved) slot.scrollIntoView({ block: 'nearest' });
+      if (moved) markInvalidFields();
     };
     var ob = new MutationObserver(function () {
       if (!document.body.contains(slot)) { ob.disconnect(); return; }

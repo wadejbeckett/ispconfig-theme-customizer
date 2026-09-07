@@ -149,6 +149,7 @@ installs, listed in `sys_user.modules` and declared by `lib/module.conf.php`:
 |---|---|
 | `interface/web/customizer/customizer_edit.php` | The Branding settings page: reads and writes the `[branding]` keys in `sys_ini.config`. |
 | `interface/web/customizer/logo_upload.php`, `logo_delete.php` | The brand-image endpoints. Three slots share them: `on_light` writes `sys_ini.custom_logo`, `on_dark` writes `[branding] logo_on_dark`, `favicon` writes `[branding] favicon`. The slot is allowlisted, never taken raw. Only the accepted formats and the size cap vary by slot; CSRF, MIME sniffing, the SVG screen and demo mode are shared. |
+| `interface/web/customizer/preview.php` | The Branding page's live preview: admin-only and **read-only**. Takes the form's unsaved values as POST and returns JSON built by `lib/preview.inc.php` — the resolved logo variants per surface, the three preview rows and the measured rail ink. It exists so the logo-variant resolver stays in PHP: a JavaScript copy would sit outside the three-copies-agree guarantee CI enforces. It declares no function of its own, and `tests/brand/probe_preview.php` proves it writes nothing. |
 | `interface/web/customizer/lib/preview.inc.php` | The brand-image model in one place: slot vocabulary, source resolution (the two logo variants with their cross-variant fallback, and the favicon), the ICO structural check, and the preview renderers. The theme readers — `brand.php` for the logos, `favicon.php` for the icon — mirror its resolution rules and must be changed with it. |
 | `interface/web/customizer/lib/svg_guard.inc.php` | The SVG upload screen. Its adversarial corpus is `tests/svg/run.php` — run it before and after any change here. |
 | `interface/web/customizer/form/`, `templates/` | tform definition and page markup. |
@@ -186,8 +187,8 @@ The script parses `.lng` files as text and never `include()`s them — they are
 PHP, and they arrive through pull requests. Keep it that way.
 
 A separate CI step, **Brand-token contract parity**, greps *every*
-`themes/*/brand.php` for each of the eleven keys on CI's hard-coded contract
-list (`accent_hex`, `rail_hex`, `login_bg`, `logo_url`, `logo_url_on_dark`,
+`themes/*/brand.php` for each of the twelve keys on CI's hard-coded contract
+list (`accent_hex`, `rail_hex`, `rail_hex_light`, `login_bg`, `logo_url`, `logo_url_on_dark`,
 `logo_on_dark`, `logo_variant_nav`, `logo_variant_login`, `show_version`,
 `show_design_picker`, `company_name` — the Branding page writes more than these;
 the list is the subset a design must read) and fails if one is missing. The two `*_on_dark` logo
@@ -197,7 +198,13 @@ implementing only one of the pair would render the wrong-brightness mark on half
 its surfaces, and no other check would see it. The two `logo_variant_*` keys are
 the operator's per-surface override of which mark a slot uses; a design that
 ignores them silently overrides the operator's explicit choice with its own
-assumption about its chrome — which is the bug they were added to fix. The loop walks the directory rather
+assumption about its chrome — which is the bug they were added to fix.
+`rail_hex_light` is the light-mode rail colour, and it is on the list even
+though only a design that *has* a light colour mode can paint anything with it —
+clarity does; classic reads it and documents the no-op in code, which
+`tests/brand/probe_classic.php` checks is a read and not a comment. A list that
+excused a design from a key it happens not to use would stop being a contract.
+The loop walks the directory rather
 than naming a design on purpose: both `clarity` and `classic` have to satisfy
 it, and a third design must not quietly opt out. This is the check that keeps
 the two sides one product. Adding a key means adding it to every design in the
@@ -292,6 +299,15 @@ toggle), and check the **mobile drawer** if you touched the frame. On classic
 there is no mode toggle — check it instead with a non-default accent and rail
 colour set on the Branding page, and check the login screen separately, since
 `brand.php?scene=login` emits rules the app scene never sees.
+
+The Branding page is the one page in this repository with a layout of its own, so
+it needs checking at three widths — 1440, 1280 and 1024 — under **each installed
+design**, and in both colour modes on clarity. It has no stylesheet: every colour
+in its inline `<style>` is `var(--pz-…, var(--nz-…, <stock fallback>))`, so a rule
+that names a colour directly will look correct under the design you wrote it for
+and wrong under the other two. Its live preview needs `customizer/preview.php`
+reachable; with JavaScript off the page must still save, which is the check that
+proves the preview stayed an enhancement.
 
 ### The mockup harness (optional)
 

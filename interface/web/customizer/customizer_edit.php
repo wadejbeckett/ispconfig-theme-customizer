@@ -51,7 +51,7 @@ class page_action extends tform_actions {
      * re-parses the stored blob and only assigns the keys named below. Same
      * reasoning as sys_ini.custom_logo, which is a column and was never a
      * candidate for this list. */
-    private $branding_keys = array('logo_url', 'logo_url_on_dark', 'logo_variant_nav', 'logo_variant_login', 'favicon_url', 'accent_hex', 'rail_hex', 'login_bg', 'show_ispconfig_credit', 'show_theme_credit', 'show_version', 'show_design_picker');
+    private $branding_keys = array('logo_url', 'logo_url_on_dark', 'logo_variant_nav', 'logo_variant_login', 'favicon_url', 'accent_hex', 'rail_hex', 'rail_hex_light', 'login_bg', 'show_ispconfig_credit', 'show_theme_credit', 'show_version', 'show_design_picker');
     private $misc_keys      = array('company_name', 'custom_login_text', 'custom_login_link');
 
     function onShowEdit() {
@@ -84,6 +84,7 @@ class page_action extends tform_actions {
                 'favicon_url'           => isset($branding['favicon_url']) ? $branding['favicon_url'] : '',
                 'accent_hex'            => isset($branding['accent_hex']) ? $branding['accent_hex'] : '',
                 'rail_hex'              => isset($branding['rail_hex']) ? $branding['rail_hex'] : '',
+                'rail_hex_light'        => isset($branding['rail_hex_light']) ? $branding['rail_hex_light'] : '',
                 'login_bg'              => isset($branding['login_bg']) ? $branding['login_bg'] : '',
                 'custom_login_text'     => isset($misc['custom_login_text']) ? $misc['custom_login_text'] : '',
                 'custom_login_link'     => isset($misc['custom_login_link']) ? $misc['custom_login_link'] : '',
@@ -138,6 +139,7 @@ class page_action extends tform_actions {
     function onShowEnd() {
         global $app;
         $this->render_image_previews();
+        $this->publish_field_error_map();
         //* the post-save redirect appends msg=saved (see list_default in the form
         //* definition) — without this banner a successful save is indistinguishable
         //* from a silently failed one
@@ -167,45 +169,57 @@ class page_action extends tform_actions {
             $app->tform->errorMessage .= $app->tform->lng('demo_mode_txt');
         }
 
-        foreach(array('accent_hex', 'rail_hex', 'login_bg') as $k) {
-            if(isset($this->dataRecord[$k]) && is_string($this->dataRecord[$k])) {
-                $v = trim($this->dataRecord[$k]);
-                if(preg_match('/^[0-9A-Fa-f]{6}$/', $v)) $v = '#' . $v;
-                if(preg_match('/^#[0-9A-Fa-f]{6}$/', $v)) $v = strtoupper($v);
-                $this->dataRecord[$k] = $v;
+        //* Guarantee a STRING reaches the framework for every field it is about
+        //* to filter and validate. CHECKBOX is excluded on purpose: _encode
+        //* already converts arrays to strings for RADIO and CHECKBOX
+        //* (tform_base.inc.php:819-823), and the two CHECKBOX-only loops
+        //* elsewhere in this file must stay CHECKBOX-only for the reasons
+        //* written beside them. This loop is their exact complement.
+        //*
+        //* $this->active_tab is NOT reliable here: tform_actions only sets it in
+        //* onShow() (the display path). The save path is
+        //* onLoad()->onSubmit()->onUpdate()->onBeforeUpdate(), which never touches
+        //* active_tab, so on a real save this method's copy of it is unset/null and
+        //* formDef['tabs'][null] does not exist -> the foreach would iterate
+        //* nothing and every field below would reach trim()/preg_match()
+        //* unguarded. getCurrentTab() reads the session tab pin set at the top of
+        //* this file (and is what onUpdateSave() already keys its own formDef
+        //* lookup on), so use that instead. If it is ever empty, or names a tab
+        //* this form doesn't have, fall back to every tab's fields so the guard
+        //* can never be silently skipped.
+        //*
+        //* A STRING is left untouched on purpose: the validator must stay the
+        //* thing that rejects a bad token, so a wrong value is reported rather
+        //* than silently healed. '' is a legitimate posted value for several of
+        //* these fields and must survive unchanged.
+        $tab = $app->tform->getCurrentTab();
+        if($tab !== '' && isset($app->tform->formDef['tabs'][$tab])) {
+            $tabs_to_guard = array($tab => $app->tform->formDef['tabs'][$tab]);
+        } else {
+            $tabs_to_guard = $app->tform->formDef['tabs'];
+        }
+        foreach($tabs_to_guard as $tab_def) {
+            foreach($tab_def['fields'] as $key => $field) {
+                if($field['formtype'] === 'CHECKBOX') continue;
+                $this->dataRecord[$key] = customizer_posted_string(
+                    isset($this->dataRecord[$key]) ? $this->dataRecord[$key] : null
+                );
             }
         }
 
-        //* The two logo-variant selects: guarantee a STRING is present before the
-        //* framework touches the POST. Neither case below is reachable from a browser
-        //* — a <select> always posts, and only ever one of its own option values — but
-        //* both are one crafted POST away from an authenticated admin, and neither
-        //* fails softly:
-        //*   absent  -> tform_base::_decode reads $record[$key] unguarded
-        //*              (tform_base.inc.php:196; the pre-seed at :190-191 needs
-        //*              'filters', which these fields deliberately do not have), so
-        //*              the error-redisplay render prints a PHP 8 warning into the page;
-        //*   an array (logo_variant_nav[]=x) -> tform_base::_encode converts arrays to
-        //*              strings for RADIO and CHECKBOX only (:819-823) and hands the
-        //*              array straight to validateField, where preg_match() with a
-        //*              non-string subject is a TypeError on PHP 8 — a fatal on an
-        //*              admin page instead of a validation error.
-        //* A STRING is left untouched on purpose: the REGEX validator must stay the
-        //* thing that rejects a bad token, so a wrong value is reported rather than
-        //* silently healed into "automatic". '' is a legitimate posted value here (it
-        //* IS automatic) and must survive this method unchanged.
-        //*
-        //* The array case is why this goes through a helper rather than assigning ''.
-        //* Rewriting an array to '' satisfied the string requirement by writing a
-        //* VALID value: the validator then passed, onUpdateSave wrote it, and the page
-        //* redirected to "Settings saved." having quietly reset the operator's stored
-        //* choice to automatic. customizer_logo_variant_posted() yields a token the
-        //* validator rejects instead, so a malformed POST is reported like every other
-        //* bad value on this form. Only a genuinely ABSENT field still becomes ''.
-        foreach(array('logo_variant_nav', 'logo_variant_login') as $k) {
-            $this->dataRecord[$k] = customizer_logo_variant_posted(
-                isset($this->dataRecord[$k]) ? $this->dataRecord[$k] : null
-            );
+        //* Users paste colours without the leading '#', and colour pickers hand
+        //* back lowercase — normalise those into what the REGEX validators
+        //* accept. /D on both patterns for the same reason the validators carry
+        //* it: without it "$" also matches before a final newline, so a pasted
+        //* trailing LF would be '#'-prefixed and upper-cased here and then pass
+        //* a validator that should have rejected it. The SAVE-time TRIM filter
+        //* runs later, inside encode(); this runs on the raw POST, so it does
+        //* its own trim() first.
+        foreach(array('accent_hex', 'rail_hex', 'rail_hex_light', 'login_bg') as $k) {
+            $v = trim($this->dataRecord[$k]);
+            if(preg_match('/^[0-9A-Fa-f]{6}$/D', $v)) $v = '#' . $v;
+            if(preg_match('/^#[0-9A-Fa-f]{6}$/D', $v)) $v = strtoupper($v);
+            $this->dataRecord[$k] = $v;
         }
 
         parent::onBeforeUpdate();
@@ -266,68 +280,56 @@ class page_action extends tform_actions {
             $config['misc'][$k] = isset($clean[$k]) ? $clean[$k] : '';
         }
 
-        //* News feed toggle -> the three stock per-role [misc] atom keys.
-        //*
-        //* Core hides the dashboard feed for a role whose URL is empty, so "off" has to
-        //* blank all three. Those keys are CORE-owned though — an admin may have set a
-        //* private feed under System > Interface Config, and may deliberately have left
-        //* reseller/client blank so those roles see nothing at all. Blanking without a
-        //* copy destroys both choices, and refilling all three with the ISPConfig default
-        //* on the way back re-leaks ISPConfig branding to exactly the roles a white-label
-        //* panel must not show it to.
-        //*
-        //* So: stash each non-empty URL into module-owned [branding] keys before blanking,
-        //* and restore from that stash on the off->on transition. A role that had no URL
-        //* stays empty. The ISPConfig default is written only when there is nothing to
-        //* restore at all (i.e. a first-ever enable). This makes the round trip lossless,
-        //* which is what the field's hint text has always promised.
-        $atom_keys = array(
-            'dashboard_atom_url_admin'    => 'news_url_admin',
-            'dashboard_atom_url_reseller' => 'news_url_reseller',
-            'dashboard_atom_url_client'   => 'news_url_client',
-        );
-        $show_news = isset($clean['show_news_feed']) ? $clean['show_news_feed'] : '1';
-        if($show_news === '0') {
-            foreach($atom_keys as $k => $stash) {
-                if(isset($config['misc'][$k]) && $config['misc'][$k] !== '') {
-                    $config['branding'][$stash] = $config['misc'][$k];
-                }
-                $config['misc'][$k] = '';
-            }
-        } else {
-            //* Only act on the off->on transition (all three empty). While the feed is
-            //* already on, leave every key untouched — an admin may have deliberately
-            //* blanked a single role's URL, and refilling it on unrelated saves would
-            //* silently clobber that choice.
-            $any_set = false;
-            foreach($atom_keys as $k => $stash) {
-                if(isset($config['misc'][$k]) && $config['misc'][$k] !== '') { $any_set = true; break; }
-            }
-            if(!$any_set) {
-                $restored = false;
-                foreach($atom_keys as $k => $stash) {
-                    if(isset($config['branding'][$stash]) && $config['branding'][$stash] !== '') {
-                        $config['misc'][$k] = $config['branding'][$stash];
-                        $restored = true;
-                    }
-                }
-                //* nothing was ever stashed -> first-ever enable, seed the stock feed
-                if(!$restored) {
-                    foreach($atom_keys as $k => $stash) {
-                        $config['misc'][$k] = 'https://www.ispconfig.org/atom';
-                    }
-                }
-            }
-            //* the stash has served its purpose (or is stale) — drop it so a later manual
-            //* edit under System > Interface Config is never resurrected by a future toggle
-            foreach($atom_keys as $k => $stash) {
-                unset($config['branding'][$stash]);
+        //* News feed toggle -> the three stock per-role [misc] atom keys, and
+        //* the module-owned stash that makes the round trip lossless. The whole
+        //* decision is customizer_news_feed_apply() in lib/dashlets.inc.php,
+        //* where it can be tested without a database; this is the plumbing.
+        $atom_keys = customizer_news_feed_keys();
+        $misc_in   = array();
+        $stash_in  = array();
+        foreach($atom_keys as $k => $stash_key) {
+            $misc_in[$k]        = isset($config['misc'][$k]) ? $config['misc'][$k] : '';
+            $stash_in[$stash_key] = isset($config['branding'][$stash_key]) ? $config['branding'][$stash_key] : '';
+        }
+        $news = customizer_news_feed_apply($misc_in, $stash_in,
+            isset($clean['show_news_feed']) ? $clean['show_news_feed'] : '1');
+
+        foreach($atom_keys as $k => $stash_key) {
+            $config['misc'][$k] = $news['misc'][$k];
+            //* An empty stash is an ABSENT key, not a key with an empty value:
+            //* the stash is ours and it should not appear in the blob at all
+            //* once it has been consumed.
+            if($news['stash'][$stash_key] === '') {
+                unset($config['branding'][$stash_key]);
+            } else {
+                $config['branding'][$stash_key] = $news['stash'][$stash_key];
             }
         }
 
         $config_str = $app->ini_parser->get_ini_string($config);
         if($conf['demo_mode'] != true) {
             $app->db->datalogUpdate('sys_ini', array("config" => $config_str), 'sysini_id', 1);
+
+            //* datalogUpdate() CANNOT report a failure: it discards the return
+            //* value of its own query() and returns true unconditionally
+            //* (db_mysql.inc.php:811-843). And tform_actions::onUpdate()
+            //* redirects to list_default — "customizer_edit.php?id=1&msg=saved"
+            //* — unconditionally at its line 167, so a write that never landed
+            //* printed "Changes saved." over values that were never stored.
+            //*
+            //* Read the column back and compare it byte for byte. Raising
+            //* errorMessage here would not help — the framework tested it
+            //* BEFORE calling this hook, which is the same trap the demo-mode
+            //* refusal in onBeforeUpdate is placed early to avoid. $app->error()
+            //* renders core's error template and die()s, which is the only thing
+            //* at this point in the flow that can stop the page claiming
+            //* success. It also stops before save_donation_dashlet(), which is
+            //* correct: the config write is the one that failed.
+            $after = $app->db->queryOneRecord("SELECT config FROM sys_ini WHERE sysini_id = 1");
+            if(!is_array($after) || !isset($after['config']) || (string)$after['config'] !== $config_str) {
+                $app->error($app->tform->lng('save_failed_txt'));
+            }
+
             //* Not part of the INI blob: this one lives in sys_config, because
             //* that row is what ISPConfig reads before it builds the dashlet.
             $this->save_donation_dashlet(isset($clean['show_donation_dashlet']) ? $clean['show_donation_dashlet'] : '1');
@@ -456,6 +458,48 @@ class page_action extends tform_actions {
             $app->lng('no_favicon_set_txt'),
             $app->lng('favicon_url_wins_txt')
         ));
+    }
+
+    /**
+     * Which field each validation message belongs to, as JSON for the page.
+     *
+     * tform reports validation failures as one banner of translated SENTENCES
+     * with no field names in it. On a one-column form the offending control was
+     * a short scroll away; on a two-column one a banner at the top is a message
+     * about a control the operator may not even be able to see. The page marks
+     * the field itself as well — and to do that it has to be able to tell which
+     * message is whose.
+     *
+     * The map is built from the form definition, so it cannot drift from the
+     * errmsg keys the validators actually name: field => the message that field
+     * would produce. Entity-decoded because the banner is read back as
+     * textContent, where "&times;" has already become "×".
+     *
+     * The four JSON_HEX_* flags escape every character that could end the HTML
+     * attribute this lands in FROM INSIDE a message — but they do not touch
+     * json_encode's own structural quotes, which is why the attribute in
+     * customizer_edit.htm is single-quoted and JSON_HEX_APOS is the one of the
+     * four that is load-bearing. Changing either without the other reopens the
+     * hole; the template says so at the attribute too.
+     *
+     * A field whose errmsg key is missing from the wordbook is skipped rather
+     * than mapped to the raw key: tform prints the key itself in that case, and
+     * matching on it would mark a field on the strength of a bug elsewhere.
+     */
+    private function publish_field_error_map() {
+        global $app;
+        $map = array();
+        foreach($app->tform->formDef['tabs'][$this->active_tab]['fields'] as $key => $field) {
+            if(!isset($field['validators']) || !is_array($field['validators'])) continue;
+            foreach($field['validators'] as $v) {
+                if(!isset($v['errmsg'])) continue;
+                $txt = $app->tform->lng($v['errmsg']);
+                if(!is_string($txt) || $txt === '' || $txt === $v['errmsg']) continue;
+                $map[$key] = html_entity_decode($txt, ENT_QUOTES, 'UTF-8');
+            }
+        }
+        $app->tpl->setVar('field_errors_json',
+            json_encode($map, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT));
     }
 }
 

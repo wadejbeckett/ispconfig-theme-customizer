@@ -39,6 +39,8 @@
  *
  *   config [branding] accent_hex  -> re-hues the blue ramp + accents
  *   config [branding] rail_hex    -> the navy brand rail
+ *   config [branding] rail_hex_light -> the rail in LIGHT colour mode; unset,
+ *                                       the light scope inherits rail_hex
  *   config [branding] login_bg    -> login-screen background base
  *   config [branding] show_ispconfig_credit (0/1) -> footer courtesy line
  *   config [branding] show_theme_credit     (0/1) -> footer courtesy line
@@ -196,9 +198,10 @@ if ($read_ok) {
 }
 
 /* ---- resolve + validate the contract values ---- */
-$accent   = brand_hex($branding, 'accent_hex');
-$rail     = brand_hex($branding, 'rail_hex');
-$login_bg = brand_hex($branding, 'login_bg');
+$accent     = brand_hex($branding, 'accent_hex');
+$rail       = brand_hex($branding, 'rail_hex');
+$rail_light = brand_hex($branding, 'rail_hex_light');
+$login_bg   = brand_hex($branding, 'login_bg');
 
 $show_ispc  = !(isset($branding['show_ispconfig_credit']) && $branding['show_ispconfig_credit'] === '0');
 $show_theme = !(isset($branding['show_theme_credit'])     && $branding['show_theme_credit']     === '0');
@@ -255,6 +258,29 @@ if ($accent !== '') {
     $css .= ":root {\n" . brand_rail_vars($rail, '') . "}\n";
 }
 
+/* ---- the light-mode rail ----------------------------------------------------
+ * --nz-rail is declared exactly once (tokens.css:88) and the light scope
+ * (tokens.css:215-302) never redeclares it: the shipped rail is navy in BOTH
+ * colour modes by design. rail_hex_light is the operator's way of saying
+ * otherwise, and it is emitted as its own light-scope block rather than folded
+ * into the accent one above so that it works with or without an accent.
+ *
+ * Unset, nothing is emitted and the light scope inherits whatever :root said —
+ * which IS the documented fallback to rail_hex, expressed as the cascade rather
+ * than as a second copy of the same values. :root[data-nz-theme='light'] is
+ * (0,2,0) against :root's (0,1,0), so this wins wherever it is emitted,
+ * regardless of source order.
+ *
+ * The accent handed to brand_rail_vars() is the light scope's own accent role —
+ * the base (blue-700) colour the light block above uses for its tints — not the
+ * bright (blue-400) one the dark scope uses, so the rail indicator matches the
+ * ramp emitted beside it in the same scope. */
+if ($rail_light !== '') {
+    $css .= ":root[data-nz-theme='light'] {\n"
+          . brand_rail_vars($rail_light, ($accent !== '') ? brand_shade($accent, 34) : '')
+          . "}\n";
+}
+
 /* ---- login background ---- */
 if ($accent !== '' || $login_bg !== '') {
     $g1   = $accent !== '' ? brand_shade($accent, 34) : '#0065AB';
@@ -301,19 +327,25 @@ $has_logo = ($logo_on_light !== '' || $logo_on_dark !== '');
 // have ?scene= and resolves one surface per request; do not copy that here.)
 //
 // NAV — #logo img on the rail and .nz-topbar-brand img on the mobile header
-// chip. Both are painted var(--nz-rail): app.css:121 and app.css:710, which
-// rail_hex overrides through brand_rail_vars() above. --nz-rail is declared
-// exactly once, at tokens.css:88, and the light scope (tokens.css:215-302)
-// never redeclares it — the rail is navy in both colour modes by design
-// (tokens.css:210) — so this surface is MODE-INVARIANT and one fixed rule is
-// always right. Note it is the CHIP that is navy in the header, not the bar:
-// .nz-topbar reads --nz-topbar-bg (app.css:326), an ink-derived translucent
-// that rail_hex never touches.
-$nav_pref = brand_logo_variant_pref(
-    isset($branding['logo_variant_nav']) ? $branding['logo_variant_nav'] : '',
-    $rail,
-    'on_dark'
-);
+// chip. Both are painted var(--nz-rail) (app.css:121 and app.css:710), which
+// rail_hex overrides through brand_rail_vars() above.
+//
+// This surface used to be MODE-INVARIANT — one fixed rule was always right,
+// because --nz-rail was declared once and never redeclared in the light scope.
+// rail_hex_light is exactly the value that falsifies it: with a dark rail in one
+// mode and a light rail in the other, the mark that reads on one is the mark
+// that disappears on the other. So the light mode is resolved separately, from
+// the colour that will really be behind the mark THERE, and a rule is emitted
+// only when the answer actually differs — a panel that has not set the key emits
+// what it always did, byte for byte.
+//
+// Note it is the CHIP that is navy in the header, not the bar: .nz-topbar reads
+// --nz-topbar-bg (app.css:326), an ink-derived translucent that rail_hex never
+// touches.
+$nav_stored = isset($branding['logo_variant_nav']) ? $branding['logo_variant_nav'] : '';
+$nav_pref   = brand_logo_variant_pref($nav_stored, $rail, 'on_dark');
+$nav_light_pref = brand_logo_variant_pref($nav_stored,
+    ($rail_light !== '') ? $rail_light : $rail, 'on_dark');
 
 // LOGIN — .nzl-brand img. main_login.tpl.htm:54-57 makes .nzl-brand a SIBLING
 // above .nzl-card, and it and .nzl-scene are both transparent (login.css:67-83),
@@ -362,6 +394,8 @@ if ($has_logo) {
     $nav_var   = brand_logo_var($nav_src,   $logo_vars);
     $login_var = brand_logo_var($login_src, $logo_vars);
     $light_var = brand_logo_var($light_src, $logo_vars);
+    $nav_light_src = brand_logo_for_pref($nav_light_pref, $logo_on_light, $logo_on_dark);
+    $nav_light_var = brand_logo_var($nav_light_src, $logo_vars);
     $logo_root = '';
     foreach ($logo_vars as $src => $prop) {
         $logo_root .= "  {$prop}: url(\"{$src}\");\n";
@@ -372,6 +406,12 @@ if ($has_logo) {
     // for any width (the base rules pin a fixed height, which would distort wide logos).
     $css .= "#logo img { content: var({$nav_var}); height: auto; width: auto; max-height: 26px; max-width: 180px; }\n";
     $css .= ".nz-topbar-brand img { content: var({$nav_var}); height: auto; width: auto; max-height: 18px; max-width: 120px; }\n";
+    //* Only when light mode genuinely wants a different artwork. brand_logo_var()
+    //* reuses the property for an identical source, so this cannot add a second
+    //* copy of a data URI to the sheet even when it is emitted.
+    if ($nav_light_src !== $nav_src) {
+        $css .= ":root[data-nz-theme='light'] #logo img, :root[data-nz-theme='light'] .nz-topbar-brand img { content: var({$nav_light_var}); }\n";
+    }
     $css .= ".nzl-brand img { content: var({$login_var}); height: auto; width: auto; max-height: 36px; max-width: 100%; }\n";
 
     // The light-mode login rule is NOT optional once any logo exists.

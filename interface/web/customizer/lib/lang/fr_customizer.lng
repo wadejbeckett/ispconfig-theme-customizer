@@ -2,9 +2,10 @@
 $wb['customizer_title'] = 'Branding';
 $wb['page_head_txt'] = 'Branding';
 $wb['customizer_desc_txt'] = 'Personnalisez ce panneau de contrôle aux couleurs de votre marque — le logo, le nom et les couleurs sont enregistrés dans ISPConfig et sont conservés lors des mises à jour du panneau et du thème.';
-$wb['settings_saved_txt'] = 'Paramètres enregistrés. Les changements de couleur apparaissent après un rechargement complet de la page (F5).';
+$wb['settings_saved_txt'] = 'Modifications enregistrées. Les couleurs du panneau lui-même apparaissent après un rechargement complet de la page (F5).';
+$wb['save_failed_txt'] = 'Les paramètres n’ont pas été enregistrés : l’écriture en base de données n’a pas pris effet. Rien n’a été modifié sur cette page ; réessayez, et consultez le journal d’erreurs du panneau si cela se reproduit.';
 
-$wb['logo_head_txt'] = 'Logo';
+$wb['identity_head_txt'] = 'Identité';
 $wb['logo_txt'] = 'Fichier du logo';
 $wb['logo_hint_txt'] = 'La marque qui se pose SUR un fond clair : elle doit donc être sombre ou en couleurs. C’est celle qu’ISPConfig utilise lui-même — l’en-tête d’origine et la page de connexion sont tous deux clairs. Choisissez un fichier, puis cliquez sur « Téléverser le logo » — le logo est téléversé immédiatement, indépendamment du bouton « Enregistrer » en bas de page. SVG, PNG, JPEG, GIF ou WebP, de moins de 45 KB.';
 $wb['upload_txt'] = 'Téléverser le logo';
@@ -12,16 +13,17 @@ $wb['logo_url_txt'] = 'Chemin / URL du logo pour fonds clairs (remplacement)';
 $wb['logo_url_hint_txt'] = 'Facultatif ; prioritaire sur le fichier téléversé ci-dessus. Un chemin relatif à la racine (recommandé — par ex. /themes/custom/logo.svg pour un fichier que vous avez placé sur le serveur) ou une URL https://. Lorsqu’il est défini, les designs compatibles avec la personnalisation l’utilisent partout, y compris sur leur page de connexion ; seul le thème d’origine d’ISPConfig utilise toujours le logo téléversé, car c’est la seule valeur que le cœur connaisse. Un SVG ou un PNG 2x d’environ 500&times;160 convient le mieux (il s’affiche à environ 26px de hauteur). Une URL distante lie votre page de connexion à cet hôte et lui révèle les adresses IP de vos visiteurs — préférez un chemin local.';
 $wb['logo_url_error_regex'] = 'Le chemin du logo pour fonds clairs doit être un chemin relatif à la racine (/…) ou une URL https://, sans espaces, guillemets, crochets ni parenthèses.';
 $wb['logo_remove_txt'] = 'Supprimer';
-$wb['used_logo_txt'] = 'Logo actuel';
 $wb['logo_variants_hint_txt'] = 'Deux emplacements, parce que les designs ne s’accordent pas sur la luminosité : clarity pose le logo sur une barre bleu marine sombre, l’aspect d’origine sur un en-tête gris clair. Remplissez celui qui correspond au design que vous utilisez. Laissez l’autre vide et il reprendra simplement celui-ci, exactement comme le panneau se comporte aujourd’hui. Chaque aperçu est dessiné sur le fond auquel son emplacement est destiné : une marque placée dans le mauvais emplacement saute aux yeux.';
 $wb['logo_on_light_head_txt'] = 'Logo pour fonds clairs';
 $wb['logo_on_dark_head_txt'] = 'Logo pour fonds sombres';
 $wb['logo_on_dark_txt'] = 'Fichier du logo';
 $wb['logo_on_dark_hint_txt'] = 'La marque qui se pose SUR un fond sombre : elle doit donc être claire ou blanche. C’est celle qu’utilisent la barre latérale bleu marine et le bandeau de connexion de Clarity. Mêmes formats, même limite de 45 KB. À savoir : ISPConfig ne possède qu’une seule colonne de logo et cette extension n’en ajoute aucune, cette image est donc conservée dans les paramètres de l’interface — elle est relue au chargement des pages et inscrite dans le journal des modifications au prochain enregistrement. Si cela compte sur votre panneau, utilisez plutôt le champ de chemin ci-dessous : un chemin ne coûte que quelques octets.';
-$wb['used_logo_on_dark_txt'] = 'Logo actuel';
 $wb['logo_url_on_dark_txt'] = 'Chemin / URL du logo pour fonds sombres (remplacement)';
 $wb['logo_url_on_dark_hint_txt'] = 'Facultatif ; prioritaire sur le fichier téléversé ci-dessus. Mêmes règles que pour le chemin des fonds clairs : un chemin relatif à la racine (recommandé) ou une URL https://. C’est aussi ainsi que vous gardez un logo pour fonds sombres entièrement hors des paramètres de l’interface — un chemin représente quelques octets, une image téléversée jusqu’à 60 KB.';
 $wb['logo_url_on_dark_error_regex'] = 'Le chemin du logo pour fonds sombres doit être un chemin relatif à la racine (/…) ou une URL https://, sans espaces, guillemets, crochets ni parenthèses.';
+
+$wb['placement_head_txt'] = 'Emplacement';
+
 $wb['logo_variant_nav_txt'] = 'Logo dans la barre de navigation';
 $wb['logo_variant_nav_hint_txt'] = 'Laquelle des deux marques ci-dessus la barre latérale et l’en-tête utilisent. « Automatique » lit la couleur de la barre latérale que vous définissez plus bas et retient la marque qui y reste lisible ; sans couleur définie, chaque design conserve la sienne — l’aspect d’origine pose le logo sur un en-tête gris clair, Clarity sur une barre bleu marine sombre. Ne modifiez ce réglage que si vous avez choisi une couleur qui rend le choix automatique erroné : une barre latérale blanche, par exemple, sur laquelle la marque pour fonds sombres disparaîtrait. Dans tous les cas, un emplacement que vous n’avez pas rempli reprend toujours l’autre : un logo unique continue de fonctionner.';
 $wb['logo_variant_login_txt'] = 'Logo sur l’écran de connexion';
@@ -37,24 +39,34 @@ $wb['favicon_intro_txt'] = 'La petite icône de l’onglet du navigateur, des fa
 $wb['favicon_txt'] = 'Fichier du favicon';
 $wb['favicon_hint_txt'] = 'SVG (simple, sans script), PNG ou ICO, de moins de 15 KB. Choisissez un fichier, puis cliquez sur « Téléverser le favicon » — il est téléversé immédiatement, indépendamment du bouton « Enregistrer » en bas de page. Un SVG s’adapte à toutes les densités d’écran ; un .ico couvre encore les navigateurs qui n’en acceptent pas, et un simple PNG de 32&times;32 suffit à lui seul. Quel que soit votre choix, regardez l’aperçu à 16px ci-dessus : les détails fins et les petits caractères s’y brouillent, et un onglet est le plus petit endroit où votre marque apparaisse.';
 $wb['favicon_upload_txt'] = 'Téléverser le favicon';
-$wb['used_favicon_txt'] = 'Favicon actuel';
 $wb['favicon_url_txt'] = 'Chemin / URL du favicon (remplacement)';
 $wb['favicon_url_hint_txt'] = 'Facultatif ; prioritaire sur le fichier téléversé ci-dessus — la même règle que pour les chemins du logo. Un chemin relatif à la racine (recommandé — par ex. /themes/custom/favicon.svg pour un fichier que vous avez placé sur le serveur) ou une URL https://. Le panneau y redirige le navigateur au lieu de servir des octets stockés, ce qui garde aussi l’icône entièrement hors des paramètres de l’interface. Une URL distante lie chaque page de votre panneau à cet hôte et lui révèle les adresses IP de vos visiteurs — préférez un chemin local.';
 $wb['favicon_url_error_regex'] = 'Le chemin du favicon doit être un chemin relatif à la racine (/…) ou une URL https://, sans espaces, guillemets, crochets ni parenthèses.';
 
-$wb['brand_head_txt'] = 'Nom et couleurs';
 $wb['company_name_txt'] = 'Nom du panneau';
 $wb['company_name_hint_txt'] = 'Affiché dans le titre du navigateur et le pied de page.';
+
+$wb['colour_head_txt'] = 'Couleurs';
 $wb['accent_hex_txt'] = 'Couleur d’accentuation';
 $wb['rail_hex_txt'] = 'Couleur de la barre latérale';
+$wb['rail_hex_light_txt'] = 'Couleur de la barre latérale (mode clair)';
+$wb['rail_hex_light_hint_txt'] = 'Utilisée par les designs qui proposent un mode clair ; laissez le champ vide et la couleur de la barre latérale ci-dessus s’applique aux deux modes. Un design sans mode clair lit la valeur sans rien en faire.';
+$wb['rail_contrast_txt'] = 'Contraste du texte de la barre latérale :';
 $wb['login_bg_txt'] = 'Arrière-plan de la connexion';
 $wb['colour_hint_txt'] = 'Valeur hexadécimale comme #0065AB. Laissez vide pour conserver la valeur par défaut du thème.';
+
+$wb['preview_head_txt'] = 'Aperçu';
+$wb['preview_hint_txt'] = 'Les couleurs et le nom du panneau se mettent à jour pendant la saisie. Le logo utilisé par chaque surface est déterminé par le serveur, afin de correspondre à ce que le panneau affichera réellement.';
+$wb['preview_nav_txt'] = 'Navigation';
+$wb['preview_login_txt'] = 'Écran de connexion';
+$wb['preview_tab_txt'] = 'Icône d’onglet';
+$wb['preview_failed_txt'] = 'L’aperçu n’a pas pu être actualisé. Vous voyez la dernière version confirmée par le serveur.';
 
 $wb['login_head_txt'] = 'Écran de connexion';
 $wb['custom_login_text_txt'] = 'Texte de la note de bas de page de connexion';
 $wb['custom_login_link_txt'] = 'Lien de la note de bas de page de connexion';
 
-$wb['credits_head_txt'] = 'Attribution';
+$wb['visibility_head_txt'] = 'Visibilité dans le panneau';
 $wb['credits_hint_txt'] = 'Ces options contrôlent les lignes de courtoisie facultatives du pied de page. Les mentions de licence open source dans le code source et la documentation sont toujours conservées — désactiver une ligne ne les supprime jamais.';
 $wb['show_ispconfig_credit_txt'] = 'Afficher « powered by ISPConfig »';
 $wb['show_theme_credit_txt'] = 'Afficher le crédit du thème';
@@ -69,6 +81,7 @@ $wb['show_design_picker_hint_txt'] = 'La liste déroulante Design sous Outils > 
 
 $wb['accent_hex_error_regex'] = 'La couleur d’accentuation doit être une valeur hexadécimale comme #0065AB.';
 $wb['rail_hex_error_regex'] = 'La couleur de la barre latérale doit être une valeur hexadécimale comme #01243D.';
+$wb['rail_hex_light_error_regex'] = 'La couleur de la barre latérale (mode clair) doit être une valeur hexadécimale comme #E7EBF0.';
 $wb['login_bg_error_regex'] = 'L’arrière-plan de la connexion doit être une valeur hexadécimale comme #17252B.';
 $wb['login_link_error_regex'] = 'Le lien de la note de bas de page de connexion doit commencer par http:// ou https://.';
 
@@ -83,6 +96,6 @@ $wb['no_file_uploaded_error'] = 'Aucun fichier n’a été sélectionné.';
 $wb['upload_failed_txt'] = 'Le téléversement n’a pas abouti. Veuillez réessayer.';
 $wb['demo_mode_txt'] = 'Cette fonction est désactivée en mode démonstration.';
 
-$wb['btn_save_txt'] = 'Enregistrer';
+$wb['btn_save_txt'] = 'Enregistrer les modifications';
 $wb['btn_cancel_txt'] = 'Annuler';
 $wb['logo_delete_failed_txt'] = 'Impossible de supprimer le logo — l’écriture en base de données a échoué. Il est toujours enregistré ; réessayez.';

@@ -37,9 +37,18 @@ $renders = array(
     'render:classic' => array(__DIR__ . '/probe_render.php', 'classic'),
 );
 
-$fail    = 0;
-$matrix  = array();
-$php     = PHP_BINARY !== '' ? PHP_BINARY : 'php';
+// Probes that assert STRUCTURE rather than a decision: they emit no matrix and
+// take no argument. Kept separate from $probes so run.php never demands a
+// decision matrix from a file that has no decision to report.
+$checks = array(
+    'tform'   => __DIR__ . '/probe_tform.php',
+    'preview' => __DIR__ . '/probe_preview.php',
+);
+
+$fail      = 0;
+$matrix    = array();
+$inkmatrix = array();
+$php       = PHP_BINARY !== '' ? PHP_BINARY : 'php';
 
 foreach ($probes as $name => $path) {
     echo "\n== $name ==\n";
@@ -47,8 +56,14 @@ foreach ($probes as $name => $path) {
     $rc  = 0;
     exec(escapeshellarg($php) . ' ' . escapeshellarg($path) . ' 2>&1', $out, $rc);
     foreach ($out as $line) {
+        if (strpos($line, 'INKMATRIX ') === 0) {
+            $rows = json_decode(substr($line, 10), true);
+            if (is_array($rows) && $rows) { $inkmatrix[$name] = $rows; }
+            continue;
+        }
         if (strpos($line, 'MATRIX ') === 0) {
-            $matrix[$name] = json_decode(substr($line, 7), true);
+            $rows = json_decode(substr($line, 7), true);
+            if (is_array($rows) && $rows) { $matrix[$name] = $rows; }
             continue;
         }
         echo "$line\n";
@@ -68,6 +83,20 @@ foreach ($renders as $name => $spec) {
     $out = array();
     $rc  = 0;
     exec(escapeshellarg($php) . ' ' . escapeshellarg($spec[0]) . ' ' . escapeshellarg($spec[1]) . ' 2>&1', $out, $rc);
+    foreach ($out as $line) {
+        echo "$line\n";
+    }
+    if ($rc !== 0) {
+        $fail++;
+        echo "-- $name probe exited $rc\n";
+    }
+}
+
+foreach ($checks as $name => $path) {
+    echo "\n== $name ==\n";
+    $out = array();
+    $rc  = 0;
+    exec(escapeshellarg($php) . ' ' . escapeshellarg($path) . ' 2>&1', $out, $rc);
     foreach ($out as $line) {
         echo "$line\n";
     }
@@ -100,6 +129,35 @@ if (count($matrix) === count($probes)) {
     }
 } else {
     echo "SKIP not every probe reported\n";
+}
+
+echo "\n== rail-ink parity ==\n";
+/* Opt-in, unlike the resolver matrix: classic derives its rail ink from stock's
+ * own ink colour rather than from black, so it has no comparable direction to
+ * report and emits no INKMATRIX. Two emitters is the minimum for a comparison
+ * to mean anything, so fewer is a failure rather than a skip — that is how a
+ * renamed probe silently stops being compared. */
+if (count($inkmatrix) < 2) {
+    $fail++;
+    echo "FAIL fewer than two probes reported a rail-ink matrix (" . count($inkmatrix) . ")\n";
+} else {
+    $ref = null;
+    $refname = '';
+    foreach ($inkmatrix as $name => $rows) {
+        if ($ref === null) { $ref = $rows; $refname = $name; continue; }
+        if ($rows === $ref) {
+            echo "ok   $name chooses the same ink direction as $refname on all " . count($ref) . " rails\n";
+            continue;
+        }
+        $fail++;
+        echo "FAIL $name disagrees with $refname about the ink direction\n";
+        foreach ($ref as $i => $want) {
+            $got = isset($rows[$i]) ? $rows[$i] : null;
+            if ($got === $want) continue;
+            echo sprintf("     rail #%d: %s says %s, %s says %s\n",
+                $i, $refname, var_export($want, true), $name, var_export($got, true));
+        }
+    }
 }
 
 echo "\n";

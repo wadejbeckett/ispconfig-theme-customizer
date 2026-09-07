@@ -53,6 +53,29 @@ if(!is_readable($ini_parser_path)) {
 require $ini_parser_path;
 $parser = new ini_parser();
 
+//* The news-feed key-name mapping lives in exactly ONE place —
+//* customizer_news_feed_keys() in the module's own lib/dashlets.inc.php — so
+//* this script and customizer_edit.php's onUpdateSave() can never drift apart
+//* on which [misc] atom key is stashed under which [branding] key. That file
+//* is pure functions with no $app dependency, so it is CLI-safe to require
+//* directly; it is not a class this script would otherwise need to load.
+//*
+//* Resolved two ways, same as $conf_path / $ini_parser_path above: first
+//* relative to the INSTALLED module ($conf_path tells us $ISPC_ROOT), then
+//* relative to this script's own repo tree (bin/../interface/...) for a
+//* checkout that has not been installed yet. Fail closed if neither exists —
+//* silently falling back to an inline copy of the map is the exact bug this
+//* require exists to prevent.
+$dashlets_path = dirname(dirname($conf_path)) . '/web/customizer/lib/dashlets.inc.php';
+if(!is_readable($dashlets_path)) {
+    $dashlets_path = dirname(__DIR__) . '/interface/web/customizer/lib/dashlets.inc.php';
+}
+if(!is_readable($dashlets_path)) {
+    fwrite(STDERR, "ERROR: module lib/dashlets.inc.php not found (looked next to $conf_path and in the repo tree)\n");
+    exit(1);
+}
+require $dashlets_path;
+
 if(function_exists('mysqli_report')) {
     mysqli_report(MYSQLI_REPORT_OFF);
 }
@@ -117,11 +140,7 @@ $did = array();
 //* ISPConfig default would resurrect a feed the admin deliberately turned off before the
 //* module existed, and re-leak ISPConfig branding to roles a white-label panel must not
 //* show it to. Dropping [branding] below then removes the stash keys themselves.
-$atom_stash = array(
-    'dashboard_atom_url_admin'    => 'news_url_admin',
-    'dashboard_atom_url_reseller' => 'news_url_reseller',
-    'dashboard_atom_url_client'   => 'news_url_client',
-);
+$atom_stash = customizer_news_feed_keys();
 //* $unrestorable must be collected HERE, while [branding] still exists — the
 //* section (and with it the stash) is dropped a few lines below.
 $unrestorable = array();

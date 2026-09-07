@@ -160,6 +160,64 @@ function check_parity($label, $ref_file, $files) {
 }
 
 /**
+ * Every plain-quoted $wb value in a file, keyed by its wordbook key. Unlike
+ * wb_value() this walks the whole file in one pass instead of one key at a
+ * time; a double-quoted value that interpolates a variable is skipped (it
+ * cannot be resolved from text, and wb_value() already reports it as
+ * unparseable wherever that matters — e.g. the nav-title length check).
+ */
+function wb_all_values($src) {
+    $out = array();
+    if (preg_match_all('/\$wb\[\s*\'([^\']+)\'\s*\]\s*=\s*\'((?:[^\'\\\\]|\\\\.)*)\'\s*;/', $src, $m, PREG_SET_ORDER)) {
+        foreach ($m as $mm) {
+            $out[$mm[1]] = preg_replace('/\\\\([\'\\\\])/', '$1', $mm[2]);
+        }
+    }
+    if (preg_match_all('/\$wb\[\s*\'([^\']+)\'\s*\]\s*=\s*"((?:[^"\\\\]|\\\\.)*)"\s*;/', $src, $m, PREG_SET_ORDER)) {
+        foreach ($m as $mm) {
+            if (strpos($mm[2], '$') !== false) continue;
+            $out[$mm[1]] = stripcslashes($mm[2]);
+        }
+    }
+    return $out;
+}
+
+/**
+ * customizer_edit.htm interpolates exactly these eight tform-wordbook keys
+ * into DOUBLE-QUOTED HTML attributes with no escaping at the call site:
+ * preview_failed_txt into data-preview-failed, and the other seven into an
+ * aria-label each (logo_txt, logo_on_dark_txt, favicon_txt, accent_hex_txt,
+ * rail_hex_txt, rail_hex_light_txt, login_bg_txt). A value containing '"'
+ * breaks out of the attribute; a value containing '<' opens a tag inside it.
+ * Neither is stoppable once the string is in the template, so it is enforced
+ * here, at the only point every translation passes through before it ships.
+ * Scoped to these keys only — other wordbook values (hint text, error
+ * messages) legitimately quote UI labels, e.g. 'click "Upload logo"', and are
+ * never placed inside an attribute.
+ */
+$HTML_ATTR_WB_KEYS = array(
+    'preview_failed_txt', 'logo_txt', 'logo_on_dark_txt', 'favicon_txt',
+    'accent_hex_txt', 'rail_hex_txt', 'rail_hex_light_txt', 'login_bg_txt',
+);
+
+function check_no_html_hostile_chars($file, $src) {
+    global $HTML_ATTR_WB_KEYS;
+    $fail = 0;
+    $values = wb_all_values($src);
+    foreach ($HTML_ATTR_WB_KEYS as $key) {
+        if (!array_key_exists($key, $values)) continue;
+        $val = $values[$key];
+        if (strpos($val, '"') === false && strpos($val, '<') === false) continue;
+        fwrite(STDERR, basename($file) . ": $key value contains '\"' or '<' — it is "
+             . "interpolated into a double-quoted HTML attribute in "
+             . "customizer_edit.htm with no escaping, so either character breaks "
+             . "the markup. Reword the translation to avoid both characters.\n");
+        $fail = 1;
+    }
+    return $fail;
+}
+
+/**
  * top_menu_customizer must fit the dashboard launcher tile's 8-character budget.
  */
 function check_nav_title_length($file, $src) {
@@ -241,6 +299,12 @@ foreach ($flat_files as $f) {
 
 foreach ($module_files as $f) {
     $fail |= check_nav_title_length($f, lc_read($f));
+}
+
+//* The HTML-attribute keys above live only in the tform wordbook — see
+//* check_no_html_hostile_chars().
+foreach ($tform_files as $f) {
+    $fail |= check_no_html_hostile_chars($f, lc_read($f));
 }
 
 if (!$fail) echo "language files OK\n";
