@@ -1355,6 +1355,21 @@
       for (var i = 0; i < els.length; i++) els[i].style.color = accent;
     }
 
+    // The caption under each colour chip says what the chip is painted with, so
+    // it follows the FIELD and not the payload — a value the operator has typed
+    // but not yet saved is the value the chip is showing. data-hex-field names
+    // the field, so the markup decides which caption mirrors which control and
+    // this loop stays one rule. The light rail's caption inherits the rail
+    // exactly as its swatch does, or the two would disagree about the same
+    // colour on the same line.
+    var caps = document.querySelectorAll('.nz-brandchip-hex');
+    for (var ci = 0; ci < caps.length; ci++) {
+      var field = caps[ci].getAttribute('data-hex-field');
+      var shown = field ? fieldValue(field) : '';
+      if (shown === '' && field === 'rail_hex_light') shown = rail;
+      caps[ci].textContent = (shown === '') ? '—' : shown;
+    }
+
     paintName();
   }
 
@@ -1380,6 +1395,16 @@
     if (!el) return;
     el.textContent = (block && block.hex && typeof block.ratio === 'number')
       ? (block.ratio.toFixed(2) + ':1') : '—';
+  }
+
+  // One status fact in the legend. The strings are built server-side by
+  // customizer_brand_summary(), so the page render and every refresh after an
+  // upload word them identically; this only places them. textContent, like
+  // every other string this page writes.
+  function setFact(id, text) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = (typeof text === 'string') ? text : '';
   }
 
   // Says WHOSE colour the light-rail ratio was measured on when it is not this
@@ -1461,6 +1486,7 @@
       // than keeping an image an earlier response put there.
       paintNavBrand('.nz-prev-nav-brand', null);
       paintNavBrand('.nz-prev-nav-brand-light', null);
+      paintNavBrand('.nz-prev-login-brand', null);
       return;
     }
     var lead = surfaces[0].design, nav = [], login = [], i;
@@ -1477,6 +1503,11 @@
     // pane's mark in both would be the preview guessing.
     paintNavBrand('.nz-prev-nav-brand', nav[0]);
     paintNavBrand('.nz-prev-nav-brand-light', nav.length > 1 ? nav[1] : nav[0]);
+
+    // The login pull gets the mark its OWN surface resolved to. Without this it
+    // showed the panel name whatever the operator had uploaded — which is
+    // exactly the thing a login-screen preview exists to let them check.
+    paintNavBrand('.nz-prev-login-brand', login[0]);
 
     // The nav surface splits in two only when rail_hex_light is set AND differs
     // from the rail — exactly when the light pane has something to say. With one
@@ -1548,9 +1579,23 @@
           }
         }
         paintSurfaces(data.surfaces);
+        // The legend's three facts. Two of them change when an image is
+        // uploaded, and an upload does not reload the page — it replaces three
+        // slots in place — so this is the only thing that keeps the mark count
+        // and the favicon fact true between page loads.
+        if (data.summary) {
+          setFact('nz-fact-design', data.summary.design);
+          setFact('nz-fact-marks', data.summary.marks);
+          setFact('nz-fact-favicon', data.summary.favicon);
+        }
         if (data.colours) {
           setRatio('nz-rail-ratio', data.colours.rail);
           setRatio('nz-rail-light-ratio', data.colours.rail_light);
+          // All four colours carry a measured ratio and all four print one:
+          // the readout is the answer to the question the colour raises, and a
+          // page that answered it for two of the four would look like a bug.
+          setRatio('nz-accent-ratio', data.colours.accent);
+          setRatio('nz-login-ratio', data.colours.login);
           // The light rail falls back to the rail when this field is empty, so
           // without this the two readouts print the same number and nothing on
           // the page says why. Gated on a hex as well as on the flag: with both
@@ -1782,6 +1827,17 @@
     paintPreview();
     markInvalidFields();
 
+    // Core renders the post-save confirmation as '.alert-notification', where
+    // tabbed_form.tpl.htm puts it: above this page's own markup, a screen away
+    // from the button that caused it. Move it into the save bar. Done once, at
+    // init, rather than in the observer below: that banner is SERVER-rendered
+    // with the page and is already in the document, while the uploader's
+    // #OKMsg/#errorMsg arrive later — which is what the observer is for, and
+    // why its region is frozen.
+    var saveFlash = document.getElementById('nz-save-flash');
+    var savedMsg = formScope().querySelector('.alert-notification');
+    if (saveFlash && savedMsg) saveFlash.appendChild(savedMsg);
+
     // A save redirects back to this page with msg=saved, which core's
     // tabbed_form.tpl.htm renders as '.alert-notification' — it carries no id,
     // and '#OKMsg' is the UPLOADER's banner, which arrives later through the
@@ -1806,6 +1862,60 @@
     schedulePreview();
     markSlotsWatch();
   }
+
+  // The drop zone. The label already opens the picker for the input it wraps,
+  // with no script — that half needs nothing. Dropping does: a label is not a
+  // native drop target the way a file input is, so the file is taken off the
+  // drag and assigned to the input, which is what the uploader then reads.
+  //
+  // The zone also SHOWS the chosen file, because the input that would have
+  // shown it is clipped. That display is script-only, which costs nothing an
+  // operator can reach: the Upload button is a fetch driver, so with JavaScript
+  // off there is no upload to name a file for.
+  function wireDrop(inputId, lineId) {
+    var input = document.getElementById(inputId);
+    var line  = document.getElementById(lineId);
+    if (!input || !line) return;
+    var zone = input.parentNode;
+    // The instruction, kept so the zone can go back to it. Read from the DOM
+    // rather than carried here, because it is wordbook text.
+    var idle = line.textContent;
+
+    // The input carries its own aria-label, which OVERRIDES the label text this
+    // line sits in — so a filename written into the line alone is invisible to a
+    // screen reader. Point the input's description at the line instead of
+    // rewriting the label: the line already holds the instruction before a
+    // choice and the filename after one, so there is still exactly one copy of
+    // that string, and the field keeps the name that says which mark it is for.
+    // Set here rather than in the markup because the filename it describes is
+    // itself script-only.
+    input.setAttribute('aria-describedby', lineId);
+
+    function show() {
+      var file = (input.files && input.files.length) ? input.files[0] : null;
+      line.textContent = file ? file.name : idle;
+    }
+    input.addEventListener('change', show);
+    show();
+
+    if (!zone) return;
+    // Both, and preventDefault on both: without it the browser navigates to the
+    // dropped file and the operator loses the page they were editing.
+    zone.addEventListener('dragenter', function (e) { e.preventDefault(); });
+    zone.addEventListener('dragover', function (e) { e.preventDefault(); });
+    zone.addEventListener('drop', function (e) {
+      if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+      e.preventDefault();
+      // Wrapped because a browser that refuses the assignment must leave the
+      // zone exactly as it was rather than half-changed: the operator can still
+      // click it and choose the same file.
+      try { input.files = e.dataTransfer.files; } catch (err) { return; }
+      show();
+    });
+  }
+  wireDrop('file', 'nz-drop-line-logo');
+  wireDrop('file_on_dark', 'nz-drop-line-logo-on-dark');
+  wireDrop('file_favicon', 'nz-drop-line-favicon');
 
   // The upload driver below refreshes the three MARK slots out of its own
   // response and knows nothing about the two *_more slots beside them, or about

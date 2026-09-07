@@ -216,4 +216,74 @@ t_ok('...and every chain leads with phosphor\'s token',
     substr_count($style, 'var(--nz-') . ' clarity tokens, '
         . substr_count($style, ', var(--nz-') . ' of them inside a --pz- chain');
 
+/* ---- the inline script --------------------------------------------------- */
+$sa = strpos($src, '<script>');
+$sb = strpos($src, '</script>');
+t_ok('there is exactly one script block', $sa !== false && $sb !== false
+    && substr_count($src, '<script>') === 1);
+$js = ($sa !== false && $sb !== false) ? substr($src, $sa, $sb - $sa) : '';
+
+/* The frozen region. The click-time CSRF mint inside wireUpload() exists
+ * because ISPConfig's session store has no locking — a page-render token can be
+ * silently erased by a concurrent request — and it is the one part of this page
+ * that must never be reimplemented. wireRemove() and the #nz-msg-slot observer
+ * are frozen with it: both self-disconnect or re-read state in ways that are
+ * easy to break and impossible to see break. */
+foreach (array('function wireUpload(', 'function wireRemove(',
+               "fetch('customizer/logo_upload.php'", "fd.append('_csrf_id'",
+               "fd.append('_csrf_key'", "fd.append('slot', slotName)",
+               "wireUpload('nz-logo-upload', 'file', 'on_light')",
+               "wireUpload('nz-logo-upload-on-dark', 'file_on_dark', 'on_dark')",
+               "wireUpload('nz-favicon-upload', 'file_favicon', 'favicon')",
+               "wireRemove('nz-logo-remove', 'on_light')",
+               "wireRemove('nz-logo-remove-on-dark', 'on_dark')",
+               "wireRemove('nz-favicon-remove', 'favicon')",
+               "var slot = document.getElementById('nz-msg-slot')") as $needle) {
+    t_ok("the frozen region still contains: $needle", strpos($js, $needle) !== false);
+}
+//* Exactly two references, both inside wireUpload(): the token mint and the
+//* upload itself. A third would be a second uploader.
+t_eq('logo_upload.php is reached from exactly two places',
+    substr_count($js, 'logo_upload.php'), 2);
+
+/* ES5, matching the block these additions join.
+ *
+ * Measured on the CODE, not the file: the frozen region's own comments say
+ * "…exists to let them check" and quote jQuery's `data` in backticks, and a
+ * scan that read those would report two syntax rules broken by prose it is not
+ * allowed to edit. The '//' strip spares a '://' so a URL in a string survives.
+ */
+$code = preg_replace('#/\*.*?\*/#s', '', $js);
+$code = preg_replace('#(^|[^:])//[^\n]*#', '$1', $code);
+foreach (array('=>', 'const ', 'let ', '`') as $bad) {
+    t_ok('the script stays ES5 (no ' . $bad . ')', strpos($code, $bad) === false);
+}
+
+/* The four live hooks and the drop forwarding. */
+foreach (array("setRatio('nz-rail-ratio'", "setRatio('nz-rail-light-ratio'",
+               "setRatio('nz-accent-ratio'", "setRatio('nz-login-ratio'",
+               "paintNavBrand('.nz-prev-login-brand'",
+               "getElementById('nz-save-flash')", "querySelector('.alert-notification')",
+               '.nz-brandchip-hex', 'data-hex-field', 'data.summary',
+               "setFact('nz-fact-design'", "setFact('nz-fact-marks'",
+               "setFact('nz-fact-favicon'", 'function wireDrop(',
+               "wireDrop('file', 'nz-drop-line-logo')",
+               "wireDrop('file_on_dark', 'nz-drop-line-logo-on-dark')",
+               "wireDrop('file_favicon', 'nz-drop-line-favicon')",
+               'dataTransfer') as $needle) {
+    t_ok("the script wires: $needle", strpos($js, $needle) !== false);
+}
+//* The login pull has to be cleared as well as painted, or a mark an earlier
+//* response put there survives a change that resolves to none.
+t_eq('every nav-brand slot is cleared when nothing resolves',
+    substr_count($js, "paintNavBrand('.nz-prev-login-brand', null)"), 1);
+
+//* Controller ruling: the file input's aria-label wins over the label text the
+//* drop line lives in, so writing the chosen filename into the line alone is
+//* invisible to a screen reader. wireDrop() points the input's description at
+//* the line, which is the element that carries both the instruction and, after
+//* a choice, the filename.
+t_ok('the drop zone names its chosen file to a screen reader',
+    strpos($js, "setAttribute('aria-describedby', lineId)") !== false);
+
 t_done();
