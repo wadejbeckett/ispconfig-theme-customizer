@@ -118,6 +118,10 @@ DARK_PAGES = {  # name -> (active module, sidebar fragment, pageContent fragment
     "dark-sites":      ("sites", "sidenav-sites.html", "sites-list.html"),
     "dark-form":       ("mail", "sidenav-mail.html", "mail-user-form.html"),
     "dark-components": ("dashboard", "news.html", "components.html"),
+    # The Branding redesign lives in its own directory with the stylesheet it
+    # would ship inlined into; fragment paths are resolved against fragments/,
+    # so a sibling directory is reachable without teaching the engine anything.
+    "dark-branding":   ("tools", "../branding/sidenav-tools.html", "../branding/branding.html"),
 }
 
 # The metrics dashlet renders through <canvas>, so the harness (which strips
@@ -260,6 +264,9 @@ def build() -> None:
     (WEBROOT / "themes/clarity").symlink_to(DARK)
     # vendor JS (Chart.js) for the pages that re-inject a controlled bootstrap
     (WEBROOT / "js").symlink_to(STOCK / "js")
+    # branding/: the Branding redesign's own directory, so its fragment can link
+    # branding/branding.css the way the shipping template will inline it
+    (WEBROOT / "branding").symlink_to(HERE / "branding")
 
     # stock baseline for comparison
     body = strip_scripts((HERE / "body.html").read_text(encoding="utf-8"))
@@ -275,7 +282,8 @@ def build() -> None:
 
     # light-mode variants: same pages with the switcher attribute pre-set
     # (statically, since mockup pages ship without scripts)
-    for src, dst in (("dark-dashboard", "light-dashboard"), ("dark-login", "light-login")):
+    for src, dst in (("dark-dashboard", "light-dashboard"), ("dark-login", "light-login"),
+                     ("dark-branding", "light-branding")):
         page = (WEBROOT / f"{src}.html").read_text(encoding="utf-8")
         (WEBROOT / f"{dst}.html").write_text(
             page.replace("<html lang='en'>", "<html lang='en' data-nz-theme='light'>", 1),
@@ -298,12 +306,27 @@ SHOT_MATRIX = [
     ("dark-form", ("desktop",)),
     ("dark-components", ("desktop",)),  # QA gallery, not a marketing shot
     ("dark-login", ("desktop", "mobile")),
+    ("dark-branding", ("desktop", "fold", "narrow")),
+    ("light-branding", ("desktop", "fold")),
     ("light-dashboard", ("desktop",)),
     ("light-login", ("desktop",)),
     ("default", ("desktop",)),
 ]
 
-VIEWPORTS = {"desktop": (1440, 900), "mobile": (390, 844)}
+# "narrow" is the width at which the Branding page's container query collapses
+# it to one column — the rail takes 248px, so the page itself has ~700px there.
+VIEWPORTS = {"desktop": (1440, 900), "mobile": (390, 844),
+             "narrow": (1000, 900), "fold": (1440, 900)}
+
+# Labels shot at the viewport rather than full-page. A sticky footer renders at
+# the fold in a full-page capture, so a page that has one needs both: the
+# full-page pull for reviewing the whole layout, and the fold for what an
+# operator actually sees.
+VIEWPORT_ONLY = ("mobile", "fold")
+
+# A page whose shots belong beside its own source rather than in shots/.
+SHOT_DIRS = {"dark-branding": HERE / "branding/shots",
+             "light-branding": HERE / "branding/shots"}
 
 
 def shoot(only: str = "") -> None:
@@ -327,9 +350,16 @@ def shoot(only: str = "") -> None:
                     pg.add_style_tag(content="*,*::before,*::after{"
                                              "animation:none!important;transition:none!important;"
                                              "caret-color:transparent!important}")
+                    if label not in VIEWPORT_ONLY:
+                        # A sticky footer is painted at the fold in a full-page
+                        # capture and hides what is behind it; the fold shot is
+                        # where it is shown doing its job.
+                        pg.add_style_tag(content="#nz-brandpage .nz-actions{position:static!important}")
                     pg.wait_for_timeout(400)
-                    out = SHOTS / f"{name}-{label}.png"
-                    pg.screenshot(path=str(out), full_page=(label == "desktop"))
+                    dest = SHOT_DIRS.get(name, SHOTS)
+                    dest.mkdir(parents=True, exist_ok=True)
+                    out = dest / f"{name}-{label}.png"
+                    pg.screenshot(path=str(out), full_page=(label not in VIEWPORT_ONLY))
                     print(f"  {out.name}  ({len(errors)} failed requests)")
                     for e in errors[:6]:
                         print(f"      404 {e}")
