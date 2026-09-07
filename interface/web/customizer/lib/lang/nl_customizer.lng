@@ -51,6 +51,7 @@ $wb['accent_hex_txt'] = 'Accentkleur';
 $wb['rail_hex_txt'] = 'Zijbalkkleur';
 $wb['rail_hex_light_txt'] = 'Zijbalkkleur (lichte modus)';
 $wb['rail_hex_light_hint_txt'] = 'Wordt gebruikt door ontwerpen met een lichte kleurmodus; laat het leeg en de zijbalkkleur hierboven geldt in beide modi. Een ontwerp zonder lichte modus leest de waarde en doet er niets mee.';
+$wb['rail_hex_light_inherited_txt'] = '(overgenomen van de zijbalkkleur)';
 $wb['rail_contrast_txt'] = 'Contrast van de zijbalktekst:';
 $wb['login_bg_txt'] = 'Aanmeldachtergrond';
 $wb['colour_hint_txt'] = 'Hex-waarde zoals #0065AB. Laat leeg om de themastandaard te behouden.';

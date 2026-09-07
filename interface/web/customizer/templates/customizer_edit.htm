@@ -74,11 +74,33 @@
   /* The panes are painted by JS from the operator's own colours; these are the
      shapes only, so an unset colour still draws a recognisable frame. */
   #nz-brandpage .nz-prevnav { display: flex; min-height: 92px; }
-  #nz-brandpage .nz-prevnav-rail { flex: none; width: 92px; padding: 9px 0; }
+  /* position: relative for the accent rule below, which is the rail's own left
+     edge and not a property of any one item in it. */
+  #nz-brandpage .nz-prevnav-rail { position: relative; flex: none; width: 92px; padding: 9px 0; }
   #nz-brandpage .nz-prevnav-logo { padding: 0 10px 9px; font-size: 11px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* The brand slot shows the MARK the nav surface resolved to when there is one
+     and the panel name when there is not, so the two are mutually exclusive and
+     the name carries [hidden]. Restated at our own specificity for the same
+     reason the pane rule below is: a design that gives span a display would
+     otherwise beat the browser's own [hidden] rule and leak the name behind the
+     logo. The cap is the rail's own scale — 92px wide less 10px of padding
+     either side — so a wordmark lands at the size the panel will draw it. */
+  #nz-brandpage .nz-prev-name[hidden] { display: none; }
+  #nz-brandpage .nz-prevnav-logo img.nz-prev-navmark { display: block; max-width: 100%; max-height: 22px; width: auto; height: auto; }
   #nz-brandpage .nz-prevnav-item { position: relative; padding: 3px 10px; font-size: 10px; }
   #nz-brandpage .nz-prevnav-item.is-active { font-weight: 600; }
-  #nz-brandpage .nz-prevnav-item.is-active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: currentColor; }
+  /* The accent rule. It marks the RAIL, full height at its left edge, rather
+     than the active item: the items in this pane are placeholder bars with no
+     text in them, and a 2px stub beside one blank row read as a text cursor
+     sitting in the pane. currentColor because the JS paints .nz-prev-accent-rule
+     with the operator's accent through style.color, exactly as it did when this
+     was the item's ::before; the declared colour is what it looks like before
+     any accent is set, and is a token chain like every other colour here. */
+  #nz-brandpage .nz-prev-accent-rule {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    color: var(--pz-accent, var(--nz-blue-400, #0065AB));
+    background: currentColor;
+  }
   #nz-brandpage .nz-prevnav-body { flex: 1 1 auto; padding: 10px; background: var(--pz-ground, var(--nz-page, #ffffff)); }
   #nz-brandpage .nz-prevbar { height: 7px; margin-bottom: 6px; border-radius: 2px; background: var(--pz-raised, var(--nz-card, rgba(128,128,128,0.18))); }
   /* The light-mode pane depicts a design's LIGHT colour mode, so its ground is
@@ -141,10 +163,27 @@
      the mark over the upload controls beside it. preview.inc.php still writes
      the per-swatch background, edge and caption ink inline, because those are
      measured values rather than styling. */
-  #nz-brandpage .nz-upload-mark img { max-width: 100%; max-height: 48px; width: auto; height: auto; vertical-align: bottom; }
-  #nz-brandpage .nz-upload-mark .nz-markcap {
+  #nz-brandpage .nz-marks { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
+  #nz-brandpage .nz-marks img { max-width: 100%; max-height: 48px; width: auto; height: auto; vertical-align: bottom; }
+  #nz-brandpage .nz-markcap {
     display: block; max-width: 100%; margin-top: 6px; font-size: 11px; line-height: 1.3;
   }
+  /* The swatches for every surface AFTER the first, in a wrapping row of their
+     own spanning both columns under the block. The column beside the uploader is
+     108px wide and one variant can serve three surfaces on a panel with both
+     designs installed, so a single container stacked them vertically and ran
+     down over the path field below. :empty is what keeps a variant with nothing
+     more to say from opening an empty grid row — which is also why the slot is
+     written on one line in the markup, with no whitespace inside it to defeat
+     the selector. The per-swatch cap stops one long caption stretching a swatch
+     across the row. */
+  #nz-brandpage .nz-upload-more { grid-column: 1 / -1; }
+  #nz-brandpage .nz-upload-more:empty { display: none; }
+  #nz-brandpage .nz-upload-more .nz-marks > span { max-width: 220px; }
+  #nz-brandpage .nz-upload-more .help-block { margin: 8px 0 0; }
+  /* The paragraph introducing the two logo blocks, full width above the first
+     of them. */
+  #nz-brandpage .nz-blockintro { margin: 0 0 10px; }
   #nz-brandpage .nz-upload-fields { min-width: 0; }
   #nz-brandpage .nz-upload-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 8px; }
   /* The only place Bootstrap's own columns are overridden, and only inside our
@@ -164,6 +203,14 @@
     border-radius: var(--pz-radius-ctl, var(--nz-radius-ctl, 4px));
     background: none; cursor: pointer;
   }
+  /* An <input type=color> can only ever hold a colour, so when the text field
+     beside it holds something that is not one the picker is still showing the
+     last value that WAS — a colour the field no longer says. Dimming it is the
+     only honest thing available: the swatch stops asserting a value while the
+     field is unreadable, and nothing is written into the field, which stays
+     exactly as it was typed for the operator to correct. Opacity only, so no
+     colour is named here and the control keeps its own edge. */
+  #pageContent input.nz-hexpick.nz-hexpick-stale { opacity: 0.35; }
   /* A field the server rejected. Marked here as well as in the banner, because
      a banner at the top of a two-column page does not say WHICH control. */
   #pageContent .nz-invalid input.form-control,
@@ -220,7 +267,7 @@
      double-quoted attribute closes it on the very first key. JSON_HEX_APOS
      guarantees no apostrophe survives anywhere in the value, which is what makes
      the single-quoted attribute closeable only by us. -->
-<div id="nz-brandpage" data-field-errors='{tmpl_var name="field_errors_json"}' data-preview-failed="{tmpl_var name='preview_failed_txt'}">
+<div id="nz-brandpage" data-field-errors='{tmpl_var name="field_errors_json"}' data-preview-failed="{tmpl_var name='preview_failed_txt'}" data-rail-light-inherited="{tmpl_var name='rail_hex_light_inherited_txt'}">
 <div class="nz-brandgrid">
 <div class="nz-brandfields">
 
@@ -242,10 +289,6 @@
     </div>
   </div>
 
-  <div class="form-group">
-    <div class="col-sm-9 col-sm-offset-3"><p class="help-block">{tmpl_var name='logo_variants_hint_txt'}</p></div>
-  </div>
-
   <!-- Named by the BACKGROUND each mark sits on, because that is what the
        operator can look at and check. Which artwork is "light enough" is a
        judgement; which of their designs has a dark header is a fact.
@@ -253,7 +296,14 @@
        The file inputs carry aria-label rather than a <label for>: the visible
        label the stock form gave them is gone with the 3/9 row, and a file input
        with no accessible name is a real defect for a screen-reader user. The
-       three label keys they use are the ones that row used to render. -->
+       three label keys they use are the ones that row used to render.
+
+       The paragraph below introduces the PAIR, so it sits directly above the
+       first of the two blocks rather than under the panel-name field, where it
+       read as guidance about the name. Full width, as a direct child of the
+       fieldset: it is not one of the 3/9 label rows. -->
+  <p class="help-block nz-blockintro">{tmpl_var name='logo_variants_hint_txt'}</p>
+
   <div class="nz-upload">
     <h3>{tmpl_var name='logo_on_light_head_txt'}</h3>
     <div class="nz-upload-mark" id="used_logo">{tmpl_var name='used_logo'}</div>
@@ -277,6 +327,13 @@
         </div>
       </div>
     </div>
+    <!-- The second half of this row: every surface after the first, as a
+         wrapping strip across both columns, plus the borrowed-variant note.
+         Written on ONE line with nothing inside it but the tmpl_var, because
+         the rule that collapses it when there is nothing to say is :empty and
+         a single space of whitespace would defeat that. lib/preview.inc.php
+         renders both halves; see $part there. -->
+    <div class="nz-upload-more" id="used_logo_more">{tmpl_var name='used_logo_more'}</div>
   </div>
 
   <div class="nz-upload">
@@ -302,6 +359,7 @@
         </div>
       </div>
     </div>
+    <div class="nz-upload-more" id="used_logo_on_dark_more">{tmpl_var name='used_logo_on_dark_more'}</div>
   </div>
 
   <!-- Placement, not artwork: which of the two marks above each surface uses.
@@ -393,7 +451,14 @@
     <div class="col-sm-9">
       <input type="text" name="rail_hex_light" id="rail_hex_light" value="{tmpl_var name='rail_hex_light'}" class="form-control nz-hexfield" placeholder="#E7EBF0" />
       <input type="color" id="rail_hex_light_pick" value="#E7EBF0" class="nz-hexpick" aria-label="{tmpl_var name='rail_hex_light_txt'}" />
-      <p class="help-block">{tmpl_var name='rail_contrast_txt'} <span id="nz-rail-light-ratio" class="nz-ratio">&mdash;</span></p>
+      <!-- The ratio, and — when the light rail is showing the RAIL's value
+           because this field is empty — a note saying so. Without it the two
+           readouts print the same number with nothing to explain why. The text
+           is carried as a data attribute on #nz-brandpage rather than rendered
+           here, and written with textContent, for the same reason
+           preview_failed_txt is: it is wordbook prose and has no business being
+           parsed as markup on the page that shows it. -->
+      <p class="help-block">{tmpl_var name='rail_contrast_txt'} <span id="nz-rail-light-ratio" class="nz-ratio">&mdash;</span> <span id="nz-rail-light-inherited"></span></p>
       <p class="help-block">{tmpl_var name='rail_hex_light_hint_txt'}</p>
     </div>
   </div>
@@ -495,8 +560,17 @@
     <div class="nz-prevframe">
       <div class="nz-prevnav">
         <div class="nz-prevnav-rail nz-prev-rail">
-          <div class="nz-prevnav-logo nz-prev-name"></div>
-          <div class="nz-prevnav-item is-active nz-prev-accent-rule">&nbsp;</div>
+          <!-- The accent rule is the rail's own left edge, full height, and not
+               a marker on one item: these items are blank placeholder rows, and
+               a 2px stub beside one of them read as a text cursor in the pane.
+               It is an element rather than a ::before because the JS paints the
+               accent onto .nz-prev-accent-rule through style.color, and the rail
+               itself already carries the measured rail INK on that property. -->
+          <span class="nz-prev-accent-rule" aria-hidden="true"></span>
+          <!-- The brand slot: the resolved nav mark when the server says there
+               is one, the panel name when there is not. -->
+          <div class="nz-prevnav-logo nz-prev-nav-brand"><span class="nz-prev-name"></span></div>
+          <div class="nz-prevnav-item is-active">&nbsp;</div>
           <div class="nz-prevnav-item">&nbsp;</div>
           <div class="nz-prevnav-item">&nbsp;</div>
         </div>
@@ -519,8 +593,9 @@
     <div class="nz-prevframe">
       <div class="nz-prevnav">
         <div class="nz-prevnav-rail nz-prev-rail-light">
-          <div class="nz-prevnav-logo nz-prev-name"></div>
-          <div class="nz-prevnav-item is-active nz-prev-accent-rule">&nbsp;</div>
+          <span class="nz-prev-accent-rule" aria-hidden="true"></span>
+          <div class="nz-prevnav-logo nz-prev-nav-brand-light"><span class="nz-prev-name"></span></div>
+          <div class="nz-prevnav-item is-active">&nbsp;</div>
           <div class="nz-prevnav-item">&nbsp;</div>
           <div class="nz-prevnav-item">&nbsp;</div>
         </div>
@@ -656,6 +731,9 @@
                         'logo_variant_nav', 'logo_variant_login'];
   var previewTimer = null;
   var previewAbort = null;
+  // Set immediately before this script writes a preview slot, cleared by the
+  // observer that sees the write; see markSlotsWatch().
+  var selfPaint = false;
 
   // The ratio beside a colour field is the SERVER's measurement. This module has
   // exactly one contrast implementation and it is in PHP; a second one here
@@ -667,11 +745,63 @@
       ? (block.ratio.toFixed(2) + ':1') : '—';
   }
 
+  // Says WHOSE colour the light-rail ratio was measured on when it is not this
+  // field's own. textContent, from a data attribute on the page host: the string
+  // is wordbook prose and is not markup — see the note beside the readout.
+  function setInherited(block) {
+    var el = document.getElementById('nz-rail-light-inherited');
+    if (!el) return;
+    el.textContent = (block && block.inherited === true && block.hex)
+      ? pageText('rail-light-inherited') : '';
+  }
+
   function paintSurfacePane(sel, entry) {
     var el = document.querySelector(sel);
     if (!el || !entry) return;
     if (HEX.test(entry.bg || '')) el.style.background = entry.bg;
     if (HEX.test(entry.ink || '')) el.style.color = entry.ink;
+  }
+
+  // Which artwork the nav surface ends up with, lifted out of the row the
+  // server has just rendered for that variant. WHICH variant is the server's
+  // answer (entry.variant) for the same reason everything else about variant
+  // resolution is; the src is read back out of the DOM rather than carried
+  // separately so there is exactly one copy of it on the page, and it cannot
+  // disagree with the swatch the operator is looking at.
+  function navMarkSrc(entry) {
+    if (!entry || !entry.variant) return '';
+    var row = document.getElementById(entry.variant === 'on_dark' ? 'used_logo_on_dark' : 'used_logo');
+    var img = row ? row.querySelector('img') : null;
+    return img ? (img.getAttribute('src') || '') : '';
+  }
+
+  // The rail shows the MARK when one resolves and the panel NAME when none
+  // does. A pane that always showed the name contradicted the panel it is
+  // previewing — the rail renders a logo there whenever the operator has set
+  // one, which is exactly the thing this page exists to let them check.
+  function paintNavBrand(sel, entry) {
+    var slot = document.querySelector(sel);
+    if (!slot) return;
+    var name = slot.querySelector('.nz-prev-name');
+    var img  = slot.querySelector('img.nz-prev-navmark');
+    var src  = navMarkSrc(entry);
+    if (src === '') {
+      if (img && img.parentNode) img.parentNode.removeChild(img);
+      if (name) name.hidden = false;
+      return;
+    }
+    if (!img) {
+      img = document.createElement('img');
+      img.className = 'nz-prev-navmark';
+      // Decorative: the pane is a picture of chrome, and the caption above it
+      // already says which surface this is.
+      img.setAttribute('alt', '');
+      slot.insertBefore(img, slot.firstChild);
+    }
+    // Only on a real change, so a keystroke elsewhere does not make every
+    // refresh re-fetch (or re-decode) the same image.
+    if (img.getAttribute('src') !== src) img.setAttribute('src', src);
+    if (name) name.hidden = true;
   }
 
   // The three chrome panes, painted from what the server measured. Entries
@@ -690,6 +820,10 @@
     // claiming otherwise.
     if (!surfaces || !surfaces.length) {
       if (pane) pane.hidden = true;
+      // ...and neither does any mark, so the rail goes back to the name rather
+      // than keeping an image an earlier response put there.
+      paintNavBrand('.nz-prev-nav-brand', null);
+      paintNavBrand('.nz-prev-nav-brand-light', null);
       return;
     }
     var lead = surfaces[0].design, nav = [], login = [], i;
@@ -700,6 +834,12 @@
     }
     paintSurfacePane('.nz-prev-rail', nav[0]);
     paintSurfacePane('.nz-prev-login', login[0]);
+
+    // Each rail pane gets the mark ITS OWN entry resolved to: with two rails the
+    // light one can legitimately ask for the other variant, and showing the dark
+    // pane's mark in both would be the preview guessing.
+    paintNavBrand('.nz-prev-nav-brand', nav[0]);
+    paintNavBrand('.nz-prev-nav-brand-light', nav.length > 1 ? nav[1] : nav[0]);
 
     // The nav surface splits in two only when rail_hex_light is set AND differs
     // from the rail — exactly when the light pane has something to say. With one
@@ -754,15 +894,32 @@
         // is the same innerHTML hand-off the uploader already performs on its
         // own response, and the same trust: the fragment is built by our own
         // renderers out of validated values and wordbook text.
-        var rows = ['used_logo', 'used_logo_on_dark', 'used_favicon'];
+        //
+        // Five slots, not three: each logo row is rendered in two halves — the
+        // swatch for the first surface, which sits in the 108px mark column, and
+        // the strip of every other surface's, which spans the block underneath.
+        // See $part in lib/preview.inc.php.
+        var rows = ['used_logo', 'used_logo_more', 'used_logo_on_dark',
+                    'used_logo_on_dark_more', 'used_favicon'];
         for (var i = 0; i < rows.length; i++) {
           var slot = document.getElementById(rows[i]);
-          if (slot && typeof data.previews[rows[i]] === 'string') slot.innerHTML = data.previews[rows[i]];
+          if (slot && typeof data.previews[rows[i]] === 'string') {
+            // Flagged so the observer below can tell OUR writes from the
+            // uploader's; see markSlotsWatch().
+            selfPaint = true;
+            slot.innerHTML = data.previews[rows[i]];
+          }
         }
         paintSurfaces(data.surfaces);
         if (data.colours) {
           setRatio('nz-rail-ratio', data.colours.rail);
           setRatio('nz-rail-light-ratio', data.colours.rail_light);
+          // The light rail falls back to the rail when this field is empty, so
+          // without this the two readouts print the same number and nothing on
+          // the page says why. Gated on a hex as well as on the flag: with both
+          // fields empty the readout says nothing, and "inherited" beside
+          // nothing would be a claim about a value that does not exist.
+          setInherited(data.colours.rail_light);
           // The accent is not a surface — no design paints its chrome with it —
           // so its ink comes from the colour block rather than from the list.
           if (data.colours.accent && HEX.test(data.colours.accent.ink || '')) {
@@ -905,6 +1062,18 @@
   }
 
   // ---- wiring ------------------------------------------------------------
+
+  // An <input type=color> has no way to hold "not a colour": handed anything
+  // else it keeps the last value it accepted. So when the field beside it stops
+  // being readable the picker is DIMMED, because a swatch showing a colour the
+  // field no longer says is the picker asserting a value that is gone. The class
+  // is the only thing that changes — the field itself is never written to, which
+  // is the silent repair this page deliberately does not perform.
+  function markPickStale(p, stale) {
+    var cls = p.className.replace(/\s*\bnz-hexpick-stale\b/g, '');
+    p.className = stale ? cls + ' nz-hexpick-stale' : cls;
+  }
+
   function syncHex(txtId, pickId) {
     var t = document.getElementById(txtId), p = document.getElementById(pickId);
     if (!t) return;
@@ -920,6 +1089,10 @@
       if (!p) return;
       var v = fieldValue(txtId);
       if (v !== '') p.value = v;
+      // An EMPTY field is not an invalid one — every one of these validators
+      // accepts blank, and blank means "keep the design's own colour" — so it
+      // dims nothing. Only a value that is there and is not a colour does.
+      markPickStale(p, (t.value || '').trim() !== '' && v === '');
     }
     syncPick();
 
@@ -929,7 +1102,9 @@
     //
     // Setting t.value in script fires no 'input' event of its own, which is why
     // this repaints and reschedules rather than leaning on the handler below.
-    function fromPick() { t.value = p.value.toUpperCase(); paintPreview(); validateField(txtId); schedulePreview(); }
+    // The field now holds exactly what the picker holds, so whatever unreadable
+    // value dimmed it is gone.
+    function fromPick() { t.value = p.value.toUpperCase(); markPickStale(p, false); paintPreview(); validateField(txtId); schedulePreview(); }
     if (p) {
       p.addEventListener('input', fromPick);
       p.addEventListener('change', fromPick);
@@ -992,6 +1167,36 @@
     // One refresh on load so the panes describe the STORED state through the
     // same code path everything else uses, rather than through a second one.
     schedulePreview();
+    markSlotsWatch();
+  }
+
+  // The upload driver below refreshes the three MARK slots out of its own
+  // response and knows nothing about the two *_more slots beside them, or about
+  // the nav pane's logo. Its code is frozen — the click-time CSRF mint in it is
+  // the one part of this page that must never be reimplemented — so instead of
+  // teaching it about the new slots, an upload is OBSERVED and answered with the
+  // refresh everything else on this page already goes through. Without it, an
+  // upload would leave the swatches under the block, and the mark in the rail,
+  // showing the artwork that was there before it.
+  //
+  // It cannot loop: our own writes set selfPaint, the first callback clears it
+  // and returns, and a write only ever happens when we actually painted a slot
+  // — so a flag can never be left standing for a later, real mutation to eat.
+  // Self-disconnects for the same reason the message observer does:
+  // ISPConfig.loadContent() swaps #pageContent's children while #pageForm and
+  // everything hanging off it stays alive.
+  function markSlotsWatch() {
+    if (!window.MutationObserver) return;
+    var ob = new MutationObserver(function () {
+      if (!pageAlive()) { ob.disconnect(); return; }
+      if (selfPaint) { selfPaint = false; return; }
+      schedulePreview();
+    });
+    var ids = ['used_logo', 'used_logo_on_dark'];
+    for (var i = 0; i < ids.length; i++) {
+      var el = document.getElementById(ids[i]);
+      if (el) ob.observe(el, { childList: true, subtree: true });
+    }
   }
 
   // The iframe uploader injects #OKMsg/#errorMsg just above the hidden id input

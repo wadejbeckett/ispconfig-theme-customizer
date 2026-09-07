@@ -51,6 +51,7 @@ $wb['accent_hex_txt'] = 'Couleur d’accentuation';
 $wb['rail_hex_txt'] = 'Couleur de la barre latérale';
 $wb['rail_hex_light_txt'] = 'Couleur de la barre latérale (mode clair)';
 $wb['rail_hex_light_hint_txt'] = 'Utilisée par les designs qui proposent un mode clair ; laissez le champ vide et la couleur de la barre latérale ci-dessus s’applique aux deux modes. Un design sans mode clair lit la valeur sans rien en faire.';
+$wb['rail_hex_light_inherited_txt'] = '(hérité de la couleur de la barre latérale)';
 $wb['rail_contrast_txt'] = 'Contraste du texte de la barre latérale :';
 $wb['login_bg_txt'] = 'Arrière-plan de la connexion';
 $wb['colour_hint_txt'] = 'Valeur hexadécimale comme #0065AB. Laissez vide pour conserver la valeur par défaut du thème.';

@@ -51,6 +51,7 @@ $wb['accent_hex_txt'] = 'Akzentfarbe';
 $wb['rail_hex_txt'] = 'Farbe der Seitenleiste';
 $wb['rail_hex_light_txt'] = 'Farbe der Seitenleiste (heller Modus)';
 $wb['rail_hex_light_hint_txt'] = 'Wird von Designs mit hellem Farbmodus verwendet; bleibt das Feld leer, gilt die Farbe der Seitenleiste oben in beiden Modi. Ein Design ohne hellen Modus liest den Wert und tut nichts damit.';
+$wb['rail_hex_light_inherited_txt'] = '(von der Farbe der Seitenleiste übernommen)';
 $wb['rail_contrast_txt'] = 'Kontrast des Seitenleistentexts:';
 $wb['login_bg_txt'] = 'Anmelde-Hintergrund';
 $wb['colour_hint_txt'] = 'Hex-Wert wie #0065AB. Leer lassen, um die Theme-Vorgabe beizubehalten.';

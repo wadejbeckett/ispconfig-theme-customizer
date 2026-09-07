@@ -632,10 +632,18 @@ function customizer_preview_payload($stored_branding, $custom_logo, $posted, $de
 
     return array(
         'previews' => array(
+            //* Two halves per logo row, two slots on the page: the mark column
+            //* beside the uploader takes the first surface's swatch, and the
+            //* full-width strip under the block takes the rest. See
+            //* customizer_logo_preview_html()'s $part.
             'used_logo' => customizer_logo_preview_html($resolved['on_light'], 'on_light',
-                $txt('no_logo'), $txt('fallback_from_dark'), $surfaces),
+                $txt('no_logo'), $txt('fallback_from_dark'), $surfaces, 'first'),
+            'used_logo_more' => customizer_logo_preview_html($resolved['on_light'], 'on_light',
+                $txt('no_logo'), $txt('fallback_from_dark'), $surfaces, 'more'),
             'used_logo_on_dark' => customizer_logo_preview_html($resolved['on_dark'], 'on_dark',
-                $txt('no_logo'), $txt('fallback_from_light'), $surfaces),
+                $txt('no_logo'), $txt('fallback_from_light'), $surfaces, 'first'),
+            'used_logo_on_dark_more' => customizer_logo_preview_html($resolved['on_dark'], 'on_dark',
+                $txt('no_logo'), $txt('fallback_from_light'), $surfaces, 'more'),
             'used_favicon' => customizer_favicon_preview_html(
                 customizer_favicon_resolve(array(
                     'favicon'     => isset($branding['favicon']) ? $branding['favicon'] : '',
@@ -942,12 +950,34 @@ function customizer_installed_designs($active) {
  * The labels are emitted unescaped, exactly as $no_logo_text and $fallback_text
  * always have been: all three are wordbook entries, and this wordbook uses named
  * entities (&times;) deliberately, so escaping them would print the source.
+ *
+ * $part          which HALF of the row to emit, because the row does not fit in
+ *                one place on the page:
+ *                  'first'  the swatch for the FIRST surface — the active
+ *                           design's, since customizer_installed_designs() puts
+ *                           it first — in <span class="nz-marks nz-mark-primary">
+ *                  'more'   every remaining swatch, plus the borrowed-variant
+ *                           note, in <span class="nz-marks nz-mark-others">
+ *                The mark column beside each uploader is 108px wide and a panel
+ *                with two designs installed has THREE surfaces asking for the
+ *                light mark, so one container stacked them vertically and ran
+ *                over the path field below it. The caller puts 'first' in the
+ *                column and 'more' in a full-width row under the block, where a
+ *                horizontal wrapping strip of swatches has somewhere to go.
+ *                'first' is the default so that a caller which knows nothing
+ *                about the split still gets the column's content and never the
+ *                overflowing whole.
  */
-function customizer_logo_preview_html($resolved, $want, $no_logo_text, $fallback_text = '', $surfaces = array()) {
+function customizer_logo_preview_html($resolved, $want, $no_logo_text, $fallback_text = '', $surfaces = array(), $part = 'first') {
     $src  = (is_array($resolved) && isset($resolved['src']))  ? (string)$resolved['src']  : '';
     $from = (is_array($resolved) && isset($resolved['from'])) ? (string)$resolved['from'] : '';
+    $more = ($part === 'more');
 
-    if($src === '') return '<em>' . $no_logo_text . '</em>';
+    //* "Nothing is set" is said ONCE, by the column: the row beneath it is
+    //* additional detail about a mark, and there is no mark to detail. An empty
+    //* string is what makes the second slot collapse (:empty in the page's style
+    //* block) instead of leaving a gap under the block.
+    if($src === '') return $more ? '' : '<em>' . $no_logo_text . '</em>';
 
     $boxes = array();
     if(is_array($surfaces)) {
@@ -967,12 +997,20 @@ function customizer_logo_preview_html($resolved, $want, $no_logo_text, $fallback
     //* cannot support; a swatch of the right kind is one we can.
     if(!$boxes) $boxes[] = array('bg' => '', 'label' => '');
 
+    //* The split. array_slice rather than two loops so both halves are drawn by
+    //* the one piece of code below and cannot diverge in edge, ink or caption.
+    $boxes = $more ? array_slice($boxes, 1) : array_slice($boxes, 0, 1);
+
     //* htmlspecialchars is a no-op on a valid data URI — the base64 alphabet and
     //* the "data:image/…;base64," prefix contain none of & < > " ' — so escaping
     //* unconditionally costs nothing and removes the need for the reader of this
     //* line to know which of the two kinds of value it is holding.
     $esc  = htmlspecialchars($src, ENT_QUOTES);
-    $html = '<span style="display:inline-flex;gap:12px;flex-wrap:wrap;align-items:flex-start">';
+    //* Layout is a CLASS, not an inline style: this strip is 108px wide in the
+    //* mark column and full width under the block, and only the page knows
+    //* which of the two it is being dropped into. The per-swatch background,
+    //* edge and caption ink below stay inline because they are measured values.
+    $html = $boxes ? '<span class="nz-marks ' . ($more ? 'nz-mark-others' : 'nz-mark-primary') . '">' : '';
 
     foreach($boxes as $b) {
         //* The design-neutral colours are the pair this row was drawn on before
@@ -1006,12 +1044,13 @@ function customizer_logo_preview_html($resolved, $want, $no_logo_text, $fallback
         }
         $html .= '</span>';
     }
-    $html .= '</span>';
+    if($boxes) $html .= '</span>';
 
     //* Say so when this row is borrowing the other variant, otherwise the two
     //* rows show the same mark twice and look like a bug rather than like the
-    //* documented fallback.
-    if($fallback_text !== '' && $from !== '' && $from !== $want) {
+    //* documented fallback. It rides with the SECOND half: it is a sentence, and
+    //* a sentence in a 108px column is a column of single words.
+    if($more && $fallback_text !== '' && $from !== '' && $from !== $want) {
         $html .= '<p class="help-block">' . $fallback_text . '</p>';
     }
     return $html;
