@@ -139,6 +139,7 @@ class page_action extends tform_actions {
     function onShowEnd() {
         global $app;
         $this->render_image_previews();
+        $this->publish_field_error_map();
         //* the post-save redirect appends msg=saved (see list_default in the form
         //* definition) — without this banner a successful save is indistinguishable
         //* from a silently failed one
@@ -457,6 +458,48 @@ class page_action extends tform_actions {
             $app->lng('no_favicon_set_txt'),
             $app->lng('favicon_url_wins_txt')
         ));
+    }
+
+    /**
+     * Which field each validation message belongs to, as JSON for the page.
+     *
+     * tform reports validation failures as one banner of translated SENTENCES
+     * with no field names in it. On a one-column form the offending control was
+     * a short scroll away; on a two-column one a banner at the top is a message
+     * about a control the operator may not even be able to see. The page marks
+     * the field itself as well — and to do that it has to be able to tell which
+     * message is whose.
+     *
+     * The map is built from the form definition, so it cannot drift from the
+     * errmsg keys the validators actually name: field => the message that field
+     * would produce. Entity-decoded because the banner is read back as
+     * textContent, where "&times;" has already become "×".
+     *
+     * The four JSON_HEX_* flags escape every character that could end the HTML
+     * attribute this lands in FROM INSIDE a message — but they do not touch
+     * json_encode's own structural quotes, which is why the attribute in
+     * customizer_edit.htm is single-quoted and JSON_HEX_APOS is the one of the
+     * four that is load-bearing. Changing either without the other reopens the
+     * hole; the template says so at the attribute too.
+     *
+     * A field whose errmsg key is missing from the wordbook is skipped rather
+     * than mapped to the raw key: tform prints the key itself in that case, and
+     * matching on it would mark a field on the strength of a bug elsewhere.
+     */
+    private function publish_field_error_map() {
+        global $app;
+        $map = array();
+        foreach($app->tform->formDef['tabs'][$this->active_tab]['fields'] as $key => $field) {
+            if(!isset($field['validators']) || !is_array($field['validators'])) continue;
+            foreach($field['validators'] as $v) {
+                if(!isset($v['errmsg'])) continue;
+                $txt = $app->tform->lng($v['errmsg']);
+                if(!is_string($txt) || $txt === '' || $txt === $v['errmsg']) continue;
+                $map[$key] = html_entity_decode($txt, ENT_QUOTES, 'UTF-8');
+            }
+        }
+        $app->tpl->setVar('field_errors_json',
+            json_encode($map, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT));
     }
 }
 

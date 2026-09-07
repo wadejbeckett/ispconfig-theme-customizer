@@ -177,6 +177,21 @@
   @media (max-width: 767px) {
     #nz-brandpage .nz-upload { grid-template-columns: minmax(0, 1fr); }
   }
+
+  /* One flash of the preview panes after a save, so "Changes saved" is not the
+     only signal that the panes now describe stored values. It only ADDS a ring
+     and takes nothing away, which is why it is safe to gate on reduced motion:
+     under `reduce` the rule simply never applies and the panes render normally.
+     Nothing here may ever hide an element to animate it back — that is the
+     regression this project fixed at v3.1.1, where a reduced-motion visitor got
+     `opacity: 0` with nothing left to animate. */
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes nzPreviewFlash {
+      from { box-shadow: 0 0 0 2px var(--pz-accent, var(--nz-blue-400, #0065AB)); }
+      to   { box-shadow: 0 0 0 2px transparent; }
+    }
+    #nz-brandpage .nz-prevframe.nz-flash { animation: nzPreviewFlash 600ms ease-out 1; }
+  }
 </style>
 
 <!-- Upload feedback only (logo_upload.php's iframe response — the uploader
@@ -190,7 +205,22 @@
   <div id="errorMsg" class="alert alert-danger clear"><tmpl_var name="upload_error"></div>
 </tmpl_if>
 
-<div id="nz-brandpage">
+<!-- Two values the script below needs, carried as ATTRIBUTES rather than as an
+     inline var assignment: logo_upload.php renders this same template with no
+     tform, so there both tmpl_vars are unknown, vlibTemplate removes them, and
+     an empty attribute is something the readers cope with while an empty
+     assignment would be a syntax error.
+
+     data-field-errors is the field-to-validation-message map built by
+     publish_field_error_map() in customizer_edit.php. It is quoted with SINGLE
+     quotes and the tmpl_var inside it with double ones, which is the one place
+     in this template that inverts the house style and is not a slip:
+     json_encode's four HEX flags escape a quote INSIDE a JSON string, but JSON's
+     own structural quotes are emitted raw, so `{"logo_url":"…"}` in a
+     double-quoted attribute closes it on the very first key. JSON_HEX_APOS
+     guarantees no apostrophe survives anywhere in the value, which is what makes
+     the single-quoted attribute closeable only by us. -->
+<div id="nz-brandpage" data-field-errors='{tmpl_var name="field_errors_json"}' data-preview-failed="{tmpl_var name='preview_failed_txt'}">
 <div class="nz-brandgrid">
 <div class="nz-brandfields">
 
@@ -534,28 +564,404 @@
 
 <script>
 (function () {
-  function sync(txtId, pickId) {
+  // ---- the live preview -------------------------------------------------
+  //
+  // Two halves, and the split is the point. BACKGROUND colour, and the panel
+  // name, are painted here as you type, so a recoloured rail answers the
+  // keystroke with no round trip. Everything a colour does not decide on its
+  // own — the ink that goes on it, the ratio the two measure, and which logo
+  // VARIANT each surface resolves to — is NOT guessed here: those resolvers
+  // exist in PHP copies CI proves agree, and a fourth copy in JavaScript would
+  // put what this page promises outside that guarantee. They arrive from
+  // customizer/preview.php, debounced. Until the first response lands a pane
+  // carries the design's own ink and the ratio readouts say nothing, which is
+  // the honest state rather than a guess that might be contradicted 300ms later.
+
+  var HEX = /^#[0-9A-Fa-f]{6}$/;
+
+  // Everything this script reads or writes lives inside the panel's one form;
+  // scoping to it keeps a banner belonging to another part of the chrome out.
+  function formScope() {
+    return document.getElementById('pageForm') || document;
+  }
+
+  // A design token as an actual colour, or the fallback — this is how the panes
+  // stay design-agnostic: with no colour set they show the ACTIVE design's own.
+  function token(names, fallback) {
+    var cs = window.getComputedStyle ? getComputedStyle(document.documentElement) : null;
+    for (var i = 0; cs && i < names.length; i++) {
+      var v = (cs.getPropertyValue(names[i]) || '').trim();
+      if (HEX.test(v)) return v;
+    }
+    return fallback;
+  }
+
+  // The '#' is tolerated as missing because onBeforeUpdate() prepends it before
+  // the validators run — the pane shows what the SAVE would store, not what the
+  // regex would reject. The field itself is left exactly as it was typed.
+  function fieldValue(id, fallback) {
+    var el = document.getElementById(id);
+    if (!el) return fallback;
+    var v = (el.value || '').trim();
+    if (/^[0-9A-Fa-f]{6}$/.test(v)) v = '#' + v;
+    return HEX.test(v) ? v.toUpperCase() : fallback;
+  }
+
+  function paintBg(sel, hex) {
+    var els = document.querySelectorAll(sel);
+    for (var i = 0; i < els.length; i++) els[i].style.background = hex;
+  }
+
+  function paintPreview() {
+    var rail   = fieldValue('rail_hex', token(['--pz-band', '--nz-rail'], '#2E3A44'));
+    var accent = fieldValue('accent_hex', token(['--pz-accent', '--nz-blue-400'], '#0065AB'));
+    var login  = fieldValue('login_bg', token(['--pz-ground', '--nz-page'], '#17252B'));
+    // The light rail falls back to the rail, which is what a design with a light
+    // scope does with an empty value — the preview must show that, not nothing.
+    var light  = fieldValue('rail_hex_light', rail);
+
+    paintBg('.nz-prev-rail', rail);
+    paintBg('.nz-prev-rail-light', light);
+    paintBg('.nz-prev-login', login);
+    paintBg('.nz-prev-accent', accent);
+
+    var i, els;
+    els = document.querySelectorAll('.nz-prev-accent-rule');
+    for (i = 0; i < els.length; i++) els[i].style.color = accent;
+
+    // textContent, never innerHTML: the panel name is the operator's own text and
+    // has no business being parsed as markup on the page that sets it.
+    var nameEl = document.getElementById('company_name');
+    var name   = (nameEl && nameEl.value) ? nameEl.value.trim() : '';
+    els = document.querySelectorAll('.nz-prev-name');
+    for (i = 0; i < els.length; i++) els[i].textContent = name;
+  }
+
+  // ---- what only the server can answer -----------------------------------
+  //
+  // One debounced, same-origin POST carrying the candidate values. No CSRF token
+  // is minted for it: minting WRITES the lock-free session, this fires while
+  // somebody is typing, and the endpoint writes nothing — see preview.php.
+  var PREVIEW_FIELDS = ['accent_hex', 'rail_hex', 'rail_hex_light', 'login_bg',
+                        'logo_url', 'logo_url_on_dark', 'favicon_url',
+                        'logo_variant_nav', 'logo_variant_login'];
+  var previewTimer = null;
+  var previewAbort = null;
+
+  // The ratio beside a colour field is the SERVER's measurement. This module has
+  // exactly one contrast implementation and it is in PHP; a second one here
+  // could print a number the panel does not agree with.
+  function setRatio(id, block) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = (block && block.hex && typeof block.ratio === 'number')
+      ? (block.ratio.toFixed(2) + ':1') : '—';
+  }
+
+  function paintSurfacePane(sel, entry) {
+    var el = document.querySelector(sel);
+    if (!el || !entry) return;
+    if (HEX.test(entry.bg || '')) el.style.background = entry.bg;
+    if (HEX.test(entry.ink || '')) el.style.color = entry.ink;
+  }
+
+  // The three chrome panes, painted from what the server measured. Entries
+  // arrive one per (design, surface, backdrop) with the ACTIVE design first
+  // (customizer_installed_designs orders them), so the leading design's entries
+  // are the ones these panes describe — the other designs' entries are already
+  // shown, as swatches, inside the server-rendered logo previews.
+  //
+  // A surface with two backdrops contributes two entries. clarity's login does
+  // that whenever login_bg is unset (one entry per colour mode); the pane shows
+  // the first, which is the mode the design ships in.
+  function paintSurfaces(surfaces) {
+    if (!surfaces || !surfaces.length) return;
+    var lead = surfaces[0].design, nav = [], login = [], i;
+    for (i = 0; i < surfaces.length; i++) {
+      if (surfaces[i].design !== lead) continue;
+      if (surfaces[i].surface === 'nav') nav.push(surfaces[i]);
+      else if (surfaces[i].surface === 'login') login.push(surfaces[i]);
+    }
+    paintSurfacePane('.nz-prev-rail', nav[0]);
+    paintSurfacePane('.nz-prev-login', login[0]);
+
+    // The nav surface splits in two only when rail_hex_light is set AND differs
+    // from the rail — exactly when the light pane has something to say. With one
+    // entry it stays hidden, because a second identical pane would tell the
+    // operator they have two rails when they have one.
+    var pane = document.querySelector('.nz-prev-light-pane');
+    if (!pane) return;
+    if (nav.length > 1) {
+      paintSurfacePane('.nz-prev-rail-light', nav[1]);
+      pane.hidden = false;
+    } else {
+      pane.hidden = true;
+    }
+  }
+
+  // The trap the observer below self-disconnects for, in its other form:
+  // ISPConfig.loadContent() swaps #pageContent's children while a debounce may
+  // still be pending, so a timer left over from the PREVIOUS instance of this
+  // page can fire against another module's markup. getElementById only finds
+  // elements still in the document, so a null host IS "this page is gone".
+  function pageAlive() {
+    return !!document.getElementById('nz-brandpage');
+  }
+
+  function refreshPreview() {
+    if (!window.fetch || !window.FormData || !pageAlive()) return;
+    var fd = new FormData();
+    for (var i = 0; i < PREVIEW_FIELDS.length; i++) {
+      var el = document.getElementById(PREVIEW_FIELDS[i]);
+      if (el) fd.append(PREVIEW_FIELDS[i], el.value);
+    }
+
+    // Only the newest answer is wanted; an older one landing later would show
+    // the operator a state they have already typed past.
+    var opts = { method: 'POST', body: fd, credentials: 'same-origin',
+                 headers: { 'X-Requested-With': 'XMLHttpRequest' } };
+    if (window.AbortController) {
+      if (previewAbort) previewAbort.abort();
+      previewAbort = new AbortController();
+      opts.signal = previewAbort.signal;
+    }
+
+    fetch('customizer/preview.php', opts)
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.previews) throw new Error('unexpected response');
+        if (!pageAlive()) return;
+        // The three preview rows are SERVER-rendered by the same functions the
+        // page load and the logo uploader use, so the three cannot disagree. This
+        // is the same innerHTML hand-off the uploader already performs on its
+        // own response, and the same trust: the fragment is built by our own
+        // renderers out of validated values and wordbook text.
+        var rows = ['used_logo', 'used_logo_on_dark', 'used_favicon'];
+        for (var i = 0; i < rows.length; i++) {
+          var slot = document.getElementById(rows[i]);
+          if (slot && typeof data.previews[rows[i]] === 'string') slot.innerHTML = data.previews[rows[i]];
+        }
+        paintSurfaces(data.surfaces);
+        if (data.colours) {
+          setRatio('nz-rail-ratio', data.colours.rail);
+          setRatio('nz-rail-light-ratio', data.colours.rail_light);
+          // The accent is not a surface — no design paints its chrome with it —
+          // so its ink comes from the colour block rather than from the list.
+          if (data.colours.accent && HEX.test(data.colours.accent.ink || '')) {
+            var els = document.querySelectorAll('.nz-prev-accent');
+            for (i = 0; i < els.length; i++) els[i].style.color = data.colours.accent.ink;
+          }
+        }
+        previewNote('');
+      })
+      .catch(function (e) {
+        // An aborted request is this function superseding itself, not a failure.
+        if (e && e.name === 'AbortError') return;
+        previewNote(pageText('preview-failed'));
+      });
+  }
+
+  function schedulePreview() {
+    if (previewTimer) clearTimeout(previewTimer);
+    previewTimer = setTimeout(refreshPreview, 350);
+  }
+
+  // A failed refresh is SAID, not swallowed: the panes would otherwise keep
+  // showing a state the server never confirmed, with nothing to indicate it.
+  function previewNote(text) {
+    var box = document.querySelector('.nz-brandpreview');
+    if (!box) return;
+    var note = document.getElementById('nz-preview-note');
+    if (!text) { if (note && note.parentNode) note.parentNode.removeChild(note); return; }
+    if (!note) {
+      note = document.createElement('p');
+      note.id = 'nz-preview-note';
+      note.className = 'help-block nz-fielderror';
+      box.appendChild(note);
+    }
+    note.textContent = text;
+  }
+
+  // ---- inline validation -------------------------------------------------
+  //
+  // Two sources, one decoration. The SERVER's banner is authoritative and is the
+  // reason this exists: it keeps its place under the page header, but on a
+  // two-column page a banner at the top is a message about a control the
+  // operator may not be able to see, so the field is marked as well. The blur
+  // check is an ADVISORY mirror that says the same thing before a round trip.
+  // Neither blocks a submission — the tform validators are the only gate — and
+  // neither repairs what was typed.
+  function pageText(what) {
+    var host = document.getElementById('nz-brandpage');
+    var raw = host ? host.getAttribute('data-' + what) : null;
+    return raw || '';
+  }
+
+  // Each field mapped to the validation message that field would produce,
+  // published by publish_field_error_map() in customizer_edit.php out of the form
+  // definition itself, so it cannot drift from the errmsg keys the validators name.
+  function fieldErrorMap() {
+    var host = document.getElementById('nz-brandpage');
+    if (!host) return {};
+    try { return JSON.parse(host.getAttribute('data-field-errors') || '{}'); }
+    catch (e) { return {}; }
+  }
+
+  var FIELD_ERRORS = fieldErrorMap();
+  var clientInvalid = {};
+
+  // What the SERVER would reject, mirrored — which is not the same as the
+  // validator's own regex. onBeforeUpdate() trims and prepends a missing '#'
+  // before the hex validators run, so "0065ab" is accepted and must not be
+  // advised against: an advisory on a value the server takes is worse than no
+  // advisory at all. Only fields whose filters are TRIM alone are mirrored;
+  // custom_login_link is deliberately absent because STRIPTAGS rewrites it
+  // before its validator sees it, and this check cannot honestly predict that.
+  var PATH_RE = /^(https:\/\/[^\s"'<>()\\]+|\/(?!\/)[^\s"'<>()\\]+)$/;
+  var HEX_RE  = /^#?[0-9A-Fa-f]{6}$/;
+  var ADVISORY = {
+    accent_hex: HEX_RE, rail_hex: HEX_RE, rail_hex_light: HEX_RE, login_bg: HEX_RE,
+    logo_url: PATH_RE, logo_url_on_dark: PATH_RE, favicon_url: PATH_RE
+  };
+
+  function markField(field, on) {
+    var input = document.getElementById(field);
+    if (!input) return;
+    var text = FIELD_ERRORS[field];
+    // Nothing to say means nothing is marked: a red edge with no message is a
+    // worse answer than the banner alone.
+    if (typeof text !== 'string' || text === '') on = false;
+    var group = input.closest ? input.closest('.form-group') : null;
+    if (group) group.className = group.className.replace(/\s*\bnz-invalid\b/g, '') + (on ? ' nz-invalid' : '');
+    var note = document.getElementById('nz-err-' + field);
+    if (on) {
+      if (!note) {
+        note = document.createElement('p');
+        note.id = 'nz-err-' + field;
+        note.className = 'help-block nz-fielderror';
+        if (input.parentNode) input.parentNode.appendChild(note);
+      }
+      note.textContent = text;
+      input.setAttribute('aria-invalid', 'true');
+      input.setAttribute('aria-describedby', 'nz-err-' + field);
+    } else {
+      if (note && note.parentNode) note.parentNode.removeChild(note);
+      input.removeAttribute('aria-invalid');
+      // Removed with the note it pointed at: a describedby aimed at an element
+      // that no longer exists is read out as nothing at all by some screen
+      // readers and as stale text by others.
+      input.removeAttribute('aria-describedby');
+    }
+  }
+
+  // EVERY danger banner in the form, not '#errorMsg'. Core's tabbed_form.tpl.htm
+  // writes the tform validation banner with no id whatsoever (class
+  // 'alert alert-danger clear'), while '#errorMsg' belongs to the UPLOADER's
+  // response — matching on that id alone would mark nothing on the one occasion
+  // this function exists for.
+  function bannerText() {
+    var els = formScope().querySelectorAll('.alert-danger');
+    var out = '';
+    for (var i = 0; i < els.length; i++) out += (els[i].textContent || '') + '\n';
+    return out;
+  }
+
+  function markInvalidFields() {
+    var text = bannerText();
+    for (var field in FIELD_ERRORS) {
+      if (!Object.prototype.hasOwnProperty.call(FIELD_ERRORS, field)) continue;
+      var msg = FIELD_ERRORS[field];
+      markField(field, (msg !== '' && text.indexOf(msg) !== -1) || clientInvalid[field] === true);
+    }
+  }
+
+  // Advisory only, on blur. It never rewrites what was typed: a value the
+  // operator can still see is one they can correct, and silently repairing it
+  // teaches them the field accepts a shape it may not.
+  function validateField(id) {
+    var el = document.getElementById(id);
+    if (!el || !Object.prototype.hasOwnProperty.call(ADVISORY, id)) return;
+    var v = (el.value || '').trim();
+    clientInvalid[id] = (v !== '' && !ADVISORY[id].test(v));
+    markInvalidFields();
+  }
+
+  // ---- wiring ------------------------------------------------------------
+  function syncHex(txtId, pickId) {
     var t = document.getElementById(txtId), p = document.getElementById(pickId);
-    if (!t || !p) return;
-    var re = /^#[0-9A-Fa-f]{6}$/;
-    if (re.test(t.value)) p.value = t.value;
+    if (!t) return;
+    if (p && HEX.test(t.value)) p.value = t.value;
     // 'input' alone is NOT enough: Firefox's native colour dialog only fires
     // 'change' when it closes, so a picker-chosen colour never reached the
     // named text field and every save posted an empty value.
-    function fromPick() { t.value = p.value.toUpperCase(); }
-    p.addEventListener('input', fromPick);
-    p.addEventListener('change', fromPick);
-    t.addEventListener('input', function () { if (re.test(t.value)) p.value = t.value; });
-    // tolerate a pasted colour without the leading '#'
-    t.addEventListener('blur', function () {
-      var v = t.value.trim();
-      if (/^[0-9A-Fa-f]{6}$/.test(v)) v = '#' + v;
-      if (re.test(v)) { v = v.toUpperCase(); t.value = v; p.value = v; }
+    //
+    // Setting t.value in script fires no 'input' event of its own, which is why
+    // this repaints and reschedules rather than leaning on the handler below.
+    function fromPick() { t.value = p.value.toUpperCase(); paintPreview(); validateField(txtId); schedulePreview(); }
+    if (p) {
+      p.addEventListener('input', fromPick);
+      p.addEventListener('change', fromPick);
+    }
+    t.addEventListener('input', function () {
+      if (p && HEX.test(t.value)) p.value = t.value;
+      paintPreview();
+      schedulePreview();
     });
+    t.addEventListener('blur', function () { validateField(txtId); });
   }
-  sync('accent_hex', 'accent_hex_pick');
-  sync('rail_hex', 'rail_hex_pick');
-  sync('login_bg', 'login_bg_pick');
+
+  if (document.getElementById('nz-brandpage')) {
+    syncHex('accent_hex', 'accent_hex_pick');
+    syncHex('rail_hex', 'rail_hex_pick');
+    syncHex('rail_hex_light', 'rail_hex_light_pick');
+    syncHex('login_bg', 'login_bg_pick');
+
+    var nameInput = document.getElementById('company_name');
+    if (nameInput) nameInput.addEventListener('input', paintPreview);
+
+    // The reference paths change WHICH mark a surface gets, which only the
+    // server can answer; they are also the second half of the advisory check.
+    ['logo_url', 'logo_url_on_dark', 'favicon_url'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', schedulePreview);
+      el.addEventListener('blur', function () { validateField(id); });
+    });
+    // The two placement selects change nothing this page can paint on its own.
+    ['logo_variant_nav', 'logo_variant_login'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('change', schedulePreview);
+    });
+
+    paintPreview();
+    markInvalidFields();
+
+    // A save redirects back to this page with msg=saved, which core's
+    // tabbed_form.tpl.htm renders as '.alert-notification' — it carries no id,
+    // and '#OKMsg' is the UPLOADER's banner, which arrives later through the
+    // observer below. Flash the panes once so the preview column is part of the
+    // confirmation rather than a bystander to it. Fire-and-forget: the class
+    // comes off after the animation's own duration, and under reduced motion the
+    // rule does not exist, so the class is inert rather than a state something
+    // has to undo.
+    if (formScope().querySelector('.alert-notification, #OKMsg')) {
+      var panes = document.querySelectorAll('.nz-prevframe');
+      for (var pi = 0; pi < panes.length; pi++) panes[pi].className += ' nz-flash';
+      setTimeout(function () {
+        var els = document.querySelectorAll('.nz-prevframe.nz-flash');
+        for (var i = 0; i < els.length; i++) {
+          els[i].className = els[i].className.replace(/\s*\bnz-flash\b/g, '');
+        }
+      }, 700);
+    }
+
+    // One refresh on load so the panes describe the STORED state through the
+    // same code path everything else uses, rather than through a second one.
+    schedulePreview();
+  }
 
   // The iframe uploader injects #OKMsg/#errorMsg just above the hidden id input
   // at the bottom of the form, off-screen on this page — pull any injected
@@ -576,6 +982,7 @@
         if (el && el.parentNode !== slot) { slot.appendChild(el); moved = true; }
       });
       if (moved) slot.scrollIntoView({ block: 'nearest' });
+      if (moved) markInvalidFields();
     };
     var ob = new MutationObserver(function () {
       if (!document.body.contains(slot)) { ob.disconnect(); return; }
