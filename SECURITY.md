@@ -153,7 +153,9 @@ forbids quotes, whitespace and angle brackets:
 
 **Free text** (`company_name`, `custom_login_text`) — `STRIPTAGS` + `STRIPNL` on
 save. The active design normalises again on read (control characters stripped,
-by the same byte-wise filter in all four endpoints, so the CSS wordmark and the
+by the same byte-wise filter in the four endpoints that emit free text —
+`brand.php` and `title.php` in both designs; `favicon.php` never reads
+`company_name` or `custom_login_text` — so the CSS wordmark and the
 tab title can never derive different strings from the same row) and escapes per
 output context: a CSS-string escape in `brand.php`, `json_encode` with the HEX
 flags in `title.php`.
@@ -383,9 +385,11 @@ cannot drift apart:
   type error, and no form of the parameter reaches the response body. It does
   reach the `ETag`, deliberately: the two scenes are different URLs, and a
   validator that ignored the scene would let a stale revalidation cross them.
-  The other three endpoints read no request input whatsoever.
+  The other five endpoints — `clarity/brand.php`, `clarity/title.php`,
+  `clarity/favicon.php`, `classic/title.php` and `classic/favicon.php` — read no
+  request input whatsoever.
 - **No code execution surface.** Nothing user-controlled is `eval`'d or
-  `include`'d. All four endpoints read and emit validated scalars.
+  `include`'d. All six endpoints read and emit validated scalars.
 - **Caching is `private`**, max-age 30 seconds, so branding never lands in a
   shared or reverse-proxy cache.
 
@@ -407,7 +411,7 @@ stock theme's vendor CSS/JS by reference and never edits it, and classic ships
 no assets at all — every stylesheet, script and icon on the page is served from
 `themes/default/assets/` exactly as core left it. The Branding page lives
 entirely under `interface/web/customizer/`. **Nothing under either design
-directory writes at runtime** — all four endpoints only read.
+directory writes at runtime** — all six endpoints only read.
 
 `classic` is the one that comes close to core, so it is worth stating exactly.
 Its two shell templates are **generated at install time from the target panel's

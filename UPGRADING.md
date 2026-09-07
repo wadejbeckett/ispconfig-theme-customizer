@@ -389,6 +389,36 @@ regenerates classic's shell if classic is in the run, and re-runs module
 assignment; for a `--copy` install it is the step that deploys the new files at
 all. Hard-refresh the browser (`Ctrl+Shift+R`) so the new CSS is picked up.
 
+### The `rail_hex_light` key
+
+This release adds one branding key, `rail_hex_light` — the sidebar colour in
+light colour mode. **Nothing changes on an existing panel until you set it:**
+unset, every design keeps painting the sidebar from `rail_hex` in both modes,
+which is what they have always done. There is no migration and no new column;
+like every other branding value it lives in the `[branding]` section of
+`sys_ini.config` and is written by the Branding page.
+
+Downgrading is equally uneventful. An older design's `brand.php` does not read
+the key, so it is simply ignored; the value stays in the config blob and comes
+back if you upgrade again. `bin/purge_branding.php` removes it with the rest of
+the section.
+
+If you maintain your own design, add `rail_hex_light` to its `brand.php`: paint
+your light scope's rail with it where you have one, or read it and document the
+no-op where you do not. CI's **Brand-token contract parity** step walks every
+`themes/*/brand.php` and now requires the key in all of them.
+
+### Retired wordbook keys
+
+`logo_head_txt`, `brand_head_txt` and `credits_head_txt` are gone from the
+Branding page's wordbook; the page now groups its fields under five new legend
+headings instead (`identity_head_txt`, `placement_head_txt`, `colour_head_txt`,
+`preview_head_txt` and `visibility_head_txt` — `favicon_head_txt` and
+`login_head_txt` already existed and are unchanged). A third-party translation,
+or a design or script that read those three retired keys, will find them absent
+after this upgrade — there is no compatibility shim, because a wordbook key with
+nothing left to label has nothing to fall back to.
+
 The full usage line:
 
 ```

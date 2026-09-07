@@ -94,6 +94,13 @@ the page itself.)
 The UI ships in seven locales: English, German, French, Spanish, Italian, Dutch
 and Portuguese.
 
+The page itself is two columns on a wide screen — the settings on the left, a
+live preview on the right showing the navigation bar, the login screen and the
+tab icon — and one column below about 1000px, with the preview above the fields.
+Colours and the panel name update as you type; which logo each surface ends up
+with is worked out by the server, using the same code the panel itself uses, so
+the preview cannot promise a mark the panel will not render.
+
 **Some of it works with no design installed at all** — these values are read by
 ISPConfig core itself, which is why `install.sh --module` is a real option on a
 panel that is staying on the stock `default` theme:
@@ -120,6 +127,7 @@ these:
 |---|---|
 | `accent_hex` | re-hues the blue ramp and accents |
 | `rail_hex` | the main navigation band — clarity's navy brand rail, classic's navbar |
+| `rail_hex_light` | the same band in **light** colour mode, for designs that have one. Unset, `rail_hex` is used in both modes — which is what every panel does today, so this changes nothing until you set it. A design with a single colour mode (classic, and phosphor) reads the key and does nothing with it |
 | `login_bg` | login-screen background base |
 | `logo_url` | **light-background** logo by reference (root-relative path or `https` URL); wins over the uploaded `custom_logo` |
 | `logo_on_dark` | **dark-background** logo, uploaded (a data URI). Core has no second logo column and this extension adds none, so this one rides in the config blob — see the note below |
@@ -153,6 +161,15 @@ puts the logo on a navy rail and so wants the white mark, but set `rail_hex` to
 white and the white mark is what you would get, on a white rail. Set
 `logo_variant_nav` or `logo_variant_login` and that surface is pinned to the
 mark you name, independently of the other.
+
+**A light-mode sidebar changes which logo the navigation shows, and the page
+tells you.** On a design with a light colour mode, setting `rail_hex_light` gives
+the navigation bar two backgrounds instead of one — and a mark that reads on a
+navy rail is the mark that disappears on a near-white one. Left on **Automatic**,
+each colour mode gets the variant that reads on *its* background, exactly as the
+login screen already does; the preview draws one swatch per background so you can
+see both before you commit. An explicit `logo_variant_nav` is still obeyed in
+both modes, because the escape hatch is absolute by design.
 
 On classic, neither colour reaches a logo, so neither is read: `rail_hex`
 recolours the navigation band *below* the header strip the logo sits in, and

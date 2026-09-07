@@ -22,13 +22,11 @@ $wb['logo_url_error_regex'] = 'The light-background logo path must be a root-rel
 $wb['logo_on_dark_head_txt'] = 'Logo for dark backgrounds';
 $wb['logo_on_dark_txt'] = 'Logo file';
 $wb['logo_on_dark_hint_txt'] = 'The mark that sits ON a dark background, so it should be light or white. Clarity’s navy sidebar and login band use this one. Same formats and the same 45 KB limit. Worth knowing: ISPConfig has only one logo column and this extension adds none, so this image is kept in the interface settings instead — which means it is re-read on page loads and is written into the change log the next time you press Save. If that matters on your panel, use the path field below instead; a path costs a few bytes.';
-$wb['used_logo_on_dark_txt'] = 'Current logo';
 $wb['logo_url_on_dark_txt'] = 'Dark-background logo path / URL (override)';
 $wb['logo_url_on_dark_hint_txt'] = 'Optional, and it wins over the uploaded file above. Same rules as the light-background path: a root-relative path (recommended) or an https:// URL. This is also how you keep a dark-background logo out of the interface settings entirely — a path is a few bytes where an uploaded image is up to 60 KB.';
 $wb['logo_url_on_dark_error_regex'] = 'The dark-background logo path must be a root-relative path (/…) or an https:// URL, without spaces, quotes, brackets or parentheses.';
 
 $wb['logo_remove_txt'] = 'Remove';
-$wb['used_logo_txt'] = 'Current logo';
 // no_logo_set_txt and the two logo_fallback_* notes are resolved via $app->lng(),
 // which reads lib/lang/en.lng — logo_upload.php renders the same previews and has
 // no tform at all, so they cannot live in this file (which feeds the tform
@@ -68,7 +66,6 @@ $wb['favicon_intro_txt'] = 'The small icon in the browser tab, in bookmarks and 
 $wb['favicon_txt'] = 'Favicon file';
 $wb['favicon_hint_txt'] = 'SVG (plain, script-free), PNG or ICO, under 15 KB. Choose a file, then click “Upload favicon” — it uploads on its own, separately from the Save button at the bottom. An SVG scales to every screen density; a .ico still covers browsers that will not take one, and a plain 32&times;32 PNG is fine by itself. Whatever you choose, look at the 16px preview above: fine detail and small lettering turn to mud at that size, and a tab is the smallest place your brand ever appears.';
 $wb['favicon_upload_txt'] = 'Upload favicon';
-$wb['used_favicon_txt'] = 'Current favicon';
 $wb['favicon_url_txt'] = 'Favicon path / URL (override)';
 $wb['favicon_url_hint_txt'] = 'Optional, and it wins over the uploaded file above — the same precedence the logo paths have. A root-relative path (recommended — e.g. /themes/custom/favicon.svg for a file you placed on the server) or an https:// URL. The panel sends the browser there instead of serving stored bytes, so this also keeps the icon out of the interface settings entirely. A remote URL ties every page of your panel to that host and reveals visitor IPs to it — prefer a local path.';
 $wb['favicon_url_error_regex'] = 'The favicon path must be a root-relative path (/…) or an https:// URL, without spaces, quotes, brackets or parentheses.';

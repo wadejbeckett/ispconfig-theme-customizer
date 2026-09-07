@@ -300,6 +300,15 @@ there is no mode toggle — check it instead with a non-default accent and rail
 colour set on the Branding page, and check the login screen separately, since
 `brand.php?scene=login` emits rules the app scene never sees.
 
+The Branding page is the one page in this repository with a layout of its own, so
+it needs checking at three widths — 1440, 1280 and 1024 — under **each installed
+design**, and in both colour modes on clarity. It has no stylesheet: every colour
+in its inline `<style>` is `var(--pz-…, var(--nz-…, <stock fallback>))`, so a rule
+that names a colour directly will look correct under the design you wrote it for
+and wrong under the other two. Its live preview needs `customizer/preview.php`
+reachable; with JavaScript off the page must still save, which is the check that
+proves the preview stayed an enhancement.
+
 ### The mockup harness (optional)
 
 `mockup/build.py` renders clarity's real templates with sample content, offline
