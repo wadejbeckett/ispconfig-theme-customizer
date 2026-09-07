@@ -43,6 +43,7 @@ $renders = array(
 $checks = array(
     'tform'   => __DIR__ . '/probe_tform.php',
     'preview' => __DIR__ . '/probe_preview.php',
+    'page'    => __DIR__ . '/probe_page.php',
 );
 
 $fail      = 0;
