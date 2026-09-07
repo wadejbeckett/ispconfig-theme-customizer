@@ -2,9 +2,9 @@
 $wb['customizer_title'] = 'Branding';
 $wb['page_head_txt'] = 'Personalizzazione';
 $wb['customizer_desc_txt'] = 'Personalizzi questo pannello di controllo con il Suo marchio — logo, nome e colori vengono salvati in ISPConfig e restano invariati durante gli aggiornamenti del pannello e del tema.';
-$wb['settings_saved_txt'] = 'Impostazioni salvate. Le modifiche ai colori appaiono dopo un ricaricamento completo della pagina (F5).';
+$wb['settings_saved_txt'] = 'Modifiche salvate. I colori del pannello stesso appaiono dopo un ricaricamento completo della pagina (F5).';
 $wb['save_failed_txt'] = 'Le impostazioni non sono state salvate: la scrittura nel database non ha avuto effetto. In questa pagina non è stato modificato nulla; riprovi e, se accade di nuovo, controlli il registro degli errori del pannello.';
-$wb['logo_head_txt'] = 'Logo';
+$wb['identity_head_txt'] = 'Identità';
 $wb['logo_txt'] = 'File del logo';
 $wb['logo_hint_txt'] = 'Il marchio che si appoggia SU uno sfondo chiaro e che quindi deve essere scuro o a colori. È quello che ISPConfig usa di suo: l’intestazione predefinita e la pagina di accesso sono entrambe chiare. Scelga un file, quindi faccia clic su «Carica logo» — il logo viene caricato autonomamente, separatamente dal pulsante Salva in fondo. SVG, PNG, JPEG, GIF o WebP, sotto i 45 KB.';
 $wb['upload_txt'] = 'Carica logo';
@@ -22,6 +22,9 @@ $wb['used_logo_on_dark_txt'] = 'Logo attuale';
 $wb['logo_url_on_dark_txt'] = 'Percorso / URL del logo per sfondi scuri (sostituzione)';
 $wb['logo_url_on_dark_hint_txt'] = 'Facoltativo; ha la precedenza sul file caricato qui sopra. Stesse regole del percorso per sfondi chiari: un percorso relativo alla radice (consigliato) o un URL https://. È anche il modo per tenere un logo per sfondi scuri completamente fuori dalle impostazioni dell’interfaccia — un percorso sono pochi byte, un’immagine caricata arriva a 60 KB.';
 $wb['logo_url_on_dark_error_regex'] = 'Il percorso del logo per sfondi scuri deve essere un percorso relativo alla radice (/…) o un URL https://, senza spazi, virgolette, parentesi quadre o tonde.';
+
+$wb['placement_head_txt'] = 'Posizionamento';
+
 $wb['logo_variant_nav_txt'] = 'Logo nella barra di navigazione';
 $wb['logo_variant_nav_hint_txt'] = 'Quale dei due marchi qui sopra usano la barra laterale e l’intestazione. «Automatico» legge il colore della barra laterale che imposta più in basso e sceglie il marchio che vi resta leggibile; senza alcun colore impostato ogni design mantiene il proprio — l’aspetto predefinito disegna il logo su un’intestazione grigio chiaro, Clarity su una barra blu notte scura. Cambi questa impostazione solo se ha scelto un colore che rende sbagliata la scelta automatica, ad esempio una barra laterale bianca, sulla quale il marchio per sfondi scuri sparirebbe. In ogni caso una casella che non ha compilato continua a riutilizzare l’altra, quindi un logo soltanto funziona come prima.';
 $wb['logo_variant_login_txt'] = 'Logo nella schermata di accesso';
@@ -41,17 +44,28 @@ $wb['favicon_url_txt'] = 'Percorso / URL del favicon (sostituzione)';
 $wb['favicon_url_hint_txt'] = 'Facoltativo; ha la precedenza sul file caricato qui sopra — la stessa regola dei percorsi del logo. Un percorso relativo alla radice (consigliato — ad es. /themes/custom/favicon.svg per un file che ha collocato sul server) o un URL https://. Il pannello vi reindirizza il browser invece di servire byte memorizzati, così l’icona resta completamente fuori dalle impostazioni dell’interfaccia. Un URL remoto lega ogni pagina del Suo pannello a quell’host e gli rivela gli indirizzi IP dei visitatori — preferisca un percorso locale.';
 $wb['favicon_url_error_regex'] = 'Il percorso del favicon deve essere un percorso relativo alla radice (/…) o un URL https://, senza spazi, virgolette, parentesi quadre o tonde.';
 
-$wb['brand_head_txt'] = 'Nome e colori';
 $wb['company_name_txt'] = 'Nome del pannello';
 $wb['company_name_hint_txt'] = 'Mostrato nel titolo del browser e nel piè di pagina.';
+
+$wb['colour_head_txt'] = 'Colori';
 $wb['accent_hex_txt'] = 'Colore d’accento';
 $wb['rail_hex_txt'] = 'Colore della barra laterale';
+$wb['rail_hex_light_txt'] = 'Colore della barra laterale (modalità chiara)';
+$wb['rail_hex_light_hint_txt'] = 'Usato dai design che offrono una modalità chiara; se lo lascia vuoto, il colore della barra laterale sopra vale per entrambe le modalità. Un design senza modalità chiara legge il valore e non ne fa nulla.';
+$wb['rail_contrast_txt'] = 'Contrasto del testo della barra laterale:';
 $wb['login_bg_txt'] = 'Sfondo di accesso';
 $wb['colour_hint_txt'] = 'Valore esadecimale come #0065AB. Lasci vuoto per mantenere l’impostazione predefinita del tema.';
+
+$wb['preview_head_txt'] = 'Anteprima';
+$wb['preview_hint_txt'] = 'I colori e il nome del pannello si aggiornano mentre digita. Quale logo usa ogni superficie lo decide il server, così corrisponde a ciò che il pannello mostrerà davvero.';
+$wb['preview_nav_txt'] = 'Navigazione';
+$wb['preview_login_txt'] = 'Schermata di accesso';
+$wb['preview_tab_txt'] = 'Icona della scheda';
+$wb['preview_failed_txt'] = 'Non è stato possibile aggiornare l’anteprima. Quella mostrata è l’ultima versione confermata dal server.';
 $wb['login_head_txt'] = 'Schermata di accesso';
 $wb['custom_login_text_txt'] = 'Testo della nota a piè di pagina di accesso';
 $wb['custom_login_link_txt'] = 'Collegamento della nota a piè di pagina di accesso';
-$wb['credits_head_txt'] = 'Attribuzione';
+$wb['visibility_head_txt'] = 'Visibilità nel pannello';
 $wb['credits_hint_txt'] = 'Questi controllano le righe di cortesia facoltative nel piè di pagina. Gli avvisi di licenza open source nel codice sorgente e nella documentazione vengono sempre mantenuti — disattivare una riga non li rimuove mai.';
 $wb['show_ispconfig_credit_txt'] = 'Mostra «powered by ISPConfig»';
 $wb['show_theme_credit_txt'] = 'Mostra il credito del tema';
@@ -78,6 +92,6 @@ $wb['favicon_too_large_txt'] = 'Questa icona è troppo grande. La mantenga sotto
 $wb['no_file_uploaded_error'] = 'Nessun file selezionato.';
 $wb['upload_failed_txt'] = 'Il caricamento non è stato completato. Riprovi.';
 $wb['demo_mode_txt'] = 'Questa funzione è disabilitata in modalità demo.';
-$wb['btn_save_txt'] = 'Salva';
+$wb['btn_save_txt'] = 'Salva le modifiche';
 $wb['btn_cancel_txt'] = 'Annulla';
 $wb['logo_delete_failed_txt'] = 'Impossibile rimuovere il logo — la scrittura sul database non è riuscita. È ancora memorizzato; riprova.';

@@ -2,10 +2,10 @@
 $wb['customizer_title'] = 'Branding';
 $wb['page_head_txt'] = 'Customizer';
 $wb['customizer_desc_txt'] = 'Voorzie dit controlepaneel van uw eigen merk — het logo, de naam en de kleuren worden in ISPConfig opgeslagen en blijven behouden bij updates van het paneel en het thema.';
-$wb['settings_saved_txt'] = 'Instellingen opgeslagen. Kleurwijzigingen verschijnen na een volledige vernieuwing van de pagina (F5).';
+$wb['settings_saved_txt'] = 'Wijzigingen opgeslagen. De kleuren van het paneel zelf verschijnen na een volledige vernieuwing van de pagina (F5).';
 $wb['save_failed_txt'] = 'De instellingen zijn niet opgeslagen — de databaseschrijfactie heeft geen effect gehad. Er is niets op deze pagina gewijzigd; probeer het opnieuw en bekijk het foutenlogboek van het paneel als het nogmaals gebeurt.';
 
-$wb['logo_head_txt'] = 'Logo';
+$wb['identity_head_txt'] = 'Identiteit';
 $wb['logo_txt'] = 'Logobestand';
 $wb['logo_hint_txt'] = 'Het merkteken dat OP een lichte achtergrond staat en dus donker of in volle kleur moet zijn. Dit is het exemplaar dat ISPConfig zelf gebruikt: de standaardkoptekst en de aanmeldpagina zijn allebei licht. Kies een bestand en klik vervolgens op "Logo uploaden" — het logo wordt direct geüpload, los van de knop Opslaan onderaan. SVG, PNG, JPEG, GIF of WebP, kleiner dan 45 KB.';
 $wb['upload_txt'] = 'Logo uploaden';
@@ -23,6 +23,9 @@ $wb['used_logo_on_dark_txt'] = 'Huidig logo';
 $wb['logo_url_on_dark_txt'] = 'Logopad / -URL voor donkere achtergronden (overschrijving)';
 $wb['logo_url_on_dark_hint_txt'] = 'Optioneel; heeft voorrang op het geüploade bestand hierboven. Dezelfde regels als het pad voor lichte achtergronden: een root-relatief pad (aanbevolen) of een https://-URL. Zo houdt u een logo voor donkere achtergronden ook volledig buiten de interface-instellingen — een pad is een paar bytes, een geüploade afbeelding tot 60 KB.';
 $wb['logo_url_on_dark_error_regex'] = 'Het logopad voor donkere achtergronden moet een root-relatief pad (/…) of een https://-URL zijn, zonder spaties, aanhalingstekens, vierkante haken of ronde haken.';
+
+$wb['placement_head_txt'] = 'Plaatsing';
+
 $wb['logo_variant_nav_txt'] = 'Logo in de navigatiebalk';
 $wb['logo_variant_nav_hint_txt'] = 'Welk van de twee merktekens hierboven de zijbalk en de koptekst gebruiken. "Automatisch" leest de zijbalkkleur die u hieronder instelt en kiest het merkteken dat daarop leesbaar blijft; zonder ingestelde kleur houdt elk ontwerp zijn eigen keuze — de standaardweergave zet het logo op een lichtgrijze koptekst, Clarity op een donkere marineblauwe balk. Wijzig dit alleen als u een kleur hebt ingesteld waardoor de automatische keuze verkeerd uitvalt, bijvoorbeeld een witte zijbalk, waarop het merkteken voor donkere achtergronden zou verdwijnen. Hoe dan ook leent een veld dat u niet hebt ingevuld nog steeds van het andere, dus één logo blijft gewoon werken.';
 $wb['logo_variant_login_txt'] = 'Logo op het aanmeldscherm';
@@ -43,19 +46,30 @@ $wb['favicon_url_txt'] = 'Favicon-pad / -URL (overschrijving)';
 $wb['favicon_url_hint_txt'] = 'Optioneel; heeft voorrang op het geüploade bestand hierboven — dezelfde voorrangsregel als bij de logopaden. Een pad relatief aan de webroot (aanbevolen — bijv. /themes/custom/favicon.svg voor een bestand dat u op de server hebt geplaatst) of een https://-URL. Het panel stuurt de browser daarheen in plaats van opgeslagen bytes te serveren, waardoor het pictogram ook volledig buiten de interface-instellingen blijft. Een externe URL bindt elke pagina van uw panel aan die host en onthult de IP-adressen van uw bezoekers — een lokaal pad verdient de voorkeur.';
 $wb['favicon_url_error_regex'] = 'Het favicon-pad moet een pad relatief aan de webroot (/…) of een https://-URL zijn, zonder spaties, aanhalingstekens, haken of haakjes.';
 
-$wb['brand_head_txt'] = 'Naam & kleuren';
 $wb['company_name_txt'] = 'Paneelnaam';
 $wb['company_name_hint_txt'] = 'Wordt weergegeven in de browsertitel en de voettekst.';
+
+$wb['colour_head_txt'] = 'Kleuren';
 $wb['accent_hex_txt'] = 'Accentkleur';
 $wb['rail_hex_txt'] = 'Zijbalkkleur';
+$wb['rail_hex_light_txt'] = 'Zijbalkkleur (lichte modus)';
+$wb['rail_hex_light_hint_txt'] = 'Wordt gebruikt door ontwerpen met een lichte kleurmodus; laat het leeg en de zijbalkkleur hierboven geldt in beide modi. Een ontwerp zonder lichte modus leest de waarde en doet er niets mee.';
+$wb['rail_contrast_txt'] = 'Contrast van de zijbalktekst:';
 $wb['login_bg_txt'] = 'Aanmeldachtergrond';
 $wb['colour_hint_txt'] = 'Hex-waarde zoals #0065AB. Laat leeg om de themastandaard te behouden.';
+
+$wb['preview_head_txt'] = 'Voorbeeld';
+$wb['preview_hint_txt'] = 'Kleuren en de paneelnaam worden bijgewerkt terwijl u typt. Welk logo elk oppervlak gebruikt, bepaalt de server, zodat het overeenkomt met wat het paneel echt toont.';
+$wb['preview_nav_txt'] = 'Navigatie';
+$wb['preview_login_txt'] = 'Aanmeldscherm';
+$wb['preview_tab_txt'] = 'Tabblad-icoon';
+$wb['preview_failed_txt'] = 'Het voorbeeld kon niet worden vernieuwd. U ziet de laatste versie die de server heeft bevestigd.';
 
 $wb['login_head_txt'] = 'Aanmeldscherm';
 $wb['custom_login_text_txt'] = 'Tekst aanmeldvoetnoot';
 $wb['custom_login_link_txt'] = 'Link aanmeldvoetnoot';
 
-$wb['credits_head_txt'] = 'Naamsvermelding';
+$wb['visibility_head_txt'] = 'Zichtbaarheid in het paneel';
 $wb['credits_hint_txt'] = 'Deze bepalen de optionele beleefdheidsregels in de voettekst. De open-source licentievermeldingen in de broncode en de documentatie blijven altijd behouden — het uitschakelen van een regel verwijdert deze nooit.';
 $wb['show_ispconfig_credit_txt'] = '"powered by ISPConfig" tonen';
 $wb['show_theme_credit_txt'] = 'De themavermelding tonen';
@@ -85,6 +99,6 @@ $wb['no_file_uploaded_error'] = 'Er is geen bestand geselecteerd.';
 $wb['upload_failed_txt'] = 'De upload is niet voltooid. Probeer het opnieuw.';
 $wb['demo_mode_txt'] = 'Deze functie is uitgeschakeld in de demomodus.';
 
-$wb['btn_save_txt'] = 'Opslaan';
+$wb['btn_save_txt'] = 'Wijzigingen opslaan';
 $wb['btn_cancel_txt'] = 'Annuleren';
 $wb['logo_delete_failed_txt'] = 'Kon het logo niet verwijderen — het wegschrijven naar de database is mislukt. Het is nog opgeslagen; probeer het opnieuw.';

@@ -2,10 +2,10 @@
 $wb['customizer_title'] = 'Branding';
 $wb['page_head_txt'] = 'Customizer';
 $wb['customizer_desc_txt'] = 'Brand this control panel as your own — the logo, name and colours are stored in ISPConfig and survive panel and theme updates.';
-$wb['settings_saved_txt'] = 'Settings saved. Colour changes appear after a full page refresh (F5).';
+$wb['settings_saved_txt'] = 'Changes saved. The panel’s own colours appear after a full page refresh (F5).';
 $wb['save_failed_txt'] = 'The settings were not saved — the database write did not take effect. Nothing on this page was changed; please try again, and check the panel error log if it happens twice.';
 
-$wb['logo_head_txt'] = 'Logo';
+$wb['identity_head_txt'] = 'Identity';
 // The two logo slots are named after the BACKGROUND they sit on, not after the
 // colour of the artwork: which of your designs has a dark header is something
 // you can look at, whereas "is this artwork light enough" is a judgement call.
@@ -33,6 +33,8 @@ $wb['used_logo_txt'] = 'Current logo';
 // which reads lib/lang/en.lng — logo_upload.php renders the same previews and has
 // no tform at all, so they cannot live in this file (which feeds the tform
 // wordbook only). A copy here would be dead.
+
+$wb['placement_head_txt'] = 'Placement';
 
 // Which of the two slots above each SURFACE uses. Scoped by surface rather than
 // by design, because the sidebar and login-background colours let the operator
@@ -71,19 +73,30 @@ $wb['favicon_url_txt'] = 'Favicon path / URL (override)';
 $wb['favicon_url_hint_txt'] = 'Optional, and it wins over the uploaded file above — the same precedence the logo paths have. A root-relative path (recommended — e.g. /themes/custom/favicon.svg for a file you placed on the server) or an https:// URL. The panel sends the browser there instead of serving stored bytes, so this also keeps the icon out of the interface settings entirely. A remote URL ties every page of your panel to that host and reveals visitor IPs to it — prefer a local path.';
 $wb['favicon_url_error_regex'] = 'The favicon path must be a root-relative path (/…) or an https:// URL, without spaces, quotes, brackets or parentheses.';
 
-$wb['brand_head_txt'] = 'Name & colours';
 $wb['company_name_txt'] = 'Panel name';
 $wb['company_name_hint_txt'] = 'Shown in the browser title and footer.';
+
+$wb['colour_head_txt'] = 'Colour';
 $wb['accent_hex_txt'] = 'Accent colour';
 $wb['rail_hex_txt'] = 'Sidebar colour';
+$wb['rail_hex_light_txt'] = 'Sidebar colour (light mode)';
+$wb['rail_hex_light_hint_txt'] = 'Used by designs that offer a light colour mode; leave it blank and the sidebar colour above is used in both modes. A design with no light mode reads this value and does nothing with it.';
+$wb['rail_contrast_txt'] = 'Sidebar text contrast:';
 $wb['login_bg_txt'] = 'Login background';
 $wb['colour_hint_txt'] = 'Hex value like #0065AB. Leave blank to keep the theme default.';
+
+$wb['preview_head_txt'] = 'Preview';
+$wb['preview_hint_txt'] = 'Colours and the panel name update as you type. Which logo each surface uses is worked out by the server, so it matches what the panel will really render.';
+$wb['preview_nav_txt'] = 'Navigation';
+$wb['preview_login_txt'] = 'Login screen';
+$wb['preview_tab_txt'] = 'Tab icon';
+$wb['preview_failed_txt'] = 'The preview could not be refreshed. What you see is the last version the server confirmed.';
 
 $wb['login_head_txt'] = 'Login screen';
 $wb['custom_login_text_txt'] = 'Login footnote text';
 $wb['custom_login_link_txt'] = 'Login footnote link';
 
-$wb['credits_head_txt'] = 'Attribution';
+$wb['visibility_head_txt'] = 'Panel visibility';
 $wb['credits_hint_txt'] = 'These control the optional courtesy lines in the footer. The open-source licence notices in the source and documentation are always kept — turning a line off never removes them.';
 $wb['show_ispconfig_credit_txt'] = 'Show "powered by ISPConfig"';
 $wb['show_theme_credit_txt'] = 'Show the theme credit';
@@ -113,6 +126,6 @@ $wb['no_file_uploaded_error'] = 'No file was selected.';
 $wb['upload_failed_txt'] = 'The upload did not complete. Please try again.';
 $wb['demo_mode_txt'] = 'This function is disabled in demo mode.';
 
-$wb['btn_save_txt'] = 'Save';
+$wb['btn_save_txt'] = 'Save changes';
 $wb['btn_cancel_txt'] = 'Cancel';
 $wb['logo_delete_failed_txt'] = 'Could not remove the logo — the database write failed. It is still stored; try again.';
