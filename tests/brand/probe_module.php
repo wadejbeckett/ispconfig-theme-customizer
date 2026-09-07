@@ -403,4 +403,22 @@ if ($edit_src !== false) {
     }
 }
 
+/* ---- bin/purge_branding.php must not keep its own copy of the news-feed map
+ * customizer_news_feed_keys() in lib/dashlets.inc.php IS that mapping. A second,
+ * inline literal of the same 'dashboard_atom_url_*' => 'news_url_*' pairs here
+ * would be exactly the drift the comment above customizer_news_feed_keys()
+ * claims does not exist — two copies of a key-name mapping that can silently
+ * fall out of step. Text-level, like the onBeforeUpdate probes above: this
+ * script die()s outside a real ISPConfig install and cannot simply be required.
+ */
+$purge_src = file_get_contents(__DIR__ . '/../../bin/purge_branding.php');
+t_ok('bin/purge_branding.php is readable for the source probe below', $purge_src !== false);
+
+if ($purge_src !== false) {
+    t_ok('purge_branding.php has no inline duplicate of the atom-key map',
+        !preg_match("/'dashboard_atom_url_[a-z]+'\\s*=>\\s*'news_url_[a-z]+'/", $purge_src));
+    t_ok('purge_branding.php uses customizer_news_feed_keys() instead',
+        strpos($purge_src, 'customizer_news_feed_keys()') !== false);
+}
+
 t_done();
