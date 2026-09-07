@@ -340,6 +340,198 @@ t_eq('a rail_hex the operator set is what the nav swatch is drawn on',
 t_eq('an unknown design is described as nothing rather than guessed at',
     customizer_logo_surfaces('nosuchdesign', array()), array());
 
+/* ---- rail ink, measured rather than pivoted ------------------------------
+ * The Branding page has to tell the operator, while they are typing, what
+ * colour their sidebar text will be. That decision is clarity's
+ * brand_rail_vars(), which compares the white and black contrast ratios rather
+ * than pivoting on a lightness constant — a rail like #767676, sitting between
+ * the two common pivots, is handed the WORSE ink by any rule that rounds.
+ *
+ * brand.php cannot be included (it is a pre-auth endpoint that connects to the
+ * database and prints CSS on include), so the DIRECTION rule is copied here and
+ * run.php cross-compares the two copies over h_rails() via the INKMATRIX line at
+ * the bottom of this file. The ink VALUES are deliberately not copied: clarity
+ * walks those out of the rail's own hue up an alpha ladder, and this preview
+ * promises the direction and the ratio, not the token.
+ */
+t_ok('customizer_contrast() exists', function_exists('customizer_contrast'));
+if (function_exists('customizer_contrast')) {
+    t_ok('black on white is ~21:1', abs(customizer_contrast('#000000', '#FFFFFF') - 21.0) < 0.05);
+    t_ok('a colour against itself is 1:1', abs(customizer_contrast('#0065AB', '#0065AB') - 1.0) < 1e-9);
+    foreach (h_rails() as $hex) {
+        t_ok("contrast against white agrees with the spec for $hex",
+            abs(customizer_contrast('#FFFFFF', $hex) - h_contrast('#FFFFFF', $hex)) < 1e-9);
+    }
+}
+
+t_ok('customizer_rail_ink() exists', function_exists('customizer_rail_ink'));
+if (function_exists('customizer_rail_ink')) {
+    t_eq('a navy rail takes white ink', customizer_rail_ink('#01243D'), '#FFFFFF');
+    t_eq('a white rail takes dark ink', customizer_rail_ink('#FFFFFF'), '#000000');
+    t_eq('a mid grey takes the ink that measures better', customizer_rail_ink('#767676'), '#000000');
+    t_eq('an invalid hex answers nothing rather than guessing', customizer_rail_ink('red'), '');
+    t_eq('a trailing newline is not a valid hex', customizer_rail_ink("#FFFFFF\n"), '');
+    t_eq('a non-string is not fatal', customizer_rail_ink(array('#FFFFFF')), '');
+    foreach (h_rails() as $hex) {
+        $ink = customizer_rail_ink($hex);
+        t_ok("$hex: the chosen ink is the better-measuring of the two",
+            customizer_contrast($ink, $hex) >= customizer_contrast(($ink === '#FFFFFF' ? '#000000' : '#FFFFFF'), $hex),
+            "$ink on $hex");
+    }
+}
+
+/* ---- candidate values from the form, not from the store ------------------
+ * The live preview describes the values the operator is LOOKING AT, which are
+ * not yet stored. The overlay is allowlisted key by key and each candidate is
+ * accepted only if it passes that key's own rule — an invalid candidate falls
+ * back to the stored value, which is exactly what a save would leave in place,
+ * because a save with an invalid value is refused outright.
+ *
+ * This is deliberately a SECOND, wider function beside
+ * customizer_branding_with_posted_variants(): that one takes the two variant
+ * keys alone and is used on the validation-error redisplay, where letting
+ * arbitrary POST keys into the blob would be a much wider contract than that
+ * page needs. This one is the preview endpoint's, and is wider on purpose.
+ */
+t_ok('customizer_branding_with_posted_candidates() exists',
+    function_exists('customizer_branding_with_posted_candidates'));
+if (function_exists('customizer_branding_with_posted_candidates')) {
+    $stored = array('rail_hex' => '#01243D', 'accent_hex' => '#0065AB',
+                    'logo_url' => '/themes/custom/a.svg', 'logo_variant_nav' => '');
+
+    $m = customizer_branding_with_posted_candidates($stored, array('rail_hex' => '#FFFFFF'));
+    t_eq('a valid candidate colour wins', $m['rail_hex'], '#FFFFFF');
+    t_eq('an untouched key keeps its stored value', $m['accent_hex'], '#0065AB');
+
+    t_eq('a hex without its hash is repaired, as onBeforeUpdate repairs it',
+        customizer_branding_with_posted_candidates($stored, array('rail_hex' => 'ffffff'))['rail_hex'], '#FFFFFF');
+    t_eq('a hex with surrounding space is trimmed',
+        customizer_branding_with_posted_candidates($stored, array('rail_hex' => ' #ffffff '))['rail_hex'], '#FFFFFF');
+    t_eq('an invalid candidate colour leaves the stored one showing',
+        customizer_branding_with_posted_candidates($stored, array('rail_hex' => 'nonsense'))['rail_hex'], '#01243D');
+    //* A trailing newline is TRIMMED rather than refused, and that is the point:
+    //* customizer_edit.php's onBeforeUpdate trims the raw POST before the
+    //* validators see it (customizer_edit.php, the accent_hex/rail_hex/
+    //* rail_hex_light/login_bg loop), so a real save of this same POST stores
+    //* '#FFFFFF'. A preview that refused it would be describing a panel that
+    //* does not exist. What must NOT happen is the newline surviving into a
+    //* stored value, and it does not — the /D on both patterns is what stops
+    //* '$' matching before a final LF.
+    t_eq('a trailing newline is trimmed, exactly as a real save trims it',
+        customizer_branding_with_posted_candidates($stored, array('rail_hex' => "#FFFFFF\n"))['rail_hex'], '#FFFFFF');
+    t_eq('an interior newline is not repairable and leaves the stored one showing',
+        customizer_branding_with_posted_candidates($stored, array('rail_hex' => "#FFF\nFFF"))['rail_hex'], '#01243D');
+    t_eq('a blank candidate is a real value — it means "the design\'s own"',
+        customizer_branding_with_posted_candidates($stored, array('rail_hex' => ''))['rail_hex'], '');
+
+    t_eq('the new light rail is carried',
+        customizer_branding_with_posted_candidates($stored, array('rail_hex_light' => '#E7EBF0'))['rail_hex_light'], '#E7EBF0');
+
+    t_eq('a valid reference path is carried',
+        customizer_branding_with_posted_candidates($stored, array('logo_url' => '/themes/custom/b.svg'))['logo_url'],
+        '/themes/custom/b.svg');
+    t_eq('a protocol-relative reference is refused',
+        customizer_branding_with_posted_candidates($stored, array('logo_url' => '//evil.example/b.svg'))['logo_url'],
+        '/themes/custom/a.svg');
+    t_eq('an http reference is refused',
+        customizer_branding_with_posted_candidates($stored, array('logo_url' => 'http://x.example/b.svg'))['logo_url'],
+        '/themes/custom/a.svg');
+
+    t_eq('a variant candidate is carried',
+        customizer_branding_with_posted_candidates($stored, array('logo_variant_nav' => 'on_dark'))['logo_variant_nav'], 'on_dark');
+    t_eq('an unrecognised variant is refused',
+        customizer_branding_with_posted_candidates($stored, array('logo_variant_nav' => 'garbage'))['logo_variant_nav'], '');
+
+    $wide = customizer_branding_with_posted_candidates($stored,
+        array('logo_on_dark' => 'data:image/png;base64,AA', 'favicon' => 'data:image/png;base64,AA',
+              'custom_logo' => 'data:image/png;base64,AA', 'show_version' => '0'));
+    t_ok('an uploaded image cannot be introduced by a POST', !isset($wide['logo_on_dark']) && !isset($wide['favicon']));
+    t_ok('an unrelated key cannot be introduced by a POST', !isset($wide['show_version']));
+    t_ok('a non-array POST is ignored',
+        customizer_branding_with_posted_candidates($stored, null) === $stored);
+}
+
+/* ---- one colour, as the preview column needs it -------------------------- */
+t_ok('customizer_preview_colour() exists', function_exists('customizer_preview_colour'));
+if (function_exists('customizer_preview_colour')) {
+    $c = customizer_preview_colour(array('rail_hex' => '#01243D'), 'rail_hex');
+    t_eq('the hex comes back normalised', $c['hex'], '#01243D');
+    t_eq('with the ink that will be printed on it', $c['ink'], '#FFFFFF');
+    t_ok('and the measured ratio', abs($c['ratio'] - round(h_contrast('#FFFFFF', '#01243D'), 2)) < 1e-9, $c['ratio']);
+
+    $u = customizer_preview_colour(array(), 'rail_hex');
+    t_eq('an unset colour says so rather than inventing one', $u,
+        array('hex' => '', 'ink' => '', 'ratio' => null));
+    t_eq('an invalid stored colour is treated as unset',
+        customizer_preview_colour(array('rail_hex' => 'nonsense'), 'rail_hex'),
+        array('hex' => '', 'ink' => '', 'ratio' => null));
+}
+
+/* ---- the whole payload the endpoint returns ------------------------------
+ * Built here rather than in preview.php so it can be tested without a database,
+ * an HTTP request or a session. preview.php is then an auth-and-IO shell with no
+ * decision of its own in it.
+ */
+t_ok('customizer_preview_payload() exists', function_exists('customizer_preview_payload'));
+if (function_exists('customizer_preview_payload')) {
+    $png = 'data:image/png;base64,iVBORw0KGgo=';
+    $texts = array('no_logo' => 'NOLOGO', 'fallback_from_dark' => 'FBDARK',
+                   'fallback_from_light' => 'FBLIGHT', 'no_favicon' => 'NOFAV',
+                   'favicon_url_wins' => 'FAVURL');
+
+    $p = customizer_preview_payload(
+        array('rail_hex' => '#01243D'), $png,
+        array('rail_hex' => '#FFFFFF'), array('clarity'),
+        array('nav' => 'Navigation', 'login' => 'Login screen'), $texts);
+
+    t_ok('the three preview rows are rendered', isset($p['previews']['used_logo'],
+        $p['previews']['used_logo_on_dark'], $p['previews']['used_favicon']));
+    t_ok('the logo row carries the stored artwork', strpos($p['previews']['used_logo'], $png) !== false);
+    t_ok('the favicon row says nothing is set', strpos($p['previews']['used_favicon'], 'NOFAV') !== false);
+
+    t_eq('the candidate rail is what the colours block reports', $p['colours']['rail']['hex'], '#FFFFFF');
+    t_eq('...with the ink measured for it', $p['colours']['rail']['ink'], '#000000');
+    t_eq('an unset accent is reported unset', $p['colours']['accent']['hex'], '');
+
+    //* rail_hex_light falls back to rail_hex: a design with a light scope paints
+    //* the same rail in both modes until the operator says otherwise, and the
+    //* preview must show the operator that, not an empty box.
+    t_eq('the light rail inherits the rail when it is unset', $p['colours']['rail_light']['hex'], '#FFFFFF');
+    t_eq('...and says that it inherited', $p['colours']['rail_light']['inherited'], true);
+    $p2 = customizer_preview_payload(array(), '', array('rail_hex' => '#01243D', 'rail_hex_light' => '#E7EBF0'),
+        array('clarity'), array(), $texts);
+    t_eq('a set light rail is its own value', $p2['colours']['rail_light']['hex'], '#E7EBF0');
+    t_eq('...and says it did not inherit', $p2['colours']['rail_light']['inherited'], false);
+
+    //* The surfaces list is the resolver's own output, so the caller can show
+    //* which mark each surface of each installed design ends up with.
+    t_ok('the surfaces list is carried', is_array($p['surfaces']) && count($p['surfaces']) > 0);
+    foreach ($p['surfaces'] as $s) {
+        t_ok('every surface entry names a design, a surface, a variant and a colour',
+            isset($s['design'], $s['surface'], $s['variant'], $s['bg']));
+    }
+
+    //* ...and every entry carries the INK for its own backdrop, because the page
+    //* JS paints these panes and does not implement the ink rule at all. The
+    //* direction lives in exactly one place — customizer_rail_ink() — and the
+    //* payload is the only way it reaches the browser.
+    foreach ($p['surfaces'] as $s) {
+        t_ok('every surface entry carries its measured ink and ratio',
+            isset($s['ink'], $s['ratio']) && $s['ink'] === customizer_rail_ink($s['bg'])
+                && abs($s['ratio'] - round(h_contrast($s['ink'], $s['bg']), 2)) < 1e-9,
+            json_encode($s));
+    }
+
+    //* Nothing the operator typed as free text is echoed back. The page renders
+    //* the panel name itself, from the input, as text — a name round-tripped
+    //* through JSON into innerHTML would be a new path for no gain.
+    t_ok('no free text is echoed back', !isset($p['company_name']));
+
+    //* A POST that is not an array, and one carrying nothing this reads.
+    $p3 = customizer_preview_payload(array('rail_hex' => '#01243D'), '', null, array('clarity'), array(), $texts);
+    t_eq('a non-array POST previews the stored values', $p3['colours']['rail']['hex'], '#01243D');
+}
+
 /* ---- one resolver signature across all three copies ---------------------- */
 t_eq('explicit choice beats a contradicting background',
     customizer_logo_variant_for_surface('on_dark', '#FFFFFF', 'on_light'), 'on_dark');
@@ -352,6 +544,16 @@ $matrix = array();
 foreach (h_variant_matrix() as $row) {
     $matrix[] = customizer_logo_variant_for_surface($row[0], $row[1], $row[2]);
 }
+/* The ink DIRECTION on every rail in the shared grid, cross-compared by run.php
+ * against the direction clarity's shipped brand_rail_vars() actually emits.
+ * 'white' or 'dark' — not the token, because the two are allowed to differ in
+ * value and must never differ in direction. */
+$ink = array();
+foreach (h_rails() as $rail) {
+    $ink[] = (customizer_rail_ink($rail) === '#FFFFFF') ? 'white' : 'dark';
+}
+echo 'INKMATRIX ' . json_encode($ink) . "\n";
+
 echo 'MATRIX ' . json_encode($matrix) . "\n";
 
 /* ---- onBeforeUpdate's guard runs on the SAVE path, not the display path --

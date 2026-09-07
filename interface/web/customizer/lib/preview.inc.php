@@ -256,6 +256,52 @@ function customizer_luminance($hex) {
 }
 
 /**
+ * WCAG 2.x contrast ratio between two validated #rrggbb colours.
+ *
+ * Built on customizer_luminance() rather than carrying its own transfer
+ * function, for the same reason customizer_hex_is_dark() is: a second copy of
+ * the same arithmetic in the same file is a drift hazard with nothing to catch
+ * it. Trusts its input, like the function it is built on.
+ */
+function customizer_contrast($a, $b) {
+    $la = customizer_luminance($a);
+    $lb = customizer_luminance($b);
+    return (max($la, $lb) + 0.05) / (min($la, $lb) + 0.05);
+}
+
+/**
+ * Which ink a rail of this colour will carry: '#FFFFFF' or '#000000', or '' when
+ * the value is not a valid hex.
+ *
+ * This is the DIRECTION half of brand_rail_vars() in themes/clarity/brand.php,
+ * and it is a copy for the same reason every other copy in this file is one:
+ * brand.php is a PRE-AUTH endpoint that opens a database connection and prints a
+ * stylesheet the moment it is included, so nothing here can call into it.
+ *
+ * Direction by MEASUREMENT, not by a lightness pivot. The crossover where black
+ * and white read equally well sits at luminance 0.1791, close enough to the
+ * 0.184 figure usually quoted that rails between the two — #767676 is one — are
+ * handed the WORSE ink by any rule that rounds. Comparing the two ratios is
+ * exact and needs no constant. It is a different question from
+ * customizer_hex_is_dark()'s 0.5, which asks "is this background more dark than
+ * light" in order to choose between two finished ARTWORKS; choosing INK has to
+ * respect a contrast ratio, and the two thresholds must not be merged.
+ *
+ * What is deliberately NOT copied is the ink VALUE. clarity walks its inks out
+ * of the rail's own hue up an alpha ladder so a branded rail still looks
+ * branded, and reproducing that here would be a fourth implementation of
+ * something with no contract to hold it. The Branding page promises the
+ * direction and the measured ratio, which is what an operator needs before they
+ * commit a colour — and tests/brand/run.php's rail-ink parity step compares this
+ * direction against the one clarity's shipped output actually takes, on every
+ * rail in the shared grid.
+ */
+function customizer_rail_ink($hex) {
+    if(!is_string($hex) || preg_match('/^#[0-9A-Fa-f]{6}$/D', $hex) !== 1) return '';
+    return (customizer_contrast('#FFFFFF', $hex) >= customizer_contrast('#000000', $hex)) ? '#FFFFFF' : '#000000';
+}
+
+/**
  * Which variant a SURFACE asks for: the operator's explicit choice, else the
  * luminance of the colour that will be behind it, else the design's default.
  *
@@ -420,6 +466,186 @@ function customizer_branding_with_posted_variants($stored, $posted) {
         if(isset($posted[$key]) && is_string($posted[$key])) $stored[$key] = $posted[$key];
     }
     return $stored;
+}
+
+/**
+ * The stored [branding] with the form's CANDIDATE values overlaid — what the
+ * operator is looking at, not what is stored.
+ *
+ * The live preview is only worth having if it describes the unsaved page, so
+ * this overlay is wider than customizer_branding_with_posted_variants(), which
+ * takes the two variant keys alone and is used on the validation-error
+ * redisplay. Both are allowlists, and both stay allowlists: the result is handed
+ * to the resolvers and rendered into an admin page, so a POST must never be able
+ * to introduce a key nobody expected.
+ *
+ * What it will NOT take from a POST, deliberately: the three uploaded images
+ * (custom_logo, logo_on_dark, favicon). Those are not form fields — they are
+ * written by logo_upload.php and are refreshed from the SERVER's own response —
+ * so a posted one would be an image the panel does not have, previewed as
+ * though it did.
+ *
+ * Each candidate is accepted only if it passes that key's own rule, and an
+ * invalid one leaves the STORED value showing. That is exactly right rather than
+ * merely safe: a save carrying an invalid value is refused outright, so the
+ * stored value is what the panel would still be rendering.
+ *
+ * The hex repair here — trim, add a missing '#', upper-case — is the same repair
+ * customizer_edit.php's onBeforeUpdate applies to a real save, so the preview
+ * and the save agree about a pasted "0065ab". That includes the trim: a value
+ * with a trailing newline is repaired here exactly as onBeforeUpdate repairs it
+ * before the validators run, because a preview that refused what the save
+ * accepts would be describing a panel that does not exist. The /D on both
+ * patterns is still what keeps a newline from surviving INTO a value — without
+ * it '$' matches before a final LF and an unrepairable value would be accepted
+ * whole.
+ */
+function customizer_branding_with_posted_candidates($stored, $posted) {
+    if(!is_array($stored)) $stored = array();
+    if(!is_array($posted)) return $stored;
+
+    foreach(array('accent_hex', 'rail_hex', 'rail_hex_light', 'login_bg') as $key) {
+        if(!isset($posted[$key]) || !is_string($posted[$key])) continue;
+        $v = trim($posted[$key]);
+        if(preg_match('/^[0-9A-Fa-f]{6}$/D', $v) === 1) $v = '#' . $v;
+        if($v === '' || preg_match('/^#[0-9A-Fa-f]{6}$/D', $v) === 1) $stored[$key] = strtoupper($v);
+    }
+
+    foreach(array('logo_url', 'logo_url_on_dark', 'favicon_url') as $key) {
+        if(!isset($posted[$key]) || !is_string($posted[$key])) continue;
+        $v = trim($posted[$key]);
+        //* customizer_logo_ref_ok() is the same anchored allowlist the tform
+        //* validator and both theme readers use; '' is separately legitimate and
+        //* means "no reference", which that function reports as not-ok.
+        if($v === '' || customizer_logo_ref_ok($v)) $stored[$key] = $v;
+    }
+
+    foreach(array('logo_variant_nav', 'logo_variant_login') as $key) {
+        if(!isset($posted[$key]) || !is_string($posted[$key])) continue;
+        if($posted[$key] === '' || $posted[$key] === 'on_light' || $posted[$key] === 'on_dark') {
+            $stored[$key] = $posted[$key];
+        }
+    }
+
+    return $stored;
+}
+
+/**
+ * One colour as the preview column needs it: the value, the ink that will be
+ * printed on it, and the ratio the two measure.
+ *
+ * An unset or invalid value returns hex '' with a null ratio rather than a
+ * default, because "the design's own colour stands" is a different statement
+ * from "this colour", and the page says so in words rather than drawing a
+ * swatch of a colour the operator never chose.
+ */
+function customizer_preview_colour($branding, $key) {
+    $hex = '';
+    if(is_array($branding) && isset($branding[$key]) && is_string($branding[$key])
+        && preg_match('/^#[0-9A-Fa-f]{6}$/D', $branding[$key]) === 1) {
+        $hex = strtoupper($branding[$key]);
+    }
+    if($hex === '') return array('hex' => '', 'ink' => '', 'ratio' => null);
+
+    $ink = customizer_rail_ink($hex);
+    return array('hex' => $hex, 'ink' => $ink, 'ratio' => round(customizer_contrast($ink, $hex), 2));
+}
+
+/**
+ * Everything preview.php answers with, built without touching a database, an
+ * HTTP request or a session — so it can be tested, and so the endpoint itself
+ * holds no decision of its own.
+ *
+ * $stored_branding  the [branding] section as stored
+ * $custom_logo      sys_ini.custom_logo as stored (the light-background upload)
+ * $posted           the raw $_POST
+ * $designs          which designs to describe, from customizer_installed_designs()
+ * $labels           array('nav' => …, 'login' => …), already localised
+ * $texts            the five already-localised preview strings, keyed
+ *                   'no_logo', 'fallback_from_dark', 'fallback_from_light',
+ *                   'no_favicon', 'favicon_url_wins'
+ *
+ * Returns:
+ *   'previews' => array('used_logo' => html, 'used_logo_on_dark' => html,
+ *                       'used_favicon' => html)   — the same renderers the page
+ *                       and logo_upload.php use, so the three agree by
+ *                       construction rather than by inspection
+ *   'surfaces' => customizer_logo_surfaces_all()'s list, each entry additionally
+ *                 carrying 'ink' and 'ratio' for its own 'bg'
+ *   'colours'  => 'accent' | 'rail' | 'rail_light' | 'login', each a
+ *                 customizer_preview_colour() block; 'rail_light' additionally
+ *                 carries 'inherited' => bool
+ *
+ * The ink on each SURFACE is measured here rather than left to the caller
+ * because the page's JavaScript repaints these panes after every keystroke and
+ * carries no copy of the ink rule: customizer_rail_ink() is the only place that
+ * direction is decided, on the server, and this payload is how it reaches the
+ * browser. A pane needs the backdrop, the ink that goes on it, the ratio the two
+ * measure and the variant that surface resolved to, so an entry carries all
+ * four.
+ *
+ * Nothing the operator typed as free text comes back. The panel name is rendered
+ * into the preview by the page itself, from the input, as text — round-tripping
+ * it through JSON and into innerHTML would add a path for no gain.
+ */
+function customizer_preview_payload($stored_branding, $custom_logo, $posted, $designs, $labels, $texts) {
+    $branding = customizer_branding_with_posted_candidates($stored_branding, $posted);
+    if(!is_array($texts)) $texts = array();
+    $txt = function($key) use ($texts) {
+        return (isset($texts[$key]) && is_string($texts[$key])) ? $texts[$key] : '';
+    };
+
+    $resolved = customizer_logo_resolve(array(
+        'custom_logo'      => is_string($custom_logo) ? $custom_logo : '',
+        'logo_on_dark'     => isset($branding['logo_on_dark']) ? $branding['logo_on_dark'] : '',
+        'logo_url'         => isset($branding['logo_url']) ? $branding['logo_url'] : '',
+        'logo_url_on_dark' => isset($branding['logo_url_on_dark']) ? $branding['logo_url_on_dark'] : '',
+    ));
+
+    $surfaces = customizer_logo_surfaces_all($designs, $branding, $labels);
+
+    //* customizer_preview_colour() is asked for the ink rather than
+    //* customizer_rail_ink() directly, so the swatch beside a colour field and
+    //* the pane painted on that same colour cannot round the ratio differently.
+    //* 'bg' is documented as always a valid #rrggbb; an entry that ever is not
+    //* gets ink '' and ratio null, which is the same "say nothing" answer a
+    //* colour field gives, rather than a guessed ink on an unknown backdrop.
+    foreach($surfaces as $i => $surface) {
+        $measured = customizer_preview_colour($surface, 'bg');
+        $surfaces[$i]['ink']   = $measured['ink'];
+        $surfaces[$i]['ratio'] = $measured['ratio'];
+    }
+
+    //* The light rail falls back to the rail: a design with a light scope paints
+    //* the same colour in both modes until the operator sets this one, and the
+    //* preview has to show that rather than an empty pane. 'inherited' is what
+    //* lets the page say WHICH of the two it is showing.
+    $rail_light_key = (isset($branding['rail_hex_light']) && is_string($branding['rail_hex_light'])
+        && preg_match('/^#[0-9A-Fa-f]{6}$/D', $branding['rail_hex_light']) === 1) ? 'rail_hex_light' : 'rail_hex';
+    $rail_light = customizer_preview_colour($branding, $rail_light_key);
+    $rail_light['inherited'] = ($rail_light_key === 'rail_hex');
+
+    return array(
+        'previews' => array(
+            'used_logo' => customizer_logo_preview_html($resolved['on_light'], 'on_light',
+                $txt('no_logo'), $txt('fallback_from_dark'), $surfaces),
+            'used_logo_on_dark' => customizer_logo_preview_html($resolved['on_dark'], 'on_dark',
+                $txt('no_logo'), $txt('fallback_from_light'), $surfaces),
+            'used_favicon' => customizer_favicon_preview_html(
+                customizer_favicon_resolve(array(
+                    'favicon'     => isset($branding['favicon']) ? $branding['favicon'] : '',
+                    'favicon_url' => isset($branding['favicon_url']) ? $branding['favicon_url'] : '',
+                )),
+                $txt('no_favicon'), $txt('favicon_url_wins')),
+        ),
+        'surfaces' => $surfaces,
+        'colours'  => array(
+            'accent'     => customizer_preview_colour($branding, 'accent_hex'),
+            'rail'       => customizer_preview_colour($branding, 'rail_hex'),
+            'rail_light' => $rail_light,
+            'login'      => customizer_preview_colour($branding, 'login_bg'),
+        ),
+    );
 }
 
 /**
