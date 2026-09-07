@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='utf-8' />
+  <title>Branding</title>
+  <meta name='viewport' content='width=device-width, initial-scale=1, user-scalable=yes'>
+  <meta name='robots' content='noindex, nofollow' />
+  <meta name='theme-color' content='#06080A'>
+  <link rel='icon' href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2306080A'/%3E%3Crect x='7.5' y='7.5' width='17' height='17' rx='2.5' fill='none' stroke='%23FFA301' stroke-width='2.5'/%3E%3Crect x='12' y='13.5' width='8' height='3' fill='%23FFA301'/%3E%3C/svg%3E">
+
+  <!-- phosphor layer. In the shipping theme this is fonts + tokens + icons +
+       base + app + components (+ login), loaded in that order; the mockup
+       carries one stylesheet plus the verbatim icon file. -->
+  <link rel='stylesheet' href='fonts.css'>
+  <link rel='stylesheet' href='phosphor.css'>
+  <link rel='stylesheet' href='icons.css'>
+</head>
+
+<body class='pz'>
+  <a class='pz-skip' href='#content'>Skip to content</a>
+  <nav class='pushy pushy-left' id='pz-drawer' aria-label='Mobile navigation'></nav>
+  <div class='site-overlay'></div>
+
+  <div id='container'>
+    <aside class='pz-rail' aria-label='Sidebar'>
+      <div class='pz-brand'>
+        <div id='logo'><a href='#' aria-label='Aperture Hosting'><span class='pz-mark' aria-hidden='true'></span><span class='pz-wordmark'>Aperture Hosting</span></a></div>
+      </div>
+      <div id='topnav-container'>
+    <nav id='main-navigation' class='pz-modnav' aria-label='Modules'>
+      <a href='#' class='pz-modnav-item' data-capp='dashboard' data-icon-class='icon icon-dashboard'>
+        <span class='icon icon-dashboard'></span>
+        <span class='title'>Home</span>
+      </a>
+      <a href='#' class='pz-modnav-item' data-capp='help' data-icon-class='icon icon-help'>
+        <span class='icon icon-help'></span>
+        <span class='title'>Help</span>
+      </a>
+      <a href='#' class='pz-modnav-item' data-capp='client' data-icon-class='icon icon-client'>
+        <span class='icon icon-client'></span>
+        <span class='title'>Client</span>
+      </a>
+      <a href='#' class='pz-modnav-item' data-capp='sites' data-icon-class='icon icon-sites'>
+        <span class='icon icon-sites'></span>
+        <span class='title'>Sites</span>
+      </a>
+      <a href='#' class='pz-modnav-item' data-capp='mail' data-icon-class='icon icon-mail'>
+        <span class='icon icon-mail'></span>
+        <span class='title'>Email</span>
+      </a>
+      <a href='#' class='pz-modnav-item' data-capp='dns' data-icon-class='icon icon-dns'>
+        <span class='icon icon-dns'></span>
+        <span class='title'>DNS</span>
+      </a>
+      <a href='#' class='pz-modnav-item' data-capp='monitor' data-icon-class='icon icon-monitor'>
+        <span class='icon icon-monitor'></span>
+        <span class='title'>Monitor</span>
+      </a>
+      <a href='#' class='pz-modnav-item active' data-icon-class='icon icon-tools' aria-current='page'>
+        <span class='icon icon-tools'></span>
+        <span class='title'>Tools</span>
+      </a>
+      <a href='#' class='pz-modnav-item' data-capp='admin' data-icon-class='icon icon-admin'>
+        <span class='icon icon-admin'></span>
+        <span class='title'>System</span>
+      </a>
+    </nav>
+      </div>
+      <div id='sidebar' class='pz-context'>
+<header>Panel</header>
+<ul>
+  <li><a href='#'>User settings</a></li>
+  <li><a href='#' class='active'>Branding</a></li>
+</ul>
+<header>Data</header>
+<ul>
+  <li><a href='#'>Import</a></li>
+  <li><a href='#'>Export</a></li>
+</ul>
+      </div>
+    </aside>
+
+    <div class='pz-main'>
+      <header class='pz-topbar'>
+        <button type='button' class='menu-btn' aria-label='Menu' aria-expanded='false' aria-controls='pz-drawer'>&#9776;</button>
+        <a class='pz-topbar-brand' href='#' aria-label='Aperture Hosting'><span class='pz-mark' aria-hidden='true'></span>Aperture Hosting</a>
+        <div id='headerbar'>
+          <form action='#' method='get' id='searchform' role='form'>
+            <div class='input-group'>
+              <input id='globalsearch' type='text' class='form-control' placeholder='Search' />
+              <span class='input-group-btn'>
+                <button class='btn btn-default' type='button' title='Search'><span class='icon icon-lens'></span></button>
+              </span>
+            </div>
+          </form>
+          <div class='pz-topbar-actions'>
+            <button type="button" class="notification" data-toggle="modal" data-target="#datalogModal" aria-live="polite">
+              <span class="pz-sr">Pending changes: </span><span class="notification_text">3</span>
+            </button>
+            <span class='pz-user'><span class='icon icon-client' aria-hidden='true'></span>admin</span>
+            <button type='button' id='logout-button' class='btn btn-sm btn-danger text-uppercase' data-load-content="login/logout.php">Log out</button>
+          </div>
+        </div>
+      </header>
+
+      <main id='content'>
+        <form method="post" action="" id="pageForm" name="pageForm" enctype="multipart/form-data" class='form-horizontal' role='form'>
+          <div id="pageContent" data-startpage="dashboard/dashboard.php">
+<!-- Branding (interface/web/customizer/templates/customizer_edit.htm), redesigned
+     per the spec's "Branding page redesign" section.
+
+     Real markup: the ISPConfig field names (company_name, accent_hex, rail_hex,
+     rail_hex_light, login_bg, custom_login_text, custom_login_link,
+     logo_url, logo_url_on_dark, favicon_url, logo_variant_nav,
+     logo_variant_login, show_design_picker, show_version, show_news_feed,
+     show_donation_dashlet, show_ispconfig_credit, show_theme_credit), the
+     #nz-msg-slot the banner relocates into, the three uploader button ids the
+     two-step fetch driver binds to, and the tform Save/Cancel contract are all
+     carried over unchanged. Copy is the shipped en_customizer.lng wording,
+     trimmed to the length a two-column layout can carry. -->
+<div class="page-header">
+  <h1>Branding</h1>
+  <p>Brand this control panel as your own. The logo, name and colours are stored in ISPConfig and survive panel and theme updates.</p>
+</div>
+
+<div id="nz-msg-slot">
+  <div id="OKMsg" class="alert alert-success clear">Changes saved.</div>
+</div>
+
+<div class="pz-brandgrid">
+
+  <div class="pz-brandfields">
+
+    <fieldset>
+      <legend>Identity</legend>
+
+      <div class="form-group">
+        <label for="company_name" class="control-label">Panel name</label>
+        <div class="col-sm-9">
+          <input type="text" name="company_name" id="company_name" value="Aperture Hosting" class="form-control" />
+          <p class="help-block">Replaces the product name in the browser title, the login screen and the footer.</p>
+        </div>
+      </div>
+
+      <!-- One block per variant: the mark, previewed on the background it is
+           for, its file input, Upload and Remove, and the by-reference path —
+           so "which artwork, for which background" is one decision the
+           operator checks by eye. -->
+      <div class="pz-upload">
+        <h4>Mark for light backgrounds</h4>
+        <p>The one ISPConfig itself uses: the stock header and login card are both light.</p>
+        <div>
+          <div class="pz-swatch pz-swatch-light" id="used_logo">APERTURE</div>
+          <span class="pz-swatch-note">on light</span>
+        </div>
+        <div class="pz-upload-fields">
+          <div class="pz-upload-row">
+            <input name="file" id="file" size="30" type="file" class="fileUpload" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,.svg" />
+            <button class="btn btn-default" type="button" id="nz-logo-upload">Upload logo</button>
+            <a href="javascript:void(0);" class="btn btn-default" id="nz-logo-remove">Remove</a>
+          </div>
+          <input type="text" name="logo_url" id="logo_url" value="" class="form-control" placeholder="/themes/custom/logo.svg" />
+          <p class="help-block">Optional path or https:// URL. It wins over the uploaded file. SVG or a 2&times; PNG around 500&times;160; under 45&nbsp;KB.</p>
+        </div>
+      </div>
+
+      <div class="pz-upload">
+        <h4>Mark for dark backgrounds</h4>
+        <p>The light or white version. This design's rail and login card both use it.</p>
+        <div>
+          <div class="pz-swatch pz-swatch-dark" id="used_logo_on_dark">APERTURE</div>
+          <span class="pz-swatch-note">on dark</span>
+        </div>
+        <div class="pz-upload-fields">
+          <div class="pz-upload-row">
+            <input name="file_on_dark" id="file_on_dark" size="30" type="file" class="fileUpload" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,.svg" />
+            <button class="btn btn-default" type="button" id="nz-logo-upload-on-dark">Upload logo</button>
+            <a href="javascript:void(0);" class="btn btn-default" id="nz-logo-remove-on-dark">Remove</a>
+          </div>
+          <input type="text" name="logo_url_on_dark" id="logo_url_on_dark" value="/themes/custom/aperture-on-dark.svg" class="form-control" placeholder="/themes/custom/logo-on-dark.svg" />
+          <p class="help-block">A path keeps the artwork out of the interface settings entirely — a few bytes where an upload is up to 60&nbsp;KB.</p>
+        </div>
+      </div>
+
+      <!-- Placement stays a third block after both variants: it is scoped by
+           SURFACE and is a statement about the pair. Nesting it under one mark
+           would read as a property of that mark. -->
+      <div class="pz-upload">
+        <h4>Placement</h4>
+        <p>Which of the two marks each surface uses. An unfilled slot still borrows from the other one.</p>
+        <div class="pz-upload-fields" style="grid-column: 1 / -1;">
+          <div class="form-group">
+            <label for="logo_variant_nav" class="control-label">Navigation bar</label>
+            <div class="col-sm-9">
+              <select name="logo_variant_nav" id="logo_variant_nav" class="form-control">
+                <option value="auto" selected="selected">Automatic — match the background</option>
+                <option value="on_light">Always the mark for light backgrounds</option>
+                <option value="on_dark">Always the mark for dark backgrounds</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="logo_variant_login" class="control-label">Login screen</label>
+            <div class="col-sm-9">
+              <select name="logo_variant_login" id="logo_variant_login" class="form-control">
+                <option value="auto" selected="selected">Automatic — match the background</option>
+                <option value="on_light">Always the mark for light backgrounds</option>
+                <option value="on_dark">Always the mark for dark backgrounds</option>
+              </select>
+              <p class="help-block">One setting, obeyed by every design you have installed. Change it only if a colour you set makes the automatic choice wrong.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pz-upload">
+        <h4>Tab icon</h4>
+        <p>One icon for the whole panel, login screen included. There is no light/dark pair — a browser draws the same icon everywhere.</p>
+        <div>
+          <div class="pz-swatch pz-swatch-tab" id="used_favicon"><span class="pz-prevtab-icon"></span></div>
+          <span class="pz-swatch-note">at 16px</span>
+        </div>
+        <div class="pz-upload-fields">
+          <div class="pz-upload-row">
+            <input name="file_favicon" id="file_favicon" size="30" type="file" class="fileUpload" accept="image/svg+xml,.svg,image/png,image/x-icon,image/vnd.microsoft.icon,.ico" />
+            <button class="btn btn-default" type="button" id="nz-favicon-upload">Upload favicon</button>
+            <a href="javascript:void(0);" class="btn btn-default" id="nz-favicon-remove">Remove</a>
+          </div>
+          <input type="text" name="favicon_url" id="favicon_url" value="" class="form-control" placeholder="/themes/custom/favicon.svg" />
+          <p class="help-block">SVG, PNG or ICO under 15&nbsp;KB. Look at the 16px preview: fine lettering turns to mud at that size.</p>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Colour</legend>
+
+      <div class="form-group">
+        <label for="accent_hex" class="control-label">Accent</label>
+        <div class="col-sm-9">
+          <div class="pz-hexrow">
+            <input type="text" name="accent_hex" id="accent_hex" value="#FFA301" class="form-control pz-hexfield" placeholder="#FFA301" />
+            <input type="color" id="accent_hex_pick" value="#FFA301" class="pz-hexpick" aria-label="Pick accent colour" />
+          </div>
+          <p class="help-block">Buttons, links, the active navigation marker and the chart line. Ink on a filled accent is chosen by measured contrast, so a pale accent gets dark text.</p>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="rail_hex" class="control-label">Sidebar</label>
+        <div class="col-sm-9">
+          <div class="pz-hexrow">
+            <input type="text" name="rail_hex" id="rail_hex" value="#0B0E12" class="form-control pz-hexfield" placeholder="#0B0E12" />
+            <input type="color" id="rail_hex_pick" value="#0B0E12" class="pz-hexpick" aria-label="Pick sidebar colour" />
+          </div>
+          <p class="help-block">Sidebar text is derived from this by measured contrast, never assumed — currently <span id="pz-rail-ratio" class="pz-num">21.00:1</span>.</p>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="rail_hex_light" class="control-label">Sidebar, light mode</label>
+        <div class="col-sm-9">
+          <div class="pz-hexrow">
+            <input type="text" name="rail_hex_light" id="rail_hex_light" value="" class="form-control pz-hexfield" placeholder="#E7EBF0" />
+            <input type="color" id="rail_hex_light_pick" value="#E7EBF0" class="pz-hexpick" aria-label="Pick light-mode sidebar colour" />
+            <span class="pz-noop">no effect here</span>
+          </div>
+          <p class="help-block">Read and stored, but this design has no light scope to paint. Designs that offer light mode use it.</p>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="login_bg" class="control-label">Login background</label>
+        <div class="col-sm-9">
+          <div class="pz-hexrow">
+            <input type="text" name="login_bg" id="login_bg" value="#06080A" class="form-control pz-hexfield" placeholder="#06080A" />
+            <input type="color" id="login_bg_pick" value="#06080A" class="pz-hexpick" aria-label="Pick login background colour" />
+          </div>
+          <p class="help-block">Hex like #06080A. Leave any of these blank to keep the design's own value.</p>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Login screen</legend>
+      <div class="form-group">
+        <label for="custom_login_text" class="control-label">Footnote text</label>
+        <div class="col-sm-9"><input type="text" name="custom_login_text" id="custom_login_text" value="Support: help@aperture.example" class="form-control" /></div>
+      </div>
+      <div class="form-group">
+        <label for="custom_login_link" class="control-label">Footnote link</label>
+        <div class="col-sm-9">
+          <input type="text" name="custom_login_link" id="custom_login_link" value="https://aperture.example/support" class="form-control" placeholder="https://" />
+          <p class="help-block">Shown under the sign-in card. Leave both blank to show nothing.</p>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Panel visibility</legend>
+
+      <div class="pz-switchrow">
+        <label for="show_design_picker">Design picker in User Settings</label>
+        <div>
+          <input type="checkbox" name="show_design_picker" id="show_design_picker" value="y" checked>
+          <p class="help-block">Where a user picks the panel design. Hiding it applies to every role, including you — switch it back on here when you need to change design.</p>
+        </div>
+      </div>
+
+      <div class="pz-switchrow">
+        <label for="show_version">Software version</label>
+        <div>
+          <input type="checkbox" name="show_version" id="show_version" value="y">
+          <p class="help-block">The About section and the version line under Help. Hidden visually; the page stays reachable by direct URL.</p>
+        </div>
+      </div>
+
+      <div class="pz-switchrow">
+        <label for="show_news_feed">News feed</label>
+        <div>
+          <input type="checkbox" name="show_news_feed" id="show_news_feed" value="y" checked>
+          <p class="help-block">The sidebar feed on the dashboard. Users see the change at their next login.</p>
+        </div>
+      </div>
+
+      <div class="pz-switchrow">
+        <label for="show_donation_dashlet">Donation panel</label>
+        <div>
+          <input type="checkbox" name="show_donation_dashlet" id="show_donation_dashlet" value="y">
+          <p class="help-block">Administrators only ever see this one — it is never shown to resellers or clients.</p>
+        </div>
+      </div>
+
+      <div class="pz-switchrow">
+        <label for="show_ispconfig_credit">Footer credit: the panel</label>
+        <div><input type="checkbox" name="show_ispconfig_credit" id="show_ispconfig_credit" value="y" checked></div>
+      </div>
+
+      <div class="pz-switchrow">
+        <label for="show_theme_credit">Footer credit: the design</label>
+        <div>
+          <input type="checkbox" name="show_theme_credit" id="show_theme_credit" value="y" checked>
+          <p class="help-block">Courtesy lines only. The open-source licence notices in the source and documentation are always kept.</p>
+        </div>
+      </div>
+    </fieldset>
+
+    <input type="hidden" name="id" value="1" />
+
+    <div class="pz-actions">
+      <button class="btn btn-default formbutton-success" type="button" data-submit-form="pageForm" data-form-action="customizer/customizer_edit.php">Save changes</button>
+      <button class="btn btn-default formbutton-default" type="button" data-load-content="dashboard/dashboard.php">Cancel</button>
+    </div>
+  </div>
+
+  <!-- The preview column. Colour, panel name and sidebar ink render here as you
+       type. Anything depending on VARIANT RESOLUTION is not guessed in JS —
+       that resolver exists in PHP copies CI proves agree, and the shipping page
+       asks customizer/preview.php for the fragment instead. -->
+  <aside class="pz-brandpreview" aria-label="Preview">
+    <h2>Preview</h2>
+    <p>Colours and the panel name update as you type. Uploads refresh all three panes from the server.</p>
+
+    <figure class="pz-prevpane">
+      <figcaption>Navigation</figcaption>
+      <div class="pz-prevframe">
+        <div class="pz-prevnav">
+          <div class="pz-prevnav-rail">
+            <div class="pz-prevnav-logo pz-prev-name">Aperture Hosting</div>
+            <div class="pz-prevnav-item is-active pz-prev-accent-rule">Home</div>
+            <div class="pz-prevnav-item">Sites</div>
+            <div class="pz-prevnav-item">Email</div>
+          </div>
+          <div class="pz-prevnav-body">
+            <div class="pz-prevnav-bar w60"></div>
+            <div class="pz-prevnav-bar w40"></div>
+            <span class="pz-prevbtn pz-prev-accent">Save changes</span>
+          </div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="pz-prevpane">
+      <figcaption>Login</figcaption>
+      <div class="pz-prevframe">
+        <div class="pz-prevlogin">
+          <div class="pz-prevlogin-name pz-prev-name">Aperture Hosting</div>
+          <div class="pz-prevlogin-card">
+            <div class="pz-prevlogin-field"></div>
+            <div class="pz-prevlogin-field"></div>
+            <span class="pz-prevbtn pz-prev-accent">Sign in</span>
+          </div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="pz-prevpane">
+      <figcaption>Tab icon</figcaption>
+      <div class="pz-prevframe">
+        <div class="pz-prevtab">
+          <span class="pz-prevtab-chip"><span class="pz-prevtab-icon pz-prev-accent"></span><span class="pz-prev-name">Aperture Hosting</span></span>
+        </div>
+      </div>
+    </figure>
+  </aside>
+</div>
+
+          </div>
+        </form>
+      </main>
+
+      <footer id='footer'>
+        <span class='pz-credit-ispconfig'>powered by <a href="#" rel="noopener">ISPConfig</a></span>
+        <span class='pz-credit-theme'><span class='pz-credit-sep'> &middot; </span><a href="#" rel="noopener">phosphor</a></span>
+      </footer>
+    </div>
+  </div>
+
+  <script src='phosphor.js'></script>
+</body>
+</html>

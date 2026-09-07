@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='utf-8' />
+  <title>Dashboard</title>
+  <meta name='viewport' content='width=device-width, initial-scale=1, user-scalable=yes'>
+  <meta name='robots' content='noindex, nofollow' />
+  <meta name='theme-color' content='#06080A'>
+  <link rel='icon' href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2306080A'/%3E%3Crect x='7.5' y='7.5' width='17' height='17' rx='2.5' fill='none' stroke='%23FFA301' stroke-width='2.5'/%3E%3Crect x='12' y='13.5' width='8' height='3' fill='%23FFA301'/%3E%3C/svg%3E">
+
+  <!-- phosphor layer. In the shipping theme this is fonts + tokens + icons +
+       base + app + components (+ login), loaded in that order; the mockup
+       carries one stylesheet plus the verbatim icon file. -->
+  <link rel='stylesheet' href='fonts.css'>
+  <link rel='stylesheet' href='phosphor.css'>
+  <link rel='stylesheet' href='icons.css'>
+</head>
+
+<body class='pz'>
+  <a class='pz-skip' href='#content'>Skip to content</a>
+  <nav class='pushy pushy-left' id='pz-drawer' aria-label='Mobile navigation'></nav>
+  <div class='site-overlay'></div>
+
+  <div id='container'>
+    <aside class='pz-rail' aria-label='Sidebar'>
+      <div class='pz-brand'>
+        <div id='logo'><a href='#' aria-label='Aperture Hosting'><span class='pz-mark' aria-hidden='true'></span><span class='pz-wordmark'>Aperture Hosting</span></a></div>
+      </div>
+      <div id='topnav-container'>
+    <nav id='main-navigation' class='pz-modnav' aria-label='Modules'>
+      <a href='#' class='pz-modnav-item active' data-icon-class='icon icon-dashboard' aria-current='page'>
+        <span class='icon icon-dashboard'></span>
+        <span class='title'>Home</span>
+      </a>
+      <a href='#' class='pz-modnav-item' data-capp='help' data-icon-class='icon icon-help'>
+        <span class='icon icon-help'></span>
+        <span class='title'>Help</span>
+      </a>
+      <a href='#' class='pz-modnav-item' data-capp='client' data-icon-class='icon icon-client'>
+        <span class='icon icon-client'></span>
+        <span class='title'>Client</span>
+      </a>
+      <a href='#' class='pz-modnav-item' data-capp='sites' data-icon-class='icon icon-sites'>
+        <span class='icon icon-sites'></span>
+        <span class='title'>Sites</span>
+      </a>
+      <a href='#' class='pz-modnav-item' data-capp='mail' data-icon-class='icon icon-mail'>
+        <span class='icon icon-mail'></span>
+        <span class='title'>Email</span>
+      </a>
+      <a href='#' class='pz-modnav-item' data-capp='dns' data-icon-class='icon icon-dns'>
+        <span class='icon icon-dns'></span>
+        <span class='title'>DNS</span>
+      </a>
+      <a href='#' class='pz-modnav-item' data-capp='monitor' data-icon-class='icon icon-monitor'>
+        <span class='icon icon-monitor'></span>
+        <span class='title'>Monitor</span>
+      </a>
+      <a href='#' class='pz-modnav-item' data-capp='tools' data-icon-class='icon icon-tools'>
+        <span class='icon icon-tools'></span>
+        <span class='title'>Tools</span>
+      </a>
+      <a href='#' class='pz-modnav-item' data-capp='admin' data-icon-class='icon icon-admin'>
+        <span class='icon icon-admin'></span>
+        <span class='title'>System</span>
+      </a>
+    </nav>
+      </div>
+      <div id='sidebar' class='pz-context'>
+<!-- dashboard #sidebar content: dashboard/templates/custom_menu.htm rendered
+     (stock markup, incl. the inline styles the server emits) -->
+<header>Latest news</header>
+<ul>
+            <li>
+            <a href="#" target="_blank" style="margin-top:8px;padding-bottom:5px;"><b>2026-03-09</b><br />
+                ISPConfig 3.3.1p1 Released – Bugfix Update</a>
+        </li>
+            <li>
+            <a href="#" target="_blank" style="margin-top:8px;padding-bottom:5px;"><b>2026-01-22</b><br />
+                ISPConfig 3.3.1 Released</a>
+        </li>
+            <li>
+            <a href="#" target="_blank" style="margin-top:8px;padding-bottom:5px;"><b>2025-12-26</b><br />
+                ISPConfig 3.3.1 Beta 1 Released – Debian 13 Support in ISPConfig</a>
+        </li>
+            <li>
+            <a href="#" target="_blank" style="margin-top:8px;padding-bottom:5px;"><b>2025-10-08</b><br />
+                ISPConfig 3.3.0p3 Released – Security Update</a>
+        </li>
+</ul>
+
+      </div>
+    </aside>
+
+    <div class='pz-main'>
+      <header class='pz-topbar'>
+        <button type='button' class='menu-btn' aria-label='Menu' aria-expanded='false' aria-controls='pz-drawer'>&#9776;</button>
+        <a class='pz-topbar-brand' href='#' aria-label='Aperture Hosting'><span class='pz-mark' aria-hidden='true'></span>Aperture Hosting</a>
+        <div id='headerbar'>
+          <form action='#' method='get' id='searchform' role='form'>
+            <div class='input-group'>
+              <input id='globalsearch' type='text' class='form-control' placeholder='Search' />
+              <span class='input-group-btn'>
+                <button class='btn btn-default' type='button' title='Search'><span class='icon icon-lens'></span></button>
+              </span>
+            </div>
+          </form>
+          <div class='pz-topbar-actions'>
+            <button type="button" class="notification" data-toggle="modal" data-target="#datalogModal" aria-live="polite">
+              <span class="pz-sr">Pending changes: </span><span class="notification_text">3</span>
+            </button>
+            <span class='pz-user'><span class='icon icon-client' aria-hidden='true'></span>admin</span>
+            <button type='button' id='logout-button' class='btn btn-sm btn-danger text-uppercase' data-load-content="login/logout.php">Log out</button>
+          </div>
+        </div>
+      </header>
+
+      <main id='content'>
+        <form method="post" action="" id="pageForm" name="pageForm" enctype="multipart/form-data" class='form-horizontal' role='form'>
+          <div id="pageContent" data-startpage="dashboard/dashboard.php">
+<div class="page-header pz-dash-head">
+  <div class="pz-dash-head-row">
+    <h1>Welcome admin</h1>
+    <span class="pz-dash-date" id="pz-dash-date">Tuesday, 21 July</span>
+  </div>
+  <div class="pz-dash-chips" id="pz-dash-chips"></div>
+</div>
+
+    <h2 class="pz-launcher-title">Available Modules</h2>
+    <ul class="modules pz-launcher clear">
+            <li>
+            <a href="#" data-capp="help" title="Go to Help">
+                <span class="icon icon-help"></span>
+                <span class="pz-launcher-label">Help</span>
+            </a>
+        </li>
+            <li>
+            <a href="#" data-capp="client" title="Go to Client">
+                <span class="icon icon-client"></span>
+                <span class="pz-launcher-label">Client</span>
+            </a>
+        </li>
+            <li>
+            <a href="#" data-capp="sites" title="Go to Sites">
+                <span class="icon icon-sites"></span>
+                <span class="pz-launcher-label">Sites</span>
+            </a>
+        </li>
+            <li>
+            <a href="#" data-capp="mail" title="Go to Email">
+                <span class="icon icon-mail"></span>
+                <span class="pz-launcher-label">Email</span>
+            </a>
+        </li>
+            <li>
+            <a href="#" data-capp="dns" title="Go to DNS">
+                <span class="icon icon-dns"></span>
+                <span class="pz-launcher-label">DNS</span>
+            </a>
+        </li>
+            <li>
+            <a href="#" data-capp="monitor" title="Go to Monitor">
+                <span class="icon icon-monitor"></span>
+                <span class="pz-launcher-label">Monitor</span>
+            </a>
+        </li>
+            <li>
+            <a href="#" data-capp="tools" title="Go to Tools">
+                <span class="icon icon-tools"></span>
+                <span class="pz-launcher-label">Tools</span>
+            </a>
+        </li>
+            <li>
+            <a href="#" data-capp="admin" title="Go to System">
+                <span class="icon icon-admin"></span>
+                <span class="pz-launcher-label">System</span>
+            </a>
+        </li>
+            <li>
+            <a href="#" data-capp="customizer" title="Go to Branding">
+                <span class="icon icon-tools"></span>
+                <span class="pz-launcher-label">Branding</span>
+            </a>
+        </li>
+    </ul>
+
+<div class="pz-statwrap">
+    <h3 class="pz-statwrap-title">System metrics</h3>
+    <div class="pz-statgrid">
+        <div class="pz-statcard">
+            <header><span class="pz-statcard-label">Server load (1 min)</span><span class="pz-statcard-value" id="pz-stat-loadchart">&mdash;</span></header>
+            <div class="pz-statcard-chart"><canvas id="loadchart"></canvas></div>
+        </div>
+        <div class="pz-statcard">
+            <header><span class="pz-statcard-label">Memory usage %</span><span class="pz-statcard-value" id="pz-stat-memchart">&mdash;</span></header>
+            <div class="pz-statcard-chart"><canvas id="memchart"></canvas></div>
+        </div>
+        <div class="pz-statcard">
+            <header><span class="pz-statcard-label">Network In/kB</span><span class="pz-statcard-value" id="pz-stat-rxchart">&mdash;</span></header>
+            <div class="pz-statcard-chart"><canvas id="rxchart"></canvas></div>
+        </div>
+        <div class="pz-statcard">
+            <header><span class="pz-statcard-label">Network Out/kB</span><span class="pz-statcard-value" id="pz-stat-txchart">&mdash;</span></header>
+            <div class="pz-statcard-chart"><canvas id="txchart"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<div class="table-wrapper">
+    <table class="table">
+      <caption>Mailbox Quota</caption>
+      <thead class="dark form-group-sm">
+        <tr>
+          <th>Email Address</th>
+          <th>Name</th>
+          <th>Used Space</th>
+          <th colspan="2">Quota</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="#" data-toggle="tooltip" data-placement="bottom" title="">accounts@example.co.za</a></td>
+          <td></td><td>2 GB</td><td>Unlimited</td><td></td>
+        </tr>
+        <tr>
+          <td><a href="#" data-toggle="tooltip" data-placement="bottom" title="">adam@example.co.za</a></td>
+          <td></td><td>1 GB</td><td>Unlimited</td><td></td>
+        </tr>
+        <tr>
+          <td><a href="#" data-toggle="tooltip" data-placement="bottom" title="">admin@example.co.za</a></td>
+          <td></td><td>55 MB</td><td>Unlimited</td><td></td>
+        </tr>
+        <tr>
+          <td><a href="#" data-toggle="tooltip" data-placement="bottom" title="">backup@example.co.za</a></td>
+          <td></td><td>1 kB</td><td>Unlimited</td><td></td>
+        </tr>
+        <tr>
+          <td><a href="#" data-toggle="tooltip" data-placement="bottom" title="">info@example.co.za</a></td>
+          <td></td><td>8 MB</td><td>Unlimited</td><td></td>
+        </tr>
+        <tr>
+          <td><a href="#" data-toggle="tooltip" data-placement="bottom" title="">sales@example.co.za</a></td>
+          <td></td><td>3 GB</td><td>Unlimited</td><td></td>
+        </tr>
+      </tbody>
+        <tfoot>
+            <tr>
+                <th></th><th></th><th>45 GB</th><th colspan="2"></th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+    <div class="table-wrapper">
+    <table class="table">
+        <caption>Account limits</caption>
+        <thead class="dark form-group-sm">
+            <tr>
+                <th class="col-md-4">&nbsp;</th>
+                <th class="col-md-3">&nbsp;</th>
+                <th class="col-md-2">&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Assigned mailbox quota</td><td>0 of Unlimited</td><td></td></tr>
+            <tr><td>Number of email domains</td><td>1 of Unlimited</td><td></td></tr>
+            <tr><td>Number of mailboxes</td><td>81 of Unlimited</td><td></td></tr>
+            <tr><td>Number of email forwarders</td><td>5 of Unlimited</td><td></td></tr>
+            <tr><td>Number of spamfilter users</td><td>82 of Unlimited</td><td></td></tr>
+            <tr><td>Number of Clients</td><td>1 of Unlimited</td><td></td></tr>
+        </tbody>
+    </table>
+</div>
+
+          </div>
+        </form>
+      </main>
+
+      <footer id='footer'>
+        <span class='pz-credit-ispconfig'>powered by <a href="#" rel="noopener">ISPConfig</a></span>
+        <span class='pz-credit-theme'><span class='pz-credit-sep'> &middot; </span><a href="#" rel="noopener">phosphor</a></span>
+      </footer>
+    </div>
+  </div>
+  <script src='vendor/chart.umd.js'></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var L = ['','','','','','','','','','','',''];
+    createChart('loadchart', 'Server load (1 min)', L,
+                [0.42,0.55,0.48,0.71,0.62,0.90,1.15,0.88,0.64,0.70,0.52,0.61]);
+    createChart('memchart', 'Memory usage %', L,
+                [38,41,40,45,52,58,71,64,60,55,47,49]);
+    createChart('rxchart', 'Network In/kB', L,
+                [3.2,2.8,4.1,3.6,8.4,12.7,9.2,5.5,4.8,6.1,5.2,4.4]);
+    createChart('txchart', 'Network Out/kB', L,
+                [1.1,0.9,1.4,1.2,2.9,4.2,3.1,1.8,1.5,2.0,1.7,1.5]);
+  });
+  </script>
+
+  <script src='phosphor.js'></script>
+</body>
+</html>
