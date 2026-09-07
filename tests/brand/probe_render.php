@@ -96,6 +96,7 @@ $cases = array(
     'forced nav variant'   => array('rail_hex' => '#FFFFFF', 'logo_variant_nav' => 'on_dark'),
     'forced login variant' => array('logo_variant_login' => 'on_light'),
     'hide version'         => array('show_version' => '0'),
+    'hide design picker'   => array('show_design_picker' => '0'),
     'no credits'           => array('show_ispconfig_credit' => '0', 'show_theme_credit' => '0'),
 );
 
@@ -193,5 +194,36 @@ if (!function_exists('brand_rail_vars')) {
     $css = render($path, array(), $png, '', '');
     t_ok('classic: automatic leaves core\'s own logo alone', strpos($css, 'background-image') === false);
 }
+
+/* ---- the design-picker rule is one string, not two -----------------------
+ * Both designs hide the SAME core control on the SAME core page, so the rule
+ * they emit has to be byte-identical: a selector that drifts on one design is a
+ * panel where the operator's switch works in clarity and silently does nothing
+ * in classic. This probe runs once per design in a process of its own (see
+ * run.php), so parity is asserted the only way it can be from inside one
+ * process — both designs are measured against the one literal below, which is
+ * therefore the single place the selector is written down in the tests.
+ *
+ * The scoping matters as much as the hiding. `#app_theme` alone also matches
+ * tools/tpl_default.php's own Design control ("Default Theme settings", whose
+ * form/tpl_default.tform.php declares an app_theme SELECT), and hiding the
+ * operator's default-setting control was never what the switch promised. The
+ * anchor is user_settings.htm's own Save button.
+ */
+$design_rule = "#pageContent:has([data-form-action='tools/user_settings.php'])"
+             . " .form-group:has(#app_theme) { display: none; }";
+
+$css = render($path, array('show_design_picker' => '0'));
+t_ok("$design: hiding the design picker emits the agreed selector",
+    strpos($css, $design_rule) !== false, $css);
+t_ok("$design: the rule is scoped to the User Settings page",
+    strpos($css, '.form-group:has(#app_theme)') === false
+        || strpos($css, "[data-form-action='tools/user_settings.php']") !== false, $css);
+
+//* Left alone, nothing is emitted — an operator who never touched the switch
+//* must not lose the picker.
+$css = render($path, array());
+t_ok("$design: an unset design-picker switch hides nothing",
+    strpos($css, '#app_theme') === false, $css);
 
 t_done();

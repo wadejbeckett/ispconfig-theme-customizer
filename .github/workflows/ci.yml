@@ -150,7 +150,7 @@ jobs:
             #
             # As with every key on this list, presence is what is proven here —
             # not that the value is read, and not that it is honoured.
-            for key in accent_hex rail_hex login_bg logo_url logo_url_on_dark logo_on_dark logo_variant_nav logo_variant_login show_version company_name; do
+            for key in accent_hex rail_hex login_bg logo_url logo_url_on_dark logo_on_dark logo_variant_nav logo_variant_login show_version show_design_picker company_name; do
               if ! grep -q "$key" "$reader"; then
                 echo "::error file=$reader::brand token '$key' is written by the module but not read by $reader"
                 missing=1

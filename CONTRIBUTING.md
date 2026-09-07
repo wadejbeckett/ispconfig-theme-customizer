@@ -186,11 +186,11 @@ The script parses `.lng` files as text and never `include()`s them — they are
 PHP, and they arrive through pull requests. Keep it that way.
 
 A separate CI step, **Brand-token contract parity**, greps *every*
-`themes/*/brand.php` for each of the ten keys on CI's hard-coded contract list
-(`accent_hex`, `rail_hex`, `login_bg`, `logo_url`, `logo_url_on_dark`,
+`themes/*/brand.php` for each of the eleven keys on CI's hard-coded contract
+list (`accent_hex`, `rail_hex`, `login_bg`, `logo_url`, `logo_url_on_dark`,
 `logo_on_dark`, `logo_variant_nav`, `logo_variant_login`, `show_version`,
-`company_name` — the Branding page writes more than these; the list is the
-subset a design must read) and fails if one is missing. The two `*_on_dark` logo
+`show_design_picker`, `company_name` — the Branding page writes more than these;
+the list is the subset a design must read) and fails if one is missing. The two `*_on_dark` logo
 keys are listed separately from `logo_url` because `logo_on_dark` is not a
 substring of `logo_url_on_dark`, so each name genuinely has to appear: a design
 implementing only one of the pair would render the wrong-brightness mark on half

@@ -51,7 +51,7 @@ class page_action extends tform_actions {
      * re-parses the stored blob and only assigns the keys named below. Same
      * reasoning as sys_ini.custom_logo, which is a column and was never a
      * candidate for this list. */
-    private $branding_keys = array('logo_url', 'logo_url_on_dark', 'logo_variant_nav', 'logo_variant_login', 'favicon_url', 'accent_hex', 'rail_hex', 'login_bg', 'show_ispconfig_credit', 'show_theme_credit', 'show_version');
+    private $branding_keys = array('logo_url', 'logo_url_on_dark', 'logo_variant_nav', 'logo_variant_login', 'favicon_url', 'accent_hex', 'rail_hex', 'login_bg', 'show_ispconfig_credit', 'show_theme_credit', 'show_version', 'show_design_picker');
     private $misc_keys      = array('company_name', 'custom_login_text', 'custom_login_link');
 
     function onShowEdit() {
@@ -91,6 +91,7 @@ class page_action extends tform_actions {
                 'show_ispconfig_credit' => (isset($branding['show_ispconfig_credit']) && $branding['show_ispconfig_credit'] === '0') ? '0' : '1',
                 'show_theme_credit'     => (isset($branding['show_theme_credit']) && $branding['show_theme_credit'] === '0') ? '0' : '1',
                 'show_version'          => (isset($branding['show_version']) && $branding['show_version'] === '0') ? '0' : '1',
+                'show_design_picker'    => (isset($branding['show_design_picker']) && $branding['show_design_picker'] === '0') ? '0' : '1',
                 //* derived, not stored: this switch owns a row in sys_config, not
                 //* a key in the INI blob, because that row is what ISPConfig
                 //* itself consults before it builds the dashlet. See
