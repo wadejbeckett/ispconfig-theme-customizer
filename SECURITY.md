@@ -5,8 +5,8 @@ page where you set your logo, panel name and colours. It installs into the panel
 in two places, and both are in scope here:
 
 - `themes/clarity/` and `themes/classic/` — the two designs it ships, each with
-  two endpoints that are reachable **without a session** (`brand.php`,
-  `title.php`), so four in total;
+  three endpoints that are reachable **without a session** (`brand.php`,
+  `title.php`, `favicon.php`), so six in total;
 - `interface/web/customizer/` — the **Branding** page. That page is an ISPConfig
   *module* in core's sense of the word (`lib/module.conf.php`,
   `sys_user.modules`), and it writes the values those endpoints read.
@@ -41,8 +41,8 @@ A matched pair is now the only thing you can install.
 ## Trust boundary: the Branding page is admin-only by construction
 
 Every endpoint under `interface/web/customizer/` (`customizer_edit.php`,
-`logo_upload.php`, `logo_delete.php`) opens with the same three checks, in this
-order:
+`logo_upload.php`, `logo_delete.php`, `preview.php`) opens with the same three
+checks, in this order:
 
 ```php
 $app->auth->check_module_permissions('customizer');
@@ -285,6 +285,23 @@ says it is.
 - **`logo_delete.php`** requires the same `X-Requested-With` header *and*
   `csrf_token_check('GET')`, matching core's own delete flow. The header check
   alone would be defence in depth; the token check is the control.
+- **`preview.php` mints no token, and that is deliberate.** It is the Branding
+  page's live preview: admin-only, the same three checks in the same order,
+  and **read-only** — one `SELECT` against `sys_ini` row 1, no write of any
+  kind (nothing to the database, nothing to disk), and no function of its own
+  (every rule it applies is one of the shared resolvers in
+  `lib/preview.inc.php`, so the preview cannot drift from what the panel
+  renders). It answers `application/json` with `Cache-Control: no-store`,
+  gated on `POST` and on the same `X-Requested-With: XMLHttpRequest` header
+  the uploader's token mint uses. A CSRF token would be actively harmful here:
+  minting one **writes** the session, ISPConfig's session store does not lock,
+  and this endpoint fires on a debounce while an admin types — so minting per
+  keystroke would manufacture the race the click-time mint exists to shrink.
+  There is nothing for a forged request to change, and the response is
+  unreadable cross-origin. `tests/brand/probe_preview.php` asserts all of that
+  against the file's token stream on every push: the three checks in order
+  with nothing before them, no write verb anywhere, the two gates, the JSON
+  and no-store headers, and no locally declared function.
 - **Demo mode** (`$conf['demo_mode']`) refuses before any write, and refuses
   *visibly* — in `onBeforeUpdate` rather than `onUpdateSave`, because the
   framework tests `errorMessage` before calling the save hook and its redirect
@@ -401,7 +418,9 @@ account for.
 
 There are **no schema changes**: no new tables, no new columns, no `CREATE` or
 `ALTER` anywhere in the repository. Every write targets a row and column
-ISPConfig already has.
+ISPConfig already has. `preview.php` appears nowhere in this table, which is the
+point of it: it is the fourth endpoint under `interface/web/customizer/` and the
+only one that writes nothing at all.
 
 | What | When | Written by |
 |---|---|---|

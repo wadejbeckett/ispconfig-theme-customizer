@@ -41,7 +41,8 @@ $renders = array(
 // take no argument. Kept separate from $probes so run.php never demands a
 // decision matrix from a file that has no decision to report.
 $checks = array(
-    'tform' => __DIR__ . '/probe_tform.php',
+    'tform'   => __DIR__ . '/probe_tform.php',
+    'preview' => __DIR__ . '/probe_preview.php',
 );
 
 $fail      = 0;
