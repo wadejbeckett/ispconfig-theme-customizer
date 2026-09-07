@@ -38,6 +38,10 @@
  *
  *   config [branding] accent_hex  -> primary action, links, focus, active nav
  *   config [branding] rail_hex    -> the main-navigation band (+ mobile menu)
+ *   config [branding] rail_hex_light -> read, and deliberately a NO-OP here:
+ *                                       classic renders one colour mode, so
+ *                                       there is no light scope to paint. See
+ *                                       the read below.
  *   config [branding] login_bg    -> login-screen background
  *   config [branding] show_version (0/1) -> 0 hides Help's version surfaces
  *   config [branding] show_design_picker (0/1) -> 0 hides the Design picker
@@ -243,6 +247,22 @@ if ($read_ok) {
 $accent   = brand_hex($branding, 'accent_hex');
 $rail     = brand_hex($branding, 'rail_hex');
 $login_bg = brand_hex($branding, 'login_bg');
+
+//* rail_hex_light is read here and used for nothing, on purpose.
+//*
+//* It is on CI's brand-token contract list, which every design under themes/
+//* must satisfy — and the check greps this file, so a comment alone would
+//* satisfy it while the design said nothing about the key at all. Reading it in
+//* CODE is the honest answer: this design has ONE colour mode, its rail is
+//* #main-navigation and .pushy, and there is no light scope for a second rail
+//* colour to live in. Acting on the value instead would paint classic's only
+//* rail with a colour the operator chose for a mode they do not have here,
+//* which is worse than ignoring it.
+//*
+//* tests/brand/probe_classic.php holds both halves: that the key appears in code
+//* rather than in prose, and that the value never reaches a rule.
+$rail_light_noop = brand_hex($branding, 'rail_hex_light');
+unset($rail_light_noop);
 
 // The accent's own lightness, resolved once: every filled brand surface below
 // offsets from it rather than from a fixed rung (see "how a colour is derived").
@@ -879,10 +899,22 @@ function brand_is_dark($hex)
     return (brand_luminance($hex) < 0.5);
 }
 
-/** Return a validated #rrggbb value from the branding array, or '' if absent/invalid. */
+/**
+ * A validated #rrggbb from the contract, or ''.
+ *
+ * /D is not decoration and is not optional. tform_base appends only "s" to a
+ * validator, and PCRE's `$` matches immediately before a final newline as well
+ * as at the true end of the subject — so without /D a stored "#FFFFFF\n" passes
+ * here and the raw LF is emitted into a text/css response, corrupting the
+ * declaration it lands in, on an endpoint that answers with no session.
+ * themes/clarity/brand.php's copy of this function has always carried it, so
+ * this one was the only place in the project where two readers disagreed about
+ * the same stored value. Every anchored pattern in this project carries /D;
+ * tests/brand/probe_classic.php and probe_clarity.php now hold both copies to it.
+ */
 function brand_hex($branding, $key)
 {
-    if (isset($branding[$key]) && preg_match('/^#[0-9A-Fa-f]{6}$/', $branding[$key])) {
+    if (isset($branding[$key]) && preg_match('/^#[0-9A-Fa-f]{6}$/D', $branding[$key])) {
         return $branding[$key];
     }
     return '';

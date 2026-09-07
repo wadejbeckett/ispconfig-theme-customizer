@@ -239,6 +239,22 @@ if (function_exists('brand_contrast')) {
     t_ok('a colour against itself is 1:1', abs(brand_contrast('#0065AB', '#0065AB') - 1.0) < 1e-9);
 }
 
+/* ---- the same hex gate, and the same anchor -----------------------------
+ * The twin of the block in probe_classic.php. classic's copy of brand_hex() was
+ * missing /D and let "#FFFFFF\n" through into a text/css response; this one has
+ * always carried it. Both are asserted from now on, so the pair cannot drift
+ * again in either direction.
+ */
+t_ok('brand_hex() exists', function_exists('brand_hex'));
+if (function_exists('brand_hex')) {
+    t_eq('a valid hex is returned as stored',
+        brand_hex(array('rail_hex' => '#01243D'), 'rail_hex'), '#01243D');
+    t_eq('an absent key is empty', brand_hex(array(), 'rail_hex'), '');
+    t_eq('a missing hash is refused', brand_hex(array('rail_hex' => '01243D'), 'rail_hex'), '');
+    t_eq('a trailing space is refused', brand_hex(array('rail_hex' => '#01243D '), 'rail_hex'), '');
+    t_eq('a trailing newline is refused', brand_hex(array('rail_hex' => "#01243D\n"), 'rail_hex'), '');
+}
+
 /* ---- the light-mode login filter ----------------------------------------
  * Extracted from the endpoint body, where the test read
  * `$light_slot !== '' && !$one_variant`. The left half could never be false when

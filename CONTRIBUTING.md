@@ -186,8 +186,8 @@ The script parses `.lng` files as text and never `include()`s them — they are
 PHP, and they arrive through pull requests. Keep it that way.
 
 A separate CI step, **Brand-token contract parity**, greps *every*
-`themes/*/brand.php` for each of the eleven keys on CI's hard-coded contract
-list (`accent_hex`, `rail_hex`, `login_bg`, `logo_url`, `logo_url_on_dark`,
+`themes/*/brand.php` for each of the twelve keys on CI's hard-coded contract
+list (`accent_hex`, `rail_hex`, `rail_hex_light`, `login_bg`, `logo_url`, `logo_url_on_dark`,
 `logo_on_dark`, `logo_variant_nav`, `logo_variant_login`, `show_version`,
 `show_design_picker`, `company_name` — the Branding page writes more than these;
 the list is the subset a design must read) and fails if one is missing. The two `*_on_dark` logo
@@ -197,7 +197,13 @@ implementing only one of the pair would render the wrong-brightness mark on half
 its surfaces, and no other check would see it. The two `logo_variant_*` keys are
 the operator's per-surface override of which mark a slot uses; a design that
 ignores them silently overrides the operator's explicit choice with its own
-assumption about its chrome — which is the bug they were added to fix. The loop walks the directory rather
+assumption about its chrome — which is the bug they were added to fix.
+`rail_hex_light` is the light-mode rail colour, and it is on the list even
+though only a design that *has* a light colour mode can paint anything with it —
+clarity does; classic reads it and documents the no-op in code, which
+`tests/brand/probe_classic.php` checks is a read and not a comment. A list that
+excused a design from a key it happens not to use would stop being a contract.
+The loop walks the directory rather
 than naming a design on purpose: both `clarity` and `classic` have to satisfy
 it, and a third design must not quietly opt out. This is the check that keeps
 the two sides one product. Adding a key means adding it to every design in the
