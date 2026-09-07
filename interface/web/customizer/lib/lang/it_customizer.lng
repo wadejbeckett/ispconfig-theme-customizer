@@ -76,6 +76,7 @@ $wb['preview_nav_sites_txt'] = 'Siti';
 $wb['preview_nav_email_txt'] = 'Email';
 $wb['preview_search_txt'] = 'Cerca';
 $wb['preview_card_title_txt'] = 'Siti web';
+$wb['preview_signin_txt'] = 'Accedi';
 $wb['login_head_txt'] = 'Schermata di accesso';
 $wb['custom_login_text_txt'] = 'Testo della nota a piè di pagina di accesso';
 $wb['custom_login_link_txt'] = 'Collegamento della nota a piè di pagina di accesso';

@@ -129,7 +129,7 @@ t_ok('the light-rail pane ships hidden for the script to reveal',
  * standing beside nothing, reading as a text cursor rather than as a marker.
  */
 foreach (array('preview_nav_home_txt', 'preview_nav_sites_txt', 'preview_nav_email_txt',
-               'preview_search_txt', 'preview_card_title_txt') as $key) {
+               'preview_search_txt', 'preview_card_title_txt', 'preview_signin_txt') as $key) {
     t_ok("the pane draws {$key}, not an English literal",
         strpos($src, "{tmpl_var name='" . $key . "'}") !== false);
 }
@@ -165,6 +165,13 @@ t_ok('no rule uses !important', strpos($style, '!important') === false);
 t_ok('there is exactly one focus rule', substr_count($style, ':focus') === 1);
 t_ok('...and it is the drop zone\'s', strpos($style, '.nz-drop:focus-within') !== false);
 t_ok('nothing sets an outline', strpos($style, 'outline') === false);
+
+//* A colour row is a flex line, and markField() appends its message to the
+//* rejected input's parentNode — which on those four rows IS that line. Without
+//* a full-width basis the message renders beside the contrast readout instead of
+//* under the row, measured in Chromium at the one-column collapse.
+t_ok('a rejected colour\'s message takes the whole row',
+    preg_match('/#nz-brandpage \.nz-colourrow > \.nz-fielderror \{[^}]*flex:\s*1 0 100%/', $style) === 1);
 
 //* Containment goes on OUR wrapper. #pageContent is core's element and giving
 //* it a containment context changes the layout of every other module's page.

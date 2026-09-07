@@ -76,6 +76,7 @@ $wb['preview_nav_sites_txt'] = 'Sites';
 $wb['preview_nav_email_txt'] = 'Email';
 $wb['preview_search_txt'] = 'Pesquisar';
 $wb['preview_card_title_txt'] = 'Sites';
+$wb['preview_signin_txt'] = 'Iniciar sessão';
 $wb['login_head_txt'] = 'Ecrã de início de sessão';
 $wb['custom_login_text_txt'] = 'Texto da nota de rodapé de início de sessão';
 $wb['custom_login_link_txt'] = 'Ligação da nota de rodapé de início de sessão';

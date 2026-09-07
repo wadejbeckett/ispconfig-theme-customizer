@@ -78,6 +78,7 @@ $wb['preview_nav_sites_txt'] = 'Sites';
 $wb['preview_nav_email_txt'] = 'E-mail';
 $wb['preview_search_txt'] = 'Zoeken';
 $wb['preview_card_title_txt'] = 'Websites';
+$wb['preview_signin_txt'] = 'Aanmelden';
 
 $wb['login_head_txt'] = 'Aanmeldscherm';
 $wb['custom_login_text_txt'] = 'Tekst aanmeldvoetnoot';

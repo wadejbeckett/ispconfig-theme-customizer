@@ -480,7 +480,6 @@
   }
   #nz-brandpage .nz-upload > .help-block { margin: 0 0 10px; }
 
-
   #nz-brandpage .nz-drop-row {
     display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px;
     margin-top: 9px;
@@ -752,6 +751,14 @@
      same thing about two surfaces. */
   #nz-brandpage .nz-hint > p + p { margin-top: 4px; }
 
+  /* markField() appends its message to the rejected input's parentNode, which
+     on a colour row is this flex line rather than a block. Without a basis the
+     message is laid out as one more item on the line and renders beside the
+     contrast readout, vertically centred against it — measured in Chromium at
+     the one-column collapse. A full-width basis puts it under the row it
+     belongs to, which is where every other field's message already lands. */
+  #nz-brandpage .nz-colourrow > .nz-fielderror { flex: 1 0 100%; }
+
   /* previewNote() appends the refresh-failed line to .nz-brandpreview, which is
      the hero — give it the hero's own gutter instead of the mount's edge. */
   #nz-brandpage .nz-hero > #nz-preview-note { margin: 0; padding: 0 18px 14px; }
@@ -854,7 +861,7 @@
           <div class="nz-prevlogin-card">
             <div class="nz-prevfield"></div>
             <div class="nz-prevfield"></div>
-            <span class="nz-prevbtn nz-prev-accent">&nbsp;</span>
+            <span class="nz-prevbtn nz-prev-accent">{tmpl_var name='preview_signin_txt'}</span>
           </div>
         </div>
       </div>

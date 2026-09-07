@@ -119,6 +119,10 @@ $wb['preview_nav_sites_txt'] = 'Sites';
 $wb['preview_nav_email_txt'] = 'Email';
 $wb['preview_search_txt'] = 'Search';
 $wb['preview_card_title_txt'] = 'Websites';
+// The login pull's own button. Same reason as the five above: the pane
+// draws a sign-in screen, and an English literal inside a page that ships
+// in seven locales would be the one untranslated word in the picture.
+$wb['preview_signin_txt'] = 'Sign in';
 
 $wb['login_head_txt'] = 'Login screen';
 $wb['custom_login_text_txt'] = 'Login footnote text';

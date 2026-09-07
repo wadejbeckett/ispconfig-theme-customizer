@@ -78,6 +78,7 @@ $wb['preview_nav_sites_txt'] = 'Webseiten';
 $wb['preview_nav_email_txt'] = 'E-Mail';
 $wb['preview_search_txt'] = 'Suche';
 $wb['preview_card_title_txt'] = 'Webseiten';
+$wb['preview_signin_txt'] = 'Anmelden';
 
 $wb['login_head_txt'] = 'Anmeldebildschirm';
 $wb['custom_login_text_txt'] = 'Fußnotentext der Anmeldung';
