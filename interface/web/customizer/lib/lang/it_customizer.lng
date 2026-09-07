@@ -64,6 +64,7 @@ $wb['show_design_picker_txt'] = 'Mostra il selettore Design nelle impostazioni u
 $wb['show_design_picker_hint_txt'] = 'L’elenco a discesa Design in Tools > User Settings, dove un utente sceglie il design del pannello. Nasconderlo si applica a ogni ruolo — operatore incluso, quindi lo riattivi qui quando deve cambiare design (un tema compatibile con il branding lo nasconde visivamente; una richiesta artefatta può comunque cambiare il tema, quindi è estetica e non applicazione).';
 $wb['accent_hex_error_regex'] = 'Il colore d’accento deve essere un valore esadecimale come #0065AB.';
 $wb['rail_hex_error_regex'] = 'Il colore della barra laterale deve essere un valore esadecimale come #01243D.';
+$wb['rail_hex_light_error_regex'] = 'Il colore della barra laterale (modalità chiara) deve essere un valore esadecimale come #E7EBF0.';
 $wb['login_bg_error_regex'] = 'Lo sfondo di accesso deve essere un valore esadecimale come #17252B.';
 $wb['login_link_error_regex'] = 'Il collegamento della nota a piè di pagina di accesso deve iniziare con http:// o https://.';
 $wb['logo_uploaded_txt'] = 'Logo aggiornato.';

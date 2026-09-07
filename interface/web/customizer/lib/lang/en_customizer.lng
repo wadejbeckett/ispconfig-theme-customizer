@@ -97,6 +97,7 @@ $wb['show_design_picker_hint_txt'] = 'The Design drop-down under Tools > User Se
 
 $wb['accent_hex_error_regex'] = 'Accent colour must be a hex value like #0065AB.';
 $wb['rail_hex_error_regex'] = 'Sidebar colour must be a hex value like #01243D.';
+$wb['rail_hex_light_error_regex'] = 'Sidebar colour (light mode) must be a hex value like #E7EBF0.';
 $wb['login_bg_error_regex'] = 'Login background must be a hex value like #17252B.';
 $wb['login_link_error_regex'] = 'The login footnote link must start with http:// or https://.';
 

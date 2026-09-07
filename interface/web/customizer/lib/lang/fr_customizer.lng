@@ -69,6 +69,7 @@ $wb['show_design_picker_hint_txt'] = 'La liste déroulante Design sous Outils > 
 
 $wb['accent_hex_error_regex'] = 'La couleur d’accentuation doit être une valeur hexadécimale comme #0065AB.';
 $wb['rail_hex_error_regex'] = 'La couleur de la barre latérale doit être une valeur hexadécimale comme #01243D.';
+$wb['rail_hex_light_error_regex'] = 'La couleur de la barre latérale (mode clair) doit être une valeur hexadécimale comme #E7EBF0.';
 $wb['login_bg_error_regex'] = 'L’arrière-plan de la connexion doit être une valeur hexadécimale comme #17252B.';
 $wb['login_link_error_regex'] = 'Le lien de la note de bas de page de connexion doit commencer par http:// ou https://.';
 

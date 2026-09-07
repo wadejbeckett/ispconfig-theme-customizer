@@ -37,6 +37,13 @@ $renders = array(
     'render:classic' => array(__DIR__ . '/probe_render.php', 'classic'),
 );
 
+// Probes that assert STRUCTURE rather than a decision: they emit no matrix and
+// take no argument. Kept separate from $probes so run.php never demands a
+// decision matrix from a file that has no decision to report.
+$checks = array(
+    'tform' => __DIR__ . '/probe_tform.php',
+);
+
 $fail    = 0;
 $matrix  = array();
 $php     = PHP_BINARY !== '' ? PHP_BINARY : 'php';
@@ -68,6 +75,20 @@ foreach ($renders as $name => $spec) {
     $out = array();
     $rc  = 0;
     exec(escapeshellarg($php) . ' ' . escapeshellarg($spec[0]) . ' ' . escapeshellarg($spec[1]) . ' 2>&1', $out, $rc);
+    foreach ($out as $line) {
+        echo "$line\n";
+    }
+    if ($rc !== 0) {
+        $fail++;
+        echo "-- $name probe exited $rc\n";
+    }
+}
+
+foreach ($checks as $name => $path) {
+    echo "\n== $name ==\n";
+    $out = array();
+    $rc  = 0;
+    exec(escapeshellarg($php) . ' ' . escapeshellarg($path) . ' 2>&1', $out, $rc);
     foreach ($out as $line) {
         echo "$line\n";
     }

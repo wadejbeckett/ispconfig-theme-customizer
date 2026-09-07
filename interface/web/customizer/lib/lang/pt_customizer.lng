@@ -64,6 +64,7 @@ $wb['show_design_picker_txt'] = 'Mostrar o seletor Design nas definições do ut
 $wb['show_design_picker_hint_txt'] = 'A lista suspensa Design em Tools > User Settings, onde um utilizador escolhe o design do painel. Ocultá-la aplica-se a todos os perfis — incluindo o operador, pelo que deve voltar a ativá-la aqui quando precisar de mudar de design (um tema compatível com a marca oculta-a visualmente; um pedido forjado continua a poder mudar o tema, pelo que isto é cosmético e não uma imposição).';
 $wb['accent_hex_error_regex'] = 'A cor de destaque tem de ser um valor hexadecimal como #0065AB.';
 $wb['rail_hex_error_regex'] = 'A cor da barra lateral tem de ser um valor hexadecimal como #01243D.';
+$wb['rail_hex_light_error_regex'] = 'A cor da barra lateral (modo claro) tem de ser um valor hexadecimal como #E7EBF0.';
 $wb['login_bg_error_regex'] = 'O fundo de início de sessão tem de ser um valor hexadecimal como #17252B.';
 $wb['login_link_error_regex'] = 'A ligação da nota de rodapé de início de sessão tem de começar por http:// ou https://.';
 $wb['logo_uploaded_txt'] = 'Logótipo atualizado.';

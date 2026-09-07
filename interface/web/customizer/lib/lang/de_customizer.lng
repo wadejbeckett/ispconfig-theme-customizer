@@ -69,6 +69,7 @@ $wb['show_design_picker_hint_txt'] = 'Die Auswahlliste Design unter Einstellunge
 
 $wb['accent_hex_error_regex'] = 'Die Akzentfarbe muss ein Hex-Wert wie #0065AB sein.';
 $wb['rail_hex_error_regex'] = 'Die Farbe der Seitenleiste muss ein Hex-Wert wie #01243D sein.';
+$wb['rail_hex_light_error_regex'] = 'Die Farbe der Seitenleiste (heller Modus) muss ein Hex-Wert wie #E7EBF0 sein.';
 $wb['login_bg_error_regex'] = 'Der Anmelde-Hintergrund muss ein Hex-Wert wie #17252B sein.';
 $wb['login_link_error_regex'] = 'Der Fußnotenlink der Anmeldung muss mit http:// oder https:// beginnen.';
 

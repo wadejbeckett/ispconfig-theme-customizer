@@ -69,6 +69,7 @@ $wb['show_design_picker_hint_txt'] = 'De keuzelijst Design onder Tools > User Se
 
 $wb['accent_hex_error_regex'] = 'De accentkleur moet een hex-waarde zoals #0065AB zijn.';
 $wb['rail_hex_error_regex'] = 'De zijbalkkleur moet een hex-waarde zoals #01243D zijn.';
+$wb['rail_hex_light_error_regex'] = 'De zijbalkkleur (lichte modus) moet een hex-waarde zoals #E7EBF0 zijn.';
 $wb['login_bg_error_regex'] = 'De aanmeldachtergrond moet een hex-waarde zoals #17252B zijn.';
 $wb['login_link_error_regex'] = 'De link van de aanmeldvoetnoot moet beginnen met http:// of https://.';
 

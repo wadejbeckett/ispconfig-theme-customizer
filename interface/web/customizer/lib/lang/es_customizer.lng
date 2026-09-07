@@ -64,6 +64,7 @@ $wb['show_design_picker_txt'] = 'Mostrar el selector Design en las opciones de u
 $wb['show_design_picker_hint_txt'] = 'La lista desplegable Design en Tools > User Settings, donde un usuario elige el diseño del panel. Ocultarla se aplica a todos los perfiles — incluido el operador, así que vuelva a activarla aquí cuando necesite cambiar de diseño (un tema compatible con la marca la oculta visualmente; una petición manipulada puede seguir cambiando el tema, de modo que esto es cosmético y no una restricción).';
 $wb['accent_hex_error_regex'] = 'El color de acento debe ser un valor hexadecimal como #0065AB.';
 $wb['rail_hex_error_regex'] = 'El color de la barra lateral debe ser un valor hexadecimal como #01243D.';
+$wb['rail_hex_light_error_regex'] = 'El color de la barra lateral (modo claro) debe ser un valor hexadecimal como #E7EBF0.';
 $wb['login_bg_error_regex'] = 'El fondo de inicio de sesión debe ser un valor hexadecimal como #17252B.';
 $wb['login_link_error_regex'] = 'El enlace de la nota al pie del inicio de sesión debe comenzar por http:// o https://.';
 $wb['logo_uploaded_txt'] = 'Logotipo actualizado.';

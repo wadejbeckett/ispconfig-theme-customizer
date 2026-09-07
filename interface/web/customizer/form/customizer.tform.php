@@ -11,8 +11,8 @@
  * (customizer_edit.php) reads/writes two INI sections inside sys_ini.config:
  *   [branding]  logo_url, logo_url_on_dark, logo_variant_nav,
  *               logo_variant_login, favicon_url, accent_hex, rail_hex,
- *               login_bg, show_ispconfig_credit, show_theme_credit,
- *               show_version, show_design_picker
+ *               rail_hex_light, login_bg, show_ispconfig_credit,
+ *               show_theme_credit, show_version, show_design_picker
  *   [misc]      company_name, custom_login_text, custom_login_link, and the
  *               three dashboard_atom_url_* keys via the news-feed toggle
  *               (all existing core keys)
@@ -256,11 +256,26 @@ $form["tabs"]['branding'] = array(
             'value'   => ''
         ),
 
+        //* The four colours share one filter and one anchored pattern, for the
+        //* reasons logo_url spells out above and which apply here unchanged.
+        //* TRIM because a browser does not strip a trailing space from a text
+        //* input and a pasted "#0065AB " would otherwise fail an anchored
+        //* pattern with an opaque error on a field that looks correct; /D
+        //* because tform_base.inc.php:1011 appends only "s", and without /D
+        //* PCRE's "$" also matches just before a final newline — so "#0065AB\n"
+        //* would validate, db->quote() would store a literal backslash-n, and
+        //* the readers' stripslashes() would collapse it to "#0065ABn": a hex
+        //* that fails every reader's regex, with no error ever shown. encode()
+        //* runs twice per save in this module; trim() is idempotent, which is
+        //* why the same filter is safe here as on logo_url.
         'accent_hex' => array(
             'datatype' => 'VARCHAR',
             'formtype' => 'TEXT',
+            'filters'  => array(
+                0 => array('event' => 'SAVE', 'type' => 'TRIM'),
+            ),
             'validators' => array(
-                0 => array('type' => 'REGEX', 'regex' => '/^(#[0-9A-Fa-f]{6})?$/', 'errmsg' => 'accent_hex_error_regex'),
+                0 => array('type' => 'REGEX', 'regex' => '/^(#[0-9A-Fa-f]{6})?$/D', 'errmsg' => 'accent_hex_error_regex'),
             ),
             'default' => '',
             'value'   => ''
@@ -269,8 +284,36 @@ $form["tabs"]['branding'] = array(
         'rail_hex' => array(
             'datatype' => 'VARCHAR',
             'formtype' => 'TEXT',
+            'filters'  => array(
+                0 => array('event' => 'SAVE', 'type' => 'TRIM'),
+            ),
             'validators' => array(
-                0 => array('type' => 'REGEX', 'regex' => '/^(#[0-9A-Fa-f]{6})?$/', 'errmsg' => 'rail_hex_error_regex'),
+                0 => array('type' => 'REGEX', 'regex' => '/^(#[0-9A-Fa-f]{6})?$/D', 'errmsg' => 'rail_hex_error_regex'),
+            ),
+            'default' => '',
+            'value'   => ''
+        ),
+
+        //* The light-mode twin of rail_hex, and the ONE key this redesign adds.
+        //*
+        //* A design with a light colour mode paints its rail from this value
+        //* there and falls back to rail_hex when it is empty — clarity does
+        //* exactly that. A design with no light scope (classic; phosphor when it
+        //* lands) READS the key and documents the no-op, which is what keeps
+        //* CI's contract list a list of keys every design has answered for
+        //* rather than a list some designs quietly ignore.
+        //*
+        //* Same filter and the same anchored pattern as the other three colours,
+        //* character for character; only the errmsg differs, so the operator is
+        //* told which field they got wrong.
+        'rail_hex_light' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'TEXT',
+            'filters'  => array(
+                0 => array('event' => 'SAVE', 'type' => 'TRIM'),
+            ),
+            'validators' => array(
+                0 => array('type' => 'REGEX', 'regex' => '/^(#[0-9A-Fa-f]{6})?$/D', 'errmsg' => 'rail_hex_light_error_regex'),
             ),
             'default' => '',
             'value'   => ''
@@ -279,8 +322,11 @@ $form["tabs"]['branding'] = array(
         'login_bg' => array(
             'datatype' => 'VARCHAR',
             'formtype' => 'TEXT',
+            'filters'  => array(
+                0 => array('event' => 'SAVE', 'type' => 'TRIM'),
+            ),
             'validators' => array(
-                0 => array('type' => 'REGEX', 'regex' => '/^(#[0-9A-Fa-f]{6})?$/', 'errmsg' => 'login_bg_error_regex'),
+                0 => array('type' => 'REGEX', 'regex' => '/^(#[0-9A-Fa-f]{6})?$/D', 'errmsg' => 'login_bg_error_regex'),
             ),
             'default' => '',
             'value'   => ''
