@@ -1,12 +1,12 @@
 # phosphor — design spec
 
-Status: for approval. Nothing here is implemented. Written 2026-09-07 against `themes/clarity/`, `DESIGN.md`, `CONTRIBUTING.md`, `README.md`, `interface/web/customizer/`, `mockup/build.py` and the Earlier brand tokens (`earlier-brand`, `tokens/tokens.json`). Supersedes Part A of `context/design-plan-2026-09-06.md`; Parts B and C of that draft are unaffected.
+Status: for approval. Nothing here is implemented. Written 2026-09-07 against `themes/clarity/`, `DESIGN.md`, `CONTRIBUTING.md`, `README.md`, `interface/web/customizer/`, `mockup/build.py` and a private brand token sheet (not in this repository). Supersedes Part A of `context/design-plan-2026-09-06.md`; Parts B and C of that draft are unaffected.
 
 ## Purpose and scope
 
 `phosphor` is a third design for the ISPConfig Theme Customizer, selectable in ISPConfig's Design picker alongside `clarity` and `classic`. Clarity is not touched. The brief is *black glass with phosphor glow*: a true-black console whose surfaces are translucent panes over the ground and whose only warm thing is an amber accent that is allowed, in four named places, to glow. It is **dark only in v1** — no light remap, and its shell does not render the theme switcher.
 
-It is vendor-neutral: no literal "Earlier" in any file, asset, comment or string. The Earlier token system is the *starting point* for palette and rhythm, and where this spec departs from it, it says so. An operator's identity arrives through the Branding page exactly as it does on the other two designs.
+It is vendor-neutral: no vendor name in any file, asset, comment or string. That private token system is the *starting point* for palette and rhythm, and where this spec departs from it, it says so. An operator's identity arrives through the Branding page exactly as it does on the other two designs.
 
 The envelope is unchanged: no ISPConfig core file modified; everything ships in `themes/phosphor/` and `interface/web/customizer/`; the only rows written are ones core already owns (`sys_ini`, and `sys_config` for the donation switch); the brand-token contract is honoured, so CI's walk of `themes/*/` passes on merit. The new key `rail_hex_light` is in scope for the Branding page.
 
