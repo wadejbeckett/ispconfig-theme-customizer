@@ -101,6 +101,15 @@ $payload = customizer_preview_payload(
         'fallback_from_light' => $app->lng('logo_fallback_from_light_txt'),
         'no_favicon'          => $app->lng('no_favicon_set_txt'),
         'favicon_url_wins'    => $app->lng('favicon_url_wins_txt'),
+        //* The legend's status facts. They live in the MODULE wordbook rather
+        //* than the tform one for the same reason the five above do: this
+        //* endpoint has no tform and cannot address that wordbook by key.
+        'summary_design'       => $app->lng('summary_design_txt'),
+        'summary_marks_none'   => $app->lng('summary_marks_none_txt'),
+        'summary_marks_one'    => $app->lng('summary_marks_one_txt'),
+        'summary_marks'        => $app->lng('summary_marks_txt'),
+        'summary_favicon'      => $app->lng('summary_favicon_txt'),
+        'summary_favicon_none' => $app->lng('summary_favicon_none_txt'),
     )
 );
 
