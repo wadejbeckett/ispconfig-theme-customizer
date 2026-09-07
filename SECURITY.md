@@ -287,21 +287,31 @@ says it is.
   alone would be defence in depth; the token check is the control.
 - **`preview.php` mints no token, and that is deliberate.** It is the Branding
   page's live preview: admin-only, the same three checks in the same order,
-  and **read-only** — one `SELECT` against `sys_ini` row 1, no write of any
-  kind (nothing to the database, nothing to disk), and no function of its own
-  (every rule it applies is one of the shared resolvers in
-  `lib/preview.inc.php`, so the preview cannot drift from what the panel
-  renders). It answers `application/json` with `Cache-Control: no-store`,
-  gated on `POST` and on the same `X-Requested-With: XMLHttpRequest` header
-  the uploader's token mint uses. A CSRF token would be actively harmful here:
-  minting one **writes** the session, ISPConfig's session store does not lock,
-  and this endpoint fires on a debounce while an admin types — so minting per
-  keystroke would manufacture the race the click-time mint exists to shrink.
-  There is nothing for a forged request to change, and the response is
-  unreadable cross-origin. `tests/brand/probe_preview.php` asserts all of that
-  against the file's token stream on every push: the three checks in order
-  with nothing before them, no write verb anywhere, the two gates, the JSON
-  and no-store headers, and no locally declared function.
+  and **read-only** — one `SELECT` against `sys_ini` row 1, and no write of
+  its own: nothing to `sys_ini`, nothing to `sys_config`, nothing to disk. It
+  declares no function of its own either (every rule it applies is one of the
+  shared resolvers in `lib/preview.inc.php`, so the preview cannot drift from
+  what the panel renders). It answers `application/json` with `Cache-Control:
+  no-store`, gated on `POST` (`405` otherwise) and on the same
+  `X-Requested-With: XMLHttpRequest` header the uploader's token mint uses
+  (`400` otherwise, so the caller can tell a refusal from a malformed body). A
+  CSRF token would be actively harmful here: minting one **writes** the
+  session, ISPConfig's session store does not lock, and this endpoint fires on
+  a debounce while an admin types — so minting per keystroke would manufacture
+  the race the click-time mint exists to shrink. Instead it leaves the session
+  data untouched (no mint, no `$_SESSION` assignment), which puts core's
+  handler on its unchanged-data path:
+  `interface/lib/classes/session.inc.php::write()` only stamps
+  `sys_session.last_updated` in that case — the same keep-alive every
+  authenticated request performs — rather than rewriting the row, and it is
+  the whole-row rewrite that erases a token minted concurrently. There is
+  nothing for a forged request to change, and the response is unreadable
+  cross-origin. `tests/brand/probe_preview.php` asserts all of that against
+  the file's token stream on every push: the three checks in order with
+  nothing before them, no write verb anywhere across the endpoint and the
+  model it includes, no `$_SESSION` assignment and no `csrf_token_` call, both
+  gates with their status codes, the JSON and no-store headers, and no locally
+  declared function.
 - **Demo mode** (`$conf['demo_mode']`) refuses before any write, and refuses
   *visibly* — in `onBeforeUpdate` rather than `onUpdateSave`, because the
   framework tests `errorMessage` before calling the save hook and its redirect

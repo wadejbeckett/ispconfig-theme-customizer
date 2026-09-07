@@ -102,11 +102,39 @@ if (t_ok('lib/preview.inc.php exists and is readable', $model_src !== false)) {
         $verbs, array('SELECT'));
 }
 
+/**
+ * ...and it leaves the SESSION alone, which is the write nobody sees.
+ *
+ * The write-verb scan above cannot catch this one, because the write is core's,
+ * not ours: ISPConfig's session handler (interface/lib/classes/session.inc.php,
+ * write() at line 86) rewrites the whole session row whenever the session data
+ * differs from what it read, and only touches last_updated when it does not.
+ * Minting a token or assigning into $_SESSION is therefore a whole-row REPLACE
+ * per keystroke on a debounced endpoint — the exact race the uploader's
+ * click-time mint exists to shrink. READING $_SESSION is fine and this endpoint
+ * does it (the active design), so the assertion is about assignment.
+ */
+t_ok('nothing is assigned into $_SESSION',
+    preg_match('/\$_SESSION\s*(\[[^\]]*\])+\s*=(?!=)/', $code) !== 1,
+    'an assignment makes core rewrite the session row on every keystroke');
+t_ok('no CSRF token is minted or checked',
+    stripos($code, 'csrf_token_') === false, 'minting is a session write');
+
 /* ---- the gates ----------------------------------------------------------- */
 t_ok('only POST is answered', strpos($code, "REQUEST_METHOD") !== false
     && strpos($code, "'POST'") !== false);
+t_ok('a non-POST is refused as 405, not as a 200 the caller cannot read',
+    strpos($code, 'http_response_code(405)') !== false);
 t_ok('the same-origin header gate the uploader uses is applied',
     strpos($code, 'HTTP_X_REQUESTED_WITH') !== false && strpos($code, 'XMLHttpRequest') !== false);
+//* Both refusals have to carry a status, or the page's fetch() sees a 200 whose
+//* text/html body fails JSON.parse and cannot tell a refusal from a bug.
+$hdr_gate = strpos($code, 'HTTP_X_REQUESTED_WITH');
+$bad_req  = strpos($code, 'http_response_code(400)');
+t_ok('the header gate refuses with 400', $bad_req !== false);
+t_ok('...and does so in the header gate, not before it',
+    $bad_req !== false && $hdr_gate !== false && $bad_req > $hdr_gate,
+    "400 at $bad_req, gate at $hdr_gate");
 
 /* ---- the answer ---------------------------------------------------------- */
 t_ok('the response is declared JSON', strpos($code, 'application/json') !== false);

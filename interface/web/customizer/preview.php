@@ -63,6 +63,13 @@ if($_SERVER['REQUEST_METHOD'] !== 'POST') {
     die('Bad request.');
 }
 if(!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest') {
+    //* 400, not a bare 200: the only caller is the page's own fetch(), and a
+    //* refusal that arrives as 200 with a text/html body reaches it as a
+    //* JSON.parse error rather than a refusal. The method gate above answers 405
+    //* for the same reason. The admin refusal is left as a bare die() on purpose
+    //* — byte-identical to the three sibling endpoints, so the auth line stays
+    //* one string CI can compare across all four.
+    http_response_code(400);
     die('Bad request.');
 }
 
