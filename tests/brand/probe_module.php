@@ -337,6 +337,30 @@ t_eq('a rail_hex the operator set is what the nav swatch is drawn on',
     customizer_logo_surfaces('clarity', array('rail_hex' => '#FFFFFF'))[0],
     array('surface' => 'nav', 'label' => '', 'variant' => 'on_light', 'bg' => '#FFFFFF'));
 
+//* rail_hex_light gives clarity's nav a SECOND backdrop, exactly as the login
+//* slot has always had one per colour mode — and only when the two rails
+//* actually differ, so a panel that has not set it sees no change at all.
+$cl = customizer_logo_surfaces('clarity', array('rail_hex' => '#01243D', 'rail_hex_light' => '#FFFFFF'));
+t_eq('clarity with two rails: four swatches', count($cl), 4);
+t_eq('clarity nav, dark mode', $cl[0],
+    array('surface' => 'nav', 'label' => '', 'variant' => 'on_dark', 'bg' => '#01243D'));
+t_eq('clarity nav, light mode', $cl[1],
+    array('surface' => 'nav', 'label' => '', 'variant' => 'on_light', 'bg' => '#FFFFFF'));
+
+t_eq('two identical rails are one backdrop, not two',
+    count(customizer_logo_surfaces('clarity', array('rail_hex' => '#01243D', 'rail_hex_light' => '#01243D'))), 3);
+t_eq('a light rail alone still describes both modes',
+    count(customizer_logo_surfaces('clarity', array('rail_hex_light' => '#FFFFFF'))), 4);
+t_eq('an explicit choice is obeyed on both nav backdrops',
+    customizer_logo_surfaces('clarity',
+        array('rail_hex' => '#01243D', 'rail_hex_light' => '#FFFFFF', 'logo_variant_nav' => 'on_dark'))[1]['variant'],
+    'on_dark');
+t_eq('an invalid light rail changes nothing',
+    count(customizer_logo_surfaces('clarity', array('rail_hex' => '#01243D', 'rail_hex_light' => 'nonsense'))), 3);
+t_eq('classic is untouched by the new key',
+    customizer_logo_surfaces('classic', array('rail_hex_light' => '#FFFFFF')),
+    customizer_logo_surfaces('classic', array()));
+
 t_eq('an unknown design is described as nothing rather than guessed at',
     customizer_logo_surfaces('nosuchdesign', array()), array());
 

@@ -98,6 +98,10 @@ $cases = array(
     'hide version'         => array('show_version' => '0'),
     'hide design picker'   => array('show_design_picker' => '0'),
     'no credits'           => array('show_ispconfig_credit' => '0', 'show_theme_credit' => '0'),
+    'light rail only'      => array('rail_hex_light' => '#E7EBF0'),
+    'both rails'           => array('rail_hex' => '#01243D', 'rail_hex_light' => '#E7EBF0'),
+    'both rails, same'     => array('rail_hex' => '#01243D', 'rail_hex_light' => '#01243D'),
+    'light rail + accent'  => array('rail_hex_light' => '#FFFFFF', 'accent_hex' => '#0065AB'),
 );
 
 $png  = 'data:image/png;base64,iVBORw0KGgo=';
@@ -157,6 +161,42 @@ if (function_exists('brand_rail_vars')) {
     } else {
         t_ok('clarity: a white rail emits --nz-rail-text', false);
     }
+
+    //* rail_hex_light is clarity's light-mode rail. Unset, the light scope
+    //* inherits whatever :root said, which is the documented fallback and is why
+    //* nothing is emitted for it.
+    $none = render($path, array('rail_hex' => '#01243D'));
+    t_ok('clarity: an unset light rail emits no light-scope rail block',
+        strpos($none, "[data-nz-theme='light'] {\n  --nz-rail:") === false, $none);
+
+    $both = render($path, array('rail_hex' => '#01243D', 'rail_hex_light' => '#E7EBF0'));
+    t_ok('clarity: a light rail is emitted into the light scope',
+        strpos($both, "[data-nz-theme='light'] {\n  --nz-rail: #E7EBF0;") !== false, $both);
+    t_ok('clarity: the dark scope keeps the dark rail',
+        strpos($both, "  --nz-rail: #01243D;\n") !== false, $both);
+    if (preg_match_all('/--nz-rail-text:\s*([^;]+);/', $both, $m)) {
+        //* Two rails of opposite brightness must produce two DIFFERENT inks, or
+        //* the light scope is repainting the background and leaving the text
+        //* behind — the exact bug the rail ink family exists to fix.
+        t_ok('clarity: the two rails get different inks', count(array_unique($m[1])) === 2,
+            implode(' | ', $m[1]));
+        //* And the light one must read on the light rail.
+        $light_ink = h_flatten(trim($m[1][count($m[1]) - 1]), '#E7EBF0');
+        $c = h_contrast($light_ink, '#E7EBF0');
+        t_ok(sprintf('clarity: the light-mode rail ink reads at %.2f:1', $c), $c >= 4.5, $light_ink);
+    }
+
+    //* The nav MARK follows, or the operator gets the white wordmark on the
+    //* light rail in light mode — a logo that disappears in one colour mode
+    //* with nothing on the page to explain it.
+    $marks = render($path, array('rail_hex' => '#01243D', 'rail_hex_light' => '#FFFFFF',
+        'logo_on_dark' => $png2), $png);
+    t_ok('clarity: opposite rails give the nav mark a light-mode rule',
+        strpos($marks, "[data-nz-theme='light'] #logo img") !== false, $marks);
+    $same = render($path, array('rail_hex' => '#01243D', 'rail_hex_light' => '#0B1B2A',
+        'logo_on_dark' => $png2), $png);
+    t_ok('clarity: two dark rails need no light-mode mark rule',
+        strpos($same, "[data-nz-theme='light'] #logo img") === false, $same);
 
     //* The shipped navy still emits exactly the tokens.css values.
     $navy = render($path, array('rail_hex' => '#01243D'));

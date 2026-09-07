@@ -691,8 +691,14 @@ function customizer_preview_payload($stored_branding, $custom_logo, $posted, $de
  *
  *   clarity nav    --nz-rail, declared once at tokens.css:88 as --nz-blue-1100
  *                  (#01243D, tokens.css:47) and NOT redeclared in the light-mode
- *                  block at tokens.css:215+ — the rail is navy in both colour
- *                  modes, which is why this surface never needs a mode split.
+ *                  block at tokens.css:215+ — the shipped rail is navy in both
+ *                  colour modes — and, since rail_hex_light exists, redeclared
+ *                  in the light scope by brand.php whenever the operator sets
+ *                  that key. So this surface has ONE backdrop until the two
+ *                  rails differ and TWO after, which is why it carries
+ *                  'bg_key_light' rather than the static 'modes' map the login
+ *                  slot uses: the login slot's two backdrops are the DESIGN's
+ *                  own colours, and the nav slot's are the OPERATOR's.
  *   clarity login  body.nz-login is var(--nz-page) (login.css:35), and --nz-page
  *                  IS mode-dependent: --nz-ink-1100 #17252B dark (tokens.css:61,
  *                  :80) against #F1F6F8 light (tokens.css:219). With login_bg
@@ -714,7 +720,9 @@ function customizer_logo_surfaces($design, $branding, $labels = array()) {
 
     //* 'bg_key' is the [branding] colour that repaints this slot's backdrop, or
     //* '' when no operator-settable colour reaches it — the parameter argument
-    //* in customizer_logo_variant_for_surface() spelled as data. 'modes' is the
+    //* in customizer_logo_variant_for_surface() spelled as data. 'bg_key_light'
+    //* is the same thing for LIGHT colour mode, or '' where the operator has no
+    //* per-mode say over this slot's backdrop. 'modes' is the
     //* variant => colour pair for a slot whose backdrop follows the viewer's
     //* own light/dark mode, and is empty for every slot that has one backdrop.
     //*
@@ -726,13 +734,17 @@ function customizer_logo_surfaces($design, $branding, $labels = array()) {
     //* like the authoritative default a third design would copy.
     $chrome = array(
         'clarity' => array(
-            'nav'   => array('default' => 'on_dark', 'bg_key' => 'rail_hex', 'bg' => '#01243D', 'modes' => array()),
+            'nav'   => array('default' => 'on_dark', 'bg_key' => 'rail_hex', 'bg' => '#01243D',
+                             'bg_key_light' => 'rail_hex_light', 'modes' => array()),
             'login' => array('default' => '', 'bg_key' => 'login_bg', 'bg' => '',
+                             'bg_key_light' => '',
                              'modes'   => array('on_dark' => '#17252B', 'on_light' => '#F1F6F8')),
         ),
         'classic' => array(
-            'nav'   => array('default' => 'on_light', 'bg_key' => '', 'bg' => '#F2F5F7', 'modes' => array()),
-            'login' => array('default' => 'on_light', 'bg_key' => '', 'bg' => '#EEF0F2', 'modes' => array()),
+            'nav'   => array('default' => 'on_light', 'bg_key' => '', 'bg' => '#F2F5F7',
+                             'bg_key_light' => '', 'modes' => array()),
+            'login' => array('default' => 'on_light', 'bg_key' => '', 'bg' => '#EEF0F2',
+                             'bg_key_light' => '', 'modes' => array()),
         ),
     );
 
@@ -746,6 +758,34 @@ function customizer_logo_surfaces($design, $branding, $labels = array()) {
         if($spec['bg_key'] !== '' && isset($branding[$spec['bg_key']]) && is_string($branding[$spec['bg_key']])
             && preg_match('/^#[0-9A-Fa-f]{6}$/D', $branding[$spec['bg_key']]) === 1) {
             $bg_hex = $branding[$spec['bg_key']];
+        }
+
+        //* A slot whose backdrop the operator can set PER COLOUR MODE. It is
+        //* resolved like the base one and only produces a second entry when it
+        //* is set AND differs — an operator who has not touched it, or who set
+        //* the same colour twice, sees exactly what they saw before.
+        $bg_light = '';
+        if($spec['bg_key_light'] !== '' && isset($branding[$spec['bg_key_light']])
+            && is_string($branding[$spec['bg_key_light']])
+            && preg_match('/^#[0-9A-Fa-f]{6}$/D', $branding[$spec['bg_key_light']]) === 1) {
+            $bg_light = $branding[$spec['bg_key_light']];
+        }
+        //* With no base colour set the design's own is what light mode differs
+        //* FROM, so the comparison is against the swatch that will be drawn.
+        $bg_base = ($bg_hex !== '') ? $bg_hex : $spec['bg'];
+        if($bg_light !== '' && strcasecmp($bg_light, $bg_base) !== 0) {
+            //* Key ORDER matters and must match every other entry this function
+            //* emits: probe_module compares whole entries with ===, which in PHP
+            //* is order-sensitive for arrays.
+            $out[] = array('surface' => $surface, 'label' => $label,
+                           'variant' => customizer_logo_variant_for_surface(
+                               customizer_logo_variant_stored($surface, $branding), $bg_base, $spec['default']),
+                           'bg' => $bg_base);
+            $out[] = array('surface' => $surface, 'label' => $label,
+                           'variant' => customizer_logo_variant_for_surface(
+                               customizer_logo_variant_stored($surface, $branding), $bg_light, $spec['default']),
+                           'bg' => $bg_light);
+            continue;
         }
 
         //* Called with an EMPTY design default so the fall-through is visible:
