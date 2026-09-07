@@ -414,10 +414,13 @@ no-op where you do not. CI's **Brand-token contract parity** step walks every
 Branding page's wordbook; the page now groups its fields under five new legend
 headings instead (`identity_head_txt`, `placement_head_txt`, `colour_head_txt`,
 `preview_head_txt` and `visibility_head_txt` — `favicon_head_txt` and
-`login_head_txt` already existed and are unchanged). A third-party translation,
-or a design or script that read those three retired keys, will find them absent
-after this upgrade — there is no compatibility shim, because a wordbook key with
-nothing left to label has nothing to fall back to.
+`login_head_txt` already existed and are unchanged). `used_logo_txt`,
+`used_logo_on_dark_txt` and `used_favicon_txt` are gone too — they labelled the
+"Current logo" and "Current favicon" rows that the inline upload/preview blocks
+replaced, so the labels have nothing left to sit next to. A third-party
+translation, or a design or script that read those six retired keys, will find
+them absent after this upgrade — there is no compatibility shim, because a
+wordbook key with nothing left to label has nothing to fall back to.
 
 The full usage line:
 

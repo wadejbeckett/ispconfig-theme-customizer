@@ -109,4 +109,13 @@ header('Cache-Control: no-store');
 //* The four HEX flags for the same reason themes/*/title.php uses them: the
 //* result is handed to a page, and a value that cannot carry <, &, ' or " cannot
 //* change the meaning of whatever it lands in.
-echo json_encode($payload, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+$json = json_encode($payload, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+if ($json === false) {
+    //* A payload that cannot be encoded (e.g. malformed UTF-8 from an upstream
+    //* value) must not fall through to echoing `false`, which prints nothing and
+    //* still answers 200 — the caller's JSON.parse() would then fail on an empty
+    //* body with no indication anything went wrong server-side.
+    http_response_code(500);
+    die('{}');
+}
+echo $json;

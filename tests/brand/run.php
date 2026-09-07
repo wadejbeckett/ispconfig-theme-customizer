@@ -57,11 +57,13 @@ foreach ($probes as $name => $path) {
     exec(escapeshellarg($php) . ' ' . escapeshellarg($path) . ' 2>&1', $out, $rc);
     foreach ($out as $line) {
         if (strpos($line, 'INKMATRIX ') === 0) {
-            $inkmatrix[$name] = json_decode(substr($line, 10), true);
+            $rows = json_decode(substr($line, 10), true);
+            if (is_array($rows) && $rows) { $inkmatrix[$name] = $rows; }
             continue;
         }
         if (strpos($line, 'MATRIX ') === 0) {
-            $matrix[$name] = json_decode(substr($line, 7), true);
+            $rows = json_decode(substr($line, 7), true);
+            if (is_array($rows) && $rows) { $matrix[$name] = $rows; }
             continue;
         }
         echo "$line\n";

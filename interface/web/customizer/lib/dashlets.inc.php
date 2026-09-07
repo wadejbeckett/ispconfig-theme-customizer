@@ -1,7 +1,7 @@
 <?php
 /**
  * ispconfig-customizer — dashboard dashlets the operator can switch off.
- * Copyright (c) 2026 Wade Beckett. GPLv3 — see ../../LICENSE.
+ * Copyright (c) 2026 Wade Beckett. MIT License — see ../../LICENSE.
  *
  * Required by customizer_edit.php.
  *

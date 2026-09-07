@@ -112,4 +112,14 @@ foreach (array('logo_url', 'logo_url_on_dark', 'favicon_url') as $name) {
     t_ok("$name keeps /D", strpos(regex_of($fields[$name]), 'D') !== false);
 }
 
+//* custom_login_link is the eighth field brand.php's docblock claims carries
+//* /D — it has no TRIM filter (STRIPTAGS + STRIPNL instead), so it is asserted
+//* on its own rather than folded into the TRIM-based loops above.
+if (t_ok('custom_login_link is declared', isset($fields['custom_login_link']))) {
+    $f = $fields['custom_login_link'];
+    t_ok('custom_login_link keeps its SAVE-time STRIPTAGS filter', has_filter($f, 'STRIPTAGS'));
+    t_ok('custom_login_link keeps its SAVE-time STRIPNL filter', has_filter($f, 'STRIPNL'));
+    t_ok("custom_login_link keeps /D", strpos(regex_of($f), 'D') !== false, regex_of($f));
+}
+
 t_done();

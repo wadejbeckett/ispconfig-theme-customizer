@@ -354,7 +354,7 @@ $form["tabs"]['branding'] = array(
             //* value must not contain a quote/space/angle-bracket that could break out of
             //* the attribute. Anchored, and no attribute-breaking chars allowed.
             'validators' => array(
-                0 => array('type' => 'REGEX', 'regex' => '/^(https?:\/\/[^\s"\'<>]+)?$/', 'errmsg' => 'login_link_error_regex'),
+                0 => array('type' => 'REGEX', 'regex' => '/^(https?:\/\/[^\s"\'<>]+)?$/D', 'errmsg' => 'login_link_error_regex'),
             ),
             'default' => '',
             'value'   => ''

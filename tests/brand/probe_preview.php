@@ -144,6 +144,11 @@ t_ok('the payload is built by the shared function, not here',
 t_ok('json_encode escapes for an HTML-hostile reader',
     strpos($code, 'JSON_HEX_TAG') !== false && strpos($code, 'JSON_HEX_AMP') !== false
     && strpos($code, 'JSON_HEX_APOS') !== false && strpos($code, 'JSON_HEX_QUOT') !== false);
+//* json_encode() returns false on a payload it cannot encode (e.g. malformed
+//* UTF-8) — falling through would echo the string "" (nothing) with a 200,
+//* which the caller's JSON.parse() cannot distinguish from a server bug.
+t_ok('a json_encode failure is checked and answers 500',
+    strpos($code, '=== false') !== false && strpos($code, 'http_response_code(500)') !== false);
 
 /* ---- no decision of its own ---------------------------------------------
  * Every rule this endpoint applies has to be one of the shared resolvers, or

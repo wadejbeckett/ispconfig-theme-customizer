@@ -402,7 +402,11 @@ function customizer_logo_variant_stored($surface, $branding) {
  * value — the validator then passed, the save succeeded, and the page said
  * "saved" having quietly reset the operator's choice. 'invalid' matches none of
  * this form's three patterns (the hex, the reference and the variant one), so a
- * malformed POST is reported like any other bad value.
+ * malformed POST is reported like any other bad value. The one exception is
+ * company_name and custom_login_text: neither declares a validator at all, so
+ * an array POST to either is simply STORED as the literal string "invalid" —
+ * harmless here specifically because writing it requires the admin's own CSRF
+ * pair, i.e. it is self-inflicted, not something another party can trigger.
  *
  * A genuinely ABSENT field still becomes '': there is nothing to report in that
  * case, and the framework already treats a missing VARCHAR as '' one layer down
@@ -417,27 +421,28 @@ function customizer_posted_string($raw) {
 }
 
 /**
- * Normalise a POSTED logo-variant value so the VALIDATOR decides its fate.
+ * Normalise a POSTED logo-variant value so the VALIDATOR decides its fate —
+ * exactly customizer_posted_string(), kept under a name of its own because
+ * the two logo-variant SELECTs' contract is documented here and probe_module
+ * tests it by this name specifically. One line, so the two functions can
+ * never disagree about the token.
  *
- * onBeforeUpdate has to guarantee a string reaches the framework: tform's
- * _encode converts arrays to strings for RADIO and CHECKBOX only, so an array
- * posted into one of these SELECTs reaches validateField and makes preg_match()
- * a TypeError — a fatal on an admin page rather than a validation error.
+ * The guard exists because onBeforeUpdate() has to guarantee a string reaches
+ * the framework for every field: tform's _encode converts arrays to strings
+ * for RADIO and CHECKBOX only, so an array posted into one of these SELECTs
+ * would otherwise reach validateField() and make preg_match() a TypeError —
+ * a fatal on an admin page rather than a validation error.
  *
- * It used to guarantee that by rewriting the array to '', and '' is the VALID
- * value meaning "Automatic". So the REGEX validator passed, the save went
- * through, the page redirected to "Settings saved." and the operator's stored
- * choice had been silently reset to automatic — a bad POST healed into a
- * successful write of the wrong thing, which is the exact failure the comment
- * beside that loop said must not happen. Returning a token the validator
- * REJECTS puts the decision back where the rest of the form keeps it.
+ * An earlier version guaranteed that by rewriting the array to '', and '' is
+ * the VALID value meaning "Automatic". So the REGEX validator passed, the
+ * save went through, the page redirected to "Settings saved." and the
+ * operator's stored choice had been silently reset to automatic — a bad POST
+ * healed into a successful write of the wrong thing. Returning a token the
+ * validator REJECTS instead puts the decision back where the rest of the form
+ * keeps it.
  *
  * A missing field still becomes '': there is no value to report in that case,
  * and the framework already treats a missing VARCHAR as '' one layer down.
- *
- * The logo-variant flavour of the above, kept as its own name because the two
- * SELECTs' contract is documented under it and probe_module tests it by name.
- * One line, so the two can never disagree about the token.
  */
 function customizer_logo_variant_posted($raw) {
     return customizer_posted_string($raw);
@@ -773,6 +778,12 @@ function customizer_logo_surfaces($design, $branding, $labels = array()) {
         //* With no base colour set the design's own is what light mode differs
         //* FROM, so the comparison is against the swatch that will be drawn.
         $bg_base = ($bg_hex !== '') ? $bg_hex : $spec['bg'];
+        //* 'bg_key_light' and 'modes' are mutually exclusive on a chrome-table
+        //* slot: every $chrome[$design] entry above sets at most one of them.
+        //* This branch's `continue` returns before the 'modes' handling further
+        //* down ever runs, so if a slot ever declared BOTH, a non-empty 'modes'
+        //* map would be silently dropped whenever bg_key_light also resolved to
+        //* a colour different from the base — nothing here would notice.
         if($bg_light !== '' && strcasecmp($bg_light, $bg_base) !== 0) {
             //* Key ORDER matters and must match every other entry this function
             //* emits: probe_module compares whole entries with ===, which in PHP
