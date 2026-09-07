@@ -774,4 +774,52 @@ if ($purge_src !== false) {
         strpos($purge_src, 'customizer_news_feed_keys()') !== false);
 }
 
+/* ---- the fifteen hint-label keys live in one place -------------------------
+ * customizer_hint_label_keys() (lib/preview.inc.php) is the single list Task 3's
+ * publish_hint_labels() iterates and Task 7's lang_check.php cross-references.
+ * Pure and stateless, so it is called directly rather than sourced.
+ */
+if (function_exists('customizer_hint_label_keys')) {
+    $hint_keys = customizer_hint_label_keys();
+    t_ok('customizer_hint_label_keys() returns exactly the fifteen expected keys',
+        $hint_keys === array(
+            'identity_head_txt', 'logo_on_light_head_txt', 'logo_url_txt',
+            'logo_on_dark_head_txt', 'logo_url_on_dark_txt', 'placement_head_txt',
+            'favicon_head_txt', 'favicon_url_txt', 'accent_hex_txt',
+            'rail_hex_light_txt', 'show_design_picker_txt', 'show_version_txt',
+            'show_news_feed_txt', 'show_donation_dashlet_txt', 'show_theme_credit_txt',
+        ),
+        $hint_keys);
+} else {
+    t_ok('customizer_hint_label_keys() exists', false);
+}
+
+/* ---- the page publishes what its template asks for -----------------------
+ * customizer_edit.php cannot be executed without a database, so it is asserted
+ * the way `probe_module.php` already asserts `onBeforeUpdate`'s guard: against
+ * the source. What is checked is that the page hands the template every name
+ * the template interpolates — a missing one renders as an empty attribute with
+ * nothing anywhere to say why.
+ */
+if ($edit_src !== false) {
+    t_ok('the page publishes the three status facts',
+        strpos($edit_src, "setVar('summary_fact_design'") !== false
+        && strpos($edit_src, "setVar('summary_fact_marks'") !== false
+        && strpos($edit_src, "setVar('summary_fact_favicon'") !== false);
+    t_ok('...through the shared builder, not a second copy of the wording',
+        strpos($edit_src, 'customizer_brand_summary(') !== false);
+    t_ok('the disclosure names are built from hint_more_txt',
+        strpos($edit_src, "lng('hint_more_txt')") !== false);
+    t_ok('...with str_replace, because sprintf on a translated string can fatal',
+        strpos($edit_src, "str_replace('%s'") !== false
+        && strpos($edit_src, 'sprintf(') === false);
+    //* Controller ruling S7: the fifteen keys are NOT a second literal in this
+    //* file — publish_hint_labels() iterates customizer_hint_label_keys()
+    //* (lib/preview.inc.php), which is checked for its own exact fifteen-key
+    //* shape above. What is checked here is only that this page reaches that
+    //* shared list rather than reintroducing its own copy of it.
+    t_ok('...iterating customizer_hint_label_keys(), not a second copy of the list',
+        strpos($edit_src, 'customizer_hint_label_keys()') !== false);
+}
+
 t_done();

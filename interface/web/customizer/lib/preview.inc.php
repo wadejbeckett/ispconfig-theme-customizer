@@ -628,6 +628,26 @@ function customizer_brand_summary($design, $resolved, $favicon, $texts) {
 }
 
 /**
+ * The label-wordbook key of every "?" disclosure on the Branding page, in the
+ * order they appear.
+ *
+ * One list, in one place: customizer_edit.php's publish_hint_labels() builds
+ * the fifteen hint_<key> template vars from it, and lang_check.php's
+ * $HTML_ATTR_WB_KEYS docblock cross-references it so the two cannot drift
+ * apart. Pure and stateless — no $app, no I/O — so it can be asserted against
+ * directly instead of through customizer_edit.php's source text.
+ */
+function customizer_hint_label_keys() {
+    return array(
+        'identity_head_txt', 'logo_on_light_head_txt', 'logo_url_txt',
+        'logo_on_dark_head_txt', 'logo_url_on_dark_txt', 'placement_head_txt',
+        'favicon_head_txt', 'favicon_url_txt', 'accent_hex_txt',
+        'rail_hex_light_txt', 'show_design_picker_txt', 'show_version_txt',
+        'show_news_feed_txt', 'show_donation_dashlet_txt', 'show_theme_credit_txt',
+    );
+}
+
+/**
  * Everything preview.php answers with, built without touching a database, an
  * HTTP request or a session — so it can be tested, and so the endpoint itself
  * holds no decision of its own.
