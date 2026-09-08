@@ -4,7 +4,7 @@ Mockup of the redesigned `interface/web/customizer/templates/customizer_edit.htm
 
 Files: `branding.html` (the fragment), `branding.css` (the module CSS as it would ship, inline-able verbatim into the template's `<style>` block), `sidenav-tools.html` (the Tools sidebar so the page renders in its real place), `shots/`.
 
-Build: `cd mockup && python3 build.py --shoot --only=branding`.
+Build: `cd mockup && python3 build.py --shoot --only=branding` — the approved mockup, `dark-branding` and `light-branding`. The shipped page is a separate target, `--only=branding-shipped`; `--only` matches a whole page name (with or without its `dark-`/`light-` prefix) and never a fragment of one, so neither run overwrites the other's shots even though both land in `shots/`.
 
 ## The verdict being answered
 

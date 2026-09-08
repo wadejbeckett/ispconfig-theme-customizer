@@ -399,6 +399,32 @@ SHOT_DIRS = {"dark-branding": HERE / "branding/shots",
              "light-branding-shipped": HERE / "branding/shots"}
 
 
+# --only takes whole page names, matched EXACTLY, comma-separated. A page also
+# answers to its name without the design prefix, so --only=branding is
+# dark-branding + light-branding and NOTHING else. A substring match was the
+# hazard this replaces: --only=branding also matched dark-branding-shipped and
+# light-branding-shipped, which share a destination directory with the approved
+# design record, so the documented build command re-rendered and overwrote the
+# artefacts a human had signed off.
+def shot_targets(only: str):
+    if not only:
+        return [name for name, _ in SHOT_MATRIX]
+    wanted = [w.strip() for w in only.split(",") if w.strip()]
+    picked, unknown = [], []
+    for w in wanted:
+        hits = [name for name, _ in SHOT_MATRIX
+                if name == w or name.split("-", 1)[-1] == w]
+        if not hits:
+            unknown.append(w)
+        picked += hits
+    if unknown:
+        known = sorted({name for name, _ in SHOT_MATRIX}
+                       | {name.split("-", 1)[-1] for name, _ in SHOT_MATRIX})
+        raise SystemExit("--only: no page named " + ", ".join(unknown)
+                         + "\n  known: " + ", ".join(known))
+    return picked
+
+
 def shoot(only: str = "", dest_root: Path = None) -> None:
     from playwright.sync_api import sync_playwright
 
@@ -408,8 +434,9 @@ def shoot(only: str = "", dest_root: Path = None) -> None:
     try:
         with sync_playwright() as p:
             b = p.chromium.launch()
+            targets = shot_targets(only)
             for name, labels in SHOT_MATRIX:
-                if only and only not in name:
+                if name not in targets:
                     continue
                 for label in labels:
                     w, h = VIEWPORTS[label]
