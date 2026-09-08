@@ -43,7 +43,7 @@ Four materials, so the page does not read as one card kit repeated five times: t
 
 ## What each hint became
 
-Every paragraph of inline help is now either a single muted line in the flow or a native `<details>` "?" next to the thing it explains. No `<p class="help-block">` paragraph survives in the reading flow.
+Every paragraph of inline help is now either a single muted line in the flow or a native `<details>` "?" next to the thing it explains. Four one-line leads keep Bootstrap’s `help-block` class, because that is what a muted line under a field is called here; no multi-line wall of help text survives in the reading flow.
 
 | Wordbook key | Was | Now |
 |---|---|---|
@@ -57,7 +57,7 @@ Every paragraph of inline help is now either a single muted line in the flow or 
 | `favicon_intro_txt` | paragraph | one-line summary in the flow |
 | `favicon_hint_txt` | 5-line paragraph | "?" on the Favicon card; size/format stays as the drop-zone note |
 | `favicon_url_hint_txt` | 4-line paragraph | "?" on "Path or URL instead" |
-| `colour_hint_txt` | help-block under login_bg | muted line, trimmed to "Leave any of these blank to keep the design's own colour." |
+| `colour_hint_txt` | help-block under login_bg | unchanged — it already was one muted line, so it ships verbatim as the `help-block` under `login_bg` |
 | `rail_contrast_txt` + ratio | help-block under the field | the measurement on the colour's own line: `12.50:1 text contrast` |
 | `rail_hex_light_hint_txt` | help-block | "?" on "Sidebar, light mode" |
 | `show_*_hint_txt` (4) | help-block per row | "?" beside each switch label |
