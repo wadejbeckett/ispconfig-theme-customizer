@@ -297,7 +297,7 @@ deploy() {
 # Generate classic's two shell templates from the TARGET PANEL's stock ones.
 # $1 = directory to write them into (a scratch dir; the caller places them).
 #
-# The whole transform is three mechanical changes, and nothing else may differ:
+# The whole transform is four mechanical changes, and nothing else may differ:
 #
 #   1. themes/<tmpl_var name='current_theme'>/assets/  ->  themes/default/assets/
 #      Template fallback does NOT extend to assets. Under classic the stock

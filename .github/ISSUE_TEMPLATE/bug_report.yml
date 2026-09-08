@@ -5,9 +5,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for the report! One quick check first: switch back to the stock `default`
-        theme and try again. If the problem is still there, it's an ISPConfig panel issue —
-        please take it to the [ISPConfig bugtracker](https://git.ispconfig.org/ispconfig/ispconfig3/-/issues)
+        One check before you file: switch back to the stock `default` theme and try again.
+        If the problem is still there, it is an ISPConfig panel issue — please take it to the
+        [ISPConfig bugtracker](https://git.ispconfig.org/ispconfig/ispconfig3/-/issues)
         or the [HowtoForge forum](https://forum.howtoforge.com/) instead.
   - type: input
     id: ispconfig-version
@@ -19,14 +19,24 @@ body:
   - type: input
     id: theme-version
     attributes:
-      label: Theme version or commit
-      placeholder: "v1.0.0"
+      label: Extension version or commit
+      placeholder: "v3.5.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: design
+    attributes:
+      label: Design
+      options:
+        - clarity
+        - classic
+        - Neither (module only, stock default theme)
     validations:
       required: true
   - type: dropdown
     id: mode
     attributes:
-      label: Theme mode
+      label: Colour mode
       options:
         - Dark
         - Light
@@ -42,7 +52,7 @@ body:
     id: what-happened
     attributes:
       label: What happened, and what did you expect?
-      description: A screenshot is worth a thousand words — drag one in.
+      description: Drag in a screenshot if the problem is visual.
     validations:
       required: true
   - type: textarea

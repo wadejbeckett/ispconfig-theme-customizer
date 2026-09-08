@@ -1,6 +1,6 @@
 <?php
 /**
- * ispconfig-customizer — assign the 'customizer' module to admin users.
+ * ispconfig-theme-customizer — assign the 'customizer' module to admin users.
  * Copyright (c) 2026 Wade Beckett. MIT License — see ../LICENSE.
  *
  * The module only appears in the top navigation for users whose sys_user.modules
