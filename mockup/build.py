@@ -13,6 +13,7 @@ the live panel would serve.
     python3 build.py            # build webroot/
     python3 build.py --shoot    # build + screenshot (needs playwright)
 """
+import importlib.util
 import re
 import shutil
 import subprocess
@@ -197,188 +198,50 @@ function createChart(chartname, label, labels, data) {
 #
 # interface/web/customizer/templates/customizer_edit.htm rendered here rather
 # than the hand-written branding/branding.html, so what is reviewed is the file
-# that ships. Its tmpl_vars come from the English wordbooks — the same strings
-# tform resolves — plus the mockup's invented brand (Karoo Hosting) for the
-# stored values, so the two pages can be compared shot for shot.
+# that ships. Everything it needs — the tmpl_vars, the five server-rendered
+# preview slots, the three status facts and the canned preview response the
+# page's own script runs against — comes from branding/render_shipped.py, which
+# gets the markup out of the module's real renderers in lib/preview.inc.php.
 #
-# The server-rendered slots (the marks, the "also used on" strips, the favicon
-# row) are lifted out of branding.html: lib/preview.inc.php builds that markup
-# on a live panel and there is no PHP here to run it.
+# Loaded by path rather than imported: mockup/branding is a plain directory of
+# design material, not a package, and making it one would put an __init__.py
+# beside the approved design record for no other reason.
 # ---------------------------------------------------------------------------
 
 BRANDING_TPL = REPO / "interface/web/customizer/templates/customizer_edit.htm"
-BRANDING_WB = [REPO / "interface/web/customizer/lib/lang/en_customizer.lng",
-               REPO / "interface/web/customizer/lib/lang/en.lng"]
-BRANDING_MOCKUP = HERE / "branding/branding.html"
+# The rendered fragment, written on every build for the checks that read the
+# page as text. Generated, never edited; .gitignore carries it.
+BRANDING_SHIPPED_HTML = HERE / "branding/shipped.html"
 
-# The .lng files are PHP, and are parsed as TEXT here for the same reason
-# .github/scripts/lang_check.php does it: nothing in this harness may execute a
-# translation file.
-_WB_RE = re.compile(r"\$wb\['([^']+)'\]\s*=\s*'((?:[^'\\]|\\.)*)'\s*;")
+_SHIPPED = None
 
 
-def wordbook() -> dict:
-    out = {}
-    for f in BRANDING_WB:
-        for m in _WB_RE.finditer(f.read_text(encoding="utf-8")):
-            out[m.group(1)] = m.group(2).replace("\\'", "'").replace("\\\\", "\\")
-    return out
-
-
-def mockup_slot(slot_id: str) -> str:
-    """The server-rendered contents of one preview slot, out of the mockup."""
-    html = BRANDING_MOCKUP.read_text(encoding="utf-8")
-    m = re.search(r'id="%s">(.*?)</div>' % re.escape(slot_id), html, re.S)
-    if m is None:
-        raise SystemExit(f"no #{slot_id} slot in branding.html")
-    # The "Also used on" label lives OUTSIDE the slot on the shipped page — the
-    # preview endpoint replaces the slot's innerHTML wholesale — so the mockup's
-    # copy of it inside the slot is dropped here rather than shown twice.
-    return re.sub(r'<span class="nz-surfacelabel">.*?</span>', "", m.group(1), flags=re.S)
-
-
-def mockup_navmark(cls: str) -> str:
-    html = BRANDING_MOCKUP.read_text(encoding="utf-8")
-    m = re.search(r'class="[^"]*%s"[^>]*>\s*<img class="nz-prev-navmark" src="([^"]+)"' % re.escape(cls),
-                  html, re.S)
-    if m is None:
-        raise SystemExit(f"no .{cls} nav mark in branding.html")
-    return m.group(1)
-
-
-# The stored values. Deliberately not clarity's own palette: a preview painted
-# in the active design's colours proves nothing.
-SAMPLE = {
-    "company_name": "Karoo Hosting",
-    "accent_hex": "#2E7D6B", "rail_hex": "#123A34",
-    "rail_hex_light": "#E6EEEC", "login_bg": "#0E2723",
-    "logo_url": "", "logo_url_on_dark": "/themes/custom/karoo-on-dark.svg",
-    "favicon_url": "",
-    "custom_login_text": "Support: help@karoo.example",
-    "custom_login_link": "https://karoo.example/support",
-    "id": "1", "field_errors_json": "{}",
-}
-SAMPLE_RATIOS = {"nz-accent-ratio": "4.93:1", "nz-rail-ratio": "12.50:1",
-                 "nz-rail-light-ratio": "17.79:1", "nz-login-ratio": "15.75:1"}
-
-# What tform emits for a select and a checkbox — only the <option> tags and the
-# bare <input> come from it; the shells are in the template.
-_OPTIONS = ("<option value='auto' selected='selected'>Automatic — match the background</option>"
-            "<option value='on_light'>Always the mark for light backgrounds</option>"
-            "<option value='on_dark'>Always the mark for dark backgrounds</option>")
-
-
-def _switch(name: str, on: bool) -> str:
-    return ("<input name=\"%s\" id=\"%s\" value=\"y\" type=\"checkbox\"%s />"
-            % (name, name, " CHECKED" if on else ""))
+def render_shipped():
+    """branding/render_shipped.py, loaded once."""
+    global _SHIPPED
+    if _SHIPPED is None:
+        spec = importlib.util.spec_from_file_location(
+            "render_shipped", HERE / "branding/render_shipped.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        _SHIPPED = mod
+    return _SHIPPED
 
 
 def shipped_branding() -> str:
-    wb = wordbook()
-    v = dict(wb)
-    # publish_hint_labels() in customizer_edit.php, in one line: every "?" gets
-    # hint_more_txt with the label of the thing it explains substituted in.
-    for key, val in list(wb.items()):
-        if key.endswith("_txt"):
-            v["hint_" + key] = wb["hint_more_txt"].replace("%s", val)
-    # publish_brand_summary() — customizer_brand_summary()'s three facts for
-    # this sample: one design installed, two marks supplied, a favicon set.
-    v["summary_fact_design"] = wb["summary_design_txt"].replace("%s", "Clarity")
-    v["summary_fact_marks"] = wb["summary_marks_txt"].replace("%d", "2")
-    v["summary_fact_favicon"] = wb["summary_favicon_txt"]
-    v.update(SAMPLE)
-    for slot in ("used_logo", "used_logo_on_dark", "used_logo_more",
-                 "used_logo_on_dark_more", "used_favicon"):
-        v[slot] = mockup_slot(slot)
-    v["logo_variant_nav"] = _OPTIONS
-    v["logo_variant_login"] = _OPTIONS
-    for name, on in (("show_design_picker", True), ("show_version", False),
-                     ("show_news_feed", True), ("show_donation_dashlet", False),
-                     ("show_ispconfig_credit", True), ("show_theme_credit", True)):
-        v[name] = _switch(name, on)
-    return render_tpl(BRANDING_TPL.read_text(encoding="utf-8"), v)
+    """The shipped template with customizer_edit.php's variables filled in."""
+    return render_tpl(BRANDING_TPL.read_text(encoding="utf-8"),
+                      render_shipped().variables())
 
 
 CONTENT_BUILDERS = {"dark-branding-shipped": shipped_branding}
 
-# The page's own <script> is stripped with every other script in this harness,
-# and there is no PHP endpoint behind it either, so this stands in for both:
-# it writes exactly what the mockup wrote as inline style attributes, and
-# nothing more. It is NOT a second implementation of the page's JS — no
-# listeners, no fetch — it only puts the sample brand on screen so the built
-# page and branding/shots/ can be compared.
-BRANDING_SHIPPED_BOOTSTRAP = """
-<script>
-(function () {
-  var NAV_MARK = '%(navmark)s';
-  var NAV_MARK_LIGHT = '%(navmark_light)s';
-  var NAME = '%(name)s';
-  function paint(sel, bg, ink) {
-    var els = document.querySelectorAll(sel), i;
-    for (i = 0; i < els.length; i++) {
-      if (bg) els[i].style.background = bg;
-      if (ink) els[i].style.color = ink;
-    }
-  }
-  paint('.nz-prev-rail', '%(rail)s', '#FFFFFF');
-  paint('.nz-prev-rail-light', '%(rail_light)s', '%(rail)s');
-  paint('.nz-prev-login', '%(login)s', '#FFFFFF');
-  paint('.nz-prev-accent', '%(accent)s', '#FFFFFF');
-  var rules = document.querySelectorAll('.nz-prev-accent-rule'), i;
-  for (i = 0; i < rules.length; i++) rules[i].style.color = '%(accent)s';
-  var names = document.querySelectorAll('.nz-prev-name');
-  for (i = 0; i < names.length; i++) names[i].textContent = NAME;
-  // paintNavBrand(): the resolved mark replaces the name in a brand slot.
-  function mark(sel, src) {
-    var slot = document.querySelector(sel);
-    if (!slot) return;
-    var img = document.createElement('img');
-    img.className = 'nz-prev-navmark';
-    img.setAttribute('alt', '');
-    img.setAttribute('src', src);
-    slot.insertBefore(img, slot.firstChild);
-    var n = slot.querySelector('.nz-prev-name');
-    if (n) n.hidden = true;
-  }
-  mark('.nz-prev-nav-brand', NAV_MARK);
-  mark('.nz-prev-nav-brand-light', NAV_MARK_LIGHT);
-  // paintSurfaces() reveals the light sample only when rail_hex_light is set.
-  var pane = document.querySelector('.nz-prev-light-pane');
-  if (pane) pane.hidden = false;
-  var ratios = %(ratios)s;
-  Object.keys(ratios).forEach(function (id) {
-    var el = document.getElementById(id);
-    if (el) el.textContent = ratios[id];
-  });
-  var chips = document.querySelectorAll('.nz-brandchip-hex[data-hex-field]');
-  for (i = 0; i < chips.length; i++) {
-    var f = document.getElementById(chips[i].getAttribute('data-hex-field'));
-    if (f && f.value) chips[i].textContent = f.value.toUpperCase();
-  }
-  var flash = document.getElementById('nz-save-flash');
-  if (flash) flash.innerHTML = '<div class="alert alert-success clear">%(saved)s</div>';
-})();
-</script>
-"""
-
-
-def _branding_bootstrap() -> str:
-    import json
-    wb = wordbook()
-    return BRANDING_SHIPPED_BOOTSTRAP % {
-        "navmark": mockup_navmark("nz-prev-nav-brand"),
-        "navmark_light": mockup_navmark("nz-prev-nav-brand-light"),
-        "name": SAMPLE["company_name"],
-        "rail": SAMPLE["rail_hex"], "rail_light": SAMPLE["rail_hex_light"],
-        "login": SAMPLE["login_bg"], "accent": SAMPLE["accent_hex"],
-        "ratios": json.dumps(SAMPLE_RATIOS),
-        "saved": wb.get("settings_saved_txt", "Changes saved."),
-    }
-
-
-PAGE_SCRIPTS = {"dark-dashboard": CHART_BOOTSTRAP,
-                "dark-branding-shipped": _branding_bootstrap(),
-                "light-branding-shipped": _branding_bootstrap()}
+# The page's own <script> is stripped with every other script in this
+# harness, so the Branding page gets it re-injected in build() with a
+# fetch() stub in front of it — see render_shipped.bootstrap(). The light
+# variant is copied from the built dark page, script and all, so it needs
+# no entry of its own.
+PAGE_SCRIPTS = {"dark-dashboard": CHART_BOOTSTRAP}
 
 
 def nav_top(active: str):
@@ -462,6 +325,14 @@ def build() -> None:
     # branding/branding.css the way the shipping template will inline it
     (WEBROOT / "branding").symlink_to(HERE / "branding")
 
+    # Render the shipped Branding template into a fragment, and hand its own
+    # inline script a canned preview response so the page paints itself exactly
+    # as it does on a panel. Everything both need comes from the module's real
+    # renderers; see branding/render_shipped.py. The fragment is also written to
+    # disk so the page can be checked as text after a build.
+    BRANDING_SHIPPED_HTML.write_text(shipped_branding(), encoding="utf-8")
+    PAGE_SCRIPTS["dark-branding-shipped"] = render_shipped().bootstrap()
+
     # stock baseline for comparison
     body = strip_scripts((HERE / "body.html").read_text(encoding="utf-8"))
     head = head_from(STOCK / "themes/default/templates/main.tpl.htm", "default")
@@ -523,7 +394,9 @@ VIEWPORT_ONLY = ("mobile", "fold")
 
 # A page whose shots belong beside its own source rather than in shots/.
 SHOT_DIRS = {"dark-branding": HERE / "branding/shots",
-             "light-branding": HERE / "branding/shots"}
+             "light-branding": HERE / "branding/shots",
+             "dark-branding-shipped": HERE / "branding/shots",
+             "light-branding-shipped": HERE / "branding/shots"}
 
 
 def shoot(only: str = "", dest_root: Path = None) -> None:
