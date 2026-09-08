@@ -443,12 +443,20 @@ Four things are worth knowing before you upgrade:
   is now "Software version", and so on for the other five: a switch already
   says "show". The settings and their keys are unchanged — only the labels are
   shorter. All seven shipped locales were updated in the same release.
-- **Seventeen wordbook keys were added**, eleven to the form wordbook
-  (`lib/lang/<lang>_customizer.lng`) and six to the module wordbook
-  (`lib/lang/<lang>.lng`, where the endpoint that refreshes the preview can
-  reach them). If you maintain a translation of your own, add all seventeen:
-  ISPConfig *substitutes* wordbooks rather than merging them, so a file that
-  exists but omits a key renders the raw key name in the UI.
+- **Twenty-three wordbook keys were added**, seventeen to the form wordbook
+  (`lib/lang/<lang>_customizer.lng`) — `accent_hex_hint_txt`,
+  `accent_short_txt`, `also_used_on_txt`, `contrast_short_txt`,
+  `drop_hint_txt`, `favicon_lead_txt`, `hint_more_txt`,
+  `logo_variants_lead_txt`, `preview_card_title_txt`, `preview_nav_email_txt`,
+  `preview_nav_home_txt`, `preview_nav_sites_txt`, `preview_panel_txt`,
+  `preview_search_txt`, `preview_signin_txt`, `rail_light_short_txt` and
+  `rail_short_txt` — and six to the module wordbook (`lib/lang/<lang>.lng`,
+  where the endpoint that refreshes the preview can reach them):
+  `summary_design_txt`, `summary_favicon_none_txt`, `summary_favicon_txt`,
+  `summary_marks_none_txt`, `summary_marks_one_txt` and `summary_marks_txt`.
+  If you maintain a translation of your own, add all twenty-three: ISPConfig
+  *substitutes* wordbooks rather than merging them, so a file that exists but
+  omits a key renders the raw key name in the UI.
   `.github/scripts/lang_check.php` lists exactly what is missing.
 - **No design has to change.** The page's own stylesheet is inline and reads
   design tokens through the same `var(--pz-…, var(--nz-…, …))` chains it always
