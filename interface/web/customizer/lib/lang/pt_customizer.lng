@@ -1,6 +1,6 @@
 <?php
 $wb['customizer_title'] = 'Branding';
-$wb['page_head_txt'] = 'Personalização';
+$wb['page_head_txt'] = 'Branding';
 $wb['customizer_desc_txt'] = 'Personalize este painel de controlo com a sua própria marca — o logótipo, o nome e as cores são armazenados no ISPConfig e mantêm-se durante as atualizações do painel e do tema.';
 $wb['settings_saved_txt'] = 'Alterações guardadas. As cores do próprio painel aparecem após uma atualização completa da página (F5).';
 $wb['save_failed_txt'] = 'As definições não foram guardadas — a escrita na base de dados não teve efeito. Nada nesta página foi alterado; tente novamente e consulte o registo de erros do painel se voltar a acontecer.';

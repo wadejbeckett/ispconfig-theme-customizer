@@ -1,6 +1,6 @@
 <?php
 $wb['customizer_title'] = 'Branding';
-$wb['page_head_txt'] = 'Customizer';
+$wb['page_head_txt'] = 'Branding';
 $wb['customizer_desc_txt'] = 'Voorzie dit controlepaneel van uw eigen merk — het logo, de naam en de kleuren worden in ISPConfig opgeslagen en blijven behouden bij updates van het paneel en het thema.';
 $wb['settings_saved_txt'] = 'Wijzigingen opgeslagen. De kleuren van het paneel zelf verschijnen na een volledige vernieuwing van de pagina (F5).';
 $wb['save_failed_txt'] = 'De instellingen zijn niet opgeslagen — de databaseschrijfactie heeft geen effect gehad. Er is niets op deze pagina gewijzigd; probeer het opnieuw en bekijk het foutenlogboek van het paneel als het nogmaals gebeurt.';

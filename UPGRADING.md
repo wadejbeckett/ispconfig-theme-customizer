@@ -432,8 +432,13 @@ cards under that. Nothing about **what** it stores changed — same keys, same
 new column. An upgrade is `git checkout <tag>` and `./install.sh`, exactly as
 before.
 
-Three things are worth knowing before you upgrade:
+Four things are worth knowing before you upgrade:
 
+- **The page heading now reads "Branding."** The `page_head_txt` key held
+  "Customizer" while the navigation item beside it already said "Branding"; the
+  two now agree, in all seven shipped locales. Only the heading text changed —
+  the module is still `customizer`, its URL is unchanged, and nothing reads the
+  heading but the page itself.
 - **The six visibility switches were relabelled.** "Show the software version"
   is now "Software version", and so on for the other five: a switch already
   says "show". The settings and their keys are unchanged — only the labels are

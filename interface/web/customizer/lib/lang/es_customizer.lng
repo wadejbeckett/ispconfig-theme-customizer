@@ -1,6 +1,6 @@
 <?php
 $wb['customizer_title'] = 'Branding';
-$wb['page_head_txt'] = 'Personalizador';
+$wb['page_head_txt'] = 'Branding';
 $wb['customizer_desc_txt'] = 'Personalice este panel de control con su propia marca — el logotipo, el nombre y los colores se guardan en ISPConfig y se conservan tras las actualizaciones del panel y del tema.';
 $wb['settings_saved_txt'] = 'Cambios guardados. Los colores del propio panel aparecen tras recargar completamente la página (F5).';
 $wb['save_failed_txt'] = 'Los ajustes no se guardaron: la escritura en la base de datos no tuvo efecto. No se cambió nada en esta página; inténtelo de nuevo y revise el registro de errores del panel si vuelve a ocurrir.';
