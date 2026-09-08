@@ -1944,21 +1944,36 @@
   // is safe only because customizer_logo_preview_html(..., 'first') never
   // returns '' — an observed mark-slot write always accompanies the flag, so
   // it can never be left standing for a later, real mutation to eat.
-  // Self-disconnects for the same reason the message observer does:
-  // ISPConfig.loadContent() swaps #pageContent's children while #pageForm and
-  // everything hanging off it stays alive.
+  // Observes #pageForm rather than the two slots themselves, for the same
+  // reason the message observer below does: ISPConfig.loadContent() swaps
+  // #pageContent's children while #pageForm stays alive. Observing the slots
+  // directly could never self-disconnect — after a navigation they are detached,
+  // so they never mutate again, so the pageAlive() bail-out never runs and every
+  // visit to this page left one more observer holding one more dead subtree.
+  // The records are filtered back down to the two slots, so this is still a
+  // watch on our own marks and not on the form.
   function markSlotsWatch() {
     if (!window.MutationObserver) return;
-    var ob = new MutationObserver(function () {
+    var root = document.getElementById('pageForm');
+    if (!root) return;
+    var ids = ['used_logo', 'used_logo_on_dark'];
+    var touchesASlot = function (records) {
+      for (var i = 0; i < records.length; i++) {
+        for (var j = 0; j < ids.length; j++) {
+          var slot = document.getElementById(ids[j]);
+          var t = records[i].target;
+          if (slot && (t === slot || slot.contains(t))) return true;
+        }
+      }
+      return false;
+    };
+    var ob = new MutationObserver(function (records) {
       if (!pageAlive()) { ob.disconnect(); return; }
+      if (!touchesASlot(records)) return;
       if (selfPaint) { selfPaint = false; return; }
       schedulePreview();
     });
-    var ids = ['used_logo', 'used_logo_on_dark'];
-    for (var i = 0; i < ids.length; i++) {
-      var el = document.getElementById(ids[i]);
-      if (el) ob.observe(el, { childList: true, subtree: true });
-    }
+    ob.observe(root, { childList: true, subtree: true });
   }
 
   // The iframe uploader injects #OKMsg/#errorMsg just above the hidden id input
