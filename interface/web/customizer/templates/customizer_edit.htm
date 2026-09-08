@@ -689,10 +689,18 @@
       #nz-brandpage .nz-proof { grid-template-columns: minmax(0, 1fr); }
       #nz-brandpage .nz-cards { grid-template-columns: minmax(0, 1fr); }
       #nz-brandpage .nz-switchgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      /* The dividers follow the column count, so the fallback has to restate
+         them: at two columns the rule above switch 3 opens row 2, and switches
+         1 and 2 are the top row and take none. Without this pair, switch 3
+         renders with no rule while switch 4 has one. */
+      #nz-brandpage .nz-switchgrid .form-group:nth-child(-n + 3) { border-top: 1px solid var(--pz-edge-soft, var(--nz-border-soft, rgba(128, 128, 128, 0.14))); padding-top: 11px; }
+      #nz-brandpage .nz-switchgrid .form-group:nth-child(-n + 2) { border-top: 0; padding-top: 2px; }
       #nz-brandpage .nz-legend-colours { margin-left: 0; }
     }
     @media (max-width: 860px) {
       #nz-brandpage .nz-switchgrid { grid-template-columns: minmax(0, 1fr); }
+      #nz-brandpage .nz-switchgrid .form-group:nth-child(-n + 3) { border-top: 1px solid var(--pz-edge-soft, var(--nz-border-soft, rgba(128, 128, 128, 0.14))); padding-top: 11px; }
+      #nz-brandpage .nz-switchgrid .form-group:first-child { border-top: 0; padding-top: 2px; }
       #nz-brandpage .nz-legend-cell { border-left: 0; padding-left: 0; }
     }
   }
