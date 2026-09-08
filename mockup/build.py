@@ -13,7 +13,6 @@ the live panel would serve.
     python3 build.py            # build webroot/
     python3 build.py --shoot    # build + screenshot (needs playwright)
 """
-import importlib.util
 import re
 import shutil
 import subprocess
@@ -119,17 +118,6 @@ DARK_PAGES = {  # name -> (active module, sidebar fragment, pageContent fragment
     "dark-sites":      ("sites", "sidenav-sites.html", "sites-list.html"),
     "dark-form":       ("mail", "sidenav-mail.html", "mail-user-form.html"),
     "dark-components": ("dashboard", "news.html", "components.html"),
-    # The Branding redesign lives in its own directory with the stylesheet it
-    # would ship inlined into; fragment paths are resolved against fragments/,
-    # so a sibling directory is reachable without teaching the engine anything.
-    "dark-branding":   ("tools", "../branding/sidenav-tools.html", "../branding/branding.html"),
-    # ...and the SHIPPED template beside it, rendered from
-    # interface/web/customizer/templates/customizer_edit.htm with the wordbook
-    # and the mockup's sample brand substituted for its tmpl_vars, so the built
-    # page can be compared against branding/shots/ shot for shot. The content is
-    # built rather than read from fragments/, which is why this value is a
-    # callable.
-    "dark-branding-shipped": ("tools", "../branding/sidenav-tools.html", None),
 }
 
 # The metrics dashlet renders through <canvas>, so the harness (which strips
@@ -193,54 +181,8 @@ function createChart(chartname, label, labels, data) {
 </script>
 """
 
-# ---------------------------------------------------------------------------
-# the SHIPPED Branding page
-#
-# interface/web/customizer/templates/customizer_edit.htm rendered here rather
-# than the hand-written branding/branding.html, so what is reviewed is the file
-# that ships. Everything it needs — the tmpl_vars, the five server-rendered
-# preview slots, the three status facts and the canned preview response the
-# page's own script runs against — comes from branding/render_shipped.py, which
-# gets the markup out of the module's real renderers in lib/preview.inc.php.
-#
-# Loaded by path rather than imported: mockup/branding is a plain directory of
-# design material, not a package, and making it one would put an __init__.py
-# beside the approved design record for no other reason.
-# ---------------------------------------------------------------------------
+CONTENT_BUILDERS = {}
 
-BRANDING_TPL = REPO / "interface/web/customizer/templates/customizer_edit.htm"
-# The rendered fragment, written on every build for the checks that read the
-# page as text. Generated, never edited; .gitignore carries it.
-BRANDING_SHIPPED_HTML = HERE / "branding/shipped.html"
-
-_SHIPPED = None
-
-
-def render_shipped():
-    """branding/render_shipped.py, loaded once."""
-    global _SHIPPED
-    if _SHIPPED is None:
-        spec = importlib.util.spec_from_file_location(
-            "render_shipped", HERE / "branding/render_shipped.py")
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        _SHIPPED = mod
-    return _SHIPPED
-
-
-def shipped_branding() -> str:
-    """The shipped template with customizer_edit.php's variables filled in."""
-    return render_tpl(BRANDING_TPL.read_text(encoding="utf-8"),
-                      render_shipped().variables())
-
-
-CONTENT_BUILDERS = {"dark-branding-shipped": shipped_branding}
-
-# The page's own <script> is stripped with every other script in this
-# harness, so the Branding page gets it re-injected in build() with a
-# fetch() stub in front of it — see render_shipped.bootstrap(). The light
-# variant is copied from the built dark page, script and all, so it needs
-# no entry of its own.
 PAGE_SCRIPTS = {"dark-dashboard": CHART_BOOTSTRAP}
 
 
@@ -321,18 +263,6 @@ def build() -> None:
     (WEBROOT / "themes/clarity").symlink_to(DARK)
     # vendor JS (Chart.js) for the pages that re-inject a controlled bootstrap
     (WEBROOT / "js").symlink_to(STOCK / "js")
-    # branding/: the Branding redesign's own directory, so its fragment can link
-    # branding/branding.css the way the shipping template will inline it
-    (WEBROOT / "branding").symlink_to(HERE / "branding")
-
-    # Render the shipped Branding template into a fragment, and hand its own
-    # inline script a canned preview response so the page paints itself exactly
-    # as it does on a panel. Everything both need comes from the module's real
-    # renderers; see branding/render_shipped.py. The fragment is also written to
-    # disk so the page can be checked as text after a build.
-    BRANDING_SHIPPED_HTML.write_text(shipped_branding(), encoding="utf-8")
-    PAGE_SCRIPTS["dark-branding-shipped"] = render_shipped().bootstrap()
-
     # stock baseline for comparison
     body = strip_scripts((HERE / "body.html").read_text(encoding="utf-8"))
     head = head_from(STOCK / "themes/default/templates/main.tpl.htm", "default")
@@ -347,9 +277,7 @@ def build() -> None:
 
     # light-mode variants: same pages with the switcher attribute pre-set
     # (statically, since mockup pages ship without scripts)
-    for src, dst in (("dark-dashboard", "light-dashboard"), ("dark-login", "light-login"),
-                     ("dark-branding", "light-branding"),
-                     ("dark-branding-shipped", "light-branding-shipped")):
+    for src, dst in (("dark-dashboard", "light-dashboard"), ("dark-login", "light-login")):
         page = (WEBROOT / f"{src}.html").read_text(encoding="utf-8")
         (WEBROOT / f"{dst}.html").write_text(
             page.replace("<html lang='en'>", "<html lang='en' data-nz-theme='light'>", 1),
@@ -372,17 +300,11 @@ SHOT_MATRIX = [
     ("dark-form", ("desktop",)),
     ("dark-components", ("desktop",)),  # QA gallery, not a marketing shot
     ("dark-login", ("desktop", "mobile")),
-    ("dark-branding", ("desktop", "fold", "narrow")),
-    ("light-branding", ("desktop", "fold")),
-    ("dark-branding-shipped", ("desktop", "fold", "narrow")),
-    ("light-branding-shipped", ("desktop", "fold")),
     ("light-dashboard", ("desktop",)),
     ("light-login", ("desktop",)),
     ("default", ("desktop",)),
 ]
 
-# "narrow" is the width at which the Branding page's container query collapses
-# it to one column — the rail takes 248px, so the page itself has ~700px there.
 VIEWPORTS = {"desktop": (1440, 900), "mobile": (390, 844),
              "narrow": (1000, 900), "fold": (1440, 900)}
 
@@ -393,19 +315,13 @@ VIEWPORTS = {"desktop": (1440, 900), "mobile": (390, 844),
 VIEWPORT_ONLY = ("mobile", "fold")
 
 # A page whose shots belong beside its own source rather than in shots/.
-SHOT_DIRS = {"dark-branding": HERE / "branding/shots",
-             "light-branding": HERE / "branding/shots",
-             "dark-branding-shipped": HERE / "branding/shots",
-             "light-branding-shipped": HERE / "branding/shots"}
+SHOT_DIRS = {}
 
 
 # --only takes whole page names, matched EXACTLY, comma-separated. A page also
-# answers to its name without the design prefix, so --only=branding is
-# dark-branding + light-branding and NOTHING else. A substring match was the
-# hazard this replaces: --only=branding also matched dark-branding-shipped and
-# light-branding-shipped, which share a destination directory with the approved
-# design record, so the documented build command re-rendered and overwrote the
-# artefacts a human had signed off.
+# answers to its name without the design prefix, so --only=login is
+# dark-login + light-login and NOTHING else. Exact matching rather than a
+# substring match, so a short name can never pull in a page it merely prefixes.
 def shot_targets(only: str):
     if not only:
         return [name for name, _ in SHOT_MATRIX]
