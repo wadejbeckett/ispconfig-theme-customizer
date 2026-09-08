@@ -1,6 +1,6 @@
 <?php
 /**
- * ispconfig-customizer — wipe every branding value the module manages.
+ * ispconfig-theme-customizer — wipe every branding value the module manages.
  * Copyright (c) 2026 Wade Beckett. MIT License — see ../LICENSE.
  *
  * A directory uninstall alone leaves the panel branded: [misc] company_name /

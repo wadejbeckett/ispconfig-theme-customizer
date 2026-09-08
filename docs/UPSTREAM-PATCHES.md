@@ -2,7 +2,7 @@
 
 Five core issues surfaced while building this extension against ISPConfig 3.3
 (dev/3.3.1p1). None are bugs in the extension — they're in core
-— so rather than work around them silently we're offering them back to the
+— so rather than work around them silently, they are offered back to the
 project. Each was located and quoted against the real 3.3 source and then
 independently re-verified; the candidate patches below are **starting points**,
 not drop-in merge requests: regenerate the final diffs with `git diff` against a
@@ -69,7 +69,7 @@ case, leaves the raster path byte-identical). Indentation is tabs except
 +}
 ```
 
-**Honest caveat:** on the authenticated main page the logo is a *background image*
+**Caveat:** on the authenticated main page the logo is a *background image*
 on an empty `<div id='logo'>`, where `height:auto` can collapse the box to 0. So
 `auto` doesn't reliably *display* an SVG there — but the previous `width:px` was
 already invalid CSS that browsers drop, so this is a **robustness fix** (kills the
@@ -174,8 +174,8 @@ being per-connection so a mid-request reconnect voids it, the server-wide
 `GET_LOCK` namespace). **A lower-risk alternative worth leading with:** make just
 the CSRF store concurrency-safe — merge rather than overwrite `$_SESSION['_csrf']`
 on write, or move tokens to an INSERT-only table — sidestepping session-wide
-locking entirely. We'd rather surface the analysis and let the maintainers pick
-the shape.
+locking entirely. The analysis is offered here so the maintainers can pick the
+shape.
 
 **Risk:** high (session locking is high-blast-radius); hence the fail-soft
 candidate + the lower-risk alternative + explicit deferral.
@@ -248,7 +248,7 @@ Shown for `system_config_edit.php`; the other six sites take the same shape:
 +		// Parse the RAW column, not the stripslashes'd one: get_ini_string()
 +		// does not re-escape and datalogUpdate() binds the blob, so anything
 +		// read through getconf here would be written back one escaping level
-+		// short. Sections we are not editing must pass through untouched.
++		// short. Sections this code is not editing pass through untouched.
 +		$tmp_ini = $app->db->queryOneRecord('SELECT config FROM sys_ini WHERE sysini_id = 1');
 +		$server_config_array = $app->ini_parser->parse_ini_string($tmp_ini['config']);
 ```
@@ -268,10 +268,10 @@ a migration thought too: existing installs may already hold under-escaped values
 from previous saves, and this patch preserves whatever is there rather than
 repairing it.
 
-**Honest caveat:** we could not date the `stripslashes()` calls — our reference
+**Caveat:** the `stripslashes()` calls could not be dated — the reference
 checkout is squashed to a single commit, so `git blame` attributes everything to
-one merge. They look like a magic-quotes-era vestige, but that is a guess and we
-have not verified it.
+one merge. They look like a magic-quotes-era vestige, but that is a guess and it
+has not been verified.
 
 ---
 

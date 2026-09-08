@@ -22,7 +22,7 @@ only** (`--nz-card`, `--nz-action`, …), never ramp steps, never raw hex.
 
 ## 1. Where the look comes from
 
-| Ingredient | Source | What we took |
+| Ingredient | Source | What was taken |
 |---|---|---|
 | Surface temperature | VMware Clarity dark (`@cds/core` 6.17 `theme.dark.css`, MIT) | the "construction" blue-grey ramp (hue 198): page `#17252B`, card `#21333B`, raised `#2D4048`, well `#1B2B32`; status hues (green 500/800, ochre 400/900, red 500/900) |
 | Frame anatomy & elevation | DirectAdmin Evolution dark (live demo, tokens extracted 2026-07-08) | deep-navy brand band on the left, elevation as a surface-lightness ladder + 1px hairlines (not shadows), big calm search bar, uppercase micro-headers, small radii |
@@ -226,7 +226,7 @@ anatomy, 4px control radius scale, `0 1px 2px rgba(0,0,0,.6)` shadow,
 
 Deliberate deviations (each for brand, anatomy, or WCAG):
 
-| Deviation | Clarity says | Why we differ |
+| Deviation | Clarity says | Reason |
 |---|---|---|
 | Blue ramp anchored `#0065AB` (hue 205) | hue-198 blues | Brand blue; role mapping mirrors Clarity |
 | Page = construction-1100 | app bg = construction-1000 | 2-step card-on-page elevation (DirectAdmin anatomy) |
@@ -247,9 +247,7 @@ Deliberate deviations (each for brand, anatomy, or WCAG):
   derived from Clarity's dark theme, and 29 icon shapes are bundled verbatim as
   data-URI SVG masks in `themes/clarity/assets/stylesheets/clarity/icons.css`.
   Because artwork ships, the MIT copyright and permission notice ships with it,
-  in that file's header. (An earlier version of this line said "token values
-  only; no code bundled" — that was wrong, and wrong in the direction that
-  matters for a licence obligation.)
+  in that file's header.
 - DirectAdmin Evolution — visual reference only (anatomy/metrics studied from
   the public demo; no assets copied).
 - Inter — SIL OFL 1.1, self-hosted.

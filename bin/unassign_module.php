@@ -1,6 +1,6 @@
 <?php
 /**
- * ispconfig-customizer — remove the 'customizer' module from ALL users.
+ * ispconfig-theme-customizer — remove the 'customizer' module from ALL users.
  * Copyright (c) 2026 Wade Beckett. MIT License — see ../LICENSE.
  *
  * Reverses bin/assign_module.php, but scans EVERY user (install assigns to all
