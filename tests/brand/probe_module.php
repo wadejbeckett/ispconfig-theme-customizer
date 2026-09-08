@@ -600,6 +600,87 @@ if (function_exists('customizer_preview_payload')) {
     //* A POST that is not an array, and one carrying nothing this reads.
     $p3 = customizer_preview_payload(array('rail_hex' => '#01243D'), '', null, array('clarity'), array(), $texts);
     t_eq('a non-array POST previews the stored values', $p3['colours']['rail']['hex'], '#01243D');
+
+    //* The facts ride the payload as well, because an upload refreshes the page
+    //* through this endpoint and never reloads it. Additive: nothing else in
+    //* the contract moved, which is what preview.php's shape probe assumes.
+    $ptexts = array_merge($texts, array(
+        'summary_design' => '%s active', 'summary_marks_none' => 'No marks',
+        'summary_marks_one' => '%d mark', 'summary_marks' => '%d marks',
+        'summary_favicon' => 'Favicon set', 'summary_favicon_none' => 'No favicon'));
+    $ps = customizer_preview_payload(array('favicon_url' => '/themes/custom/favicon.svg'),
+        $png, array(), array('clarity'), array(), $ptexts);
+    t_ok('the payload carries the summary', isset($ps['summary']));
+    t_eq('...naming the leading design', $ps['summary']['design'], 'Clarity active');
+    t_eq('...counting the marks it resolved', $ps['summary']['marks'], '1 mark');
+    t_eq('...and reporting the favicon', $ps['summary']['favicon'], 'Favicon set');
+
+    //* The design comes from the LIST the caller passed, in its order, because
+    //* customizer_installed_designs() puts the active design first and that is
+    //* the one the operator is looking at.
+    $ps2 = customizer_preview_payload(array(), '', array(), array('classic', 'clarity'),
+        array(), $ptexts);
+    t_eq('the leading design is the one named', $ps2['summary']['design'], 'Classic active');
+    $ps3 = customizer_preview_payload(array(), '', array(), array(), array(), $ptexts);
+    t_eq('no design installed names none', $ps3['summary']['design'], '');
+
+    //* The four blocks that were there before are still there, unmoved.
+    t_ok('the previous payload keys are unchanged',
+        isset($ps['previews'], $ps['surfaces'], $ps['colours'])
+        && isset($ps['previews']['used_logo'], $ps['previews']['used_logo_more'],
+                 $ps['previews']['used_logo_on_dark'], $ps['previews']['used_logo_on_dark_more'],
+                 $ps['previews']['used_favicon']));
+}
+
+/* ---- the three status facts under the proof ------------------------------
+ * The legend prints them on page load AND after every upload, and an upload
+ * does not reload the page — so the same builder has to serve the page render
+ * and the preview payload, or the two would word the same fact differently.
+ */
+t_ok('customizer_brand_summary() exists', function_exists('customizer_brand_summary'));
+if (function_exists('customizer_brand_summary')) {
+    $facts_txt = array('design' => '%s active', 'marks_none' => 'No marks',
+                       'marks_one' => '%d mark', 'marks' => '%d marks',
+                       'favicon' => 'Favicon set', 'favicon_none' => 'No favicon');
+    $png  = 'data:image/png;base64,iVBORw0KGgo=';
+    $png2 = 'data:image/png;base64,iVBORw0KGgoAAA=';
+
+    $both = customizer_logo_resolve(array('custom_logo' => $png, 'logo_on_dark' => $png2));
+    $one  = customizer_logo_resolve(array('custom_logo' => $png));
+    $none = customizer_logo_resolve(array());
+    $fav  = customizer_favicon_resolve(array('favicon_url' => '/themes/custom/favicon.svg'));
+    $nofav = customizer_favicon_resolve(array());
+
+    $s = customizer_brand_summary('clarity', $both, $fav, $facts_txt);
+    t_eq('the active design is named, capitalised', $s['design'], 'Clarity active');
+    t_eq('two supplied marks count as two', $s['marks'], '2 marks');
+    t_eq('a favicon is reported set', $s['favicon'], 'Favicon set');
+
+    //* A slot BORROWING the other variant is not a second mark: the borrowed
+    //* note under the block already says so, and counting it would tell an
+    //* operator with one logo that they have two.
+    $s = customizer_brand_summary('classic', $one, $nofav, $facts_txt);
+    t_eq('one supplied mark is singular', $s['marks'], '1 mark');
+    t_eq('...and does not become two through the fallback', strpos($s['marks'], '2'), false);
+    t_eq('no favicon is reported as such', $s['favicon'], 'No favicon');
+    t_eq('the design name follows the design asked about', $s['design'], 'Classic active');
+
+    $s = customizer_brand_summary('', $none, $nofav, $facts_txt);
+    t_eq('nothing supplied says so in words, not as a zero', $s['marks'], 'No marks');
+    t_eq('an unknown design says nothing at all', $s['design'], '');
+
+    //* A wordbook is a file translators edit. A missing key must not fatal, and
+    //* a stray '%' must not either — which is why this is str_replace and not
+    //* sprintf, whose ValueError on PHP 8 would take the admin page with it.
+    $s = customizer_brand_summary('clarity', $both, $fav, array());
+    t_eq('a missing text says nothing rather than printing a key', $s['marks'], '');
+    $s = customizer_brand_summary('clarity', $both, $fav,
+        array_merge($facts_txt, array('marks' => '%d marks (50% of the pair)')));
+    t_eq('a stray percent sign is printed, not fatal', $s['marks'], '2 marks (50% of the pair)');
+
+    $s = customizer_brand_summary('clarity', null, null, $facts_txt);
+    t_eq('a non-array resolve is "nothing supplied"', $s['marks'], 'No marks');
+    t_eq('...and a non-array favicon is "not set"', $s['favicon'], 'No favicon');
 }
 
 /* ---- one resolver signature across all three copies ---------------------- */
@@ -691,6 +772,98 @@ if ($purge_src !== false) {
         !preg_match("/'dashboard_atom_url_[a-z]+'\\s*=>\\s*'news_url_[a-z]+'/", $purge_src));
     t_ok('purge_branding.php uses customizer_news_feed_keys() instead',
         strpos($purge_src, 'customizer_news_feed_keys()') !== false);
+}
+
+/* ---- the fifteen hint-label keys live in one place -------------------------
+ * customizer_hint_label_keys() (lib/preview.inc.php) is the single list Task 3's
+ * publish_hint_labels() iterates and lang_check.php derives its aria-label key
+ * set from. Pure and stateless, so it is called directly rather than sourced.
+ *
+ * The literal below is a deliberate tripwire, not a second copy of the contract:
+ * a new "?" disclosure is a considered change and should have to be written
+ * down twice. What must never happen is lang_check.php growing a third,
+ * hand-maintained copy — a label key it did not know about would be
+ * interpolated unescaped into aria-label="…" — so that is asserted separately
+ * below.
+ */
+if (function_exists('customizer_hint_label_keys')) {
+    $hint_keys = customizer_hint_label_keys();
+    t_ok('customizer_hint_label_keys() returns exactly the fifteen expected keys',
+        $hint_keys === array(
+            'identity_head_txt', 'logo_on_light_head_txt', 'logo_url_txt',
+            'logo_on_dark_head_txt', 'logo_url_on_dark_txt', 'placement_head_txt',
+            'favicon_head_txt', 'favicon_url_txt', 'accent_hex_txt',
+            'rail_hex_light_txt', 'show_design_picker_txt', 'show_version_txt',
+            'show_news_feed_txt', 'show_donation_dashlet_txt', 'show_theme_credit_txt',
+        ),
+        $hint_keys);
+} else {
+    t_ok('customizer_hint_label_keys() exists', false);
+}
+
+/* ---- lang_check derives that list; it does not copy it ---------------------
+ * .github/scripts/lang_check.php must never execute the tree it guards, so it
+ * reads customizer_hint_label_keys()'s body as text. Asserted here because the
+ * failure mode is silent: a hand-copied list that lost a key still exits 0, and
+ * the key it lost is one that lands inside a double-quoted aria-label with no
+ * escaping (customizer_edit.php's str_replace into the template).
+ */
+$lang_check = @file_get_contents(__DIR__ . '/../../.github/scripts/lang_check.php');
+t_ok('lang_check.php is readable', $lang_check !== false);
+if ($lang_check !== false && function_exists('customizer_hint_label_keys')) {
+    t_ok('lang_check.php builds $HTML_ATTR_WB_KEYS from lc_hint_label_keys()',
+        preg_match('/\$HTML_ATTR_WB_KEYS\s*=.*?lc_hint_label_keys\s*\(/s', $lang_check) === 1);
+
+    //* Parsed the same way lang_check itself parses it, so this proves the
+    //* derivation yields the fifteen and not, say, an empty match.
+    $derived = array();
+    if (preg_match('/function\s+customizer_hint_label_keys\s*\(\s*\)\s*\{(.*?)\}/s',
+            file_get_contents(__DIR__ . '/../../interface/web/customizer/lib/preview.inc.php'), $body)) {
+        preg_match_all('/\'([A-Za-z0-9_]+)\'/', $body[1], $found);
+        $derived = $found[1];
+    }
+    t_ok('lang_check.php\'s own parse of customizer_hint_label_keys() returns it whole',
+        $derived === customizer_hint_label_keys(), $derived);
+
+    //* No hint label key may appear as a literal in lang_check.php: that would be
+    //* the hand-copied list coming back. The four that are ALSO plain attribute
+    //* keys in their own right (the colour pickers) are legitimately literal.
+    $attr_own = array('accent_hex_txt', 'rail_hex_txt', 'rail_hex_light_txt', 'login_bg_txt');
+    $copied = array();
+    foreach (customizer_hint_label_keys() as $key) {
+        if (in_array($key, $attr_own, true)) continue;
+        if (strpos($lang_check, "'" . $key . "'") !== false) $copied[] = $key;
+    }
+    t_ok('lang_check.php holds no hand-copied duplicate of the hint-label keys',
+        $copied === array(), $copied);
+}
+
+/* ---- the page publishes what its template asks for -----------------------
+ * customizer_edit.php cannot be executed without a database, so it is asserted
+ * the way `probe_module.php` already asserts `onBeforeUpdate`'s guard: against
+ * the source. What is checked is that the page hands the template every name
+ * the template interpolates — a missing one renders as an empty attribute with
+ * nothing anywhere to say why.
+ */
+if ($edit_src !== false) {
+    t_ok('the page publishes the three status facts',
+        strpos($edit_src, "setVar('summary_fact_design'") !== false
+        && strpos($edit_src, "setVar('summary_fact_marks'") !== false
+        && strpos($edit_src, "setVar('summary_fact_favicon'") !== false);
+    t_ok('...through the shared builder, not a second copy of the wording',
+        strpos($edit_src, 'customizer_brand_summary(') !== false);
+    t_ok('the disclosure names are built from hint_more_txt',
+        strpos($edit_src, "lng('hint_more_txt')") !== false);
+    t_ok('...with str_replace, because sprintf on a translated string can fatal',
+        strpos($edit_src, "str_replace('%s'") !== false
+        && strpos($edit_src, 'sprintf(') === false);
+    //* Controller ruling S7: the fifteen keys are NOT a second literal in this
+    //* file — publish_hint_labels() iterates customizer_hint_label_keys()
+    //* (lib/preview.inc.php), which is checked for its own exact fifteen-key
+    //* shape above. What is checked here is only that this page reaches that
+    //* shared list rather than reintroducing its own copy of it.
+    t_ok('...iterating customizer_hint_label_keys(), not a second copy of the list',
+        strpos($edit_src, 'customizer_hint_label_keys()') !== false);
 }
 
 t_done();

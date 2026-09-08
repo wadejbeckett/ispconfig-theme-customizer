@@ -1,6 +1,6 @@
 <?php
 $wb['customizer_title'] = 'Branding';
-$wb['page_head_txt'] = 'Customizer';
+$wb['page_head_txt'] = 'Branding';
 $wb['customizer_desc_txt'] = 'Voorzie dit controlepaneel van uw eigen merk — het logo, de naam en de kleuren worden in ISPConfig opgeslagen en blijven behouden bij updates van het paneel en het thema.';
 $wb['settings_saved_txt'] = 'Wijzigingen opgeslagen. De kleuren van het paneel zelf verschijnen na een volledige vernieuwing van de pagina (F5).';
 $wb['save_failed_txt'] = 'De instellingen zijn niet opgeslagen — de databaseschrijfactie heeft geen effect gehad. Er is niets op deze pagina gewijzigd; probeer het opnieuw en bekijk het foutenlogboek van het paneel als het nogmaals gebeurt.';
@@ -13,6 +13,7 @@ $wb['logo_url_txt'] = 'Logopad / -URL voor lichte achtergronden (overschrijving)
 $wb['logo_url_hint_txt'] = 'Optioneel; heeft voorrang op het geüploade bestand hierboven. Een root-relatief pad (aanbevolen — bijv. /themes/custom/logo.svg voor een bestand dat u op de server hebt geplaatst) of een https://-URL. Indien ingesteld, gebruiken merkbewuste ontwerpen dit overal, ook op hun aanmeldpagina; alleen het standaardthema van ISPConfig gebruikt altijd het geüploade logo, want dat is de enige waarde die de kern kent. SVG of een 2x-PNG van ongeveer 500&times;160 werkt het best (het wordt ongeveer 26px hoog weergegeven). Een externe URL koppelt uw aanmeldpagina aan die host en geeft de IP-adressen van uw bezoekers aan die host prijs — geef de voorkeur aan een lokaal pad.';
 $wb['logo_url_error_regex'] = 'Het logopad voor lichte achtergronden moet een root-relatief pad (/…) of een https://-URL zijn, zonder spaties, aanhalingstekens, vierkante haken of ronde haken.';
 $wb['logo_remove_txt'] = 'Verwijderen';
+$wb['logo_variants_lead_txt'] = 'Twee vakken, omdat ontwerpen het oneens zijn over helderheid. Vul het vak dat bij uw ontwerp past; het andere leent het.';
 $wb['logo_variants_hint_txt'] = 'Twee velden, omdat ontwerpen het oneens zijn over helderheid: clarity zet het logo op een donkere marineblauwe balk, de standaardweergave op een lichtgrijze koptekst. Vul het veld in dat past bij het ontwerp dat u gebruikt. Laat het andere leeg en het leent gewoon dit exemplaar — precies zoals het paneel zich vandaag al gedraagt. Elke voorbeeldweergave staat op de achtergrond waarvoor het veld bedoeld is, zodat een logo in het verkeerde veld meteen opvalt.';
 $wb['logo_on_light_head_txt'] = 'Logo voor lichte achtergronden';
 $wb['logo_on_dark_head_txt'] = 'Logo voor donkere achtergronden';
@@ -35,6 +36,7 @@ $wb['logo_variant_nav_error_regex'] = 'De logokeuze voor de navigatiebalk moet "
 $wb['logo_variant_login_error_regex'] = 'De logokeuze voor het aanmeldscherm moet "Automatisch", het merkteken voor lichte achtergronden of het merkteken voor donkere achtergronden zijn.';
 
 $wb['favicon_head_txt'] = 'Favicon';
+$wb['favicon_lead_txt'] = 'Eén icoon voor het hele paneel, inclusief het aanmeldscherm.';
 $wb['favicon_intro_txt'] = 'Het kleine pictogram in het browsertabblad, in bladwijzers en in de geschiedenis. Elk ontwerp levert er zelf een mee, dus een verder volledig gebrand panel toont daar nog steeds het merk van iemand anders — dit vervangt het op elke pagina, ook op het aanmeldscherm. Eén pictogram voor het hele panel: anders dan bij het logo is er geen licht/donker-paar, omdat de browser hetzelfde pictogram tekent, hoe de kopregel van het ontwerp er ook uitziet.';
 $wb['favicon_txt'] = 'Favicon-bestand';
 $wb['favicon_hint_txt'] = 'SVG (eenvoudig, zonder scripts), PNG of ICO, onder de 15 KB. Kies een bestand en klik daarna op “Favicon uploaden” — het wordt op zichzelf geüpload, los van de knop Opslaan onderaan. Een SVG schaalt naar elke schermdichtheid; een .ico dekt nog steeds browsers die er geen accepteren, en een eenvoudige 32&times;32-PNG volstaat op zichzelf. Wat u ook kiest: bekijk de voorbeeldweergave op 16px hierboven. Fijne details en kleine letters lopen op dat formaat dicht, en een tabblad is de kleinste plek waar uw merk ooit verschijnt.';
@@ -48,20 +50,33 @@ $wb['company_name_hint_txt'] = 'Wordt weergegeven in de browsertitel en de voett
 
 $wb['colour_head_txt'] = 'Kleuren';
 $wb['accent_hex_txt'] = 'Accentkleur';
+$wb['accent_hex_hint_txt'] = 'Knoppen, links, de actieve markering in de zijbalk en de grafieklijn. De tekst op een gevuld accent wordt op gemeten contrast gekozen, dus een licht accent krijgt donkere tekst.';
 $wb['rail_hex_txt'] = 'Zijbalkkleur';
 $wb['rail_hex_light_txt'] = 'Zijbalkkleur (lichte modus)';
 $wb['rail_hex_light_hint_txt'] = 'Wordt gebruikt door ontwerpen met een lichte kleurmodus; laat het leeg en de zijbalkkleur hierboven geldt in beide modi. Een ontwerp zonder lichte modus leest de waarde en doet er niets mee.';
 $wb['rail_hex_light_inherited_txt'] = '(overgenomen van de zijbalkkleur)';
-$wb['rail_contrast_txt'] = 'Contrast van de zijbalktekst:';
 $wb['login_bg_txt'] = 'Aanmeldachtergrond';
 $wb['colour_hint_txt'] = 'Hex-waarde zoals #0065AB. Laat leeg om de themastandaard te behouden.';
 
 $wb['preview_head_txt'] = 'Voorbeeld';
 $wb['preview_hint_txt'] = 'Kleuren en de paneelnaam worden bijgewerkt terwijl u typt. Welk logo elk oppervlak gebruikt, bepaalt de server, zodat het overeenkomt met wat het paneel echt toont.';
-$wb['preview_nav_txt'] = 'Navigatie';
 $wb['preview_login_txt'] = 'Aanmeldscherm';
 $wb['preview_tab_txt'] = 'Tabblad-icoon';
 $wb['preview_failed_txt'] = 'Het voorbeeld kon niet worden vernieuwd. U ziet de laatste versie die de server heeft bevestigd.';
+$wb['preview_panel_txt'] = 'Paneel';
+$wb['hint_more_txt'] = 'Meer over %s';
+$wb['drop_hint_txt'] = 'Kies een bestand of sleep het hierheen.';
+$wb['accent_short_txt'] = 'Accent';
+$wb['rail_short_txt'] = 'Zijbalk';
+$wb['rail_light_short_txt'] = 'Lichte zijbalk';
+$wb['contrast_short_txt'] = 'tekstcontrast';
+$wb['also_used_on_txt'] = 'Ook gebruikt op';
+$wb['preview_nav_home_txt'] = 'Start';
+$wb['preview_nav_sites_txt'] = 'Sites';
+$wb['preview_nav_email_txt'] = 'E-mail';
+$wb['preview_search_txt'] = 'Zoeken';
+$wb['preview_card_title_txt'] = 'Websites';
+$wb['preview_signin_txt'] = 'Aanmelden';
 
 $wb['login_head_txt'] = 'Aanmeldscherm';
 $wb['custom_login_text_txt'] = 'Tekst aanmeldvoetnoot';
@@ -69,15 +84,15 @@ $wb['custom_login_link_txt'] = 'Link aanmeldvoetnoot';
 
 $wb['visibility_head_txt'] = 'Zichtbaarheid in het paneel';
 $wb['credits_hint_txt'] = 'Deze bepalen de optionele beleefdheidsregels in de voettekst. De open-source licentievermeldingen in de broncode en de documentatie blijven altijd behouden — het uitschakelen van een regel verwijdert deze nooit.';
-$wb['show_ispconfig_credit_txt'] = '"powered by ISPConfig" tonen';
-$wb['show_theme_credit_txt'] = 'De themavermelding tonen';
-$wb['show_version_txt'] = 'De softwareversie tonen';
+$wb['show_ispconfig_credit_txt'] = 'Voettekstvermelding: ISPConfig';
+$wb['show_theme_credit_txt'] = 'Voettekstvermelding: het ontwerp';
+$wb['show_version_txt'] = 'Softwareversie';
 $wb['show_version_hint_txt'] = 'Het gedeelte "Over ISPConfig" en de versieregel onder Help. Het verbergen geldt voor elke beheerder — ook voor uzelf — zodat demo’s overzichtelijk blijven (een merkbewust thema verbergt het visueel; de pagina zelf blijft bereikbaar via de directe URL).';
-$wb['show_news_feed_txt'] = 'De nieuwsfeed tonen';
+$wb['show_news_feed_txt'] = 'Nieuwsfeed';
 $wb['show_news_feed_hint_txt'] = 'De zijbalk "Laatste nieuws" op het dashboard (standaard de ISPConfig-projectfeed). Uitschakelen verbergt deze voor elke rol; opnieuw inschakelen herstelt de standaardfeed, maar behoudt eventuele aangepaste feed-URL’s die u hebt ingesteld onder System > Interface Config. Gebruikers zien de wijziging bij hun volgende aanmelding.';
-$wb['show_donation_dashlet_txt'] = 'Het ISPConfig-donatievak tonen';
+$wb['show_donation_dashlet_txt'] = 'Donatievak';
 $wb['show_donation_dashlet_hint_txt'] = 'De donatieoproep die ISPConfig boven aan het dashboard plaatst. Alleen beheerders zien deze — hij wordt nooit aan resellers of klanten getoond — dus dit gaat over uw eigen dashboard, niet over wat uw klanten zien. Uitschakelen schrijft dezelfde instelling als de knop "Verbergen" van ISPConfig, zodat het blok helemaal niet wordt opgebouwd; het verschil is dat deze niet na een jaar verloopt. Zet u hem weer aan, dan verschijnt hij meteen.';
-$wb['show_design_picker_txt'] = 'De Design-keuzelijst in de gebruikersinstellingen tonen';
+$wb['show_design_picker_txt'] = 'Design-keuzelijst';
 $wb['show_design_picker_hint_txt'] = 'De keuzelijst Design onder Tools > User Settings, waar een gebruiker het ontwerp van het paneel kiest. Het verbergen geldt voor elke rol — ook voor de beheerder zelf, zet het hier dus weer aan wanneer u van ontwerp wilt wisselen (een merkbewust thema verbergt het visueel; een geprepareerd verzoek kan het thema nog steeds wijzigen, dit is dus cosmetisch en geen afdwinging).';
 
 $wb['accent_hex_error_regex'] = 'De accentkleur moet een hex-waarde zoals #0065AB zijn.';
@@ -87,7 +102,6 @@ $wb['login_bg_error_regex'] = 'De aanmeldachtergrond moet een hex-waarde zoals #
 $wb['login_link_error_regex'] = 'De link van de aanmeldvoetnoot moet beginnen met http:// of https://.';
 
 $wb['logo_uploaded_txt'] = 'Logo bijgewerkt.';
-$wb['logo_removed_txt'] = 'Logo verwijderd.';
 $wb['logo_bad_type_txt'] = 'Niet-ondersteunde afbeelding. Gebruik SVG (eenvoudig, zonder scripts), PNG, JPEG, GIF of WebP.';
 $wb['logo_too_large_txt'] = 'Die afbeelding is te groot. Houd deze onder de 45 KB — een geoptimaliseerde PNG of WebP werkt het best.';
 $wb['favicon_uploaded_txt'] = 'Favicon bijgewerkt. Browsers bewaren pictogrammen hardnekkig in de cache — blijft het oude hangen, ververs dan met Ctrl+Shift+R of open een nieuw tabblad.';

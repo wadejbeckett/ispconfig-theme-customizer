@@ -16,229 +16,763 @@
      may name a colour that belongs to one design.
 
      Everything is prefixed #nz-brandpage or #pageContent so it beats a design's
-     own rules on specificity rather than with !important, and nothing here
-     styles focus: every design ships a focus indicator and this page must not
-     replace it. */
+     own rules on specificity rather than with !important. Exactly one rule
+     styles focus — the drop zone's, for the reason written beside it — and
+     nothing else on this page may, because every design ships a focus indicator
+     and this page must not replace it.
 
-  /* The two columns. The collapse is measured on the CONTENT column, not the
-     viewport: a rail takes ~232px, so a 1024px window leaves this page far less
-     than 1024px to lay out in and a viewport query would hold two columns in a
-     space that cannot carry them. container-type goes on OUR wrapper — never on
-     #pageContent, which is core's element. The viewport query is the fallback
-     where @container is unsupported, and is set wide enough that it errs toward
-     one column. */
+     Generated from mockup/branding/branding.css, the approved design, by the
+     conversion described in docs/superpowers/plans/2026-09-07-branding-page-design.md.
+     MATERIALS. Four, deliberately distinct, so the page does not read as one
+     card kit repeated five times:
+       1. the proof     — a recessed viewport on the page ground, hairline mount
+       2. the cards     — flat card fill, hairline edge, no shadow
+       3. the drop zone — a control: dashed edge on the input well, control radius
+       4. the switch list and the save bar — no box at all, hairlines only */
+
+  /* ---- the container -------------------------------------------------------
+     The collapse is measured on the CONTENT column, not the viewport: the rail
+     takes ~248px, so a 1000px window leaves this page ~700px to lay out in and a
+     viewport query would hold two columns in a space that cannot carry them. */
   #nz-brandpage { container-type: inline-size; container-name: nzbrand; }
-  #nz-brandpage .nz-brandgrid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 28px; align-items: start; }
-  @container nzbrand (max-width: 900px) {
-    #nz-brandpage .nz-brandgrid { grid-template-columns: minmax(0, 1fr); }
-    #nz-brandpage .nz-brandpreview { order: -1; position: static; }
-  }
-  @supports not (container-type: inline-size) {
-    @media (max-width: 1200px) {
-      #nz-brandpage .nz-brandgrid { grid-template-columns: minmax(0, 1fr); }
-      #nz-brandpage .nz-brandpreview { order: -1; position: static; }
-    }
-  }
-  #nz-brandpage .nz-brandfields { min-width: 0; }
 
-  /* The preview column. Sticky under the topbar, whose height is a design token
-     where one exists. */
-  #nz-brandpage .nz-brandpreview {
-    position: sticky;
-    top: calc(var(--pz-topbar-h, var(--nz-topbar-h, 56px)) + 16px);
-    min-width: 0;
-    padding: 16px;
-    border: 1px solid var(--pz-edge, var(--nz-border, rgba(128,128,128,0.25)));
+  #nz-brandpage .nz-vh {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+    overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+
+  /* ============================================================
+   * 1. THE HERO — "the proof"
+   * The page's one bold object. Everything else on the page is quiet so that
+   * this can be loud: it is the only place in the panel where the thing being
+   * edited and the thing being looked at are the same thing.
+   * ============================================================ */
+
+  #nz-brandpage .nz-hero {
+    margin: 0 0 24px;
+    border: 1px solid var(--pz-edge, var(--nz-border, rgba(128, 128, 128, 0.25)));
     border-radius: var(--pz-radius-card, var(--nz-radius-card, 8px));
     background: var(--pz-glass, var(--nz-card, transparent));
+    overflow: hidden;
   }
-  #nz-brandpage .nz-brandpreview h2 { margin: 0 0 4px; font-size: 16px; font-weight: 600; }
-  #nz-brandpage .nz-brandpreview .help-block { margin: 0 0 14px; }
-  #nz-brandpage .nz-prevpane { margin: 0 0 14px; }
-  #nz-brandpage .nz-prevpane:last-child { margin-bottom: 0; }
-  /* The light-mode rail pane ships hidden and the script reveals it only when
-     rail_hex_light carries a value. [hidden] is the mechanism, so no rule in
-     this block may give .nz-prevpane a display — and this rule restates it at
-     our own specificity, because a design that sets `figure { display: block }`
-     would otherwise beat the browser's own [hidden] rule and leak the pane. */
-  #nz-brandpage .nz-prevpane[hidden] { display: none; }
-  #nz-brandpage .nz-prevpane figcaption {
-    margin: 0 0 6px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+
+  #nz-brandpage .nz-hero-head {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px;
+    padding: 14px 18px 0;
+  }
+  #nz-brandpage .nz-hero-head h2 {
+    margin: 0;
+    font-size: var(--pz-fs-cardtitle, var(--nz-fs-cardtitle, 14px));
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--pz-ink-bright, var(--nz-text-heading, inherit));
+  }
+  #nz-brandpage .nz-hero-hint {
+    margin: 0;
+    font-size: 12px; line-height: 1.45;
     color: var(--pz-ink-muted, var(--nz-text-muted, #6c757d));
   }
+
+  /* The proof itself sits on the PAGE ground, not the card ground: it is a
+     viewport cut into the card, and the ground change is what says so. */
+  #nz-brandpage .nz-proof {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+    gap: 18px;
+    margin: 14px 0 0;
+    padding: 18px;
+    background: var(--pz-ground, var(--nz-page, transparent));
+    border-top: 1px solid var(--pz-edge-soft, var(--nz-border-soft, rgba(128, 128, 128, 0.14)));
+    border-bottom: 1px solid var(--pz-edge-soft, var(--nz-border-soft, rgba(128, 128, 128, 0.14)));
+  }
+
+  #nz-brandpage .nz-prevpane { margin: 0; min-width: 0; }
+  /* The light-mode rail pane ships hidden and the script reveals it only when
+     rail_hex_light carries a value. [hidden] is the mechanism, so no rule here
+     may give .nz-prevpane a display — and this restates it at our own
+     specificity, because a design that sets `figure { display: block }` would
+     otherwise beat the browser's own [hidden] rule and leak the pane. */
+  #nz-brandpage .nz-prevpane[hidden] { display: none; }
+
+  #nz-brandpage .nz-prevpane figcaption {
+    margin: 8px 0 0;
+    font-size: 11px; line-height: 1.3;
+    color: var(--pz-ink-muted, var(--nz-text-muted, #6c757d));
+  }
+
   #nz-brandpage .nz-prevframe {
-    border: 1px solid var(--pz-edge, var(--nz-border, rgba(128,128,128,0.25)));
+    border: 1px solid var(--pz-edge-input, var(--nz-border-strong, rgba(128, 128, 128, 0.45)));
     border-radius: var(--pz-radius-ctl, var(--nz-radius-ctl, 4px));
     overflow: hidden;
   }
-  /* The panes are painted by JS from the operator's own colours; these are the
-     shapes only, so an unset colour still draws a recognisable frame. */
-  #nz-brandpage .nz-prevnav { display: flex; min-height: 92px; }
-  /* position: relative for the accent rule below, which is the rail's own left
-     edge and not a property of any one item in it. */
-  #nz-brandpage .nz-prevnav-rail { position: relative; flex: none; width: 92px; padding: 9px 0; }
-  #nz-brandpage .nz-prevnav-logo { padding: 0 10px 9px; font-size: 11px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ---- the browser tab strip ----
+     The tab-icon preview, put where a tab icon actually lives. It is the one
+     piece of chrome this page draws that is not the panel: one tab, a hairline,
+     nothing else — no window buttons, which would be costume rather than
+     information. */
+  #nz-brandpage .nz-prevtab {
+    display: flex; align-items: flex-end;
+    height: 26px; padding: 0 8px;
+    background: var(--pz-raised, var(--nz-well, rgba(128, 128, 128, 0.10)));
+    border-bottom: 1px solid var(--pz-edge, var(--nz-border, rgba(128, 128, 128, 0.25)));
+  }
+  #nz-brandpage .nz-prevtab-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    max-width: 190px; height: 21px; padding: 0 10px;
+    border: 1px solid var(--pz-edge, var(--nz-border, rgba(128, 128, 128, 0.25)));
+    border-bottom: 0;
+    border-radius: 5px 5px 0 0;
+    background: var(--pz-glass, var(--nz-card, transparent));
+    font-size: 11px; line-height: 1;
+    color: var(--pz-ink-sub, var(--nz-text-secondary, inherit));
+  }
+  #nz-brandpage .nz-prevtab-chip .nz-prev-name {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  #nz-brandpage .nz-prevtab-chip img,
+  #nz-brandpage .nz-prevtab-icon {
+    width: 12px; height: 12px; flex: none; border-radius: 2px;
+  }
+
+  /* ---- the mini panel ---- */
+  #nz-brandpage .nz-prevnav { display: flex; min-height: 178px; }
+
+  /* position:relative for the active marker, which is a child of the item. */
+  #nz-brandpage .nz-prevnav-rail {
+    position: relative; flex: none; width: 116px; padding: 11px 0;
+    font-size: 10px;
+  }
+  #nz-brandpage .nz-prevnav-logo {
+    padding: 0 11px 12px;
+    font-size: 11px; font-weight: 700; line-height: 1.2;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
   /* The brand slot shows the MARK the nav surface resolved to when there is one
      and the panel name when there is not, so the two are mutually exclusive and
      the name carries [hidden]. Restated at our own specificity for the same
-     reason the pane rule below is: a design that gives span a display would
-     otherwise beat the browser's own [hidden] rule and leak the name behind the
-     logo. The cap is the rail's own scale — 92px wide less 10px of padding
-     either side — so a wordmark lands at the size the panel will draw it. */
+     reason the pane rule is. The cap is the rail's own scale, so a wordmark
+     lands at the size the panel will really draw it. */
   #nz-brandpage .nz-prev-name[hidden] { display: none; }
-  #nz-brandpage .nz-prevnav-logo img.nz-prev-navmark { display: block; max-width: 100%; max-height: 22px; width: auto; height: auto; }
-  #nz-brandpage .nz-prevnav-item { position: relative; padding: 3px 10px; font-size: 10px; }
+  #nz-brandpage .nz-prevnav-logo img.nz-prev-navmark {
+    display: block; max-width: 100%; max-height: 20px; width: auto; height: auto;
+  }
+  #nz-brandpage .nz-prevnav-item {
+    position: relative;
+    padding: 5px 11px;
+    line-height: 1.4;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
   #nz-brandpage .nz-prevnav-item.is-active { font-weight: 600; }
-  /* The accent rule. It marks the RAIL, full height at its left edge, rather
-     than the active item: the items in this pane are placeholder bars with no
-     text in them, and a 2px stub beside one blank row read as a text cursor
-     sitting in the pane. currentColor because the JS paints .nz-prev-accent-rule
-     with the operator's accent through style.color, exactly as it did when this
-     was the item's ::before; the declared colour is what it looks like before
-     any accent is set, and is a token chain like every other colour here. */
+  /* The active marker. It is an element rather than a ::before because the JS
+     paints it through style.color, and the rail itself already carries the
+     measured rail INK on that property. The declared colour is what it looks
+     like before any accent is set. */
   #nz-brandpage .nz-prev-accent-rule {
     position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-    color: var(--pz-accent, var(--nz-blue-400, #0065AB));
+    color: var(--pz-accent, var(--nz-accent, #0065AB));
     background: currentColor;
   }
-  #nz-brandpage .nz-prevnav-body { flex: 1 1 auto; padding: 10px; background: var(--pz-ground, var(--nz-page, #ffffff)); }
-  #nz-brandpage .nz-prevbar { height: 7px; margin-bottom: 6px; border-radius: 2px; background: var(--pz-raised, var(--nz-card, rgba(128,128,128,0.18))); }
-  /* The light-mode pane depicts a design's LIGHT colour mode, so its ground is
-     a literal and not --pz-ground: under a dark design that token is dark, and
-     a light rail on a dark ground depicts neither mode. A literal is safe here
-     in a way it would never be on a rail — this is the module's own preview
-     chrome, not ink whose contrast anything is measured against. The value is
-     the stock theme's own page grey, which is what preview.inc.php already
-     falls back to when it draws a light swatch. */
-  #nz-brandpage .nz-prev-light-pane .nz-prevnav-body { background: #F2F5F7; }
-  /* ...and so do the placeholder bars on it, for the same reason: --pz-raised
-     under a dark design is a near-black chip, which on a light ground depicts
-     nothing anyone's light mode looks like. */
-  #nz-brandpage .nz-prev-light-pane .nz-prevbar { background: #DCE3E8; }
+
+  #nz-brandpage .nz-prevnav-body {
+    flex: 1 1 auto; min-width: 0;
+    background: var(--pz-ground, var(--nz-page, #ffffff));
+  }
+  #nz-brandpage .nz-prevtop {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--pz-edge-soft, var(--nz-border-soft, rgba(128, 128, 128, 0.14)));
+  }
+  #nz-brandpage .nz-prevsearch {
+    flex: 1 1 auto; min-width: 0;
+    padding: 3px 8px;
+    border: 1px solid var(--pz-edge-input, var(--nz-border-strong, rgba(128, 128, 128, 0.45)));
+    border-radius: var(--pz-radius-ctl, var(--nz-radius-ctl, 4px));
+    background: var(--pz-raised, var(--nz-well, transparent));
+    font-size: 10px; line-height: 1.5;
+    color: var(--pz-ink-faint, var(--nz-text-disabled, #6c757d));
+  }
+  #nz-brandpage .nz-prevuser {
+    flex: none;
+    padding: 3px 9px;
+    border: 1px solid var(--pz-edge, var(--nz-border, rgba(128, 128, 128, 0.25)));
+    border-radius: var(--pz-radius-pill, var(--nz-radius-pill, 999px));
+    font-size: 9.5px; line-height: 1.5;
+    color: var(--pz-ink-sub, var(--nz-text-secondary, inherit));
+  }
+  #nz-brandpage .nz-prevbody { padding: 12px 10px; }
+  #nz-brandpage .nz-prevcard {
+    padding: 10px;
+    border: 1px solid var(--pz-edge, var(--nz-border, rgba(128, 128, 128, 0.25)));
+    border-radius: var(--pz-radius-ctl, var(--nz-radius-ctl, 4px));
+    background: var(--pz-glass, var(--nz-card, transparent));
+  }
+  #nz-brandpage .nz-prevcard-head {
+    margin-bottom: 8px;
+    font-size: 10.5px; font-weight: 600;
+    color: var(--pz-ink-bright, var(--nz-text-heading, inherit));
+  }
+  #nz-brandpage .nz-prevbar {
+    height: 7px; margin-bottom: 6px; border-radius: 2px;
+    background: var(--pz-raised, var(--nz-raised, rgba(128, 128, 128, 0.18)));
+  }
   #nz-brandpage .nz-prevbar.w60 { width: 60%; }
   #nz-brandpage .nz-prevbar.w40 { width: 40%; }
-  #nz-brandpage .nz-prevbtn { display: inline-block; margin-top: 4px; padding: 3px 9px; border-radius: 3px; font-size: 10px; font-weight: 700; }
-  #nz-brandpage .nz-prevlogin { padding: 16px; text-align: center; }
-  #nz-brandpage .nz-prevlogin-name { margin-bottom: 8px; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  #nz-brandpage .nz-prevlogin-card {
-    padding: 10px; border-radius: var(--pz-radius-ctl, var(--nz-radius-ctl, 4px));
-    border: 1px solid var(--pz-edge, var(--nz-border, rgba(128,128,128,0.25)));
+  #nz-brandpage .nz-prevbtn {
+    display: inline-block; margin-top: 8px; padding: 4px 10px;
+    border-radius: var(--pz-radius-ctl, var(--nz-radius-ctl, 4px));
+    font-size: 9.5px; font-weight: 700; line-height: 1.4;
+    letter-spacing: 0.04em;
   }
-  #nz-brandpage .nz-prevfield { height: 18px; margin-bottom: 6px; border-radius: 3px; background: var(--pz-raised, var(--nz-card, rgba(128,128,128,0.18))); }
-  #nz-brandpage .nz-prevtab { display: flex; align-items: center; padding: 10px 12px; }
-  #nz-brandpage .nz-prevtab-chip {
-    display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px;
-    border-radius: 5px 5px 0 0; font-size: 11px;
-    background: var(--pz-raised, var(--nz-card, rgba(128,128,128,0.18)));
-  }
-  #nz-brandpage .nz-prevtab-chip img, #nz-brandpage .nz-prevtab-chip .nz-prevtab-icon { width: 16px; height: 16px; flex: none; border-radius: 3px; }
-  /* The ratio readouts: a number, tabular so it does not jump while typing. */
-  #nz-brandpage .nz-ratio { font-variant-numeric: tabular-nums; }
 
-  /* One block per logo variant: the mark on the background it is FOR, beside the
-     file input, the buttons and the by-reference path — so "which artwork, for
-     which background" is one decision an operator can check by eye. */
-  #nz-brandpage .nz-upload {
-    display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 14px;
-    padding: 4px 0 14px;
+  /* ---- the login pull ---- */
+  #nz-brandpage .nz-prevlogin {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 204px; padding: 18px 16px;
   }
-  /* The rule BETWEEN blocks, written as an adjacent-sibling rule rather than as
-     a border on every block cancelled by :first-of-type — :first-of-type
-     compares against every div sibling in the fieldset, and the two .form-group
-     rows above these blocks are divs too, so the first .nz-upload is never the
-     first div of its type and the cancelling rule would never match. */
-  #nz-brandpage .nz-upload + .nz-upload {
-    padding-top: 14px;
-    border-top: 1px solid var(--pz-edge-soft, var(--nz-border-soft, rgba(128,128,128,0.25)));
+  #nz-brandpage .nz-prevlogin-name {
+    max-width: 100%; margin-bottom: 10px;
+    font-size: 13px; font-weight: 600; line-height: 1.3;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  #nz-brandpage .nz-upload > h3 { grid-column: 1 / -1; margin: 0 0 2px; font-size: 15px; font-weight: 700; }
-  #nz-brandpage .nz-upload > .help-block { grid-column: 1 / -1; margin: 0 0 4px; }
-  #nz-brandpage .nz-upload-mark { min-width: 0; }
-  /* The swatch markup inside this column is GENERATED in lib/preview.inc.php
-     and injected three ways — by tform on load, by the uploader driver after an
-     upload, and by the preview endpoint as the operator types — so its sizing
-     has to be a rule here rather than an inline style there: an inline
-     max-width beats every selector, and the 220px cap that used to ride on the
-     <img> forced this 108px column's content wider than the column and painted
-     the mark over the upload controls beside it. preview.inc.php still writes
-     the per-swatch background, edge and caption ink inline, because those are
-     measured values rather than styling. */
-  #nz-brandpage .nz-marks { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
-  #nz-brandpage .nz-marks img { max-width: 100%; max-height: 48px; width: auto; height: auto; vertical-align: bottom; }
+  #nz-brandpage .nz-prevlogin-name img.nz-prev-navmark {
+    display: block; max-width: 150px; max-height: 24px; width: auto; height: auto;
+  }
+  #nz-brandpage .nz-prevlogin-card {
+    width: 100%; max-width: 190px; padding: 12px;
+    border: 1px solid var(--pz-edge, var(--nz-border, rgba(128, 128, 128, 0.25)));
+    border-radius: var(--pz-radius-card, var(--nz-radius-card, 8px));
+    background: var(--pz-glass, var(--nz-card, transparent));
+    text-align: center;
+  }
+  #nz-brandpage .nz-prevfield {
+    height: 18px; margin-bottom: 7px;
+    border-radius: var(--pz-radius-ctl, var(--nz-radius-ctl, 4px));
+    background: var(--pz-raised, var(--nz-well, rgba(128, 128, 128, 0.18)));
+    border: 1px solid var(--pz-edge-soft, var(--nz-border-soft, rgba(128, 128, 128, 0.14)));
+  }
+  #nz-brandpage .nz-prevlogin-card .nz-prevbtn { display: block; margin-top: 10px; }
+
+  /* ============================================================
+   * 2. THE LEGEND — the proof's colour bar
+   * Under the pull, the way a press sheet carries its colour bar on the
+   * trailing edge: the two marks as supplied, the panel name, the light-mode
+   * rail when there is one, and the three colours as measured values.
+   * It sits AFTER the proof in the DOM as well as under it, which is also what
+   * keeps the preview script's first-match painting on the pull rather than on
+   * a swatch.
+   * ============================================================ */
+
+  #nz-brandpage .nz-legend {
+    display: flex; flex-wrap: wrap; align-items: stretch;
+    padding: 0 18px;
+  }
+  #nz-brandpage .nz-legend-cell {
+    display: flex; flex-direction: column; justify-content: center;
+    gap: 8px;
+    padding: 14px 20px;
+    border-left: 1px solid var(--pz-edge-soft, var(--nz-border-soft, rgba(128, 128, 128, 0.14)));
+  }
+  #nz-brandpage .nz-legend-cell:first-child { padding-left: 0; border-left: 0; }
+  #nz-brandpage .nz-legend-colours { margin-left: auto; padding-right: 0; }
+
+  #nz-brandpage .nz-legend-label {
+    margin: 0;
+    font-size: 11px; line-height: 1.3;
+    color: var(--pz-ink-muted, var(--nz-text-muted, #6c757d));
+  }
+  #nz-brandpage .nz-legend-brandname {
+    margin: 0;
+    font-size: 17px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.25;
+    color: var(--pz-ink-bright, var(--nz-text-heading, inherit));
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  /* The status facts. Separated by hairlines rather than by middle dots: three
+     independent facts, not one sentence. */
+  #nz-brandpage .nz-facts {
+    display: flex; flex-wrap: wrap; margin: 0;
+    font-size: 11.5px; line-height: 1.4;
+    color: var(--pz-ink-muted, var(--nz-text-muted, #6c757d));
+  }
+  #nz-brandpage .nz-facts > span { padding: 0 10px; border-left: 1px solid var(--pz-edge, var(--nz-border, rgba(128, 128, 128, 0.25))); }
+  #nz-brandpage .nz-facts > span:first-child { padding-left: 0; border-left: 0; }
+
+  /* The two supplied marks, each on the ground it is for. The swatch markup is
+     GENERATED in lib/preview.inc.php and injected three ways — by tform on load,
+     by the uploader driver, and by the preview endpoint as the operator types —
+     so its sizing has to be a rule here rather than an inline style there. */
+  #nz-brandpage .nz-marks-pair { display: flex; flex-wrap: wrap; gap: 10px; }
+  #nz-brandpage .nz-marks { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start; }
+  #nz-brandpage .nz-marks img { max-width: 100%; max-height: 34px; width: auto; height: auto; vertical-align: bottom; }
   #nz-brandpage .nz-markcap {
-    display: block; max-width: 100%; margin-top: 6px; font-size: 11px; line-height: 1.3;
+    display: block; max-width: 136px; margin-top: 6px;
+    font-size: 11px; line-height: 1.3;
   }
-  /* The swatches for every surface AFTER the first, in a wrapping row of their
-     own spanning both columns under the block. The column beside the uploader is
-     108px wide and one variant can serve three surfaces on a panel with both
-     designs installed, so a single container stacked them vertically and ran
-     down over the path field below. :empty is what keeps a variant with nothing
-     more to say from opening an empty grid row — which is also why the slot is
-     written on one line in the markup, with no whitespace inside it to defeat
-     the selector. The per-swatch cap stops one long caption stretching a swatch
-     across the row. */
-  #nz-brandpage .nz-upload-more { grid-column: 1 / -1; }
+
+  /* The colour bar. The chip is pure colour and the value sits under it in page
+     ink, so nothing here depends on the module measuring an ink for a swatch. */
+  #nz-brandpage .nz-brandchips { display: flex; gap: 12px; }
+  #nz-brandpage .nz-brandchip { min-width: 0; }
+  #nz-brandpage .nz-brandchip-swatch {
+    display: block; width: 56px; height: 28px;
+    border: 1px solid var(--pz-edge, var(--nz-border, rgba(128, 128, 128, 0.25)));
+    border-radius: var(--pz-radius-ctl, var(--nz-radius-ctl, 4px));
+  }
+  #nz-brandpage .nz-brandchip-hex {
+    display: block; margin-top: 6px;
+    font-family: var(--pz-mono, var(--nz-font-mono, monospace));
+    font-size: 11px; font-variant-numeric: tabular-nums; line-height: 1.3;
+    color: var(--pz-ink-sub, var(--nz-text-secondary, inherit));
+  }
+  #nz-brandpage .nz-brandchip-name {
+    display: block; margin-top: 1px;
+    font-size: 11px; line-height: 1.3;
+    color: var(--pz-ink-muted, var(--nz-text-muted, #6c757d));
+  }
+
+  /* The light-mode rail sample, shown only when rail_hex_light carries a value. */
+  #nz-brandpage .nz-legend .nz-prevpane .nz-prevframe { border-color: var(--pz-edge, var(--nz-border, rgba(128, 128, 128, 0.25))); }
+  #nz-brandpage .nz-railsample { display: flex; width: 132px; }
+  #nz-brandpage .nz-railsample .nz-prevnav-rail { width: 76px; min-height: 46px; padding: 7px 0; }
+  #nz-brandpage .nz-railsample .nz-prevnav-logo { padding: 0 8px 5px; font-size: 9px; }
+  #nz-brandpage .nz-railsample .nz-prevnav-logo img.nz-prev-navmark { max-height: 12px; }
+  #nz-brandpage .nz-railsample .nz-prevnav-item { padding: 2px 8px; font-size: 8.5px; }
+  #nz-brandpage .nz-railsample .nz-prev-lightbody { flex: 1 1 auto; background: #F2F5F7; }
+  #nz-brandpage .nz-legend .nz-prevpane figcaption { margin-top: 6px; }
+
+  /* ============================================================
+   * 3. THE CARDS
+   * ============================================================ */
+
+  #nz-brandpage .nz-cards {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 20px;
+    align-items: start;
+  }
+  #nz-brandpage .nz-col { display: grid; gap: 20px; min-width: 0; }
+
+  #nz-brandpage .nz-card {
+    min-width: 0;
+    margin: 0 0 20px;
+    padding: 0 18px 18px;
+    border: 1px solid var(--pz-edge, var(--nz-border, rgba(128, 128, 128, 0.25)));
+    border-radius: var(--pz-radius-card, var(--nz-radius-card, 8px));
+    background: var(--pz-glass, var(--nz-card, transparent));
+  }
+  #nz-brandpage .nz-col .nz-card,
+  #nz-brandpage .nz-cards > .nz-card { margin-bottom: 0; }
+  /* Visibility is a list of six, not a column of two: it spans both. */
+  #nz-brandpage .nz-card-wide { grid-column: 1 / -1; }
+
+  /* The card's title is the fieldset's own legend, so the screen-reader
+     structure and the existing wordbook keys survive. It is given the panel's
+     card-title voice rather than the tracked-caps legend voice: these are cards,
+     not inline field groups, and a caps eyebrow over every one of five cards is
+     chrome rather than information. */
+  #nz-brandpage .nz-card > legend {
+    display: block; box-sizing: border-box;
+    float: left; clear: both;
+    width: calc(100% + 36px);
+    margin: 0 -18px 14px;
+    padding: 13px 18px;
+    border: 0;
+    border-bottom: 1px solid var(--pz-edge-soft, var(--nz-border-soft, rgba(128, 128, 128, 0.14)));
+    font-size: var(--pz-fs-cardtitle, var(--nz-fs-cardtitle, 14px));
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: normal;
+    line-height: 1.3;
+    color: var(--pz-ink-bright, var(--nz-text-heading, inherit));
+  }
+
+  /* A floated legend needs its own clearance before the first field row. */
+  #nz-brandpage .nz-card > legend + * { clear: both; }
+
+  /* ---- field rows inside a card ----
+     Inside these cards a 3/9 split leaves nothing for the control — the right
+     column is 380px wide — so the label sits above it. Bootstrap's grid is
+     untouched everywhere else on the panel; this is scoped to our wrapper. */
+  #nz-brandpage .nz-card .form-group {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 5px 8px;
+    margin: 0 0 16px;
+  }
+  #nz-brandpage .nz-card .form-group:last-child { margin-bottom: 0; }
+  #nz-brandpage .nz-card .form-group > label.control-label,
+  #nz-brandpage .nz-card .form-group > .col-sm-3 {
+    grid-column: 1; grid-row: 1;
+    width: auto; float: none; padding: 0; text-align: left;
+  }
+  #nz-brandpage .nz-card .form-group > .col-sm-9,
+  #nz-brandpage .nz-card .form-group > .col-sm-6 {
+    grid-column: 1 / -1; grid-row: 2;
+    width: auto; float: none; padding: 0;
+    min-width: 0;
+  }
+  #nz-brandpage .nz-card .form-group > .nz-hint { grid-column: 2; grid-row: 1; justify-self: end; }
+
+  #nz-brandpage .nz-card .help-block { margin: 6px 0 0; }
+
+  /* ---- the "?" disclosure ----
+     A native <details>, so it needs no script and no ARIA of its own. Every
+     paragraph of help on the old page became one of these, or a single muted
+     line where the sentence was short enough to just say. */
+  #nz-brandpage .nz-hint { display: inline-block; margin: 0; }
+  #nz-brandpage .nz-hint > summary {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px;
+    border: 1px solid var(--pz-edge-input, var(--nz-border-strong, rgba(128, 128, 128, 0.45)));
+    border-radius: var(--pz-radius-pill, var(--nz-radius-pill, 999px));
+    font-size: 11px; font-weight: 600; line-height: 1;
+    color: var(--pz-ink-muted, var(--nz-text-muted, #6c757d));
+    cursor: pointer;
+    list-style: none;
+  }
+  #nz-brandpage .nz-hint > summary::-webkit-details-marker { display: none; }
+  #nz-brandpage .nz-hint > summary::marker { content: ''; }
+  #nz-brandpage .nz-hint[open] > summary {
+    border-color: var(--pz-accent, var(--nz-accent, #0065AB));
+    color: var(--pz-ink-base, var(--nz-text, inherit));
+  }
+  #nz-brandpage .nz-hint > p {
+    margin: 8px 0 0;
+    padding: 9px 11px;
+    border-left: 2px solid var(--pz-edge-input, var(--nz-border-strong, rgba(128, 128, 128, 0.45)));
+    background: var(--pz-raised, var(--nz-well, rgba(128, 128, 128, 0.06)));
+    font-size: 12px; line-height: 1.5;
+    color: var(--pz-ink-sub, var(--nz-text-secondary, inherit));
+  }
+  /* Opened from the label row, the text belongs to the whole row and must not be
+     squeezed into the label's grid column. */
+  #nz-brandpage .nz-card .form-group > .nz-hint[open] { grid-column: 1 / -1; grid-row: 3; justify-self: stretch; }
+  #nz-brandpage .nz-card .form-group > .nz-hint[open] > summary { margin-bottom: 0; }
+
+  /* A hint opened from a row that is not a .form-group grid — a block heading or
+     the pair intro — takes the whole row rather than sitting in the flex line. */
+  #nz-brandpage .nz-introrow {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px;
+    margin: 0 0 14px;
+  }
+  #nz-brandpage .nz-introrow > .help-block { flex: 1 1 240px; margin: 0; }
+  #nz-brandpage .nz-introrow > .nz-hint[open],
+  #nz-brandpage .nz-upload-head > .nz-hint[open] { flex: 1 0 100%; }
+
+  /* ---- the mark blocks ---- */
+  #nz-brandpage .nz-upload { padding: 0 0 16px; }
+  #nz-brandpage .nz-upload + .nz-upload,
+  #nz-brandpage .nz-upload + .form-group {
+    padding-top: 16px;
+    border-top: 1px solid var(--pz-edge-soft, var(--nz-border-soft, rgba(128, 128, 128, 0.14)));
+  }
+  #nz-brandpage .nz-upload:last-child { padding-bottom: 0; }
+  #nz-brandpage .nz-upload-head {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px;
+    margin: 0 0 10px;
+  }
+  #nz-brandpage .nz-upload h3 {
+    margin: 0;
+    font-size: 13px; font-weight: 600; line-height: 1.3;
+    color: var(--pz-ink-bright, var(--nz-text-heading, inherit));
+  }
+  #nz-brandpage .nz-upload > .help-block { margin: 0 0 10px; }
+
+  #nz-brandpage .nz-drop-row {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px;
+    margin-top: 9px;
+  }
+  #nz-brandpage .nz-drop-row .btn { flex: none; }
+
+  /* Every surface after the first, as a wrapping strip under the block, plus the
+     borrowed-variant note. :empty is what keeps a variant with nothing more to
+     say from opening an empty row — which is why the slot is written on one line
+     in the markup, with no whitespace inside it to defeat the selector. */
+  #nz-brandpage .nz-upload > .form-group { margin-top: 14px; }
+  #nz-brandpage .nz-upload-more { margin-top: 12px; }
+  #nz-brandpage .nz-upload-more + .nz-drop { margin-top: 12px; }
   #nz-brandpage .nz-upload-more:empty { display: none; }
   #nz-brandpage .nz-upload-more .nz-marks > span { max-width: 220px; }
   #nz-brandpage .nz-upload-more .help-block { margin: 8px 0 0; }
-  /* The paragraph introducing the two logo blocks, full width above the first
-     of them. */
-  #nz-brandpage .nz-blockintro { margin: 0 0 10px; }
-  #nz-brandpage .nz-upload-fields { min-width: 0; }
-  #nz-brandpage .nz-upload-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 8px; }
-  /* The only place Bootstrap's own columns are overridden, and only inside our
-     block: at this width a 3/9 split leaves nothing for the control, so the
-     label sits above it. The grid itself is untouched everywhere else. */
-  #nz-brandpage .nz-upload-fields .col-sm-3,
-  #nz-brandpage .nz-upload-fields .col-sm-6,
-  #nz-brandpage .nz-upload-fields .col-sm-9 { width: auto; float: none; padding-left: 0; padding-right: 0; text-align: left; }
-  #nz-brandpage .nz-upload-fields .col-sm-9 { width: 100%; }
+  #nz-brandpage .nz-upload-more .nz-marks img { max-height: 26px; }
+  #nz-brandpage .nz-surfacelabel {
+    display: block; margin: 0 0 6px;
+    font-size: 11px; line-height: 1.3;
+    color: var(--pz-ink-muted, var(--nz-text-muted, #6c757d));
+  }
 
-  /* The hex fields keep their swatch on one line (form-control is a 100%-width
-     block in the stock theme and in clarity). */
-  #pageContent input.nz-hexfield { display: inline-block; width: 9.5em; vertical-align: middle; }
+  /* ---- colour rows: chip, value, measurement, on one line ---- */
+  #nz-brandpage .nz-colourrow {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  }
   #pageContent input.nz-hexpick {
-    width: 48px; height: 36px; padding: 2px 3px; margin-left: 8px; vertical-align: middle;
-    border: 1px solid var(--pz-edge-input, var(--nz-border-strong, rgba(128,128,128,0.45)));
+    flex: none; width: 44px; height: var(--pz-ctl-h, var(--nz-ctl-h, 36px));
+    padding: 3px; margin: 0;
+    border: 1px solid var(--pz-edge-input, var(--nz-border-strong, rgba(128, 128, 128, 0.45)));
     border-radius: var(--pz-radius-ctl, var(--nz-radius-ctl, 4px));
     background: none; cursor: pointer;
+    vertical-align: middle;
   }
   /* An <input type=color> can only ever hold a colour, so when the text field
      beside it holds something that is not one the picker is still showing the
-     last value that WAS — a colour the field no longer says. Dimming it is the
-     only honest thing available: the swatch stops asserting a value while the
-     field is unreadable, and nothing is written into the field, which stays
-     exactly as it was typed for the operator to correct. Opacity only, so no
-     colour is named here and the control keeps its own edge. */
+     last value that WAS. Dimming it is the only honest thing available; nothing
+     is written into the field, which stays exactly as it was typed. */
   #pageContent input.nz-hexpick.nz-hexpick-stale { opacity: 0.35; }
-  /* A field the server rejected. Marked here as well as in the banner, because
-     a banner at the top of a two-column page does not say WHICH control. */
+  #pageContent input.nz-hexfield {
+    flex: none; width: 8.4em;
+    font-family: var(--pz-mono, var(--nz-font-mono, monospace));
+    font-variant-numeric: tabular-nums;
+    text-transform: uppercase;
+    vertical-align: middle;
+  }
+  /* The measurement is the answer to the question the colour raises, so it sits
+     on the colour's own line rather than in a paragraph somewhere below it. */
+  #nz-brandpage .nz-measure {
+    flex: 1 1 auto; min-width: 0; margin: 0;
+    font-size: 11.5px; line-height: 1.4; white-space: nowrap;
+    color: var(--pz-ink-muted, var(--nz-text-muted, #6c757d));
+  }
+  /* A number, tabular so it does not jump while typing. */
+  #nz-brandpage .nz-ratio {
+    font-family: var(--pz-mono, var(--nz-font-mono, monospace));
+    font-variant-numeric: tabular-nums;
+    color: var(--pz-ink-sub, var(--nz-text-secondary, inherit));
+  }
+  #nz-brandpage .nz-inherited { display: block; }
+
+  /* ---- the switch list ----
+     Six settings, laid out as a list of switches rather than as six form rows
+     with a checkbox in the middle of a 9-column well. No box per cell: hairlines
+     only, so the group reads as one list and not as six more cards. */
+  #nz-brandpage .nz-switchgrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 28px;
+  }
+  #nz-brandpage .nz-switchgrid .form-group {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+    margin: 0;
+    padding: 11px 0;
+    border-top: 1px solid var(--pz-edge-soft, var(--nz-border-soft, rgba(128, 128, 128, 0.14)));
+  }
+  /* The first row of the grid has the legend's own rule above it already. */
+  #nz-brandpage .nz-switchgrid .form-group:nth-child(-n + 3) { border-top: 0; padding-top: 2px; }
+  #nz-brandpage .nz-switchgrid .form-group > label.control-label,
+  #nz-brandpage .nz-switchgrid .form-group > .col-sm-3 {
+    order: 1; flex: 1 1 auto; min-width: 0;
+    width: auto; float: none; padding: 0; margin: 0; text-align: left;
+  }
+  #nz-brandpage .nz-switchgrid .form-group > .col-sm-9 {
+    order: 3; flex: none;
+    width: auto; float: none; padding: 0;
+  }
+  #nz-brandpage .nz-switchgrid .form-group > .nz-hint { order: 2; flex: none; }
+  #nz-brandpage .nz-switchgrid .form-group > .nz-hint[open] { order: 4; flex: 1 0 100%; }
+
+  /* The switch. tform emits a bare <input type="checkbox">, so the track is the
+     input itself and the thumb is a sibling — a pseudo-element on an input is
+     not rendered at all in some engines, and this control must not depend on
+     one. Nothing here touches focus: the input keeps whatever indicator the
+     active design gives it. */
+  #nz-brandpage .nz-switch { position: relative; display: inline-flex; flex: none; }
+  #nz-brandpage .nz-switch input[type='checkbox'] {
+    -webkit-appearance: none; appearance: none;
+    width: 38px; height: 21px; margin: 0; padding: 0;
+    border: 1px solid var(--pz-edge-input, var(--nz-border-strong, rgba(128, 128, 128, 0.45)));
+    border-radius: var(--pz-radius-pill, var(--nz-radius-pill, 999px));
+    background: var(--pz-raised, var(--nz-well, rgba(128, 128, 128, 0.10)));
+    cursor: pointer;
+    transition: background var(--pz-fast, var(--nz-quick, 0.16s)) var(--pz-ease, var(--nz-ease, ease)),
+                border-color var(--pz-fast, var(--nz-quick, 0.16s)) var(--pz-ease, var(--nz-ease, ease));
+  }
+  #nz-brandpage .nz-switch input[type='checkbox']:checked {
+    background: var(--pz-accent, var(--nz-action, #0065AB));
+    border-color: var(--pz-accent, var(--nz-action, #0065AB));
+  }
+  #nz-brandpage .nz-switch-thumb {
+    position: absolute; left: 3px; top: 3px;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: var(--pz-glass, var(--nz-card, #ffffff));
+    border: 1px solid var(--pz-edge, var(--nz-border, rgba(128, 128, 128, 0.25)));
+    pointer-events: none;
+    transition: transform var(--pz-fast, var(--nz-quick, 0.16s)) var(--pz-ease, var(--nz-ease, ease));
+  }
+  #nz-brandpage .nz-switch input[type='checkbox']:checked ~ .nz-switch-thumb {
+    transform: translateX(17px);
+    background: var(--pz-on-accent, var(--nz-text-on-action, #ffffff));
+    border-color: transparent;
+  }
+  #nz-brandpage .nz-switch input[type='checkbox']:disabled { opacity: 0.45; cursor: default; }
+  @media (prefers-reduced-motion: reduce) {
+    #nz-brandpage .nz-switch input[type='checkbox'],
+    #nz-brandpage .nz-switch-thumb { transition: none; }
+  }
+
+  /* ============================================================
+   * 4. VALIDATION AND THE SAVE BAR
+   * ============================================================ */
+
+  /* A field the server rejected. Marked here as well as in the banner, because a
+     banner at the top of the page does not say WHICH control. */
   #pageContent .nz-invalid input.form-control,
   #pageContent .nz-invalid select.form-control {
     border-color: var(--pz-danger, var(--nz-danger, #d9534f));
   }
   #pageContent .nz-fielderror { margin-top: 4px; color: var(--pz-danger, var(--nz-danger-text, #d9534f)); }
 
-  #nz-brandpage .nz-actions { margin-top: 18px; text-align: right; }
-
-  @media (max-width: 767px) {
-    #nz-brandpage .nz-upload { grid-template-columns: minmax(0, 1fr); }
+  /* The save bar. Sticky, on the page ground with a hairline over it — the same
+     shape clarity gives every other form footer in the panel, so the one control
+     an operator looks for is where they already expect it.
+     The background chain ends in a real colour, not `transparent`: a design that
+     ships no tokens (classic does not) would otherwise let the form scroll
+     through the buttons. Same terminal fallback as .nz-prevnav-body above. */
+  #nz-brandpage .nz-actions {
+    position: sticky; bottom: 0; z-index: 5;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+    margin-top: 22px;
+    padding: 12px 0;
+    border-top: 1px solid var(--pz-edge, var(--nz-border, rgba(128, 128, 128, 0.25)));
+    background: var(--pz-ground, var(--nz-page, #ffffff));
   }
+  #nz-brandpage .nz-actions .nz-saveflash { flex: 1 1 auto; min-width: 0; }
+  /* Empty until a save lands, and it must not open a gap before then. */
+  #nz-brandpage .nz-actions .nz-saveflash:empty { flex: 1 1 auto; }
+  #nz-brandpage .nz-actions .nz-saveflash .alert {
+    margin: 0; padding: 7px 12px; font-size: 12.5px; line-height: 1.4;
+  }
+  #nz-brandpage .nz-actions .btn { flex: none; margin: 0; }
+  /* Primary outermost, matching the login card and every other form footer. */
+  #nz-brandpage .nz-actions .nz-actions-btns { display: flex; flex-direction: row-reverse; gap: 8px; margin-left: auto; }
 
-  /* One flash of the preview panes after a save, so "Changes saved" is not the
-     only signal that the panes now describe stored values. It only ADDS a ring
-     and takes nothing away, which is why it is safe to gate on reduced motion:
-     under `reduce` the rule simply never applies and the panes render normally.
-     Nothing here may ever hide an element to animate it back — that is the
-     regression this project fixed at v3.1.1, where a reduced-motion visitor got
-     `opacity: 0` with nothing left to animate. */
+  /* One flash of the proof after a save, so "Changes saved" is not the only
+     signal that the picture now describes stored values. It only ADDS a ring and
+     takes nothing away, which is why it is safe to gate on reduced motion: under
+     `reduce` the rule simply never applies and the panes render normally.
+     Nothing here may ever hide an element to animate it back. */
   @media (prefers-reduced-motion: no-preference) {
     @keyframes nzPreviewFlash {
-      from { box-shadow: 0 0 0 2px var(--pz-accent, var(--nz-blue-400, #0065AB)); }
+      from { box-shadow: 0 0 0 2px var(--pz-accent, var(--nz-accent, #0065AB)); }
       to   { box-shadow: 0 0 0 2px transparent; }
     }
     #nz-brandpage .nz-prevframe.nz-flash { animation: nzPreviewFlash 600ms ease-out 1; }
   }
+
+  /* ============================================================
+   * 5. THE COLLAPSE
+   * Measured on our own wrapper. The viewport query is the fallback where
+   * @container is unsupported, and is set wide enough that it errs toward one
+   * column.
+   * ============================================================ */
+
+  @container nzbrand (max-width: 900px) {
+    #nz-brandpage .nz-proof { grid-template-columns: minmax(0, 1fr); }
+    #nz-brandpage .nz-cards { grid-template-columns: minmax(0, 1fr); }
+    #nz-brandpage .nz-switchgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #nz-brandpage .nz-switchgrid .form-group:nth-child(-n + 3) { border-top: 1px solid var(--pz-edge-soft, var(--nz-border-soft, rgba(128, 128, 128, 0.14))); padding-top: 11px; }
+    #nz-brandpage .nz-switchgrid .form-group:nth-child(-n + 2) { border-top: 0; padding-top: 2px; }
+    #nz-brandpage .nz-legend-colours { margin-left: 0; padding-right: 20px; }
+    #nz-brandpage .nz-legend-cell { padding-top: 12px; padding-bottom: 12px; }
+  }
+
+  @container nzbrand (max-width: 560px) {
+    #nz-brandpage .nz-switchgrid { grid-template-columns: minmax(0, 1fr); }
+    #nz-brandpage .nz-switchgrid .form-group:nth-child(-n + 3) { border-top: 1px solid var(--pz-edge-soft, var(--nz-border-soft, rgba(128, 128, 128, 0.14))); padding-top: 11px; }
+    #nz-brandpage .nz-switchgrid .form-group:first-child { border-top: 0; padding-top: 2px; }
+    #nz-brandpage .nz-legend-cell { border-left: 0; padding-left: 0; }
+    #nz-brandpage .nz-legend-colours { padding-right: 0; }
+  }
+
+  @supports not (container-type: inline-size) {
+    @media (max-width: 1200px) {
+      #nz-brandpage .nz-proof { grid-template-columns: minmax(0, 1fr); }
+      #nz-brandpage .nz-cards { grid-template-columns: minmax(0, 1fr); }
+      #nz-brandpage .nz-switchgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      /* The dividers follow the column count, so the fallback has to restate
+         them: at two columns the rule above switch 3 opens row 2, and switches
+         1 and 2 are the top row and take none. Without this pair, switch 3
+         renders with no rule while switch 4 has one. */
+      #nz-brandpage .nz-switchgrid .form-group:nth-child(-n + 3) { border-top: 1px solid var(--pz-edge-soft, var(--nz-border-soft, rgba(128, 128, 128, 0.14))); padding-top: 11px; }
+      #nz-brandpage .nz-switchgrid .form-group:nth-child(-n + 2) { border-top: 0; padding-top: 2px; }
+      #nz-brandpage .nz-legend-colours { margin-left: 0; }
+    }
+    @media (max-width: 860px) {
+      #nz-brandpage .nz-switchgrid { grid-template-columns: minmax(0, 1fr); }
+      #nz-brandpage .nz-switchgrid .form-group:nth-child(-n + 3) { border-top: 1px solid var(--pz-edge-soft, var(--nz-border-soft, rgba(128, 128, 128, 0.14))); padding-top: 11px; }
+      #nz-brandpage .nz-switchgrid .form-group:first-child { border-top: 0; padding-top: 2px; }
+      #nz-brandpage .nz-legend-cell { border-left: 0; padding-left: 0; }
+    }
+  }
+
+  /* ============================================================
+   * 6. WHAT SHIPS DIFFERENTLY FROM THE MOCKUP
+   * ============================================================ */
+
+  /* The drop zone is ONE control here rather than a styled file input: a <label>
+     carrying one quiet line, with the real <input type="file"> clipped inside it
+     (.nz-vh). The input is never display:none and never hidden — it keeps its
+     place in the tab order and its accessible name, and a label already opens the
+     picker for the control it wraps, with no script at all. The drop half needs
+     three lines of JS, beside the uploader, because a label is not a native drop
+     target the way a file input is. */
+  #nz-brandpage .nz-drop {
+    position: relative; display: block; box-sizing: border-box;
+    width: 100%; padding: 14px;
+    border: 1px dashed var(--pz-edge-input, var(--nz-border-strong, rgba(128, 128, 128, 0.45)));
+    border-radius: var(--pz-radius-ctl, var(--nz-radius-ctl, 4px));
+    background: var(--pz-raised, var(--nz-well, rgba(128, 128, 128, 0.06)));
+    font-size: 12.5px; font-weight: 400; line-height: 1.6;
+    color: var(--pz-ink-muted, var(--nz-text-muted, #6c757d));
+    cursor: pointer;
+  }
+  /* A dropped file's name can be longer than the zone. */
+  #nz-brandpage .nz-drop-line { display: block; overflow-wrap: anywhere; }
+  #nz-brandpage .nz-drop:hover { border-color: var(--pz-accent, var(--nz-accent, #0065AB)); }
+  /* The ONE focus rule on this page, and the reason it is here rather than left
+     to the design: the control that would carry the design's own indicator is
+     deliberately clipped, so a keyboard user reaching the file input would have
+     nothing on screen telling them where they are. This re-exposes an indicator
+     on the element they can actually see. It replaces nothing — no other control
+     on this page has a focus rule, and none may acquire one. */
+  #nz-brandpage .nz-drop:focus-within {
+    border-style: solid;
+    border-color: var(--pz-accent, var(--nz-accent, #0065AB));
+  }
+  /* Only the two buttons live in this row now: the chosen filename is shown in
+     the zone itself, where the operator dropped it. */
+  #nz-brandpage .nz-drop-row { justify-content: flex-end; }
+
+  /* "Also used on" labels a slot that collapses when it has nothing to say, so
+     the label has to go with it. It cannot live INSIDE the slot — the preview
+     endpoint replaces that slot's innerHTML wholesale and would delete it on the
+     first refresh, and its presence would defeat :empty. :has() is the same
+     mechanism both designs' brand.php already use for the design-picker rule;
+     where it is unsupported the label stands over an empty row, which is untidy
+     rather than broken. */
+  #nz-brandpage .nz-surfacelabel:has(+ .nz-upload-more:empty) { display: none; }
+
+  /* A fact with nothing to say prints nothing — including the hairline that
+     separates it from the next one. logo_upload.php renders this same template
+     with no summary set at all, and three empty dividers would be the only thing
+     its response showed. */
+  #nz-brandpage .nz-facts > span:empty { display: none; }
+
+  /* One disclosure carries two paragraphs: the placement hints, which say the
+     same thing about two surfaces. */
+  #nz-brandpage .nz-hint > p + p { margin-top: 4px; }
+
+  /* markField() appends its message to the rejected input's parentNode, which
+     on a colour row is this flex line rather than a block. Without a basis the
+     message is laid out as one more item on the line and renders beside the
+     contrast readout, vertically centred against it — measured in Chromium at
+     the one-column collapse. A full-width basis puts it under the row it
+     belongs to, which is where every other field's message already lands. */
+  #nz-brandpage .nz-colourrow > .nz-fielderror { flex: 1 0 100%; }
+
+  /* previewNote() appends the refresh-failed line to .nz-brandpreview, which is
+     the hero — give it the hero's own gutter instead of the mount's edge. */
+  #nz-brandpage .nz-hero > #nz-preview-note { margin: 0; padding: 0 18px 14px; }
 </style>
 
 <!-- Upload feedback only (logo_upload.php's iframe response — the uploader
@@ -268,17 +802,157 @@
      guarantees no apostrophe survives anywhere in the value, which is what makes
      the single-quoted attribute closeable only by us. -->
 <div id="nz-brandpage" data-field-errors='{tmpl_var name="field_errors_json"}' data-preview-failed="{tmpl_var name='preview_failed_txt'}" data-rail-light-inherited="{tmpl_var name='rail_hex_light_inherited_txt'}">
-<div class="nz-brandgrid">
-<div class="nz-brandfields">
+<!-- ============================================================
+     THE PROOF — the hero. This is the only page in the panel where the thing
+     being edited and the thing being looked at are the same thing, so the
+     picture leads and the controls follow: a press proof carries the pull at
+     the top and its colour bar along the trailing edge.
 
-<!-- IDENTITY — what the panel is called and what it is marked with. The panel
-     name, both logo variants, where each one goes, and the tab icon: everything
-     an operator answers once, in the order they answer it. The two variants and
-     the placement block are <h3> sub-blocks rather than nested fieldsets so a
-     screen-reader user can jump between them by heading while the group stays
-     one landmark. h3 and not h4: the preview column's heading is the only h2 on
-     this page, so an h4 here would skip a level. -->
-<fieldset>
+     .nz-brandpreview stays on this element because previewNote() appends the
+     refresh-failed line to it, and the aria-labelledby/h2 pair is what names
+     the region. It is deliberately NOT an ARIA live region: it changes on
+     every keystroke, and announcing that is worse than silence.
+     ============================================================ -->
+<section class="nz-hero nz-brandpreview" aria-labelledby="nz-preview-head">
+  <div class="nz-hero-head">
+    <h2 id="nz-preview-head">{tmpl_var name='preview_head_txt'}</h2>
+    <p class="nz-hero-hint">{tmpl_var name='preview_hint_txt'}</p>
+  </div>
+
+  <div class="nz-proof">
+    <!-- The panel pull. Every string in it is this module's own wordbook, so
+         it is drawn in the operator's language rather than in English: three
+         nav items, the search field and the card heading are sample chrome,
+         not real navigation, and core's own menu is not reachable from here.
+         Blank bars were the alternative and are worse — the accent marker
+         would then stand beside nothing and read as a text cursor sitting in
+         the pane, which is why it can live ON the active item here. -->
+    <figure class="nz-prevpane nz-pane-panel">
+      <div class="nz-prevframe">
+        <div class="nz-prevtab">
+          <span class="nz-vh">{tmpl_var name='preview_tab_txt'}</span>
+          <span class="nz-prevtab-chip"><span class="nz-prevtab-icon nz-prev-accent"></span><span class="nz-prev-name"></span></span>
+        </div>
+        <div class="nz-prevnav">
+          <div class="nz-prevnav-rail nz-prev-rail">
+            <!-- The brand slot: the resolved nav mark when the server says
+                 there is one, the panel name when there is not. -->
+            <div class="nz-prevnav-logo nz-prev-nav-brand"><span class="nz-prev-name"></span></div>
+            <div class="nz-prevnav-item is-active"><span class="nz-prev-accent-rule" aria-hidden="true"></span>{tmpl_var name='preview_nav_home_txt'}</div>
+            <div class="nz-prevnav-item">{tmpl_var name='preview_nav_sites_txt'}</div>
+            <div class="nz-prevnav-item">{tmpl_var name='preview_nav_email_txt'}</div>
+          </div>
+          <div class="nz-prevnav-body">
+            <div class="nz-prevtop">
+              <span class="nz-prevsearch">{tmpl_var name='preview_search_txt'}</span>
+              <!-- A pill, and nothing in it: the page knows the panel's name
+                   but not the viewer's, and this template is also rendered by
+                   logo_upload.php where there is no tform to ask. A shape is
+                   the honest placeholder; an invented name would be a claim. -->
+              <span class="nz-prevuser">&nbsp;</span>
+            </div>
+            <div class="nz-prevbody">
+              <div class="nz-prevcard">
+                <div class="nz-prevcard-head">{tmpl_var name='preview_card_title_txt'}</div>
+                <div class="nz-prevbar w60"></div>
+                <div class="nz-prevbar w40"></div>
+                <span class="nz-prevbtn nz-prev-accent">{tmpl_var name='btn_save_txt'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption>{tmpl_var name='preview_panel_txt'}</figcaption>
+    </figure>
+
+    <figure class="nz-prevpane nz-pane-login">
+      <div class="nz-prevframe">
+        <div class="nz-prevlogin nz-prev-login">
+          <div class="nz-prevlogin-name nz-prev-login-brand"><span class="nz-prev-name"></span></div>
+          <div class="nz-prevlogin-card">
+            <div class="nz-prevfield"></div>
+            <div class="nz-prevfield"></div>
+            <span class="nz-prevbtn nz-prev-accent">{tmpl_var name='preview_signin_txt'}</span>
+          </div>
+        </div>
+      </div>
+      <figcaption>{tmpl_var name='preview_login_txt'}</figcaption>
+    </figure>
+  </div>
+
+  <!-- The legend: the proof's colour bar, on the trailing edge where a press
+       sheet carries one. It sits AFTER the proof in the DOM as well as under
+       it, which is also what keeps paintSurfacePane()'s first-match painting
+       on the pulls rather than on a 56px chip. -->
+  <div class="nz-legend">
+    <div class="nz-legend-cell nz-legend-marks">
+      <div class="nz-marks-pair">
+        <div class="nz-upload-mark" id="used_logo">{tmpl_var name='used_logo'}</div>
+        <div class="nz-upload-mark" id="used_logo_on_dark">{tmpl_var name='used_logo_on_dark'}</div>
+      </div>
+    </div>
+
+    <div class="nz-legend-cell nz-legend-name">
+      <p class="nz-legend-brandname nz-prev-name"></p>
+      <!-- Three independent facts, separated by hairlines rather than by
+           middle dots, and each empty until there is something to say — see
+           .nz-facts > span:empty. -->
+      <p class="nz-facts"><span id="nz-fact-design">{tmpl_var name='summary_fact_design'}</span><span id="nz-fact-marks">{tmpl_var name='summary_fact_marks'}</span><span id="nz-fact-favicon">{tmpl_var name='summary_fact_favicon'}</span></p>
+    </div>
+
+    <!-- Shown only when rail_hex_light carries a value: an operator who leaves
+         it blank has one sidebar, and a second sample would say otherwise. It
+         ships hidden and paintSurfaces() reveals it. -->
+    <figure class="nz-prevpane nz-prev-light-pane nz-legend-cell" hidden>
+      <div class="nz-prevframe">
+        <div class="nz-railsample">
+          <div class="nz-prevnav-rail nz-prev-rail-light">
+            <div class="nz-prevnav-logo nz-prev-nav-brand-light"><span class="nz-prev-name"></span></div>
+            <div class="nz-prevnav-item is-active">{tmpl_var name='preview_nav_home_txt'}</div>
+            <div class="nz-prevnav-item">{tmpl_var name='preview_nav_sites_txt'}</div>
+          </div>
+          <div class="nz-prev-lightbody"></div>
+        </div>
+      </div>
+      <figcaption>{tmpl_var name='rail_hex_light_txt'}</figcaption>
+    </figure>
+
+    <!-- The colour bar. The chip is pure colour and the value sits under it in
+         page ink, so nothing here depends on measuring an ink for a swatch.
+         data-hex-field names the field the caption mirrors. -->
+    <div class="nz-legend-cell nz-legend-colours">
+      <div class="nz-brandchips">
+        <span class="nz-brandchip">
+          <span class="nz-brandchip-swatch nz-prev-accent"></span>
+          <span class="nz-brandchip-hex" data-hex-field="accent_hex">&mdash;</span>
+          <span class="nz-brandchip-name">{tmpl_var name='accent_short_txt'}</span>
+        </span>
+        <span class="nz-brandchip">
+          <span class="nz-brandchip-swatch nz-prev-rail"></span>
+          <span class="nz-brandchip-hex" data-hex-field="rail_hex">&mdash;</span>
+          <span class="nz-brandchip-name">{tmpl_var name='rail_short_txt'}</span>
+        </span>
+        <span class="nz-brandchip">
+          <span class="nz-brandchip-swatch nz-prev-rail-light"></span>
+          <span class="nz-brandchip-hex" data-hex-field="rail_hex_light">&mdash;</span>
+          <span class="nz-brandchip-name">{tmpl_var name='rail_light_short_txt'}</span>
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     THE SETTINGS
+     ============================================================ -->
+<div class="nz-cards">
+
+<!-- IDENTITY — what the panel is called and what it is marked with. The two
+     variants and the placement block are <h3> sub-blocks rather than nested
+     fieldsets so a screen-reader user can jump between them by heading while
+     the group stays one landmark. h3 and not h4: the proof's heading is the
+     only h2 on this page, so an h4 here would skip a level. -->
+<fieldset class="nz-card">
   <legend>{tmpl_var name='identity_head_txt'}</legend>
 
   <div class="form-group">
@@ -289,193 +963,243 @@
     </div>
   </div>
 
+  <!-- The pair intro. Every paragraph of inline help on this page is now
+       either one muted line in the flow or a native <details> "?" beside the
+       thing it explains; the four one-line leads that remain keep the
+       help-block class, and no wall of help text survives in the reading
+       flow. The "?" is a <summary> with an aria-label, so it announces as a
+       button with a purpose rather than as a question mark. -->
+  <div class="nz-introrow">
+    <p class="help-block">{tmpl_var name='logo_variants_lead_txt'}</p>
+    <details class="nz-hint"><summary aria-label="{tmpl_var name='hint_identity_head_txt'}">?</summary>
+      <p>{tmpl_var name='logo_variants_hint_txt'}</p>
+    </details>
+  </div>
+
   <!-- Named by the BACKGROUND each mark sits on, because that is what the
        operator can look at and check. Which artwork is "light enough" is a
-       judgement; which of their designs has a dark header is a fact.
-
-       The file inputs carry aria-label rather than a <label for>: the visible
-       label the stock form gave them is gone with the 3/9 row, and a file input
-       with no accessible name is a real defect for a screen-reader user. The
-       three label keys they use are the ones that row used to render.
-
-       The paragraph below introduces the PAIR, so it sits directly above the
-       first of the two blocks rather than under the panel-name field, where it
-       read as guidance about the name. Full width, as a direct child of the
-       fieldset: it is not one of the 3/9 label rows. -->
-  <p class="help-block nz-blockintro">{tmpl_var name='logo_variants_hint_txt'}</p>
-
+       judgement; which of their designs has a dark header is a fact. -->
   <div class="nz-upload">
-    <h3>{tmpl_var name='logo_on_light_head_txt'}</h3>
-    <div class="nz-upload-mark" id="used_logo">{tmpl_var name='used_logo'}</div>
-    <div class="nz-upload-fields">
-      <div class="nz-upload-row">
-        <input name="file" id="file" size="30" type="file" class="fileUpload" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,.svg" aria-label="{tmpl_var name='logo_txt'}" />
-        <!-- Not wired to the stock iframe uploader (no data-submit-form /
-             data-form-upload, no formbutton-success): the page-render CSRF token
-             it depends on can be silently lost to ISPConfig's lock-free session
-             store, and the stock Enter-key handler must not trigger uploads.
-             The fetch flow in the script below mints its own token at click time. -->
-        <button class="btn btn-default" type="button" id="nz-logo-upload">{tmpl_var name='upload_txt'}</button>
-        <a href="javascript:void(0);" class="btn btn-default" id="nz-logo-remove">{tmpl_var name='logo_remove_txt'}</a>
-      </div>
-      <p class="help-block">{tmpl_var name='logo_hint_txt'}</p>
-      <div class="form-group">
-        <label for="logo_url" class="col-sm-3 control-label">{tmpl_var name='logo_url_txt'}</label>
-        <div class="col-sm-9">
-          <input type="text" name="logo_url" id="logo_url" value="{tmpl_var name='logo_url'}" class="form-control" placeholder="/themes/custom/logo.svg" />
-          <p class="help-block">{tmpl_var name='logo_url_hint_txt'}</p>
-        </div>
+    <div class="nz-upload-head">
+      <h3>{tmpl_var name='logo_on_light_head_txt'}</h3>
+      <details class="nz-hint"><summary aria-label="{tmpl_var name='hint_logo_on_light_head_txt'}">?</summary>
+        <p>{tmpl_var name='logo_hint_txt'}</p>
+      </details>
+    </div>
+    <!-- The zone is the label; the input is clipped inside it, focusable and
+         named. No for= attribute: the input is nested, which associates them,
+         and carrying both makes some browsers open the picker twice.
+
+         Not wired to the stock iframe uploader (no data-submit-form /
+         data-form-upload, no formbutton-success): the page-render CSRF token
+         it depends on can be silently lost to ISPConfig's lock-free session
+         store, and the stock Enter-key handler must not trigger uploads. The
+         fetch flow in the script below mints its own token at click time. -->
+    <label class="nz-drop">
+      <span class="nz-drop-line" id="nz-drop-line-logo" aria-live="polite">{tmpl_var name='drop_hint_txt'}</span>
+      <input name="file" id="file" size="30" type="file" class="fileUpload nz-vh" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,.svg" aria-label="{tmpl_var name='logo_txt'}" />
+    </label>
+    <div class="nz-drop-row">
+      <button class="btn btn-default" type="button" id="nz-logo-upload">{tmpl_var name='upload_txt'}</button>
+      <a href="javascript:void(0);" class="btn btn-default" id="nz-logo-remove">{tmpl_var name='logo_remove_txt'}</a>
+    </div>
+    <!-- Every surface AFTER the first. The label is OUTSIDE the slot: the
+         preview endpoint replaces the slot's innerHTML wholesale and would
+         delete a label inside it, and :empty — the rule that collapses the
+         slot when there is nothing to say — is defeated by any content at
+         all. Which is also why the slot is written on ONE line with nothing
+         in it but the tmpl_var. -->
+    <p class="nz-surfacelabel">{tmpl_var name='also_used_on_txt'}</p>
+    <div class="nz-upload-more" id="used_logo_more">{tmpl_var name='used_logo_more'}</div>
+    <div class="form-group">
+      <label for="logo_url" class="col-sm-3 control-label">{tmpl_var name='logo_url_txt'}</label>
+      <details class="nz-hint"><summary aria-label="{tmpl_var name='hint_logo_url_txt'}">?</summary>
+        <p>{tmpl_var name='logo_url_hint_txt'}</p>
+      </details>
+      <div class="col-sm-9">
+        <input type="text" name="logo_url" id="logo_url" value="{tmpl_var name='logo_url'}" class="form-control" placeholder="/themes/custom/logo.svg" />
       </div>
     </div>
-    <!-- The second half of this row: every surface after the first, as a
-         wrapping strip across both columns, plus the borrowed-variant note.
-         Written on ONE line with nothing inside it but the tmpl_var, because
-         the rule that collapses it when there is nothing to say is :empty and
-         a single space of whitespace would defeat that. lib/preview.inc.php
-         renders both halves; see $part there. -->
-    <div class="nz-upload-more" id="used_logo_more">{tmpl_var name='used_logo_more'}</div>
   </div>
 
   <div class="nz-upload">
-    <h3>{tmpl_var name='logo_on_dark_head_txt'}</h3>
-    <div class="nz-upload-mark" id="used_logo_on_dark">{tmpl_var name='used_logo_on_dark'}</div>
-    <div class="nz-upload-fields">
-      <div class="nz-upload-row">
-        <!-- The name is deliberately NOT "file", even though logo_upload.php
-             reads $_FILES['file'] for both slots: the driver below builds its own
-             FormData and appends the chosen file under the name 'file' itself, so
-             this attribute never reaches the server. Distinct names keep three
-             file inputs unambiguous in a form that also carries a native Save. -->
-        <input name="file_on_dark" id="file_on_dark" size="30" type="file" class="fileUpload" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,.svg" aria-label="{tmpl_var name='logo_on_dark_txt'}" />
-        <button class="btn btn-default" type="button" id="nz-logo-upload-on-dark">{tmpl_var name='upload_txt'}</button>
-        <a href="javascript:void(0);" class="btn btn-default" id="nz-logo-remove-on-dark">{tmpl_var name='logo_remove_txt'}</a>
-      </div>
-      <p class="help-block">{tmpl_var name='logo_on_dark_hint_txt'}</p>
-      <div class="form-group">
-        <label for="logo_url_on_dark" class="col-sm-3 control-label">{tmpl_var name='logo_url_on_dark_txt'}</label>
-        <div class="col-sm-9">
-          <input type="text" name="logo_url_on_dark" id="logo_url_on_dark" value="{tmpl_var name='logo_url_on_dark'}" class="form-control" placeholder="/themes/custom/logo-on-dark.svg" />
-          <p class="help-block">{tmpl_var name='logo_url_on_dark_hint_txt'}</p>
-        </div>
+    <div class="nz-upload-head">
+      <h3>{tmpl_var name='logo_on_dark_head_txt'}</h3>
+      <details class="nz-hint"><summary aria-label="{tmpl_var name='hint_logo_on_dark_head_txt'}">?</summary>
+        <p>{tmpl_var name='logo_on_dark_hint_txt'}</p>
+      </details>
+    </div>
+    <!-- The name is deliberately NOT "file", even though logo_upload.php reads
+         $_FILES['file'] for both slots: the driver below builds its own
+         FormData and appends the chosen file under the name 'file' itself, so
+         this attribute never reaches the server. Distinct names keep three
+         file inputs unambiguous in a form that also carries a native Save. -->
+    <label class="nz-drop">
+      <span class="nz-drop-line" id="nz-drop-line-logo-on-dark" aria-live="polite">{tmpl_var name='drop_hint_txt'}</span>
+      <input name="file_on_dark" id="file_on_dark" size="30" type="file" class="fileUpload nz-vh" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,.svg" aria-label="{tmpl_var name='logo_on_dark_txt'}" />
+    </label>
+    <div class="nz-drop-row">
+      <button class="btn btn-default" type="button" id="nz-logo-upload-on-dark">{tmpl_var name='upload_txt'}</button>
+      <a href="javascript:void(0);" class="btn btn-default" id="nz-logo-remove-on-dark">{tmpl_var name='logo_remove_txt'}</a>
+    </div>
+    <p class="nz-surfacelabel">{tmpl_var name='also_used_on_txt'}</p>
+    <div class="nz-upload-more" id="used_logo_on_dark_more">{tmpl_var name='used_logo_on_dark_more'}</div>
+    <div class="form-group">
+      <label for="logo_url_on_dark" class="col-sm-3 control-label">{tmpl_var name='logo_url_on_dark_txt'}</label>
+      <details class="nz-hint"><summary aria-label="{tmpl_var name='hint_logo_url_on_dark_txt'}">?</summary>
+        <p>{tmpl_var name='logo_url_on_dark_hint_txt'}</p>
+      </details>
+      <div class="col-sm-9">
+        <input type="text" name="logo_url_on_dark" id="logo_url_on_dark" value="{tmpl_var name='logo_url_on_dark'}" class="form-control" placeholder="/themes/custom/logo-on-dark.svg" />
       </div>
     </div>
-    <div class="nz-upload-more" id="used_logo_on_dark_more">{tmpl_var name='used_logo_on_dark_more'}</div>
   </div>
 
   <!-- Placement, not artwork: which of the two marks above each surface uses.
        It stays a third block AFTER both variants rather than moving inside
        either, because it is scoped by SURFACE and is a statement about the
        pair — nesting it under one mark would read as a property of that mark.
+       The two hints say the same thing about two surfaces, so one disclosure
+       carries both.
 
        Only the <option> list comes from tform (tform_base.inc.php:510 assigns
-       nothing but <option> tags to the field's own tmpl_var); the <select> shell
-       is written here, which is core's idiom too. Keep class="form-control":
-       clarity styles body.nz select.form-control with its own arrow SVG, and a
-       bare select falls through to a different, list-header-sized rule.
-
-       logo_upload.php renders this same template with no tform at all, so there
-       both tmpl_vars are unknown and vlibTemplate removes them — that response
-       carries two empty <select>s. Harmless, because the uploader driver only
-       scrapes #OKMsg/#errorMsg and the three preview blocks out of it; but
-       nothing here may assume these options exist. -->
+       nothing but <option> tags to the field's own tmpl_var); the <select>
+       shell is written here, which is core's idiom too. Keep
+       class="form-control": clarity styles body.nz select.form-control with
+       its own arrow SVG, and a bare select falls through to a different,
+       list-header-sized rule. logo_upload.php renders this same template with
+       no tform at all, so there both tmpl_vars are unknown and vlibTemplate
+       removes them — that response carries two empty <select>s, which is
+       harmless and which nothing here may assume otherwise about. -->
   <div class="nz-upload">
-    <h3>{tmpl_var name='placement_head_txt'}</h3>
-    <div class="nz-upload-mark"></div>
-    <div class="nz-upload-fields">
-      <div class="form-group">
-        <label for="logo_variant_nav" class="col-sm-3 control-label">{tmpl_var name='logo_variant_nav_txt'}</label>
-        <div class="col-sm-9">
-          <select name="logo_variant_nav" id="logo_variant_nav" class="form-control">{tmpl_var name='logo_variant_nav'}</select>
-          <p class="help-block">{tmpl_var name='logo_variant_nav_hint_txt'}</p>
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="logo_variant_login" class="col-sm-3 control-label">{tmpl_var name='logo_variant_login_txt'}</label>
-        <div class="col-sm-9">
-          <select name="logo_variant_login" id="logo_variant_login" class="form-control">{tmpl_var name='logo_variant_login'}</select>
-          <p class="help-block">{tmpl_var name='logo_variant_login_hint_txt'}</p>
-        </div>
+    <div class="nz-upload-head">
+      <h3>{tmpl_var name='placement_head_txt'}</h3>
+      <details class="nz-hint"><summary aria-label="{tmpl_var name='hint_placement_head_txt'}">?</summary>
+        <p>{tmpl_var name='logo_variant_nav_hint_txt'}</p>
+        <p>{tmpl_var name='logo_variant_login_hint_txt'}</p>
+      </details>
+    </div>
+    <div class="form-group">
+      <label for="logo_variant_nav" class="col-sm-3 control-label">{tmpl_var name='logo_variant_nav_txt'}</label>
+      <div class="col-sm-9">
+        <select name="logo_variant_nav" id="logo_variant_nav" class="form-control">{tmpl_var name='logo_variant_nav'}</select>
       </div>
     </div>
-  </div>
-
-  <!-- The favicon is the third brand image and rides the same uploader, but it
-       has ONE slot, not two: a tab strip is a tab strip whatever the design's
-       header looks like. It sits in Identity rather than in a fieldset of its
-       own because it is one more thing the panel is marked with. -->
-  <div class="nz-upload">
-    <h3>{tmpl_var name='favicon_head_txt'}</h3>
-    <div class="nz-upload-mark" id="used_favicon">{tmpl_var name='used_favicon'}</div>
-    <div class="nz-upload-fields">
-      <div class="nz-upload-row">
-        <input name="file_favicon" id="file_favicon" size="30" type="file" class="fileUpload" accept="image/svg+xml,.svg,image/png,image/x-icon,image/vnd.microsoft.icon,.ico" aria-label="{tmpl_var name='favicon_txt'}" />
-        <button class="btn btn-default" type="button" id="nz-favicon-upload">{tmpl_var name='favicon_upload_txt'}</button>
-        <a href="javascript:void(0);" class="btn btn-default" id="nz-favicon-remove">{tmpl_var name='logo_remove_txt'}</a>
-      </div>
-      <p class="help-block">{tmpl_var name='favicon_intro_txt'}</p>
-      <p class="help-block">{tmpl_var name='favicon_hint_txt'}</p>
-      <div class="form-group">
-        <label for="favicon_url" class="col-sm-3 control-label">{tmpl_var name='favicon_url_txt'}</label>
-        <div class="col-sm-9">
-          <input type="text" name="favicon_url" id="favicon_url" value="{tmpl_var name='favicon_url'}" class="form-control" placeholder="/themes/custom/favicon.svg" />
-          <p class="help-block">{tmpl_var name='favicon_url_hint_txt'}</p>
-        </div>
+    <div class="form-group">
+      <label for="logo_variant_login" class="col-sm-3 control-label">{tmpl_var name='logo_variant_login_txt'}</label>
+      <div class="col-sm-9">
+        <select name="logo_variant_login" id="logo_variant_login" class="form-control">{tmpl_var name='logo_variant_login'}</select>
       </div>
     </div>
   </div>
 </fieldset>
 
-<!-- COLOUR — the four values every brand-aware design reads. -->
-<fieldset>
+<div class="nz-col">
+
+<!-- COLOUR — the four values every brand-aware design reads. Chip, value and
+     measurement on one line: the ratio is the answer to the question the
+     colour raises, so it is not a paragraph somewhere below it. All four
+     readouts are the SERVER's measurement; this module has exactly one
+     contrast implementation and it is in PHP. -->
+<fieldset class="nz-card">
   <legend>{tmpl_var name='colour_head_txt'}</legend>
 
   <div class="form-group">
     <label for="accent_hex" class="col-sm-3 control-label">{tmpl_var name='accent_hex_txt'}</label>
+    <details class="nz-hint"><summary aria-label="{tmpl_var name='hint_accent_hex_txt'}">?</summary>
+      <p>{tmpl_var name='accent_hex_hint_txt'}</p>
+    </details>
     <div class="col-sm-9">
-      <input type="text" name="accent_hex" id="accent_hex" value="{tmpl_var name='accent_hex'}" class="form-control nz-hexfield" placeholder="#0065AB" />
-      <input type="color" id="accent_hex_pick" value="#0065AB" class="nz-hexpick" aria-label="{tmpl_var name='accent_hex_txt'}" />
+      <div class="nz-colourrow">
+        <input type="color" id="accent_hex_pick" value="#0065AB" class="nz-hexpick" aria-label="{tmpl_var name='accent_hex_txt'}" />
+        <input type="text" name="accent_hex" id="accent_hex" value="{tmpl_var name='accent_hex'}" class="form-control nz-hexfield" placeholder="#0065AB" />
+        <p class="nz-measure"><span id="nz-accent-ratio" class="nz-ratio">&mdash;</span> {tmpl_var name='contrast_short_txt'}</p>
+      </div>
     </div>
   </div>
 
   <div class="form-group">
     <label for="rail_hex" class="col-sm-3 control-label">{tmpl_var name='rail_hex_txt'}</label>
     <div class="col-sm-9">
-      <input type="text" name="rail_hex" id="rail_hex" value="{tmpl_var name='rail_hex'}" class="form-control nz-hexfield" placeholder="#01243D" />
-      <input type="color" id="rail_hex_pick" value="#01243D" class="nz-hexpick" aria-label="{tmpl_var name='rail_hex_txt'}" />
-      <p class="help-block">{tmpl_var name='rail_contrast_txt'} <span id="nz-rail-ratio" class="nz-ratio">&mdash;</span></p>
+      <div class="nz-colourrow">
+        <input type="color" id="rail_hex_pick" value="#01243D" class="nz-hexpick" aria-label="{tmpl_var name='rail_hex_txt'}" />
+        <input type="text" name="rail_hex" id="rail_hex" value="{tmpl_var name='rail_hex'}" class="form-control nz-hexfield" placeholder="#01243D" />
+        <p class="nz-measure"><span id="nz-rail-ratio" class="nz-ratio">&mdash;</span> {tmpl_var name='contrast_short_txt'}</p>
+      </div>
     </div>
   </div>
 
   <div class="form-group">
     <label for="rail_hex_light" class="col-sm-3 control-label">{tmpl_var name='rail_hex_light_txt'}</label>
+    <details class="nz-hint"><summary aria-label="{tmpl_var name='hint_rail_hex_light_txt'}">?</summary>
+      <p>{tmpl_var name='rail_hex_light_hint_txt'}</p>
+    </details>
     <div class="col-sm-9">
-      <input type="text" name="rail_hex_light" id="rail_hex_light" value="{tmpl_var name='rail_hex_light'}" class="form-control nz-hexfield" placeholder="#E7EBF0" />
-      <input type="color" id="rail_hex_light_pick" value="#E7EBF0" class="nz-hexpick" aria-label="{tmpl_var name='rail_hex_light_txt'}" />
-      <!-- The ratio, and — when the light rail is showing the RAIL's value
-           because this field is empty — a note saying so. Without it the two
-           readouts print the same number with nothing to explain why. The text
-           is carried as a data attribute on #nz-brandpage rather than rendered
-           here, and written with textContent, for the same reason
-           preview_failed_txt is: it is wordbook prose and has no business being
-           parsed as markup on the page that shows it. -->
-      <p class="help-block">{tmpl_var name='rail_contrast_txt'} <span id="nz-rail-light-ratio" class="nz-ratio">&mdash;</span> <span id="nz-rail-light-inherited"></span></p>
-      <p class="help-block">{tmpl_var name='rail_hex_light_hint_txt'}</p>
+      <div class="nz-colourrow">
+        <input type="color" id="rail_hex_light_pick" value="#E7EBF0" class="nz-hexpick" aria-label="{tmpl_var name='rail_hex_light_txt'}" />
+        <input type="text" name="rail_hex_light" id="rail_hex_light" value="{tmpl_var name='rail_hex_light'}" class="form-control nz-hexfield" placeholder="#E7EBF0" />
+        <!-- When the light rail is showing the RAIL's value because this field
+             is empty, a note says so — without it the two readouts print the
+             same number with nothing to explain why. The text is carried as a
+             data attribute on #nz-brandpage and written with textContent: it
+             is wordbook prose and has no business being parsed as markup on
+             the page that shows it. -->
+        <p class="nz-measure"><span id="nz-rail-light-ratio" class="nz-ratio">&mdash;</span> {tmpl_var name='contrast_short_txt'} <span id="nz-rail-light-inherited" class="nz-inherited"></span></p>
+      </div>
     </div>
   </div>
 
   <div class="form-group">
     <label for="login_bg" class="col-sm-3 control-label">{tmpl_var name='login_bg_txt'}</label>
     <div class="col-sm-9">
-      <input type="text" name="login_bg" id="login_bg" value="{tmpl_var name='login_bg'}" class="form-control nz-hexfield" placeholder="#17252B" />
-      <input type="color" id="login_bg_pick" value="#17252B" class="nz-hexpick" aria-label="{tmpl_var name='login_bg_txt'}" />
+      <div class="nz-colourrow">
+        <input type="color" id="login_bg_pick" value="#17252B" class="nz-hexpick" aria-label="{tmpl_var name='login_bg_txt'}" />
+        <input type="text" name="login_bg" id="login_bg" value="{tmpl_var name='login_bg'}" class="form-control nz-hexfield" placeholder="#17252B" />
+        <p class="nz-measure"><span id="nz-login-ratio" class="nz-ratio">&mdash;</span> {tmpl_var name='contrast_short_txt'}</p>
+      </div>
       <p class="help-block">{tmpl_var name='colour_hint_txt'}</p>
     </div>
   </div>
 </fieldset>
 
-<fieldset>
-  <legend>{tmpl_var name='login_head_txt'}</legend>
+<!-- THE FAVICON — the third brand image, and the only one with a single slot:
+     a tab strip is a tab strip whatever the design's header looks like. It is
+     its own card rather than a fifth block inside Identity because it has one
+     slot and no light/dark pair, and because splitting it is what makes the
+     two columns end level. -->
+<fieldset class="nz-card">
+  <legend>{tmpl_var name='favicon_head_txt'}</legend>
+  <div class="nz-upload">
+    <div class="nz-introrow">
+      <p class="help-block">{tmpl_var name='favicon_lead_txt'}</p>
+      <details class="nz-hint"><summary aria-label="{tmpl_var name='hint_favicon_head_txt'}">?</summary>
+        <p>{tmpl_var name='favicon_intro_txt'}</p>
+        <p>{tmpl_var name='favicon_hint_txt'}</p>
+      </details>
+    </div>
+    <div class="nz-upload-more" id="used_favicon">{tmpl_var name='used_favicon'}</div>
+    <label class="nz-drop">
+      <span class="nz-drop-line" id="nz-drop-line-favicon" aria-live="polite">{tmpl_var name='drop_hint_txt'}</span>
+      <input name="file_favicon" id="file_favicon" size="30" type="file" class="fileUpload nz-vh" accept="image/svg+xml,.svg,image/png,image/x-icon,image/vnd.microsoft.icon,.ico" aria-label="{tmpl_var name='favicon_txt'}" />
+    </label>
+    <div class="nz-drop-row">
+      <button class="btn btn-default" type="button" id="nz-favicon-upload">{tmpl_var name='favicon_upload_txt'}</button>
+      <a href="javascript:void(0);" class="btn btn-default" id="nz-favicon-remove">{tmpl_var name='logo_remove_txt'}</a>
+    </div>
+    <div class="form-group">
+      <label for="favicon_url" class="col-sm-3 control-label">{tmpl_var name='favicon_url_txt'}</label>
+      <details class="nz-hint"><summary aria-label="{tmpl_var name='hint_favicon_url_txt'}">?</summary>
+        <p>{tmpl_var name='favicon_url_hint_txt'}</p>
+      </details>
+      <div class="col-sm-9">
+        <input type="text" name="favicon_url" id="favicon_url" value="{tmpl_var name='favicon_url'}" class="form-control" placeholder="/themes/custom/favicon.svg" />
+      </div>
+    </div>
+  </div>
+</fieldset>
 
+<fieldset class="nz-card">
+  <legend>{tmpl_var name='login_head_txt'}</legend>
   <div class="form-group">
     <label for="custom_login_text" class="col-sm-3 control-label">{tmpl_var name='custom_login_text_txt'}</label>
     <div class="col-sm-9"><input type="text" name="custom_login_text" id="custom_login_text" value="{tmpl_var name='custom_login_text'}" class="form-control" /></div>
@@ -486,155 +1210,80 @@
   </div>
 </fieldset>
 
-<!-- PANEL VISIBILITY — six switches over what the panel shows. The two footer
-     credits keep their hint, which is about them alone. -->
-<fieldset>
-  <legend>{tmpl_var name='visibility_head_txt'}</legend>
+</div><!-- /.nz-col -->
 
-  <div class="form-group">
-    <label class="col-sm-3 control-label">{tmpl_var name='show_design_picker_txt'}</label>
-    <div class="col-sm-9">
-      {tmpl_var name='show_design_picker'}
-      <p class="help-block">{tmpl_var name='show_design_picker_hint_txt'}</p>
+<!-- PANEL VISIBILITY — six switches over what the panel shows. A switch, not a
+     checkbox: every one of these is on or off for the whole panel, and a
+     checkbox in the middle of a nine-column well reads as one more field to
+     fill in rather than as a thing that is currently on.
+
+     tform emits a bare <input type="checkbox"> with an id of its own
+     (tform_base.inc.php:543-545), so the track is the input itself
+     (appearance: none) and the thumb is a SIBLING span — a pseudo-element on
+     an input is not rendered at all in some engines and this control must not
+     depend on one. Nothing in the switch rules touches focus: the input keeps
+     whatever indicator the active design gives it. -->
+<fieldset class="nz-card nz-card-wide">
+  <legend>{tmpl_var name='visibility_head_txt'}</legend>
+  <div class="nz-switchgrid">
+    <div class="form-group">
+      <label for="show_design_picker" class="col-sm-3 control-label">{tmpl_var name='show_design_picker_txt'}</label>
+      <details class="nz-hint"><summary aria-label="{tmpl_var name='hint_show_design_picker_txt'}">?</summary>
+        <p>{tmpl_var name='show_design_picker_hint_txt'}</p>
+      </details>
+      <div class="col-sm-9"><span class="nz-switch">{tmpl_var name='show_design_picker'}<span class="nz-switch-thumb" aria-hidden="true"></span></span></div>
     </div>
-  </div>
-  <div class="form-group">
-    <label class="col-sm-3 control-label">{tmpl_var name='show_version_txt'}</label>
-    <div class="col-sm-9">
-      {tmpl_var name='show_version'}
-      <p class="help-block">{tmpl_var name='show_version_hint_txt'}</p>
+    <div class="form-group">
+      <label for="show_version" class="col-sm-3 control-label">{tmpl_var name='show_version_txt'}</label>
+      <details class="nz-hint"><summary aria-label="{tmpl_var name='hint_show_version_txt'}">?</summary>
+        <p>{tmpl_var name='show_version_hint_txt'}</p>
+      </details>
+      <div class="col-sm-9"><span class="nz-switch">{tmpl_var name='show_version'}<span class="nz-switch-thumb" aria-hidden="true"></span></span></div>
     </div>
-  </div>
-  <div class="form-group">
-    <label class="col-sm-3 control-label">{tmpl_var name='show_news_feed_txt'}</label>
-    <div class="col-sm-9">
-      {tmpl_var name='show_news_feed'}
-      <p class="help-block">{tmpl_var name='show_news_feed_hint_txt'}</p>
+    <div class="form-group">
+      <label for="show_news_feed" class="col-sm-3 control-label">{tmpl_var name='show_news_feed_txt'}</label>
+      <details class="nz-hint"><summary aria-label="{tmpl_var name='hint_show_news_feed_txt'}">?</summary>
+        <p>{tmpl_var name='show_news_feed_hint_txt'}</p>
+      </details>
+      <div class="col-sm-9"><span class="nz-switch">{tmpl_var name='show_news_feed'}<span class="nz-switch-thumb" aria-hidden="true"></span></span></div>
     </div>
-  </div>
-  <div class="form-group">
-    <label class="col-sm-3 control-label">{tmpl_var name='show_donation_dashlet_txt'}</label>
-    <div class="col-sm-9">
-      {tmpl_var name='show_donation_dashlet'}
-      <p class="help-block">{tmpl_var name='show_donation_dashlet_hint_txt'}</p>
+    <div class="form-group">
+      <label for="show_donation_dashlet" class="col-sm-3 control-label">{tmpl_var name='show_donation_dashlet_txt'}</label>
+      <details class="nz-hint"><summary aria-label="{tmpl_var name='hint_show_donation_dashlet_txt'}">?</summary>
+        <p>{tmpl_var name='show_donation_dashlet_hint_txt'}</p>
+      </details>
+      <div class="col-sm-9"><span class="nz-switch">{tmpl_var name='show_donation_dashlet'}<span class="nz-switch-thumb" aria-hidden="true"></span></span></div>
     </div>
-  </div>
-  <div class="form-group">
-    <label class="col-sm-3 control-label">{tmpl_var name='show_ispconfig_credit_txt'}</label>
-    <div class="col-sm-9">{tmpl_var name='show_ispconfig_credit'}</div>
-  </div>
-  <div class="form-group">
-    <label class="col-sm-3 control-label">{tmpl_var name='show_theme_credit_txt'}</label>
-    <div class="col-sm-9">
-      {tmpl_var name='show_theme_credit'}
-      <p class="help-block">{tmpl_var name='credits_hint_txt'}</p>
+    <div class="form-group">
+      <label for="show_ispconfig_credit" class="col-sm-3 control-label">{tmpl_var name='show_ispconfig_credit_txt'}</label>
+      <div class="col-sm-9"><span class="nz-switch">{tmpl_var name='show_ispconfig_credit'}<span class="nz-switch-thumb" aria-hidden="true"></span></span></div>
+    </div>
+    <div class="form-group">
+      <label for="show_theme_credit" class="col-sm-3 control-label">{tmpl_var name='show_theme_credit_txt'}</label>
+      <details class="nz-hint"><summary aria-label="{tmpl_var name='hint_show_theme_credit_txt'}">?</summary>
+        <p>{tmpl_var name='credits_hint_txt'}</p>
+      </details>
+      <div class="col-sm-9"><span class="nz-switch">{tmpl_var name='show_theme_credit'}<span class="nz-switch-thumb" aria-hidden="true"></span></span></div>
     </div>
   </div>
 </fieldset>
 
+</div><!-- /.nz-cards -->
+
 <input type="hidden" name="id" value="{tmpl_var name='id'}" />
 
+<!-- The save bar. Sticky, so the one control an operator is looking for is
+     where they left it, and the confirmation lands beside the button that
+     caused it rather than a screen away — the script moves core's own
+     post-save banner into #nz-save-flash. Primary outermost, matching the
+     login card and every other form footer in the panel. -->
 <div class="nz-actions">
-  <button class="btn btn-default formbutton-success" type="button" data-submit-form="pageForm" data-form-action="customizer/customizer_edit.php">{tmpl_var name='btn_save_txt'}</button>
-  <button class="btn btn-default formbutton-default" type="button" data-load-content="dashboard/dashboard.php">{tmpl_var name='btn_cancel_txt'}</button>
+  <div class="nz-saveflash" id="nz-save-flash"></div>
+  <div class="nz-actions-btns">
+    <button class="btn btn-default formbutton-success" type="button" data-submit-form="pageForm" data-form-action="customizer/customizer_edit.php">{tmpl_var name='btn_save_txt'}</button>
+    <button class="btn btn-default formbutton-default" type="button" data-load-content="dashboard/dashboard.php">{tmpl_var name='btn_cancel_txt'}</button>
+  </div>
 </div>
-
-</div><!-- /.nz-brandfields -->
-
-<!-- THE PREVIEW COLUMN.
-     Colours, the rail ink and the panel name are painted here in JS as the
-     operator types. Anything depending on VARIANT RESOLUTION is not guessed:
-     that resolver exists in three PHP copies CI proves agree, and a fourth in
-     JavaScript would put what this page promises outside that guarantee — so
-     the marks come from customizer/preview.php.
-
-     Deliberately NOT an ARIA live region: it changes on every keystroke, and
-     announcing that is worse than silence. It is labelled, and the ratio
-     readouts beside the colour fields are plain text, reachable on demand. -->
-<aside class="nz-brandpreview" aria-labelledby="nz-preview-head">
-  <h2 id="nz-preview-head">{tmpl_var name='preview_head_txt'}</h2>
-  <p class="help-block">{tmpl_var name='preview_hint_txt'}</p>
-
-  <figure class="nz-prevpane">
-    <figcaption>{tmpl_var name='preview_nav_txt'}</figcaption>
-    <div class="nz-prevframe">
-      <div class="nz-prevnav">
-        <div class="nz-prevnav-rail nz-prev-rail">
-          <!-- The accent rule is the rail's own left edge, full height, and not
-               a marker on one item: these items are blank placeholder rows, and
-               a 2px stub beside one of them read as a text cursor in the pane.
-               It is an element rather than a ::before because the JS paints the
-               accent onto .nz-prev-accent-rule through style.color, and the rail
-               itself already carries the measured rail INK on that property. -->
-          <span class="nz-prev-accent-rule" aria-hidden="true"></span>
-          <!-- The brand slot: the resolved nav mark when the server says there
-               is one, the panel name when there is not. -->
-          <div class="nz-prevnav-logo nz-prev-nav-brand"><span class="nz-prev-name"></span></div>
-          <div class="nz-prevnav-item is-active">&nbsp;</div>
-          <div class="nz-prevnav-item">&nbsp;</div>
-          <div class="nz-prevnav-item">&nbsp;</div>
-        </div>
-        <div class="nz-prevnav-body">
-          <div class="nz-prevbar w60"></div>
-          <div class="nz-prevbar w40"></div>
-          <span class="nz-prevbtn nz-prev-accent">{tmpl_var name='btn_save_txt'}</span>
-        </div>
-      </div>
-    </div>
-  </figure>
-
-  <!-- The same rail again in a design's light colour mode, shown ONLY when
-       rail_hex_light carries a value — an operator who leaves it blank has one
-       rail, and a second identical pane would say otherwise. It ships hidden
-       and the script reveals it; the caption is the field's own label, so the
-       pane and the input that fills it name themselves the same way. -->
-  <figure class="nz-prevpane nz-prev-light-pane" hidden>
-    <figcaption>{tmpl_var name='rail_hex_light_txt'}</figcaption>
-    <div class="nz-prevframe">
-      <div class="nz-prevnav">
-        <div class="nz-prevnav-rail nz-prev-rail-light">
-          <span class="nz-prev-accent-rule" aria-hidden="true"></span>
-          <div class="nz-prevnav-logo nz-prev-nav-brand-light"><span class="nz-prev-name"></span></div>
-          <div class="nz-prevnav-item is-active">&nbsp;</div>
-          <div class="nz-prevnav-item">&nbsp;</div>
-          <div class="nz-prevnav-item">&nbsp;</div>
-        </div>
-        <div class="nz-prevnav-body">
-          <div class="nz-prevbar w60"></div>
-          <div class="nz-prevbar w40"></div>
-        </div>
-      </div>
-    </div>
-  </figure>
-
-  <figure class="nz-prevpane">
-    <figcaption>{tmpl_var name='preview_login_txt'}</figcaption>
-    <div class="nz-prevframe">
-      <div class="nz-prevlogin nz-prev-login">
-        <div class="nz-prevlogin-name nz-prev-name"></div>
-        <div class="nz-prevlogin-card">
-          <div class="nz-prevfield"></div>
-          <div class="nz-prevfield"></div>
-          <span class="nz-prevbtn nz-prev-accent">&nbsp;</span>
-        </div>
-      </div>
-    </div>
-  </figure>
-
-  <figure class="nz-prevpane">
-    <figcaption>{tmpl_var name='preview_tab_txt'}</figcaption>
-    <div class="nz-prevframe">
-      <div class="nz-prevtab">
-        <span class="nz-prevtab-chip">
-          <span class="nz-prevtab-icon nz-prev-accent"></span>
-          <span class="nz-prev-name"></span>
-        </span>
-      </div>
-    </div>
-  </figure>
-</aside>
-
-</div><!-- /.nz-brandgrid -->
 </div><!-- /#nz-brandpage -->
 
 <script>
@@ -718,6 +1367,21 @@
       for (var i = 0; i < els.length; i++) els[i].style.color = accent;
     }
 
+    // The caption under each colour chip says what the chip is painted with, so
+    // it follows the FIELD and not the payload — a value the operator has typed
+    // but not yet saved is the value the chip is showing. data-hex-field names
+    // the field, so the markup decides which caption mirrors which control and
+    // this loop stays one rule. The light rail's caption inherits the rail
+    // exactly as its swatch does, or the two would disagree about the same
+    // colour on the same line.
+    var caps = document.querySelectorAll('.nz-brandchip-hex');
+    for (var ci = 0; ci < caps.length; ci++) {
+      var field = caps[ci].getAttribute('data-hex-field');
+      var shown = field ? fieldValue(field) : '';
+      if (shown === '' && field === 'rail_hex_light') shown = rail;
+      caps[ci].textContent = (shown === '') ? '—' : shown;
+    }
+
     paintName();
   }
 
@@ -743,6 +1407,16 @@
     if (!el) return;
     el.textContent = (block && block.hex && typeof block.ratio === 'number')
       ? (block.ratio.toFixed(2) + ':1') : '—';
+  }
+
+  // One status fact in the legend. The strings are built server-side by
+  // customizer_brand_summary(), so the page render and every refresh after an
+  // upload word them identically; this only places them. textContent, like
+  // every other string this page writes.
+  function setFact(id, text) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = (typeof text === 'string') ? text : '';
   }
 
   // Says WHOSE colour the light-rail ratio was measured on when it is not this
@@ -824,6 +1498,7 @@
       // than keeping an image an earlier response put there.
       paintNavBrand('.nz-prev-nav-brand', null);
       paintNavBrand('.nz-prev-nav-brand-light', null);
+      paintNavBrand('.nz-prev-login-brand', null);
       return;
     }
     var lead = surfaces[0].design, nav = [], login = [], i;
@@ -840,6 +1515,11 @@
     // pane's mark in both would be the preview guessing.
     paintNavBrand('.nz-prev-nav-brand', nav[0]);
     paintNavBrand('.nz-prev-nav-brand-light', nav.length > 1 ? nav[1] : nav[0]);
+
+    // The login pull gets the mark its OWN surface resolved to. Without this it
+    // showed the panel name whatever the operator had uploaded — which is
+    // exactly the thing a login-screen preview exists to let them check.
+    paintNavBrand('.nz-prev-login-brand', login[0]);
 
     // The nav surface splits in two only when rail_hex_light is set AND differs
     // from the rail — exactly when the light pane has something to say. With one
@@ -911,9 +1591,23 @@
           }
         }
         paintSurfaces(data.surfaces);
+        // The legend's three facts. Two of them change when an image is
+        // uploaded, and an upload does not reload the page — it replaces three
+        // slots in place — so this is the only thing that keeps the mark count
+        // and the favicon fact true between page loads.
+        if (data.summary) {
+          setFact('nz-fact-design', data.summary.design);
+          setFact('nz-fact-marks', data.summary.marks);
+          setFact('nz-fact-favicon', data.summary.favicon);
+        }
         if (data.colours) {
           setRatio('nz-rail-ratio', data.colours.rail);
           setRatio('nz-rail-light-ratio', data.colours.rail_light);
+          // All four colours carry a measured ratio and all four print one:
+          // the readout is the answer to the question the colour raises, and a
+          // page that answered it for two of the four would look like a bug.
+          setRatio('nz-accent-ratio', data.colours.accent);
+          setRatio('nz-login-ratio', data.colours.login);
           // The light rail falls back to the rail when this field is empty, so
           // without this the two readouts print the same number and nothing on
           // the page says why. Gated on a hex as well as on the flag: with both
@@ -1145,6 +1839,17 @@
     paintPreview();
     markInvalidFields();
 
+    // Core renders the post-save confirmation as '.alert-notification', where
+    // tabbed_form.tpl.htm puts it: above this page's own markup, a screen away
+    // from the button that caused it. Move it into the save bar. Done once, at
+    // init, rather than in the observer below: that banner is SERVER-rendered
+    // with the page and is already in the document, while the uploader's
+    // #OKMsg/#errorMsg arrive later — which is what the observer is for, and
+    // why its region is frozen.
+    var saveFlash = document.getElementById('nz-save-flash');
+    var savedMsg = formScope().querySelector('.alert-notification');
+    if (saveFlash && savedMsg) saveFlash.appendChild(savedMsg);
+
     // A save redirects back to this page with msg=saved, which core's
     // tabbed_form.tpl.htm renders as '.alert-notification' — it carries no id,
     // and '#OKMsg' is the UPLOADER's banner, which arrives later through the
@@ -1170,6 +1875,70 @@
     markSlotsWatch();
   }
 
+  // The drop zone. The label already opens the picker for the input it wraps,
+  // with no script — that half needs nothing. Dropping does: a label is not a
+  // native drop target the way a file input is, so the file is taken off the
+  // drag and assigned to the input, which is what the uploader then reads.
+  //
+  // The zone also SHOWS the chosen file, because the input that would have
+  // shown it is clipped. That display is script-only, which costs nothing an
+  // operator can reach: the Upload button is a fetch driver, so with JavaScript
+  // off there is no upload to name a file for.
+  function wireDrop(inputId, lineId) {
+    var input = document.getElementById(inputId);
+    var line  = document.getElementById(lineId);
+    if (!input || !line) return;
+    var zone = input.parentNode;
+    // The instruction, kept so the zone can go back to it. Read from the DOM
+    // rather than carried here, because it is wordbook text.
+    var idle = line.textContent;
+
+    // The input carries its own aria-label, which OVERRIDES the label text this
+    // line sits in — so a filename written into the line alone is invisible to a
+    // screen reader. Point the input's description at the line instead of
+    // rewriting the label: the line already holds the instruction before a
+    // choice and the filename after one, so there is still exactly one copy of
+    // that string, and the field keeps the name that says which mark it is for.
+    // Set here rather than in the markup because the filename it describes is
+    // itself script-only.
+    input.setAttribute('aria-describedby', lineId);
+
+    function show() {
+      var file = (input.files && input.files.length) ? input.files[0] : null;
+      var next = file ? file.name : idle;
+      // The line is a live region, so only a REAL change may be written to it:
+      // assigning the same string — the instruction on load, or the same
+      // filename chosen twice — would speak it to a screen reader for nothing.
+      if (line.textContent !== next) line.textContent = next;
+    }
+    input.addEventListener('change', show);
+    show();
+
+    if (!zone) return;
+    // Both, and preventDefault on both: without it the browser navigates to the
+    // dropped file and the operator loses the page they were editing.
+    zone.addEventListener('dragenter', function (e) { e.preventDefault(); });
+    zone.addEventListener('dragover', function (e) { e.preventDefault(); });
+    zone.addEventListener('drop', function (e) {
+      // BEFORE the guard, not after. dragover above is cancelled
+      // unconditionally, so the zone has already told the browser it accepts
+      // this drag; handing a file-less one — a dragged link, a selection of
+      // text — back to the browser's own default navigates away and the
+      // operator loses the page they were editing, which is the whole reason
+      // the two handlers above exist.
+      e.preventDefault();
+      if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+      // Wrapped because a browser that refuses the assignment must leave the
+      // zone exactly as it was rather than half-changed: the operator can still
+      // click it and choose the same file.
+      try { input.files = e.dataTransfer.files; } catch (err) { return; }
+      show();
+    });
+  }
+  wireDrop('file', 'nz-drop-line-logo');
+  wireDrop('file_on_dark', 'nz-drop-line-logo-on-dark');
+  wireDrop('file_favicon', 'nz-drop-line-favicon');
+
   // The upload driver below refreshes the three MARK slots out of its own
   // response and knows nothing about the two *_more slots beside them, or about
   // the nav pane's logo. Its code is frozen — the click-time CSRF mint in it is
@@ -1184,21 +1953,36 @@
   // is safe only because customizer_logo_preview_html(..., 'first') never
   // returns '' — an observed mark-slot write always accompanies the flag, so
   // it can never be left standing for a later, real mutation to eat.
-  // Self-disconnects for the same reason the message observer does:
-  // ISPConfig.loadContent() swaps #pageContent's children while #pageForm and
-  // everything hanging off it stays alive.
+  // Observes #pageForm rather than the two slots themselves, for the same
+  // reason the message observer below does: ISPConfig.loadContent() swaps
+  // #pageContent's children while #pageForm stays alive. Observing the slots
+  // directly could never self-disconnect — after a navigation they are detached,
+  // so they never mutate again, so the pageAlive() bail-out never runs and every
+  // visit to this page left one more observer holding one more dead subtree.
+  // The records are filtered back down to the two slots, so this is still a
+  // watch on our own marks and not on the form.
   function markSlotsWatch() {
     if (!window.MutationObserver) return;
-    var ob = new MutationObserver(function () {
+    var root = document.getElementById('pageForm');
+    if (!root) return;
+    var ids = ['used_logo', 'used_logo_on_dark'];
+    var touchesASlot = function (records) {
+      for (var i = 0; i < records.length; i++) {
+        for (var j = 0; j < ids.length; j++) {
+          var slot = document.getElementById(ids[j]);
+          var t = records[i].target;
+          if (slot && (t === slot || slot.contains(t))) return true;
+        }
+      }
+      return false;
+    };
+    var ob = new MutationObserver(function (records) {
       if (!pageAlive()) { ob.disconnect(); return; }
+      if (!touchesASlot(records)) return;
       if (selfPaint) { selfPaint = false; return; }
       schedulePreview();
     });
-    var ids = ['used_logo', 'used_logo_on_dark'];
-    for (var i = 0; i < ids.length; i++) {
-      var el = document.getElementById(ids[i]);
-      if (el) ob.observe(el, { childList: true, subtree: true });
-    }
+    ob.observe(root, { childList: true, subtree: true });
   }
 
   // The iframe uploader injects #OKMsg/#errorMsg just above the hidden id input

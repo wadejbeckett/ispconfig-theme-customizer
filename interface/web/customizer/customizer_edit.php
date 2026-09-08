@@ -140,6 +140,7 @@ class page_action extends tform_actions {
         global $app;
         $this->render_image_previews();
         $this->publish_field_error_map();
+        $this->publish_hint_labels();
         //* the post-save redirect appends msg=saved (see list_default in the form
         //* definition) — without this banner a successful save is indistinguishable
         //* from a silently failed one
@@ -432,8 +433,12 @@ class page_action extends tform_actions {
         //* does not ship contributes nothing and every preview falls back to its
         //* pre-surface swatch, so a third-party theme degrades instead of being
         //* described wrongly.
+        //* Hoisted because the legend's first status fact names the design the
+        //* operator is looking at, and customizer_installed_designs() is what
+        //* decides which that is — it puts the active design first.
+        $designs  = customizer_installed_designs(isset($_SESSION['s']['theme']) ? $_SESSION['s']['theme'] : '');
         $surfaces = customizer_logo_surfaces_all(
-            customizer_installed_designs(isset($_SESSION['s']['theme']) ? $_SESSION['s']['theme'] : ''),
+            $designs,
             $branding,
             array('nav' => $app->lng('surface_nav_txt'), 'login' => $app->lng('surface_login_txt'))
         );
@@ -459,14 +464,89 @@ class page_action extends tform_actions {
         //* damage anything. (The write paths must not use it; see onUpdateSave.)
         //* Both favicon values are backslash-free by construction anyway: the
         //* base64 alphabet has none, and the reference validator rejects them.
+        $favicon = customizer_favicon_resolve(array(
+            'favicon'     => isset($branding['favicon']) ? $branding['favicon'] : '',
+            'favicon_url' => isset($branding['favicon_url']) ? $branding['favicon_url'] : '',
+        ));
         $app->tpl->setVar('used_favicon', customizer_favicon_preview_html(
-            customizer_favicon_resolve(array(
-                'favicon'     => isset($branding['favicon']) ? $branding['favicon'] : '',
-                'favicon_url' => isset($branding['favicon_url']) ? $branding['favicon_url'] : '',
-            )),
+            $favicon,
             $app->lng('no_favicon_set_txt'),
             $app->lng('favicon_url_wins_txt')
         ));
+
+        $this->publish_brand_summary($designs, $resolved, $favicon);
+    }
+
+    /**
+     * The three status facts in the legend under the proof.
+     *
+     * The wording is customizer_brand_summary()'s, not this page's, because the
+     * legend is refreshed after an upload through customizer/preview.php — an
+     * upload replaces three slots in place and never reloads the page — and two
+     * copies of the sentence would eventually disagree. $app->lng(), not
+     * $app->tform->lng(): these six live in the MODULE wordbook so the endpoint,
+     * which has no tform at all, can reach them.
+     *
+     * Every value is already resolved by the caller and passed in rather than
+     * re-read here: the fact and the swatch beside it describe one object, and
+     * a second read is how they would come to describe two.
+     */
+    private function publish_brand_summary($designs, $resolved, $favicon) {
+        global $app;
+        $facts = customizer_brand_summary(
+            //* is_array first, for the same reason the payload does it:
+            //* isset($x[0]) is TRUE for a non-empty string.
+            (is_array($designs) && isset($designs[0]) && is_string($designs[0])) ? $designs[0] : '',
+            $resolved, $favicon,
+            array(
+                'design'       => $app->lng('summary_design_txt'),
+                'marks_none'   => $app->lng('summary_marks_none_txt'),
+                'marks_one'    => $app->lng('summary_marks_one_txt'),
+                'marks'        => $app->lng('summary_marks_txt'),
+                'favicon'      => $app->lng('summary_favicon_txt'),
+                'favicon_none' => $app->lng('summary_favicon_none_txt'),
+            )
+        );
+        $app->tpl->setVar('summary_fact_design',  $facts['design']);
+        $app->tpl->setVar('summary_fact_marks',   $facts['marks']);
+        $app->tpl->setVar('summary_fact_favicon', $facts['favicon']);
+    }
+
+    /**
+     * The accessible name of every "?" disclosure on the page.
+     *
+     * Each "?" is a <summary>, which announces as a button; without a name it
+     * announces as the character "?" and nothing else. The name is
+     * hint_more_txt ("More about %s") with the label of the thing the
+     * disclosure explains substituted in, so a screen-reader user hears "More
+     * about Placement" rather than fifteen identical buttons.
+     *
+     * It is built here rather than in the template because vlibTemplate cannot
+     * compose two strings, and it is str_replace('%s', …) rather than a printf
+     * family call because both halves are values a translator edits: one
+     * carrying a stray '%' would make such a call raise a ValueError on PHP 8,
+     * which on this page is a fatal caused by a wordbook file. A translation
+     * that drops the placeholder simply loses the label and keeps the sentence.
+     *
+     * BOTH halves land inside a double-quoted aria-label with no escaping at
+     * the call site, so hint_more_txt and all fifteen labels are on
+     * lang_check.php's $HTML_ATTR_WB_KEYS list — see the docblock there.
+     *
+     * The fifteen keys come from customizer_hint_label_keys() rather than a
+     * second literal here, so Task 7's lang_check.php cross-reference and this
+     * page can never name a different fifteen.
+     *
+     * logo_upload.php renders this same template with no tform, so none of
+     * these vars is set there and vlibTemplate removes them. That response
+     * carries empty aria-labels; harmless, because the uploader's driver reads
+     * only #OKMsg/#errorMsg and the three mark slots out of it.
+     */
+    private function publish_hint_labels() {
+        global $app;
+        $pattern = $app->tform->lng('hint_more_txt');
+        foreach(customizer_hint_label_keys() as $key) {
+            $app->tpl->setVar('hint_' . $key, str_replace('%s', $app->tform->lng($key), $pattern));
+        }
     }
 
     /**

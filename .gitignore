@@ -1,11 +1,18 @@
-# Vendored ISPConfig source, kept locally for diffing override contracts
-.refs/
+# Vendored ISPConfig source, kept locally for diffing override contracts.
+# No trailing slash: in a git worktree it is usually a symlink to the main
+# checkout's copy, and a pattern ending in / never matches a symlink.
+.refs
 
 # Build / scratch
 node_modules/
 *.tgz
 archive/
 mockup/webroot/
+mockup/__pycache__/
+__pycache__/
+# The shipped Branding template, rendered into a mockup fragment by
+# mockup/branding/render_shipped.py on every build. Generated, never edited.
+mockup/branding/shipped.html
 
 # Version stamps written by install.sh. In symlink mode it stamps THROUGH the
 # link, so these land in the working tree. They are install-specific.

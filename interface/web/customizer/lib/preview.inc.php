@@ -557,6 +557,103 @@ function customizer_preview_colour($branding, $key) {
 }
 
 /**
+ * The three status facts the Branding page prints in the legend under its
+ * proof: which design is active, how many marks are supplied, and whether a
+ * favicon is set.
+ *
+ * $design    the design whose chrome the page is describing — the first entry
+ *            of customizer_installed_designs(), which is the active one. '' if
+ *            nothing is known, in which case the fact is omitted rather than
+ *            guessed.
+ * $resolved  one customizer_logo_resolve() result (both variants)
+ * $favicon   one customizer_favicon_resolve() result
+ * $texts     already-localised, keyed 'design', 'marks_none', 'marks_one',
+ *            'marks', 'favicon', 'favicon_none' — this file holds no wordbook
+ *            of its own, exactly like every other renderer here
+ *
+ * Returns array('design' => …, 'marks' => …, 'favicon' => …), each a plain
+ * string ready to print. An empty string means "there is nothing to say",
+ * which the page renders as no fact at all (.nz-facts > span:empty).
+ *
+ * It lives here rather than in customizer_edit.php because it has two callers
+ * that must not word the same fact differently: the page render, and
+ * customizer_preview_payload(), which is what refreshes the legend after an
+ * upload — an upload replaces three slots in place and never reloads the page.
+ *
+ * A mark counts when the variant has artwork of its OWN, which
+ * customizer_logo_resolve() reports as 'from' equalling the variant name. A
+ * slot that is BORROWING the other one already says so in the borrowed-variant
+ * note under its block, and counting it here would tell an operator with one
+ * logo that they have two.
+ *
+ * str_replace(), never sprintf(). These are values a translator edits, and one
+ * carrying a stray '%' — '50% of the pair', a typo — makes sprintf() raise a
+ * ValueError on PHP 8. That is a fatal on an admin page, caused by a wordbook
+ * file, and there is nothing here worth that risk: a placeholder that is
+ * missing simply leaves the sentence without its number.
+ */
+function customizer_brand_summary($design, $resolved, $favicon, $texts) {
+    if(!is_array($texts))    $texts    = array();
+    if(!is_array($resolved)) $resolved = array();
+    $txt = function($key) use ($texts) {
+        return (isset($texts[$key]) && is_string($texts[$key])) ? $texts[$key] : '';
+    };
+
+    $design_fact = '';
+    if(is_string($design) && $design !== '' && $txt('design') !== '') {
+        //* ucfirst, matching customizer_logo_surfaces_all()'s own captions, so
+        //* the design is spelled the same way everywhere on this page.
+        $design_fact = str_replace('%s', ucfirst($design), $txt('design'));
+    }
+
+    $marks = 0;
+    foreach(array('on_light', 'on_dark') as $variant) {
+        if(isset($resolved[$variant]['from']) && $resolved[$variant]['from'] === $variant) $marks++;
+    }
+    if($marks === 0) {
+        $marks_fact = $txt('marks_none');
+    } elseif($marks === 1) {
+        $marks_fact = str_replace('%d', '1', $txt('marks_one'));
+    } else {
+        $marks_fact = str_replace('%d', (string)$marks, $txt('marks'));
+    }
+
+    $has_favicon = (is_array($favicon) && isset($favicon['src']) && $favicon['src'] !== '');
+
+    return array(
+        'design'  => $design_fact,
+        'marks'   => $marks_fact,
+        'favicon' => $has_favicon ? $txt('favicon') : $txt('favicon_none'),
+    );
+}
+
+/**
+ * The label-wordbook key of every "?" disclosure on the Branding page, in the
+ * order they appear.
+ *
+ * One list, in one place, and the other two readers derive from it rather than
+ * repeating it: customizer_edit.php's publish_hint_labels() builds the fifteen
+ * hint_<key> template vars from it, and .github/scripts/lang_check.php reads
+ * this function's body as text (lc_hint_label_keys()) to extend
+ * $HTML_ATTR_WB_KEYS, the set whose values must contain no '"' or '<' because
+ * they are interpolated into a double-quoted aria-label. Adding a "?"
+ * disclosure here therefore extends the attribute-injection guard with it;
+ * tests/brand/probe_module.php asserts that lang_check still derives rather
+ * than hand-copies. Pure and stateless — no $app, no I/O — so it can be
+ * asserted against directly instead of through customizer_edit.php's source
+ * text.
+ */
+function customizer_hint_label_keys() {
+    return array(
+        'identity_head_txt', 'logo_on_light_head_txt', 'logo_url_txt',
+        'logo_on_dark_head_txt', 'logo_url_on_dark_txt', 'placement_head_txt',
+        'favicon_head_txt', 'favicon_url_txt', 'accent_hex_txt',
+        'rail_hex_light_txt', 'show_design_picker_txt', 'show_version_txt',
+        'show_news_feed_txt', 'show_donation_dashlet_txt', 'show_theme_credit_txt',
+    );
+}
+
+/**
  * Everything preview.php answers with, built without touching a database, an
  * HTTP request or a session — so it can be tested, and so the endpoint itself
  * holds no decision of its own.
@@ -566,9 +663,12 @@ function customizer_preview_colour($branding, $key) {
  * $posted           the raw $_POST
  * $designs          which designs to describe, from customizer_installed_designs()
  * $labels           array('nav' => …, 'login' => …), already localised
- * $texts            the five already-localised preview strings, keyed
- *                   'no_logo', 'fallback_from_dark', 'fallback_from_light',
- *                   'no_favicon', 'favicon_url_wins'
+ * $texts            the already-localised preview strings, keyed 'no_logo',
+ *                   'fallback_from_dark', 'fallback_from_light', 'no_favicon',
+ *                   'favicon_url_wins', and the six the legend's status facts
+ *                   need: 'summary_design', 'summary_marks_none',
+ *                   'summary_marks_one', 'summary_marks', 'summary_favicon',
+ *                   'summary_favicon_none'
  *
  * Returns:
  *   'previews' => array('used_logo' => html, 'used_logo_more' => html,
@@ -581,6 +681,11 @@ function customizer_preview_colour($branding, $key) {
  *   'colours'  => 'accent' | 'rail' | 'rail_light' | 'login', each a
  *                 customizer_preview_colour() block; 'rail_light' additionally
  *                 carries 'inherited' => bool
+ *   'summary'  => customizer_brand_summary()'s three facts, so the legend under
+ *                 the proof can be refreshed after an upload. An upload
+ *                 replaces three slots in place and never reloads the page, so
+ *                 without this the mark count would go stale until the operator
+ *                 navigated away and back.
  *
  * The ink on each SURFACE is measured here rather than left to the caller
  * because the page's JavaScript repaints these panes after every keystroke and
@@ -609,6 +714,13 @@ function customizer_preview_payload($stored_branding, $custom_logo, $posted, $de
     ));
 
     $surfaces = customizer_logo_surfaces_all($designs, $branding, $labels);
+
+    //* Resolved once and used twice — the preview row and the status fact must
+    //* not be able to disagree about whether an icon is set.
+    $favicon = customizer_favicon_resolve(array(
+        'favicon'     => isset($branding['favicon']) ? $branding['favicon'] : '',
+        'favicon_url' => isset($branding['favicon_url']) ? $branding['favicon_url'] : '',
+    ));
 
     //* customizer_preview_colour() is asked for the ink rather than
     //* customizer_rail_ink() directly, so the swatch beside a colour field and
@@ -645,11 +757,7 @@ function customizer_preview_payload($stored_branding, $custom_logo, $posted, $de
                 $txt('no_logo'), $txt('fallback_from_light'), $surfaces, 'first'),
             'used_logo_on_dark_more' => customizer_logo_preview_html($resolved['on_dark'], 'on_dark',
                 $txt('no_logo'), $txt('fallback_from_light'), $surfaces, 'more'),
-            'used_favicon' => customizer_favicon_preview_html(
-                customizer_favicon_resolve(array(
-                    'favicon'     => isset($branding['favicon']) ? $branding['favicon'] : '',
-                    'favicon_url' => isset($branding['favicon_url']) ? $branding['favicon_url'] : '',
-                )),
+            'used_favicon' => customizer_favicon_preview_html($favicon,
                 $txt('no_favicon'), $txt('favicon_url_wins')),
         ),
         'surfaces' => $surfaces,
@@ -658,6 +766,24 @@ function customizer_preview_payload($stored_branding, $custom_logo, $posted, $de
             'rail'       => customizer_preview_colour($branding, 'rail_hex'),
             'rail_light' => $rail_light,
             'login'      => customizer_preview_colour($branding, 'login_bg'),
+        ),
+        //* The legend's three status facts. Additive: every key above kept its
+        //* place, which is what preview.php's shape probe and the page's own
+        //* reader assume. The active design leads $designs
+        //* (customizer_installed_designs orders it), so it is the one named.
+        'summary'  => customizer_brand_summary(
+            //* is_array first: isset($x[0]) is TRUE for a non-empty STRING and
+            //* would hand the summary a single character.
+            (is_array($designs) && isset($designs[0]) && is_string($designs[0])) ? $designs[0] : '',
+            $resolved, $favicon,
+            array(
+                'design'       => $txt('summary_design'),
+                'marks_none'   => $txt('summary_marks_none'),
+                'marks_one'    => $txt('summary_marks_one'),
+                'marks'        => $txt('summary_marks'),
+                'favicon'      => $txt('summary_favicon'),
+                'favicon_none' => $txt('summary_favicon_none'),
+            )
         ),
     );
 }

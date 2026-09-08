@@ -183,24 +183,69 @@ function wb_all_values($src) {
 }
 
 /**
- * customizer_edit.htm interpolates exactly these nine tform-wordbook keys
- * into DOUBLE-QUOTED HTML attributes with no escaping at the call site:
- * preview_failed_txt into data-preview-failed and rail_hex_light_inherited_txt
- * into data-rail-light-inherited, and the other seven into an aria-label each
- * (logo_txt, logo_on_dark_txt, favicon_txt, accent_hex_txt,
- * rail_hex_txt, rail_hex_light_txt, login_bg_txt). A value containing '"'
- * breaks out of the attribute; a value containing '<' opens a tag inside it.
- * Neither is stoppable once the string is in the template, so it is enforced
- * here, at the only point every translation passes through before it ships.
- * Scoped to these keys only — other wordbook values (hint text, error
- * messages) legitimately quote UI labels, e.g. 'click "Upload logo"', and are
- * never placed inside an attribute.
+ * customizer_edit.htm interpolates exactly these tform-wordbook keys into
+ * DOUBLE-QUOTED HTML attributes with no escaping at the call site. A value
+ * containing '"' breaks out of the attribute; a value containing '<' opens a
+ * tag inside it. Neither is stoppable once the string is in the template, so it
+ * is enforced here, at the only point every translation passes through before
+ * it ships.
+ *
+ * Three groups:
+ *
+ *   - data attributes on #nz-brandpage: preview_failed_txt,
+ *     rail_hex_light_inherited_txt.
+ *   - aria-label on a control: the three file inputs (logo_txt,
+ *     logo_on_dark_txt, favicon_txt) and the four colour pickers
+ *     (accent_hex_txt, rail_hex_txt, rail_hex_light_txt, login_bg_txt).
+ *   - aria-label on a "?" disclosure. Each one is hint_more_txt with the label
+ *     of the thing it explains substituted into it (publish_hint_labels() in
+ *     customizer_edit.php), so BOTH halves land in the attribute and both are
+ *     listed: hint_more_txt itself, and the labels it is filled with. Those
+ *     labels are NOT hand-copied here — they are read out of
+ *     customizer_hint_label_keys() by lc_hint_label_keys() below, so adding a
+ *     "?" disclosure extends this guard without anyone remembering to.
+ *
+ * Scoped to these keys only — other wordbook values (hint text, error messages)
+ * legitimately quote UI labels, e.g. 'click "Upload logo"', and are never
+ * placed inside an attribute.
  */
-$HTML_ATTR_WB_KEYS = array(
+
+/**
+ * The hint-label keys, read from the one list that defines them:
+ * customizer_hint_label_keys() in interface/web/customizer/lib/preview.inc.php.
+ *
+ * Read as TEXT, like everything else in this script — preview.inc.php is our own
+ * code and not a translation, but a guard that require()s the tree it is
+ * guarding can be broken by a parse error somewhere else in that tree, and this
+ * script has to keep working when a translation PR is what is broken.
+ *
+ * A parse that finds nothing is a hard failure: the alternative is this guard
+ * silently shrinking to the ten keys below and reporting success.
+ */
+function lc_hint_label_keys($file) {
+    $src = lc_read($file);
+    if (!preg_match('/function\s+customizer_hint_label_keys\s*\(\s*\)\s*\{(.*?)\}/s', $src, $m)) {
+        lc_fail("cannot find customizer_hint_label_keys() in $file — the "
+              . "attribute-injection guard derives its label keys from that "
+              . "function and would otherwise check a short list");
+    }
+    preg_match_all('/\'([A-Za-z0-9_]+)\'/', $m[1], $k);
+    if (count($k[1]) === 0) {
+        lc_fail("customizer_hint_label_keys() in $file yielded no keys — the "
+              . "attribute-injection guard would check a short list");
+    }
+    return $k[1];
+}
+
+//* The keys that reach an attribute WITHOUT being a "?" disclosure's label:
+//* two data attributes on #nz-brandpage, the three file inputs, the four colour
+//* pickers, and the disclosure wrapper text itself.
+$HTML_ATTR_WB_KEYS = array_values(array_unique(array_merge(array(
     'preview_failed_txt', 'rail_hex_light_inherited_txt',
     'logo_txt', 'logo_on_dark_txt', 'favicon_txt',
     'accent_hex_txt', 'rail_hex_txt', 'rail_hex_light_txt', 'login_bg_txt',
-);
+    'hint_more_txt',
+), lc_hint_label_keys($root . '/interface/web/customizer/lib/preview.inc.php'))));
 
 function check_no_html_hostile_chars($file, $src) {
     global $HTML_ATTR_WB_KEYS;

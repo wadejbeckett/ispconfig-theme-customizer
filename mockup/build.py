@@ -13,6 +13,7 @@ the live panel would serve.
     python3 build.py            # build webroot/
     python3 build.py --shoot    # build + screenshot (needs playwright)
 """
+import importlib.util
 import re
 import shutil
 import subprocess
@@ -122,6 +123,13 @@ DARK_PAGES = {  # name -> (active module, sidebar fragment, pageContent fragment
     # would ship inlined into; fragment paths are resolved against fragments/,
     # so a sibling directory is reachable without teaching the engine anything.
     "dark-branding":   ("tools", "../branding/sidenav-tools.html", "../branding/branding.html"),
+    # ...and the SHIPPED template beside it, rendered from
+    # interface/web/customizer/templates/customizer_edit.htm with the wordbook
+    # and the mockup's sample brand substituted for its tmpl_vars, so the built
+    # page can be compared against branding/shots/ shot for shot. The content is
+    # built rather than read from fragments/, which is why this value is a
+    # callable.
+    "dark-branding-shipped": ("tools", "../branding/sidenav-tools.html", None),
 }
 
 # The metrics dashlet renders through <canvas>, so the harness (which strips
@@ -185,6 +193,54 @@ function createChart(chartname, label, labels, data) {
 </script>
 """
 
+# ---------------------------------------------------------------------------
+# the SHIPPED Branding page
+#
+# interface/web/customizer/templates/customizer_edit.htm rendered here rather
+# than the hand-written branding/branding.html, so what is reviewed is the file
+# that ships. Everything it needs — the tmpl_vars, the five server-rendered
+# preview slots, the three status facts and the canned preview response the
+# page's own script runs against — comes from branding/render_shipped.py, which
+# gets the markup out of the module's real renderers in lib/preview.inc.php.
+#
+# Loaded by path rather than imported: mockup/branding is a plain directory of
+# design material, not a package, and making it one would put an __init__.py
+# beside the approved design record for no other reason.
+# ---------------------------------------------------------------------------
+
+BRANDING_TPL = REPO / "interface/web/customizer/templates/customizer_edit.htm"
+# The rendered fragment, written on every build for the checks that read the
+# page as text. Generated, never edited; .gitignore carries it.
+BRANDING_SHIPPED_HTML = HERE / "branding/shipped.html"
+
+_SHIPPED = None
+
+
+def render_shipped():
+    """branding/render_shipped.py, loaded once."""
+    global _SHIPPED
+    if _SHIPPED is None:
+        spec = importlib.util.spec_from_file_location(
+            "render_shipped", HERE / "branding/render_shipped.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        _SHIPPED = mod
+    return _SHIPPED
+
+
+def shipped_branding() -> str:
+    """The shipped template with customizer_edit.php's variables filled in."""
+    return render_tpl(BRANDING_TPL.read_text(encoding="utf-8"),
+                      render_shipped().variables())
+
+
+CONTENT_BUILDERS = {"dark-branding-shipped": shipped_branding}
+
+# The page's own <script> is stripped with every other script in this
+# harness, so the Branding page gets it re-injected in build() with a
+# fetch() stub in front of it — see render_shipped.bootstrap(). The light
+# variant is copied from the built dark page, script and all, so it needs
+# no entry of its own.
 PAGE_SCRIPTS = {"dark-dashboard": CHART_BOOTSTRAP}
 
 
@@ -221,8 +277,9 @@ def build_dark_page(name: str, active: str, sidebar_frag: str, content_frag: str
     page = fill(page, r"(<div id='topnav-container'>)\s*(</div>)", "\n" + topnav + "\n")
     page = fill(page, r"(<div id='sidebar' class='nz-context'>)\s*(</div>)",
                 "\n" + (FRAG / sidebar_frag).read_text(encoding="utf-8") + "\n")
-    page = fill(page, r"(<div id=\"pageContent\"[^>]*>)<!-- AJAX CONTENT -->(</div>)",
-                (FRAG / content_frag).read_text(encoding="utf-8"))
+    content = (CONTENT_BUILDERS[name]() if content_frag is None
+               else (FRAG / content_frag).read_text(encoding="utf-8"))
+    page = fill(page, r"(<div id=\"pageContent\"[^>]*>)<!-- AJAX CONTENT -->(</div>)", content)
     # the datalog chip is JS-toggled at runtime; show it in the static shot
     page = page.replace('class="notification" data-toggle="modal" data-target="#datalogModal" style="display: none;"',
                         'class="notification" data-toggle="modal" data-target="#datalogModal"', 1)
@@ -268,6 +325,14 @@ def build() -> None:
     # branding/branding.css the way the shipping template will inline it
     (WEBROOT / "branding").symlink_to(HERE / "branding")
 
+    # Render the shipped Branding template into a fragment, and hand its own
+    # inline script a canned preview response so the page paints itself exactly
+    # as it does on a panel. Everything both need comes from the module's real
+    # renderers; see branding/render_shipped.py. The fragment is also written to
+    # disk so the page can be checked as text after a build.
+    BRANDING_SHIPPED_HTML.write_text(shipped_branding(), encoding="utf-8")
+    PAGE_SCRIPTS["dark-branding-shipped"] = render_shipped().bootstrap()
+
     # stock baseline for comparison
     body = strip_scripts((HERE / "body.html").read_text(encoding="utf-8"))
     head = head_from(STOCK / "themes/default/templates/main.tpl.htm", "default")
@@ -283,7 +348,8 @@ def build() -> None:
     # light-mode variants: same pages with the switcher attribute pre-set
     # (statically, since mockup pages ship without scripts)
     for src, dst in (("dark-dashboard", "light-dashboard"), ("dark-login", "light-login"),
-                     ("dark-branding", "light-branding")):
+                     ("dark-branding", "light-branding"),
+                     ("dark-branding-shipped", "light-branding-shipped")):
         page = (WEBROOT / f"{src}.html").read_text(encoding="utf-8")
         (WEBROOT / f"{dst}.html").write_text(
             page.replace("<html lang='en'>", "<html lang='en' data-nz-theme='light'>", 1),
@@ -308,6 +374,8 @@ SHOT_MATRIX = [
     ("dark-login", ("desktop", "mobile")),
     ("dark-branding", ("desktop", "fold", "narrow")),
     ("light-branding", ("desktop", "fold")),
+    ("dark-branding-shipped", ("desktop", "fold", "narrow")),
+    ("light-branding-shipped", ("desktop", "fold")),
     ("light-dashboard", ("desktop",)),
     ("light-login", ("desktop",)),
     ("default", ("desktop",)),
@@ -326,10 +394,38 @@ VIEWPORT_ONLY = ("mobile", "fold")
 
 # A page whose shots belong beside its own source rather than in shots/.
 SHOT_DIRS = {"dark-branding": HERE / "branding/shots",
-             "light-branding": HERE / "branding/shots"}
+             "light-branding": HERE / "branding/shots",
+             "dark-branding-shipped": HERE / "branding/shots",
+             "light-branding-shipped": HERE / "branding/shots"}
 
 
-def shoot(only: str = "") -> None:
+# --only takes whole page names, matched EXACTLY, comma-separated. A page also
+# answers to its name without the design prefix, so --only=branding is
+# dark-branding + light-branding and NOTHING else. A substring match was the
+# hazard this replaces: --only=branding also matched dark-branding-shipped and
+# light-branding-shipped, which share a destination directory with the approved
+# design record, so the documented build command re-rendered and overwrote the
+# artefacts a human had signed off.
+def shot_targets(only: str):
+    if not only:
+        return [name for name, _ in SHOT_MATRIX]
+    wanted = [w.strip() for w in only.split(",") if w.strip()]
+    picked, unknown = [], []
+    for w in wanted:
+        hits = [name for name, _ in SHOT_MATRIX
+                if name == w or name.split("-", 1)[-1] == w]
+        if not hits:
+            unknown.append(w)
+        picked += hits
+    if unknown:
+        known = sorted({name for name, _ in SHOT_MATRIX}
+                       | {name.split("-", 1)[-1] for name, _ in SHOT_MATRIX})
+        raise SystemExit("--only: no page named " + ", ".join(unknown)
+                         + "\n  known: " + ", ".join(known))
+    return picked
+
+
+def shoot(only: str = "", dest_root: Path = None) -> None:
     from playwright.sync_api import sync_playwright
 
     SHOTS.mkdir(exist_ok=True)
@@ -338,8 +434,9 @@ def shoot(only: str = "") -> None:
     try:
         with sync_playwright() as p:
             b = p.chromium.launch()
+            targets = shot_targets(only)
             for name, labels in SHOT_MATRIX:
-                if only and only not in name:
+                if name not in targets:
                     continue
                 for label in labels:
                     w, h = VIEWPORTS[label]
@@ -356,7 +453,7 @@ def shoot(only: str = "") -> None:
                         # where it is shown doing its job.
                         pg.add_style_tag(content="#nz-brandpage .nz-actions{position:static!important}")
                     pg.wait_for_timeout(400)
-                    dest = SHOT_DIRS.get(name, SHOTS)
+                    dest = dest_root or SHOT_DIRS.get(name, SHOTS)
                     dest.mkdir(parents=True, exist_ok=True)
                     out = dest / f"{name}-{label}.png"
                     pg.screenshot(path=str(out), full_page=(label not in VIEWPORT_ONLY))
@@ -375,5 +472,8 @@ if __name__ == "__main__":
     if "--shoot" in sys.argv:
         print("\nscreenshotting")
         only = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--only=")), "")
-        shoot(only)
+        # A review pass wants its shots somewhere other than beside the design
+        # record; --shots-dir sends every capture of this run to one directory.
+        dest = next((Path(a.split("=", 1)[1]) for a in sys.argv if a.startswith("--shots-dir=")), None)
+        shoot(only, dest)
     print("\ndone")

@@ -149,7 +149,7 @@ installs, listed in `sys_user.modules` and declared by `lib/module.conf.php`:
 |---|---|
 | `interface/web/customizer/customizer_edit.php` | The Branding settings page: reads and writes the `[branding]` keys in `sys_ini.config`. |
 | `interface/web/customizer/logo_upload.php`, `logo_delete.php` | The brand-image endpoints. Three slots share them: `on_light` writes `sys_ini.custom_logo`, `on_dark` writes `[branding] logo_on_dark`, `favicon` writes `[branding] favicon`. The slot is allowlisted, never taken raw. Only the accepted formats and the size cap vary by slot; CSRF, MIME sniffing, the SVG screen and demo mode are shared. |
-| `interface/web/customizer/preview.php` | The Branding page's live preview: admin-only and **read-only**. Takes the form's unsaved values as POST and returns JSON built by `lib/preview.inc.php` — the resolved logo variants per surface, the five preview slots (one swatch per mark column, the remaining surfaces per strip, and the favicon) and the measured rail ink. It exists so the logo-variant resolver stays in PHP: a JavaScript copy would sit outside the three-copies-agree guarantee CI enforces. It declares no function of its own, and `tests/brand/probe_preview.php` proves it writes nothing. |
+| `interface/web/customizer/preview.php` | The Branding page's live preview: admin-only and **read-only**. Takes the form's unsaved values as POST and returns JSON built by `lib/preview.inc.php` — the resolved logo variants per surface, the five preview slots (one swatch per mark column, the remaining surfaces per strip, and the favicon), the measured rail ink, and the legend's three status facts (`summary`, so the mark count stays true after an upload, which replaces three slots in place and never reloads the page). It exists so the logo-variant resolver stays in PHP: a JavaScript copy would sit outside the three-copies-agree guarantee CI enforces. It declares no function of its own, and `tests/brand/probe_preview.php` proves it writes nothing. |
 | `interface/web/customizer/lib/preview.inc.php` | The brand-image model in one place: slot vocabulary, source resolution (the two logo variants with their cross-variant fallback, and the favicon), the ICO structural check, and the preview renderers. The theme readers — `brand.php` for the logos, `favicon.php` for the icon — mirror its resolution rules and must be changed with it. |
 | `interface/web/customizer/lib/svg_guard.inc.php` | The SVG upload screen. Its adversarial corpus is `tests/svg/run.php` — run it before and after any change here. |
 | `interface/web/customizer/form/`, `templates/` | tform definition and page markup. |
@@ -236,7 +236,18 @@ install.
    `themes/<design>/` and `interface/web/customizer/`; the one sanctioned
    exception is the documented `$conf['theme']` line users set themselves.
 2. **Stylesheets read only semantic tokens.** No hard-coded colors outside
-   `tokens.css`. Need a new color? Add a token.
+   `tokens.css`. Need a new color? Add a token. The Branding page's own inline
+   `<style>` follows the same rule through `var(--pz-…, var(--nz-…, …))` chains
+   instead of `tokens.css`, and carries two accepted exceptions,
+   `tests/brand/probe_page.php` enforces both by name so neither can grow a
+   sibling unnoticed:
+   - the single literal `#F2F5F7` in `.nz-prev-lightbody` — the light-mode
+     sidebar sample must depict light mode under any design, so it cannot read
+     a token that a dark design remaps to a dark colour;
+   - the single `.nz-drop:focus-within` rule — the drop zone's `<input
+     type="file">` is visually clipped, so the design's own focus indicator
+     would paint off-screen, and the zone that wraps it carries the indicator
+     instead.
 3. **Every new token needs a light-mode value** in the remap block — except
    `--nz-rail-accent`, which is deliberately never remapped (the navy rail is
    constant in both modes).
@@ -305,9 +316,21 @@ it needs checking at three widths — 1440, 1280 and 1024 — under **each insta
 design**, and in both colour modes on clarity. It has no stylesheet: every colour
 in its inline `<style>` is `var(--pz-…, var(--nz-…, <stock fallback>))`, so a rule
 that names a colour directly will look correct under the design you wrote it for
-and wrong under the other two. Its live preview needs `customizer/preview.php`
-reachable; with JavaScript off the page must still save, which is the check that
-proves the preview stayed an enhancement.
+and wrong under the other two. `tests/brand/probe_page.php` asserts that, the
+`nz-`/`#nz-brandpage` prefixing, the single permitted focus rule and every id the
+inline script binds — run it before you look at anything.
+`tests/brand/probe_frozen.php` sits beside it and hashes the frozen tail of the
+template — from the `// The iframe uploader injects` comment to EOF, the message
+observer and the two-step upload driver with its click-time CSRF mint. Work on
+this page above that comment; a red frozen probe means the region moved, and
+moving it is a security decision to argue for in the commit message, not a hash
+to regenerate. Four things need a
+human: the drop zones by **keyboard** (Tab must reach each one and show where it
+is, Space must open the picker) and by **drag and drop**; the `<details>` hints,
+which must open in place without moving the control beside them; the sticky save
+bar, which must not cover the last field; and JavaScript **off**, where the form
+must still save — that is the check that proves the preview stayed an
+enhancement. The live preview needs `customizer/preview.php` reachable.
 
 ### The mockup harness (optional)
 
