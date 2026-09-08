@@ -318,7 +318,13 @@ in its inline `<style>` is `var(--pz-…, var(--nz-…, <stock fallback>))`, so 
 that names a colour directly will look correct under the design you wrote it for
 and wrong under the other two. `tests/brand/probe_page.php` asserts that, the
 `nz-`/`#nz-brandpage` prefixing, the single permitted focus rule and every id the
-inline script binds — run it before you look at anything. Four things need a
+inline script binds — run it before you look at anything.
+`tests/brand/probe_frozen.php` sits beside it and hashes the frozen tail of the
+template — from the `// The iframe uploader injects` comment to EOF, the message
+observer and the two-step upload driver with its click-time CSRF mint. Work on
+this page above that comment; a red frozen probe means the region moved, and
+moving it is a security decision to argue for in the commit message, not a hash
+to regenerate. Four things need a
 human: the drop zones by **keyboard** (Tab must reach each one and show where it
 is, Space must open the picker) and by **drag and drop**; the `<details>` hints,
 which must open in place without moving the control beside them; the sticky save

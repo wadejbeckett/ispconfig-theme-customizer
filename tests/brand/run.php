@@ -44,6 +44,7 @@ $checks = array(
     'tform'   => __DIR__ . '/probe_tform.php',
     'preview' => __DIR__ . '/probe_preview.php',
     'page'    => __DIR__ . '/probe_page.php',
+    'frozen'  => __DIR__ . '/probe_frozen.php',
 );
 
 $fail      = 0;
