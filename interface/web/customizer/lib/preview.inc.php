@@ -631,11 +631,17 @@ function customizer_brand_summary($design, $resolved, $favicon, $texts) {
  * The label-wordbook key of every "?" disclosure on the Branding page, in the
  * order they appear.
  *
- * One list, in one place: customizer_edit.php's publish_hint_labels() builds
- * the fifteen hint_<key> template vars from it, and lang_check.php's
- * $HTML_ATTR_WB_KEYS docblock cross-references it so the two cannot drift
- * apart. Pure and stateless — no $app, no I/O — so it can be asserted against
- * directly instead of through customizer_edit.php's source text.
+ * One list, in one place, and the other two readers derive from it rather than
+ * repeating it: customizer_edit.php's publish_hint_labels() builds the fifteen
+ * hint_<key> template vars from it, and .github/scripts/lang_check.php reads
+ * this function's body as text (lc_hint_label_keys()) to extend
+ * $HTML_ATTR_WB_KEYS, the set whose values must contain no '"' or '<' because
+ * they are interpolated into a double-quoted aria-label. Adding a "?"
+ * disclosure here therefore extends the attribute-injection guard with it;
+ * tests/brand/probe_module.php asserts that lang_check still derives rather
+ * than hand-copies. Pure and stateless — no $app, no I/O — so it can be
+ * asserted against directly instead of through customizer_edit.php's source
+ * text.
  */
 function customizer_hint_label_keys() {
     return array(

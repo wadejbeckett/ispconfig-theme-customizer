@@ -776,8 +776,15 @@ if ($purge_src !== false) {
 
 /* ---- the fifteen hint-label keys live in one place -------------------------
  * customizer_hint_label_keys() (lib/preview.inc.php) is the single list Task 3's
- * publish_hint_labels() iterates and Task 7's lang_check.php cross-references.
- * Pure and stateless, so it is called directly rather than sourced.
+ * publish_hint_labels() iterates and lang_check.php derives its aria-label key
+ * set from. Pure and stateless, so it is called directly rather than sourced.
+ *
+ * The literal below is a deliberate tripwire, not a second copy of the contract:
+ * a new "?" disclosure is a considered change and should have to be written
+ * down twice. What must never happen is lang_check.php growing a third,
+ * hand-maintained copy — a label key it did not know about would be
+ * interpolated unescaped into aria-label="…" — so that is asserted separately
+ * below.
  */
 if (function_exists('customizer_hint_label_keys')) {
     $hint_keys = customizer_hint_label_keys();
@@ -792,6 +799,43 @@ if (function_exists('customizer_hint_label_keys')) {
         $hint_keys);
 } else {
     t_ok('customizer_hint_label_keys() exists', false);
+}
+
+/* ---- lang_check derives that list; it does not copy it ---------------------
+ * .github/scripts/lang_check.php must never execute the tree it guards, so it
+ * reads customizer_hint_label_keys()'s body as text. Asserted here because the
+ * failure mode is silent: a hand-copied list that lost a key still exits 0, and
+ * the key it lost is one that lands inside a double-quoted aria-label with no
+ * escaping (customizer_edit.php's str_replace into the template).
+ */
+$lang_check = @file_get_contents(__DIR__ . '/../../.github/scripts/lang_check.php');
+t_ok('lang_check.php is readable', $lang_check !== false);
+if ($lang_check !== false && function_exists('customizer_hint_label_keys')) {
+    t_ok('lang_check.php builds $HTML_ATTR_WB_KEYS from lc_hint_label_keys()',
+        preg_match('/\$HTML_ATTR_WB_KEYS\s*=.*?lc_hint_label_keys\s*\(/s', $lang_check) === 1);
+
+    //* Parsed the same way lang_check itself parses it, so this proves the
+    //* derivation yields the fifteen and not, say, an empty match.
+    $derived = array();
+    if (preg_match('/function\s+customizer_hint_label_keys\s*\(\s*\)\s*\{(.*?)\}/s',
+            file_get_contents(__DIR__ . '/../../interface/web/customizer/lib/preview.inc.php'), $body)) {
+        preg_match_all('/\'([A-Za-z0-9_]+)\'/', $body[1], $found);
+        $derived = $found[1];
+    }
+    t_ok('lang_check.php\'s own parse of customizer_hint_label_keys() returns it whole',
+        $derived === customizer_hint_label_keys(), $derived);
+
+    //* No hint label key may appear as a literal in lang_check.php: that would be
+    //* the hand-copied list coming back. The four that are ALSO plain attribute
+    //* keys in their own right (the colour pickers) are legitimately literal.
+    $attr_own = array('accent_hex_txt', 'rail_hex_txt', 'rail_hex_light_txt', 'login_bg_txt');
+    $copied = array();
+    foreach (customizer_hint_label_keys() as $key) {
+        if (in_array($key, $attr_own, true)) continue;
+        if (strpos($lang_check, "'" . $key . "'") !== false) $copied[] = $key;
+    }
+    t_ok('lang_check.php holds no hand-copied duplicate of the hint-label keys',
+        $copied === array(), $copied);
 }
 
 /* ---- the page publishes what its template asks for -----------------------
