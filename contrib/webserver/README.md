@@ -33,7 +33,7 @@ included, introduces the exposure. Verified: on a stock panel
 
 It also undercuts this project's own **"hide the ISPConfig version"** toggle,
 which hides the version in the Help page while the same value stays readable one
-URL away. Applying the snippet below is what makes that toggle honest.
+URL away. Applying the snippet below is what makes that toggle effective.
 
 Two documentation files ride along for the same reason and are denied too:
 `BUILT-AGAINST.txt` and `README.md`.
