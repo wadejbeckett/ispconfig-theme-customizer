@@ -42,4 +42,3 @@ themes/classic/templates/
 # File-sync artifacts (Nextcloud/Dropbox conflict copies)
 *conflicted copy*
 .superpowers/
-.superpowers/
