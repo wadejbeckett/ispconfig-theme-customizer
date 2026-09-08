@@ -293,8 +293,16 @@ says it is.
   its own: nothing to `sys_ini`, nothing to `sys_config`, nothing to disk. Its
   response carries the rendered preview rows, the surfaces list, the colour
   blocks and three short status sentences (`summary`) built from the module's
-  own wordbook — no value a request supplied is echoed back, and the operator's
-  panel name never enters the payload at all.
+  own wordbook. It does echo back request-supplied values, but only ones that
+  cleared the same anchored allowlists the save path uses: the four hex colours
+  (`^#[0-9A-Fa-f]{6}$`, uppercased) come back as `colours.<name>.hex`, and the
+  three reference paths (`customizer_logo_ref_ok()`) come back inside an
+  `<img src>` that `htmlspecialchars($src, ENT_QUOTES)` escaped, in a payload
+  `json_encode`d with `JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS |
+  JSON_HEX_QUOT`. Anything that fails its pattern is dropped, not echoed. No
+  free text is reflected, and the operator's panel name never enters the
+  payload at all — the page renders that into the preview itself, from the
+  input, as text.
   It declares no function of its own either (every rule it applies is one of the
   shared resolvers in `lib/preview.inc.php`, so the preview cannot drift from
   what the panel renders). It answers `application/json` with `Cache-Control:
