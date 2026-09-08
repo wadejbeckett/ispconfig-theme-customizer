@@ -624,14 +624,17 @@
 
   /* The save bar. Sticky, on the page ground with a hairline over it — the same
      shape clarity gives every other form footer in the panel, so the one control
-     an operator looks for is where they already expect it. */
+     an operator looks for is where they already expect it.
+     The background chain ends in a real colour, not `transparent`: a design that
+     ships no tokens (classic does not) would otherwise let the form scroll
+     through the buttons. Same terminal fallback as .nz-prevnav-body above. */
   #nz-brandpage .nz-actions {
     position: sticky; bottom: 0; z-index: 5;
     display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
     margin-top: 22px;
     padding: 12px 0;
     border-top: 1px solid var(--pz-edge, var(--nz-border, rgba(128, 128, 128, 0.25)));
-    background: var(--pz-ground, var(--nz-page, transparent));
+    background: var(--pz-ground, var(--nz-page, #ffffff));
   }
   #nz-brandpage .nz-actions .nz-saveflash { flex: 1 1 auto; min-width: 0; }
   /* Empty until a save lands, and it must not open a gap before then. */
