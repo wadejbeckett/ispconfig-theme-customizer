@@ -635,9 +635,9 @@ body.nz .table td.text-right { white-space: nowrap; }
 #pageContent form .clear .btn,
 #pageContent .buttonHolder .btn { margin-right: 8px; }
 
-/* form action footer: sticky, separated, primary in the power position.
-   (#pageContent lives INSIDE form#pageForm — no form descendant here.) */
-body.nz #pageContent .clear:has(> .right) {
+/* Only submit rows are form footers. Client Limits also uses .clear > .right for Add additional template halfway through the form; painting that helper as a sticky footer adds a second action bar (Issue #4). #pageContent lives INSIDE form#pageForm — no form descendant here. */
+body.nz #pageContent .clear:has(> .right [data-submit-form]),
+body.nz #pageContent .clear:has(> .right [onclick*="ISPConfig.submitForm("]) {
   position: sticky;
   bottom: 0;
   z-index: 5;
@@ -655,6 +655,21 @@ body.nz #pageContent .clear > .right {
   gap: 8px;
 }
 body.nz #pageContent .clear > .right .btn { margin-right: 0; }
+
+/* Helpers still contain their floated controls, without footer chrome. */
+body.nz .panel_client .clear:has(> .right):not(:has(> .right [data-submit-form], > .right [onclick*="ISPConfig.submitForm("])) {
+  display: flow-root;
+  margin: 8px 0 18px;
+}
+body.nz .panel_client #tpl_add_btn {
+  max-width: 100%;
+  height: auto;
+  min-height: var(--nz-ctl-h);
+  padding: 8px 12px;
+  white-space: normal;
+  line-height: 1.4;
+}
+body.nz .panel_client .clear > .right { max-width: 100%; }
 
 /* DNS record-type strip: 21 buttons — a picker, not 21 primary actions */
 body.nz .btn.dns-record-btn,
@@ -950,6 +965,26 @@ body.nz .alert {
 
 body.nz .alert ul { margin: 4px 0 0; padding-left: 18px; }
 body.nz .alert .close { color: inherit; opacity: 0.6; text-shadow: none; }
+
+/* Bootstrap's -21px close offset needs its original 35px gutter. Own both together here: the close target stays inside the border even on a one-line notice, with space between it and wrapping message text (Issue #4). */
+body.nz .alert.alert-dismissible,
+body.nz .alert.alert-dismissable { padding-right: 48px; }
+body.nz .alert-dismissible > .close,
+body.nz .alert-dismissable > .close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  float: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  line-height: 1;
+  border-radius: var(--nz-radius-ctl);
+}
+body.nz .alert > .close:hover,
+body.nz .alert > .close:focus-visible { opacity: 1; }
 
 body.nz .alert-danger, body.nz #errorMsg {
   background: var(--nz-danger-surface);
@@ -1445,6 +1480,9 @@ body.nz .panel-default > .panel-heading {
 
 body.nz .panel-body { color: var(--nz-text); }
 
+/* DNS Records is a bare .panel, not a .panel-body. Button text padding and toolbar margins cannot supply the missing inset against its border. */
+body.nz .panel_dns_soa { padding: 16px 18px 6px; }
+
 /* legacy wells / fieldsets that occasionally appear */
 body.nz .well {
   background: var(--nz-card);
@@ -1498,6 +1536,9 @@ body.nz .select2-drop  { box-shadow: var(--nz-shadow-pop), inset 0 1px 0 var(--n
    skinned: flush fields and naked panels. */
 
 body.nz .pnl_formsarea { padding: 6px 2px 0; }
+
+/* The outer client card needs its own inset. Nested accordion bodies keep their existing padding; a generic .panel rule would double that spacing. */
+body.nz .panel_client > .pnl_formsarea { padding: 18px 18px 0; }
 
 body.nz .pnl_formsarea fieldset.inlineLabels > .form-group { margin-bottom: 14px; }
 

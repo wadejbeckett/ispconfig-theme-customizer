@@ -540,20 +540,34 @@ html.nz-loading .nz-topbar::after {
   50%      { box-shadow: 0 0 0 5px transparent; }
 }
 
-/* who am I — quiet identity chip beside the session control */
+/* Identity is a plain label until the authorised Tools navigation arrives. nz-theme.js then promotes it to a native User Settings button (Issue #4). */
 .nz-user {
   display: inline-flex;
   align-items: center;
   gap: 7px;
   height: 32px;
-  padding: 0 12px;
-  border: 1px solid var(--nz-border);
-  border-radius: var(--nz-radius-pill);
+  padding: 0;
+  border: 0;
   color: var(--nz-text-secondary);
   font-size: 12.5px;
   font-weight: 500;
 }
 .nz-user .icon { font-size: 13px; color: var(--nz-text-muted); }
+body.nz button.nz-user {
+  padding: 0 12px;
+  background: transparent;
+  border: 1px solid var(--nz-border-strong);
+  border-radius: var(--nz-radius-pill);
+  font-family: var(--nz-font);
+  cursor: pointer;
+  transition: background var(--nz-quick) var(--nz-ease),
+              color var(--nz-quick) var(--nz-ease);
+}
+body.nz button.nz-user:hover,
+body.nz button.nz-user:focus-visible {
+  background: var(--nz-raised);
+  color: var(--nz-text-heading);
+}
 
 /* logout: a quiet session control, not an alarm */
 body.nz #logout-button {

@@ -10,6 +10,7 @@
  *   6. a11y + orientation enhancement of AJAX-loaded stock markup
  *      (icon-button names, keyboard sorting, filter labels, active
  *      tree item) — re-applied on every content load via observers.
+ *   7. username: native User Settings when Tools is available
  */
 (function () {
   'use strict';
@@ -467,11 +468,49 @@
       .observe(el, { childList: true });
   }
 
+  /* ---------- 7. user settings ---------- */
+
+  function syncUserSettings() {
+    var user = document.getElementById('nz-user');
+    if (!user) return;
+    /* nav.php publishes only this user's modules, asynchronously. Keep an explicit module marker even on the active item, where core omits data-capp. A missing/failed menu leaves an honest identity label. This controls the affordance, not authorisation: core still enforces Tools permission and selects the session user at the endpoint. */
+    var allowed = !!document.querySelector('#main-navigation [data-nz-module="tools"]') &&
+      !!window.jQuery && !!window.ISPConfig && typeof ISPConfig.capp === 'function';
+    if ((user.tagName === 'BUTTON') === allowed) return;
+
+    var label = user.getAttribute('data-nz-settings-label') || 'User Settings';
+    var replacement = document.createElement(allowed ? 'button' : 'span');
+    replacement.id = user.id;
+    replacement.className = user.className;
+    replacement.setAttribute('data-nz-settings-label', label);
+    while (user.firstChild) replacement.appendChild(user.firstChild);
+    if (allowed) {
+      replacement.type = 'button';
+      /* Core's delegated module switch updates the session and menus before opening Tools' native start page, User Settings. Do not load a page from another module behind the current module's session state. */
+      replacement.setAttribute('data-capp', 'tools');
+      replacement.setAttribute('title', label);
+      replacement.setAttribute('aria-label', label + ': ' + replacement.textContent.trim());
+      /* Core's document-wide Enter shortcut treats every button as the current form's input, even outside #pageForm. Keep this keypress out of that handler while preserving the button's native click activation. */
+      replacement.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter' || e.keyCode === 13) e.stopPropagation();
+      });
+    }
+    user.parentNode.replaceChild(replacement, user);
+  }
+
+  function watchUserSettings() {
+    var nav = document.getElementById('topnav-container');
+    if (!nav) return;
+    syncUserSettings();
+    new MutationObserver(syncUserSettings).observe(nav, { childList: true, subtree: true });
+  }
+
   function boot() {
     watch('pageContent');
     watch('sidebar');
     themeCharts();
     syncToggle();
+    watchUserSettings();
   }
 
   if (document.readyState === 'loading') {

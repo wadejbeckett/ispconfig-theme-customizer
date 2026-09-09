@@ -50,7 +50,7 @@ Clarity dark and DirectAdmin Evolution read as one family — desaturated dark b
 ```
 
 - **Rail** hosts the logo, the module nav (`#topnav-container`, markup from this design's own `topnav.tpl.htm`), and the contextual `#sidebar` (module tree, or news on the dashboard) under a hairline. Active module = navy-blue fill (`#002D4D`) + 3px rounded `#2EA9FF` bar + white text.
-- **Topbar** is sticky, blurred page-color; the global search is a single bordered bar (card surface, icon left, focus ring); the datalog counter is a quiet pulsing blue chip; logout is a ghost session control (danger color only on hover).
+- **Topbar** is sticky, blurred page-color; the global search is a single bordered bar (card surface, icon left, focus ring); the datalog counter is a quiet pulsing blue chip; logout is a ghost session control (danger color only on hover). The username opens native User Settings through the Tools module when that module appears in the user's authorised navigation; until then, or without Tools, it is an unbordered identity label. The button's accessible label and title come from `data-nz-settings-label` in the app shell.
 - **Mobile** (<960px): the rail hides; ISPConfig's stock pushy drawer takes over, skinned to the same navy.
 
 ## 4. Component voice (dark values)
@@ -59,7 +59,8 @@ Clarity dark and DirectAdmin Evolution read as one family — desaturated dark b
 - **Inputs.** Recessed well `#1B2B32`, 1px `rgba(133,147,153,.55)` border, 4px radius; focus = `#2EA9FF` border + 3px `rgba(46,169,255,.4)` halo. Native checkboxes/radios via `accent-color`.
 - **Tables.** Card-wrapped (8px radius, hairline, `overflow-x:auto`). `caption` = card title bar; header band = construction-1000 (Clarity's tint, darker than the card) with 11px caps muted text; cells 8×12px (Clarity standard density); hover = faint blue wash; whole-cell links inherit text color; `tr.danger` = translucent red tint, normal text.
 - **Tabs.** Flat strip on a hairline; active = white text + 3px `#2EA9FF` inset underline (Clarity border-width-300). No boxes.
-- **Alerts.** Clarity dark anatomy: solid status surface (blue-800 / green-800 / ochre-900 / red-900) + 1px status-color border, light text. In light mode the surfaces remap to the Clarity 50-tints with dark text.
+- **Alerts.** Clarity dark anatomy: solid status surface (blue-800 / green-800 / ochre-900 / red-900) + 1px status-color border, light text. In light mode the surfaces remap to the Clarity 50-tints with dark text. Dismissible alerts reserve their own gutter around an inset 28px close target; non-dismissible alerts retain normal content padding.
+- **Bare panels and form actions.** DNS Records and the outer client form need explicit content insets because core does not wrap them in a panel body. Nested accordion bodies retain their own inset. Only rows containing a submit action receive sticky-footer styling, including core's inline `ISPConfig.submitForm(...)` buttons in the DNS wizard and APS installer; mid-form helpers stay in normal flow.
 - **Meters.** 18px pill track (`#1B2B32`), status-colored fill, centered 11px white overlay label (stock markup contract).
 - **Badges.** Solid Clarity shade fills (green-800, ochre-600 with dark text, red-800/900, blue-800), 12px radius, white text elsewhere.
 - **Charts.** Chart.js draws dark axes, so canvases sit on a light "paper" panel (`--nz-paper`, `#E3EAED`, 8px radius) — a deliberate light island.

@@ -47,12 +47,12 @@
   <link rel='stylesheet' href='themes/default/assets/stylesheets/bootstrap-icons.min.css' />
 
   <!-- Clarity Theme for ISPConfig layer (loaded last so it owns the cascade) -->
-  <link rel='stylesheet' href='themes/<tmpl_var name='current_theme'>/assets/fonts/inter/inter.css?ver=10' />
-  <link rel='stylesheet' href='themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/tokens.css?ver=10' />
-  <link rel='stylesheet' href='themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/icons.css?ver=10' />
-  <link rel='stylesheet' href='themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/base.css?ver=10' />
-  <link rel='stylesheet' href='themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/app.css?ver=10' />
-  <link rel='stylesheet' href='themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/components.css?ver=10' />
+  <link rel='stylesheet' href='themes/<tmpl_var name='current_theme'>/assets/fonts/inter/inter.css?ver=11' />
+  <link rel='stylesheet' href='themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/tokens.css?ver=11' />
+  <link rel='stylesheet' href='themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/icons.css?ver=11' />
+  <link rel='stylesheet' href='themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/base.css?ver=11' />
+  <link rel='stylesheet' href='themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/app.css?ver=11' />
+  <link rel='stylesheet' href='themes/<tmpl_var name='current_theme'>/assets/stylesheets/clarity/components.css?ver=11' />
 
   <!-- host branding overrides, read from ISPConfig's sys_ini (logo/accent/login/credits).
        Loaded last so it owns the cascade; an empty no-op when nothing is set. -->
@@ -109,7 +109,7 @@
 	            <span class="nz-sr">Pending changes: </span><span class="notification_text">{tmpl_var name="datalog_changes_count"}</span>
             </button>
             <tmpl_if name="cpuser">
-				<span class='nz-user'><span class='icon icon-client' aria-hidden='true'></span><tmpl_var name="cpuser"></span>
+				<span id='nz-user' class='nz-user' data-nz-settings-label='User Settings'><span class='icon icon-client' aria-hidden='true'></span><tmpl_var name="cpuser"></span>
 				<button type='button' id='logout-button' class='btn btn-sm btn-danger text-uppercase' data-load-content="login/logout.php"><tmpl_var name="logout_txt"> <tmpl_var name="cpuser"></button>
             </tmpl_if>
           </div>
@@ -166,7 +166,7 @@
   <script type="text/javascript" src="js/jquery.ispconfigsearch.js"></script>
   <script type="text/javascript" src="js/jquery.tipsy.js"></script>
   <script src="js/chartjs/chart.umd.js"></script>
-  <script src='themes/<tmpl_var name='current_theme'>/assets/javascripts/nz-theme.js?ver=10'></script>
+  <script src='themes/<tmpl_var name='current_theme'>/assets/javascripts/nz-theme.js?ver=11'></script>
   <tmpl_loop name="js_d_includes">
 	<script type="text/javascript" src="js/js.d/<tmpl_var name='file'>"></script>
   </tmpl_loop>

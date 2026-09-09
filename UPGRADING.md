@@ -172,6 +172,17 @@ A design pass over the Branding page: it is now built around its own preview, wi
 - **Three form-wordbook keys were retired**: `rail_contrast_txt`, `preview_nav_txt` and `logo_removed_txt`. The new layout's status facts and measured-ratio captions replaced what the first two labelled, and the third labelled a standalone confirmation the inline drop-zone line replaced. A third-party translation carrying them keeps them harmlessly.
 - **No design has to change.** The page's stylesheet is inline and reads design tokens through the same `var(--pz-…, var(--nz-…, …))` chains it always did, and the brand-token contract is untouched.
 
+### v3.5.1
+
+Clarity layout and navigation fixes for [Issue #4](https://github.com/wadejbeckett/ispconfig-theme-customizer/issues/4):
+
+- Dismissible notifications keep their close control inside the border, with a larger click target and space for message text.
+- DNS Records and the outer Client Limits form gain consistent panel padding without doubling nested accordion padding.
+- The username opens native User Settings through the authorised Tools module. It remains a plain label when Tools is unavailable. Enter activation is isolated from the current form's global submit shortcut.
+- Add additional template stays in normal flow; actual submit rows, including native inline-submit DNS Wizard and APS controls, retain their footer styling.
+
+Re-run the installer with the same component/design/copy flags used previously and reload the panel. Both Clarity shell cache-busters advance together. This release adds no branding keys, storage migration, PHP endpoint or licence change; classic's implementation is unchanged. An optional Firefox regression runner is documented in [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Upgrading from the old split installation
 
 Only relevant if you installed before v3.0.0. Until then this shipped as two repositories — `clarity-theme-ispconfig` and `ispconfig-customizer` — with independent version numbers, and nothing enforced that the halves matched: `themes/clarity/brand.php` reads exactly the `sys_ini` keys `customizer_edit.php` writes, so the module at v1.0.12 against the theme at v2.1.0 left the accent colour silently unapplied, with no error anywhere. That is why they merged. It is one extension now, with one version number and one tag, and CI enforces the contract.

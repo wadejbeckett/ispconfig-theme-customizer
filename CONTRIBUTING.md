@@ -109,6 +109,14 @@ python3 mockup/build.py --shoot      # writes mockup/shots/*.png
 
 Renders are deterministic, so before and after runs can be compared with ImageMagick (`compare -metric AE old.png new.png diff.png`); zero differing pixels means a refactor changed nothing visually.
 
+### Clarity browser regressions
+
+`python3 -B tests/ui/run.py` exercises the actual Clarity shell against the stock dashboard/DNS/client markup with synthetic data and fully intercepted browser requests. It requires the optional Playwright dependency above, its Firefox browser, and an ISPConfig source checkout under `.refs/ispconfig3` (or an explicit `--core-web` directory). It checks alert containment/dismissal, DNS and client spacing, helper versus submit-footer behaviour, username navigation by click/Enter/Space, asynchronous permitted-module changes, long labels and mobile drawer operation in both modes at three widths. It uses the existing mockup renderer without rebuilding its webroot. Native server endpoints are fixture responses: the checks do not prove live permissions, database writes or installation correctness.
+
+Pass `--output /tmp/clarity-ui` to retain screenshots, computed geometry, request records and source hashes outside the repository. Without it the output uses a temporary directory removed after the run. `--theme-ref <git-revision>` renders that revision's theme files against the same core/fixtures; the current regression assertions intentionally fail on older affected revisions. The runner does not install dependencies, fetch core, write to either source tree or contact a panel. Browser checks are optional local checks, not part of the PHP-only CI job.
+
+Each username input method starts from a fresh form/list, checking that it issues only the native navigation requests and no save, filter or helper action. This catches core's document-wide Enter shortcut intercepting buttons outside the form. The runner also checks the native DNS-wizard and APS inline-submit footer shapes. `--only light-limits-desktop` selects one fixture for a focused reproduction; the default runs the complete matrix.
+
 ## Submitting a pull request
 
 - Keep PRs small and focused: one fix or one feature.

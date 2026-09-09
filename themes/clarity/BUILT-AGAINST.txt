@@ -86,3 +86,6 @@ donate.htm      <- interface/web/dashboard/dashlets/templates/donate.htm (3.3.1p
                    the same class of reason; all five are written up in
                    docs/UPSTREAM-PATCHES.md as candidates for core.
 On ISPConfig upgrade: diff these four stock files against the pins above before re-stamping.
+
+USER SETTINGS SHORTCUT (Clarity runtime enhancement):
+The app shell supplies #nz-user as an identity label. topnav.tpl.htm adds data-nz-module to each authorised nav_top item, including the active one where core omits data-capp. nz-theme.js observes #topnav-container replacements and promotes the label to a button with data-capp=tools only while Tools is present and native navigation is available. Core's delegated ISPConfig.capp call changes the session module and opens Tools' start page (tools/user_settings.php); it still enforces module permission and the current user. Recheck nav.php's allowed-module list, the Tools start page and the native data-capp contract after a panel upgrade. No new core template variable or PHP endpoint is required.

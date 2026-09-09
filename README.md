@@ -9,6 +9,12 @@ An extension for the [ISPConfig](https://www.ispconfig.org/) control panel that 
 | ![Websites list](mockup/shots/dark-sites-desktop.png) | ![Login](mockup/shots/dark-login-desktop.png) |
 | ![Light dashboard](mockup/shots/light-dashboard-desktop.png) | ![Branding page](docs/screenshots/branding-page-dark.png) |
 
+| | |
+|---|---|
+| ![Clarity DNS records](docs/screenshots/clarity-dns-records-light.png) | ![Clarity Client Limits](docs/screenshots/clarity-client-limits-light.png) |
+
+The DNS and Client Limits screenshots are Firefox renders of the shipped templates with sample data. [Dark Client Limits](docs/screenshots/clarity-client-limits-dark.png) and the [notification close control](docs/screenshots/clarity-notification-light.png) show the same layout fixes in more detail.
+
 Those are the clarity design; `mockup/shots/default-desktop.png` is the stock panel for comparison, which is the shape classic keeps.
 
 ## The two designs
@@ -18,6 +24,8 @@ They are alternatives, not layers: pick one with `--design`, or install both and
 ### clarity — the default
 
 Brand rail, topbar, card surfaces and restyled tables, forms, tabs and modals, applied by CSS to the stock markup rather than by rewriting pages. Dark and light, with an in-panel switcher stored in `localStorage`. Clarity icon shapes replace the legacy `ispconfig` icon font, the Bootstrap glyphicons and the FontAwesome 4 glyphs, inlined as CSS masks, and **Inter** is self-hosted: no external font, script or CDN request is added. Vendor CSS and JS still load from `themes/default`, so that directory must remain present.
+
+The username opens native **User Settings** when Tools is available to that user, with pointer and keyboard activation. Without Tools it is a plain identity label. DNS and client forms have their own panel spacing, and mid-form helpers stay separate from sticky submit footers.
 
 It overrides **seven templates** and nothing else: three shell templates (`main.tpl.htm`, `main_login.tpl.htm`, `topnav.tpl.htm`) and four dashboard dashlets (`dashboard.htm`, `modules.htm`, `metrics.htm`, `donate.htm`). Every other page renders from the stock `default` theme, styled by CSS alone. All seven are pinned, with the contracts each preserves, in [`themes/clarity/BUILT-AGAINST.txt`](themes/clarity/BUILT-AGAINST.txt) — the file to re-check after a panel upgrade.
 
