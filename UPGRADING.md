@@ -134,6 +134,12 @@ With a symlink install the panel reads the design from the clone, so a tag check
 
 No release listed below has a migration step, a schema change or a new column. Everything the Branding page stores lives in the same `sys_ini` row throughout.
 
+### v3.5.2
+
+Fixes an HTTP 500 when opening **Branding** with a symlink installation. PHP can resolve the module's working directory into the external clone, causing its relative `../../lib/config.inc.php` include to miss the installed panel. The settings page, live preview, upload and delete endpoints now share installation-aware core loading. Existing admin permission and CSRF checks are unchanged. Copy installations continue to work.
+
+Upgrade to `v3.5.2` using the procedure above, retaining your original `--copy` and `--design` options. There is no need to change installation mode or re-enter branding settings. This failure was reproduced with the previous release under Apache and Nginx/PHP-FPM; the patched endpoints reach authorization in both installation modes. These bootstrap checks do not establish full compatibility with a newer ISPConfig release.
+
 ### v3.1.0
 
 **If you installed before v3.1.0 with the default (symlink) mode, re-running `./install.sh` is the whole remedy.** Before v3.1.0 every branding endpoint located the panel with a path built from `__DIR__`, which PHP resolves through symlinks. Since `install.sh` defaults to symlink mode, that path landed in the git clone rather than the panel, `config.inc.php` was never found, and the endpoints took their database-failure path: a valid but empty response. The visible symptom was that branding appeared to do nothing, with no error, no log entry and no 404 to chase. Panels installed with `--copy` were unaffected. Nothing in the database changed, so the stored branding comes back as it was.

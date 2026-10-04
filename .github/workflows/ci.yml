@@ -72,6 +72,9 @@ jobs:
         # stale.
         run: php tests/svg/run.php
 
+      - name: Module bootstrap — copy and symlink HTTP requests
+        run: python3 tests/bootstrap/run.py
+
       - name: Cache-buster consistency
         # every ?ver= in a shell template must match — a mismatched bump ships
         # stale CSS/JS to browsers holding the old version (a real past bug)

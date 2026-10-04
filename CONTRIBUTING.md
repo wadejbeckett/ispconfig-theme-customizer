@@ -42,6 +42,7 @@ A stock ISPConfig tform module.
 | File | Role |
 |---|---|
 | `customizer_edit.php` | The Branding settings page: reads and writes the `[branding]` keys in `sys_ini.config`. |
+| `lib/bootstrap.inc.php` | Loads the installed panel's configuration and application for all four module endpoints. Handles copied modules, external module symlinks and symlinked document roots; verifies that a candidate panel contains this module before loading core. |
 | `logo_upload.php`, `logo_delete.php` | The brand-image endpoints. Three slots share them: `on_light` writes `sys_ini.custom_logo`, `on_dark` writes `[branding] logo_on_dark`, `favicon` writes `[branding] favicon`. The slot is allowlisted, never taken raw. Only the accepted formats and the size cap vary by slot; CSRF, MIME sniffing, the SVG screen and demo mode are shared. |
 | `preview.php` | The live preview: admin-only and read-only. Takes the form's unsaved values as POST and returns JSON built by `lib/preview.inc.php`. It exists so the logo-variant resolver stays in PHP; a JavaScript copy would sit outside the three-copies-agree guarantee CI enforces. `tests/brand/probe_preview.php` proves it writes nothing. |
 | `lib/preview.inc.php` | The brand-image model in one place: slot vocabulary, source resolution (the two logo variants with their cross-variant fallback, and the favicon), the ICO structural check, and the preview renderers. `brand.php` and `favicon.php` mirror its resolution rules and must change with it. |
@@ -88,6 +89,8 @@ Rule 1 applies everywhere. Rules 2, 3 and 7 are about clarity's stylesheets; cla
 ## Developing and testing a change
 
 Install on a **test panel**, not production. The usage lines are in [README.md](README.md) and in each script's `--help`. Pass `--theme` or `--module` to install one half while working on it, and `--design=classic` or `--design=all` when the change touches the stock-look design.
+
+Run `python3 tests/bootstrap/run.py` after changing module initialization. It needs Python 3 and PHP CLI (or `PHP_BINARY` pointing to it), with no database or installed panel. It sends HTTP requests to the real endpoints in temporary copy and symlink installations, using a synthetic core that stops at authorization, and checks fallback and failure paths. These tests prove bootstrap behavior; authenticated rendering, saving and uploads still need a test panel. CI runs this check too.
 
 The default symlink install means edits to the clone appear on the panel immediately; hard-refresh with `Ctrl+Shift+R`. If a browser clings to stale assets, bump the `?ver=` query string on the links in `themes/clarity/templates/main.tpl.htm`. Classic's `brand.php`, `title.php` and `favicon.php` are live through the symlink the same way; its `templates/` are not, so changes to the generator take effect only on the next `install.sh` run.
 

@@ -28,8 +28,7 @@
  * authorises the POST is minted by the GET branch below, at click time.
  */
 
-require_once '../../lib/config.inc.php';
-require_once '../../lib/app.inc.php';
+require_once __DIR__ . '/lib/bootstrap.inc.php';
 require_once __DIR__ . '/lib/preview.inc.php';
 
 //* admin-only

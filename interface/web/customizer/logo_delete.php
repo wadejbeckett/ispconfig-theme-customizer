@@ -17,8 +17,7 @@
  * cross-site <img>/<form> cannot trigger it, and re-load the editor after.
  */
 
-require_once '../../lib/config.inc.php';
-require_once '../../lib/app.inc.php';
+require_once __DIR__ . '/lib/bootstrap.inc.php';
 require_once __DIR__ . '/lib/preview.inc.php';
 
 $app->auth->check_module_permissions('customizer');

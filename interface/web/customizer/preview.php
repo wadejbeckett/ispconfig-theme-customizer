@@ -44,8 +44,7 @@
  * Referer. The same-origin XHR costs the same either way.
  */
 
-require_once '../../lib/config.inc.php';
-require_once '../../lib/app.inc.php';
+require_once __DIR__ . '/lib/bootstrap.inc.php';
 require_once __DIR__ . '/lib/preview.inc.php';
 
 //* admin-only — the same three checks, in the same order, as customizer_edit.php,
