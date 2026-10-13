@@ -625,7 +625,7 @@ function brand_logo_variant($ref, $data)
         return $ref;
     }
     if (is_string($data) && $data !== ''
-        && preg_match('#^data:image/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$#i', $data)) {
+        && preg_match('#^data:image/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$#iD', $data)) {
         return $data;
     }
     return '';

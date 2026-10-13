@@ -85,7 +85,9 @@ function customizer_svg_css_ok($css) {
     $c = strtolower(preg_replace('/[\x00-\x20\x7f]+/', '', $c));
     if($c === '') return true;
 
-    foreach(array('@import', 'expression(', 'javascript:', 'vbscript:', '-moz-binding', 'behavior:') as $bad) {
+    //* image-set() (and -webkit-image-set()) takes a bare string as an image
+    //* URL, so it fetches without a url( for the check below to screen.
+    foreach(array('@import', 'expression(', 'javascript:', 'vbscript:', '-moz-binding', 'behavior:', 'image-set(') as $bad) {
         if(strpos($c, $bad) !== false) return false;
     }
 
@@ -167,6 +169,15 @@ function customizer_svg_ok($raw) {
     libxml_clear_errors();
     libxml_use_internal_errors($prev);
     if($parsed === false || !($doc->documentElement instanceof DOMElement)) return false;
+
+    //* The byte scan above only sees '<!ENTITY' when the upload is ASCII-
+    //* compatible. libxml honours a UTF-16 BOM or an encoding="UTF-7"
+    //* declaration, in which the same token is spelled with other bytes, so
+    //* check the parsed DTD as well: no entity declarations, of any kind.
+    if($doc->doctype !== null) {
+        if($doc->doctype->entities->length > 0) return false;
+        if(stripos((string)$doc->doctype->internalSubset, '<!ENTITY') !== false) return false;
+    }
 
     //* Root must be <svg>, either in the SVG namespace or in none at all
     //* (which is what a hand-written file with no xmlns parses as).

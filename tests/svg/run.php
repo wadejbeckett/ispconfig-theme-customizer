@@ -24,7 +24,23 @@ require_once __DIR__ . '/../../interface/web/customizer/lib/svg_guard.inc.php';
 $SVG = 'http://www.w3.org/2000/svg';
 $XL  = 'http://www.w3.org/1999/xlink';
 
+//* ASCII -> UTF-16LE without needing mbstring or iconv.
+function svg_test_utf16le($ascii) {
+    return implode('', array_map(function($c) { return $c . "\0"; }, str_split($ascii)));
+}
+//* A UTF-16LE document with an entity declaration. The comment holds U+733C
+//* U+6776, whose UTF-16LE bytes are the ASCII '<svg' the guard's first byte
+//* check looks for, so the case is decided by the entity rule, not by that.
+$utf16_entity = "\xFF\xFE"
+    . svg_test_utf16le("<?xml version='1.0' encoding='UTF-16'?><!DOCTYPE svg [<!ENTITY x 'y'>]><svg xmlns='$SVG'><!--")
+    . "\x3C\x73\x76\x67"
+    . svg_test_utf16le("-->&x;</svg>");
+
 $reject = array(
+  'entity decl in UTF-16'    => $utf16_entity,
+  'entity decl in UTF-7'     => "<" . "?xml version='1.0' encoding='UTF-7'?" . ">+ADw-!DOCTYPE svg +AFs-+ADw-!ENTITY x +ACI-y+ACI-+AD4-+AF0-+AD4-<svg xmlns='$SVG'>&x;</svg>",
+  'style image-set remote'   => "<svg xmlns='$SVG'><style>rect{background-image:image-set(\"https://evil/x.png\" 1x)}</style><rect/></svg>",
+  'style -webkit-image-set'  => "<svg xmlns='$SVG'><rect style='background:-webkit-image-set(\"https://evil/x.png\" 1x)'/></svg>",
   'plain script'             => "<svg xmlns='$SVG'><script>alert(1)</script></svg>",
   'prefixed script (SVG ns)' => "<s:svg xmlns:s='$SVG'><s:script>alert(1)</s:script></s:svg>",
   'foreign-ns script'        => "<svg xmlns='$SVG' xmlns:h='http://www.w3.org/1999/xhtml'><h:script>alert(1)</h:script></svg>",
