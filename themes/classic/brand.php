@@ -520,7 +520,7 @@ if ($rail !== '') {
 // unparseable custom_logo counts as none: core would inline the broken value
 // either way, so treating it as "no logo" lets the wordmark below replace it
 // instead of stacking on top.
-$core_logo = (preg_match('#^data:image/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$#i', $custom_logo)) ? $custom_logo : '';
+$core_logo = (preg_match('#^data:image/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$#iD', $custom_logo)) ? $custom_logo : '';
 
 $logo_on_light = brand_logo_variant(
     isset($branding['logo_url']) ? $branding['logo_url'] : '',
@@ -793,7 +793,7 @@ function brand_logo_variant($ref, $data)
         return $ref;
     }
     if (is_string($data) && $data !== ''
-        && preg_match('#^data:image/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$#i', $data)) {
+        && preg_match('#^data:image/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$#iD', $data)) {
         return $data;
     }
     return '';

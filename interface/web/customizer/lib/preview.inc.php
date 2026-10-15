@@ -154,7 +154,7 @@ function customizer_logo_ref_ok($url) {
  * out of either context.
  */
 function customizer_logo_data_ok($uri) {
-    return ($uri !== '' && preg_match('#^data:image/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$#i', $uri) === 1);
+    return ($uri !== '' && preg_match('#^data:image/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$#iD', $uri) === 1);
 }
 
 /**

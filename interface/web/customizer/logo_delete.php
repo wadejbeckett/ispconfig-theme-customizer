@@ -54,14 +54,17 @@ if(!isset($slots[$slot])) die('Unknown logo slot.');
 //* delete endpoints (admin/server_del.php, help/faq_delete.php) refuse.
 //* The refusal is deliberately placed after the CSRF check so a request we have
 //* not authenticated never gets a rendered response.
+//*
+//* $app->lng() would otherwise fall back to the global wordbook, which has
+//* neither demo_mode_txt nor logo_delete_failed_txt; load the module's own file
+//* (sanitised session language, English if that translation is not shipped)
+//* exactly as the uploader does, so both refusals below print a sentence.
+$lng = $app->functions->check_language($_SESSION['s']['language']);
+$lng_path = '/web/customizer/lib/lang/' . $lng . '_customizer.lng';
+if(!file_exists(ISPC_ROOT_PATH . $lng_path)) $lng_path = '/web/customizer/lib/lang/en_customizer.lng';
+$app->load_language_file($lng_path);
+
 if($conf['demo_mode'] == true) {
-    //* $app->lng() would otherwise fall back to the global wordbook, which has
-    //* no demo_mode_txt; load the module's own file (sanitised session language,
-    //* English if that translation is not shipped) exactly as the uploader does.
-    $lng = $app->functions->check_language($_SESSION['s']['language']);
-    $lng_path = '/web/customizer/lib/lang/' . $lng . '_customizer.lng';
-    if(!file_exists(ISPC_ROOT_PATH . $lng_path)) $lng_path = '/web/customizer/lib/lang/en_customizer.lng';
-    $app->load_language_file($lng_path);
     $app->error($app->lng('demo_mode_txt'));
 }
 

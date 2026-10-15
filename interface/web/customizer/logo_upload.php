@@ -135,7 +135,7 @@ if($slot === 'favicon') {
 // finfo mislabels prolog-less SVGs (text/xml, text/plain, even text/html), so
 // SVG detection is by strict XML validation instead of MIME string. That guard
 // screens the favicon exactly as it screens a logo — an SVG icon is the same
-// active-content format with the same affordances, and the 41-case corpus in
+// active-content format with the same affordances, and the 45-case corpus in
 // tests/svg/ covers this path because it is literally the same call.
 require_once __DIR__ . '/lib/svg_guard.inc.php';
 

@@ -66,8 +66,9 @@ jobs:
         run: php tests/brand/run.php
 
       - name: SVG upload screen — adversarial corpus
-        # 29 bypass attempts that defeated the previous byte-scanning
-        # implementation, plus 12 shapes real editors emit. SECURITY.md cites
+        # 33 bypass attempts (29 that defeated the previous byte-scanning
+        # implementation, 4 encoding/CSS cases found in audit), plus 12 shapes
+        # real editors emit. SECURITY.md cites
         # this corpus by name, so it runs on every push and the claim cannot go
         # stale.
         run: php tests/svg/run.php

@@ -23,6 +23,8 @@ t_eq('an unrecognised stored value is automatic',
     brand_logo_variant_pref('garbage', '#FFFFFF', 'on_dark'), 'on_light');
 t_eq('a trailing newline does not make a hex valid',
     brand_logo_variant_pref('', "#FF0000\n", 'on_dark'), 'on_dark');
+t_eq('a trailing newline does not make a logo data URI valid',
+    brand_logo_variant('', "data:image/png;base64,AA\n"), '');
 
 /* ---- the CI contract check has to have something to find -----------------
  * ci.yml greps every themes/*&#47;brand.php for logo_variant_nav and
