@@ -1052,6 +1052,57 @@ function customizer_installed_designs($active) {
 }
 
 /**
+ * The note the Branding page shows when its login preview is not what visitors
+ * will see.
+ *
+ * The login page has no user yet, so core renders it with the panel-wide
+ * $conf['theme'] (app.inc.php seeds the session theme from it, and logout.php
+ * destroys the session), never with the Design each user picks under Tools >
+ * User Settings. A panel where only users switched to clarity therefore keeps
+ * the stock login, with just the three values core reads itself (the uploaded
+ * logo, the panel name and the login text), while this page previews a branded
+ * one. That gap was reported as a bug (Issue #9). The fix is one line in two
+ * ISPConfig files, which this extension deliberately never edits
+ * (docs/OVERRIDE-SURFACES.md), so the page says so instead.
+ *
+ * $panel_theme  $conf['theme'] as core loaded it from interface/lib/config.inc.php
+ * $designs      customizer_installed_designs(): the designs that can take the
+ *               login screen, the one being previewed first. Empty means a
+ *               module-only install, which stays on the stock login by choice,
+ *               so there is no design to suggest and nothing is said.
+ * $text         the localised sentence; %s becomes the current panel-wide theme
+ * $root         the ISPConfig root, normally /usr/local/ispconfig, for the two
+ *               file paths
+ *
+ * Returns the note's inner HTML, or '' when the login screen already uses one
+ * of this extension's designs. Every interpolated value is escaped here; $text
+ * is a wordbook value and, like every other one on this page, is trusted
+ * markup. str_replace(), never sprintf(), for the reason given at
+ * customizer_brand_summary().
+ *
+ * Only interface/lib/config.inc.php is visible to the panel, so a value set
+ * there but missing from server/lib/config.inc.php (which the ISPConfig updater
+ * copies forward, overwriting the interface file) goes unreported until an
+ * update reverts it. The note names both files for that reason.
+ */
+function customizer_login_notice_html($panel_theme, $designs, $text, $root) {
+    if(is_string($panel_theme) && in_array($panel_theme, array('clarity', 'classic'), true)) return '';
+    if(!is_array($designs) || !isset($designs[0]) || !is_string($designs[0])) return '';
+    if(!is_string($text) || $text === '') return '';
+
+    $current = (is_string($panel_theme) && $panel_theme !== '') ? $panel_theme : 'default';
+    $root    = (is_string($root) && $root !== '') ? rtrim($root, '/') : '/usr/local/ispconfig';
+    $e = function($s) { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); };
+
+    return '<p>' . str_replace('%s', '<code>' . $e($current) . '</code>', $text) . '</p>'
+        . '<pre><code>' . $e("\$conf['theme'] = '" . $designs[0] . "';") . '</code></pre>'
+        . '<ul class="nz-loginnote-files">'
+        . '<li><code>' . $e($root . '/interface/lib/config.inc.php') . '</code></li>'
+        . '<li><code>' . $e($root . '/server/lib/config.inc.php') . '</code></li>'
+        . '</ul>';
+}
+
+/**
  * One preview row: this variant's mark, drawn on every surface that will use it.
  *
  * $resolved      one entry of customizer_logo_resolve()

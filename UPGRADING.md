@@ -134,6 +134,10 @@ With a symlink install the panel reads the design from the clone, so a tag check
 
 No release listed below has a migration step, a schema change or a new column. Everything the Branding page stores lives in the same `sys_ini` row throughout.
 
+### v3.6.0
+
+The **Branding** page now says when the login screen will not look like its preview. ISPConfig renders the login page with the panel-wide `$conf['theme']`, not with the Design each user picks, so a panel where only users switched to clarity keeps the stock login with just the logo, panel name and login text. While that is the case, a note above the preview gives the line to add and the two files to add it to. Nothing stored changes.
+
 ### v3.5.3
 
 Fixes three problems with the ISPConfig Billing Module, and any other module that uses the same patterns, under clarity:

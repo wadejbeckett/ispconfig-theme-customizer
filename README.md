@@ -99,7 +99,7 @@ sudo ./install.sh
 - `--no-assign` skips assigning the module to admin users; do it by hand in *System → CP Users → edit the admin user → Modules*.
 - `ISPCONFIG_ROOT` defaults to `/usr/local/ispconfig`.
 
-On a multiserver setup, install only on the server that serves the web interface. Then pick the design per user in *Tools → User Settings → Design*. To set the system-wide default and the login screen, add `$conf['theme'] = 'clarity';` to **both** `interface/lib/config.inc.php` and `server/lib/config.inc.php`; `install.sh` never edits ISPConfig configuration, and the server file is what makes the value persist across panel updates.
+On a multiserver setup, install only on the server that serves the web interface. Then pick the design per user in *Tools → User Settings → Design*. To set the system-wide default and the login screen, add `$conf['theme'] = 'clarity';` to **both** `interface/lib/config.inc.php` and `server/lib/config.inc.php`; `install.sh` never edits ISPConfig configuration, and the server file is what makes the value persist across panel updates. Until the login screen is on a design, the Branding page shows a note above its preview with this line and both file paths.
 
 ## After any ISPConfig upgrade
 

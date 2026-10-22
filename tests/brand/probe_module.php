@@ -317,6 +317,54 @@ if (function_exists('customizer_installed_designs')) {
     @rmdir($root);
 }
 
+/* ---- the login-design note (Issue #9) -------------------------------------
+ * Core renders the login page with the panel-wide $conf['theme'], not the
+ * Design a user picks, so a panel where only users switched keeps the stock
+ * login while the Branding page previews a branded one. The note says so, and
+ * names the one line and the two files that change it.
+ */
+t_ok('customizer_login_notice_html() exists', function_exists('customizer_login_notice_html'));
+if (function_exists('customizer_login_notice_html')) {
+    $both = array('clarity', 'classic');
+    $say  = 'Currently %s.';
+
+    t_eq('nothing to say when the login screen is on clarity',
+        customizer_login_notice_html('clarity', $both, $say, '/usr/local/ispconfig'), '');
+    t_eq('nothing to say when the login screen is on classic',
+        customizer_login_notice_html('classic', $both, $say, '/usr/local/ispconfig'), '');
+    t_eq('nothing to say on a module-only install, which stays stock by choice',
+        customizer_login_notice_html('default', array(), $say, '/usr/local/ispconfig'), '');
+    t_eq('nothing to say without a sentence to say it with',
+        customizer_login_notice_html('default', $both, '', '/usr/local/ispconfig'), '');
+
+    $note = customizer_login_notice_html('default', $both, $say, '/usr/local/ispconfig');
+    t_ok('the stock panel-wide theme gets the note', $note !== '');
+    t_ok('...naming the current theme in place of %s',
+        strpos($note, '<p>Currently <code>default</code>.</p>') !== false, $note);
+    t_ok('...with the line for the design being previewed',
+        strpos($note, '<pre><code>$conf[&#039;theme&#039;] = &#039;clarity&#039;;</code></pre>') !== false, $note);
+    t_ok('...and both config files under the panel root',
+        strpos($note, '<code>/usr/local/ispconfig/interface/lib/config.inc.php</code>') !== false
+        && strpos($note, '<code>/usr/local/ispconfig/server/lib/config.inc.php</code>') !== false, $note);
+
+    t_ok('the suggestion follows the design being previewed',
+        strpos(customizer_login_notice_html('default', array('classic', 'clarity'), $say, '/usr/local/ispconfig'),
+            '&#039;classic&#039;;') !== false);
+    t_ok('a third-party panel-wide theme gets the note too',
+        strpos(customizer_login_notice_html('phosphor', $both, $say, '/usr/local/ispconfig'),
+            '<code>phosphor</code>') !== false);
+    t_ok('an unset theme is named as core falls back to it',
+        strpos(customizer_login_notice_html('', $both, $say, '/usr/local/ispconfig'), '<code>default</code>') !== false);
+    t_ok('a theme name is escaped, since it is interpolated into markup',
+        strpos(customizer_login_notice_html('<b>x</b>', $both, $say, '/usr/local/ispconfig'), '&lt;b&gt;x&lt;/b&gt;') !== false);
+    t_ok('an unknown root falls back to the standard ISPConfig root',
+        strpos(customizer_login_notice_html('default', $both, $say, ''), '<code>/usr/local/ispconfig/interface/lib/config.inc.php</code>') !== false);
+    t_ok('a root with a trailing slash does not double it',
+        strpos(customizer_login_notice_html('default', $both, $say, '/opt/ispconfig/'), '<code>/opt/ispconfig/server/lib/config.inc.php</code>') !== false);
+    t_ok('a stray % in a translation cannot fatal, because nothing here is sprintf',
+        customizer_login_notice_html('default', $both, '100% %s', '/usr/local/ispconfig') !== '');
+}
+
 /* ---- characterisation: the two shipped designs' chrome -------------------
  * These are the values the preview has always drawn. They pin the refactor
  * above: whatever changes, what the operator sees for clarity and classic on a
@@ -864,6 +912,12 @@ if ($edit_src !== false) {
     //* shared list rather than reintroducing its own copy of it.
     t_ok('...iterating customizer_hint_label_keys(), not a second copy of the list',
         strpos($edit_src, 'customizer_hint_label_keys()') !== false);
+    t_ok('the page publishes the login-design note through the shared builder',
+        strpos($edit_src, "setVar('login_design_notice', customizer_login_notice_html(") !== false);
+    t_ok('...deciding on the panel-wide theme core renders the login page with',
+        strpos($edit_src, "\$conf['theme']") !== false);
+    t_ok('...in the operator\'s language',
+        strpos($edit_src, "lng('login_design_notice_txt')") !== false);
 }
 
 t_done();

@@ -61,6 +61,7 @@ $wb['colour_hint_txt'] = 'Hex-Wert wie #0065AB. Leer lassen, um die Theme-Vorgab
 $wb['preview_head_txt'] = 'Vorschau';
 $wb['preview_hint_txt'] = 'Farben und der Panel-Name werden während der Eingabe aktualisiert. Welches Logo eine Oberfläche verwendet, ermittelt der Server, damit es dem entspricht, was das Panel tatsächlich anzeigt.';
 $wb['preview_login_txt'] = 'Anmeldebildschirm';
+$wb['login_design_notice_txt'] = 'Der Anmeldebildschirm entspricht nicht dieser Vorschau: ISPConfig zeigt ihn mit dem panelweiten Design an, derzeit %s, und nicht mit dem Design, das jeder Benutzer wählt. Damit er dieses Design verwendet, fügen Sie die folgende Zeile in beide Dateien ein. Die Server-Datei sorgt dafür, dass die Einstellung ISPConfig-Updates übersteht.';
 $wb['preview_tab_txt'] = 'Tab-Symbol';
 $wb['preview_failed_txt'] = 'Die Vorschau konnte nicht aktualisiert werden. Sie sehen den zuletzt vom Server bestätigten Stand.';
 $wb['preview_panel_txt'] = 'Panel';
