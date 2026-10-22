@@ -109,6 +109,8 @@ Re-run the installer after every panel upgrade, patch releases included (`3.3.1p
 
 **ISPConfig 3.3**, developed and verified against 3.3.1p1: clarity's template overrides are pinned to that version's stock markup, and classic's are generated from whatever stock markup the panel has. **ISPConfig 3.2 is not verified** — it has not been tested, so treat it as unknown. Also needed: root shell access to the panel server, the stock `default` theme still present, and PHP CLI for the module-assignment and cleanup helpers (without it the installer prints the manual equivalent).
 
+**Third-party modules** render from the stock `default` templates like every other page. Clarity has been checked against the ISPConfig Billing Module 2.0.12: its jqPlot charts keep their own layout and only their text takes the theme's colours, and its tables keep every row. Clarity folds long tables behind a "Show all" button on the dashboard only; a dashlet table that must always show every row can carry `data-nz-nocap`.
+
 ## Version disclosure
 
 Read this before deploying on a public panel. ISPConfig's theme gate requires the file `themes/<theme>/ispconfig_version` inside the panel's web root, under that exact name, so the web server serves it as an ordinary static file: anyone who can reach the login page learns the exact version and patch level, with no session and no credentials. That is not stock behaviour, it arrives with any third-party theme including this one, and it undercuts the `show_version` toggle. The fix belongs at the web-server layer; nginx and Apache snippets and the full explanation are in [`contrib/webserver/`](contrib/webserver/README.md).

@@ -244,8 +244,13 @@ ul.nz-launcher li a .icon {
    heights — with maintainAspectRatio:false a heightless parent collapses the
    chart to a ribbon. :not() keeps the v2.2 statcards on their own anatomy.
    (These rules previously lived in the dashlet section and were lost in the
-   v2.2 restructure — the monitor regression.) */
-#pageContent > div:not(.nz-statwrap):has(canvas) {
+   v2.2 restructure — the monitor regression.)
+   Every canvas rule here skips jqPlot (class jqplot-*, the chart library the
+   ISPConfig Billing Module ships): it draws one chart as a stack of absolutely
+   positioned canvases, each sized in exact pixels, so a card, a wrapper
+   height or a 100% width on any layer pulls the bars off their axis. jqPlot
+   charts keep their stock geometry; only their text is themed (below). */
+#pageContent > div:not(.nz-statwrap):has(canvas:not([class*="jqplot"])) {
   background: var(--nz-card);
   border: 1px solid var(--nz-border);
   border-radius: var(--nz-radius-card);
@@ -254,14 +259,14 @@ ul.nz-launcher li a .icon {
   margin: 0 0 20px;
 }
 
-#pageContent > div:not(.nz-statwrap):has(canvas) h3 {
+#pageContent > div:not(.nz-statwrap):has(canvas:not([class*="jqplot"])) h3 {
   margin: 0 0 12px;
   font-size: var(--nz-fs-cardtitle);
   font-weight: 600;
   color: var(--nz-text-heading);
 }
 
-#pageContent div:not(.nz-statcard-chart):has(> canvas) {
+#pageContent div:not(.nz-statcard-chart):has(> canvas:not([class*="jqplot"])) {
   height: 110px;
   padding-bottom: 0 !important;
   margin-bottom: 12px;
@@ -277,10 +282,29 @@ ul.nz-launcher li a .icon {
    wrapper a real box to measure, so Chart.js gets ~90px instead of ~30px.
    It never fights the sized containers — .nz-statcard-chart is 120px (100px
    under 640px) and the :has() wrapper 110px, all above this floor. */
-#pageContent canvas {
+#pageContent canvas:not([class*="jqplot"]) {
   width: 100% !important;
   max-width: 100%;
   min-height: 90px;
+}
+
+/* jqPlot text. Its own stylesheet (loaded by the module after ours) sets the
+   chart's labels to #666 and its legends and tooltips to translucent white or
+   grey, which on the dark card is about 2.3:1. #pageContent outranks it. The
+   plot area itself is painted on a canvas and keeps jqPlot's colours. */
+#pageContent .jqplot-target {
+  color: var(--nz-text-secondary);
+  font-family: var(--nz-font);
+}
+
+#pageContent table.jqplot-table-legend,
+#pageContent table.jqplot-cursor-legend,
+#pageContent .jqplot-highlighter-tooltip,
+#pageContent .jqplot-cursor-tooltip,
+#pageContent .jqplot-canvasOverlay-tooltip {
+  background: var(--nz-card);
+  border-color: var(--nz-border);
+  color: var(--nz-text);
 }
 
 /* ---------- cards & tables ---------- */
