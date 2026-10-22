@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Offline Clarity UI regression checks using the real theme and core templates.
 
-Needs Playwright Firefox and an ISPConfig source checkout, not a running panel. All browser requests are fulfilled in memory. --output must be outside the repo.
+Needs Playwright Firefox (or --browser chromium) and an ISPConfig source checkout, not a running panel. All browser requests are fulfilled in memory. --output must be outside the repo.
 
 --theme-ref reads an older git revision to demonstrate regressions; the same checks deliberately fail there. No renderer/source/build directory is rewritten.
+
+--billing-web points at a licensed ISPConfig Billing Module's interface/web directory and replaces the synthetic billing fixture with the module's own dashboard and invoice-item templates and its bundled jqPlot. The module is commercial and is never copied into this repository.
 """
 
 import argparse
@@ -21,16 +23,49 @@ from urllib.parse import parse_qs, unquote, urlsplit
 sys.dont_write_bytecode = True
 REPO = Path(__file__).resolve().parents[2]
 ORIGIN = "https://clarity.test"
+NAMES = ("dashboard", "dns", "limits", "billing")
+MONTHS = ("Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct")
+
+# The jqPlot chart the Billing Module draws on its dashboard (#chart1, inline 720x150), as jqPlot 1.0 builds it: full-size base and grid canvases, plot-area series, highlight and event canvases, absolutely positioned tick labels, and the colours from jqPlot's own stylesheet, which loads after the theme's.
+JQPLOT_CSS = "<style>.jqplot-target{position:relative;color:#666;font-family:'Trebuchet MS',Arial,sans-serif}.jqplot-axis{font-size:.75em}.jqplot-xaxis-tick{position:absolute;top:0}.jqplot-highlighter-tooltip{position:absolute;border:1px solid #ccc;background:rgba(208,208,208,.5)}</style>"
+# Stock monitor chart markup (show_sys_state.htm): the Chart.js strip the theme's canvas rules exist for.
+CHARTJS_STRIP = "<div><h3>Server load</h3><div style='padding-bottom:10px;'><canvas height='30' id='ui-chartjs' style='background-color: white;'></canvas></div></div>"
 
 
 def git(path, *args):
     return subprocess.check_output(["git", "-C", str(path), *args])
 
 
+def contrast(foreground, background):
+    # WCAG 2.1 contrast ratio between two computed rgb()/rgba() colours; alpha is ignored.
+    def luminance(colour):
+        channels = [float(v) / 255 for v in re.findall(r"[\d.]+", colour)[:3]]
+        r, g, b = [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in channels]
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b
+    light, dark = sorted((luminance(foreground), luminance(background)), reverse=True)
+    return (light + 0.05) / (dark + 0.05)
+
+
+def plain_table(table_id, count, attrs=""):
+    # No sortable header: the shape of a dashlet table and of a module's working table alike.
+    body = "".join(f"<tr><td>{i}</td><td>Item {i}</td><td>{i * 10}.00</td></tr>" for i in range(1, count + 1))
+    return f"<div class='table-wrapper'><table class='table' id='{table_id}'{attrs}><thead class='dark form-group-sm'><tr><th>Qty</th><th>Description</th><th>Sum</th></tr></thead><tbody>{body}</tbody></table></div>"
+
+
+def synthetic_jqplot():
+    def canvas(cls, width, height, left, top):
+        return f"<canvas class='{cls}' width='{width}' height='{height}' style='position:absolute;left:{left}px;top:{top}px'></canvas>"
+    ticks = "".join(f"<div class='jqplot-xaxis-tick' style='left:{20 + 57 * i}px'>{month}</div>" for i, month in enumerate(MONTHS))
+    layers = [canvas("jqplot-base-canvas", 720, 150, 0, 0), f"<div class='jqplot-axis jqplot-xaxis' style='position:absolute;left:30px;top:130px;width:683px;height:16px'>{ticks}</div>", canvas("jqplot-grid-canvas", 720, 150, 0, 0)]
+    layers += [canvas(cls, 683, 115, 30, 10) for cls in ("jqplot-series-shadowCanvas", "jqplot-series-canvas", "jqplot-highlight-canvas", "jqplot-event-canvas")]
+    return JQPLOT_CSS + "<div id='chart1' class='jqplot-target' style='margin-top:0px; width:720px; height:150px;'>" + "".join(layers) + "<div class='jqplot-highlighter-tooltip' style='left:100px;top:20px'>120.00</div></div>"
+
+
 class Fixture:
-    def __init__(self, core, theme_ref):
+    def __init__(self, core, theme_ref, billing=None):
         self.core = core.resolve()
         self.theme_ref = theme_ref
+        self.billing = billing.resolve() if billing else None
         self.hashes = {}
         spec = importlib.util.spec_from_file_location("mockup", REPO / "mockup/build.py")
         self.renderer = importlib.util.module_from_spec(spec)
@@ -44,6 +79,26 @@ class Fixture:
         data = git(REPO, "show", f"{self.theme_ref}:{relative}") if theme and self.theme_ref else path.read_bytes()
         self.hashes[("theme/" if theme else "core/") + relative] = hashlib.sha256(data).hexdigest()
         return data
+
+    def billing_source(self, relative):
+        path = (self.billing / relative).resolve()
+        if not path.is_relative_to(self.billing):
+            raise ValueError("Source outside the billing module")
+        data = path.read_bytes()
+        self.hashes["billing/" + relative] = hashlib.sha256(data).hexdigest()
+        return data
+
+    def billing_content(self):
+        if not self.billing:
+            return synthetic_jqplot() + "<h3>Invoice items</h3><div id='ui-items'>" + plain_table("ui-items-table", 15) + "</div>"
+        income = ",".join(str(100 + 40 * i) for i in range(len(MONTHS)))
+        records = [{"invoice_id": str(i), "invoice_number": f"R-{i:04d}", "invoice_date": "2026-10-01", "invoice_amount": "120.00"} for i in range(1, 4)]
+        dashboard = self.render(self.billing_source("billing/templates/billing_dashboard.htm").decode(), {"income": income, "ticks": "','".join(MONTHS), "income_txt": "Income", "currency_txt": "EUR", "has_invoice_records": True, "invoice_records": records, "has_invoice_due": True, "invoice_due": records})
+        # The module closes one else branch as </tmpl_else>, which core's parser tolerates and the mockup renderer does not.
+        items = self.billing_source("billing/templates/invoice_edit_item_list.htm").decode().replace("</tmpl_else>", "<tmpl_else>")
+        lines = [{"invoice_item_id": str(i), "quantity": "1", "description": f"Hosting item {i}", "price": "10.00", "vat": "17", "sum": "11.70"} for i in range(1, 16)]
+        items = self.render(items, {"has_invoice_items": True, "invoice_items": lines, "currency_txt": "EUR", "edit_txt": "Edit", "del_txt": "Delete"})
+        return dashboard + "<h3>Invoice items</h3><div id='ui-items'>" + items + "</div>"
 
     def render(self, text, values):
         # These fixtures have records and no pending changes. The existing mockup engine handles the remaining native template directives.
@@ -78,7 +133,10 @@ class Fixture:
 
     def content(self, name):
         if name == "dashboard":
-            return self.render(self.source("themes/clarity/templates/dashboard/dashboard.htm", True).decode(), {"welcome_user": "Welcome admin", "info": [{"info_msg": "An ISPConfig update is available. Please update your installation."}]})
+            dashlets = [{"content": plain_table("ui-dashlet", 15)}, {"content": plain_table("ui-dashlet-nocap", 15, " data-nz-nocap")}]
+            return self.render(self.source("themes/clarity/templates/dashboard/dashboard.htm", True).decode(), {"welcome_user": "Welcome admin", "info": [{"info_msg": "An ISPConfig update is available. Please update your installation."}], "leftcol": dashlets})
+        if name == "billing":
+            return self.billing_content() + CHARTJS_STRIP
         if name == "dns":
             values = {**self.wordbook("dns/lib/lang/en_dns_a.lng"), "parent_id": "1", "datalog_changes_count": 0, "search_active": "<option>All</option>", "search_type": "<option>All</option>", "records": [{"id": "1", "active": "Yes", "type": "A", "type_lowercase": "a", "name": "example.test.", "data": "192.0.2.1", "aux": "0", "ttl": "3600"}]}
             listing = self.render(self.source("dns/templates/dns_a_list.htm").decode(), values)
@@ -124,6 +182,20 @@ METRICS = """() => {
   if(dns) { const first = dns.querySelector('.dns-record-btn'); out.dns = {inset:box(first).left-box(dns).left-parseFloat(getComputedStyle(dns).borderLeftWidth), buttonCount:dns.querySelectorAll('.dns-record-btn').length}; }
   const panel = document.querySelector('.panel_client');
   if(panel) { out.limits = {form:style(panel.querySelector('.pnl_formsarea')), helper:style(panel.querySelector('#tpl_add_btn').closest('.clear')), footer:style(panel.querySelector('[data-submit-form]').closest('.clear')), body:style(panel.querySelector('.panel-body'))}; }
+  // The theme's "Show all" toggle is the only valueless button in a body row; the module's own Edit/Delete buttons carry value=.
+  const toggle = 'button.btn-default:not([value])';
+  const rows = table => table && {shown:[...table.tBodies[0].rows].filter(r => getComputedStyle(r).display !== 'none' && !r.querySelector(toggle)).length, toggle:!!table.tBodies[0].querySelector(toggle)};
+  out.tables = {dashlet:rows(document.querySelector('#ui-dashlet')), nocap:rows(document.querySelector('#ui-dashlet-nocap')), items:rows(document.querySelector('#ui-items table'))};
+  // The colour actually behind an element: the nearest ancestor with an opaque-enough background.
+  const behind = el => { for (let n = el; n; n = n.parentElement) { const c = getComputedStyle(n).backgroundColor; if (c && !/^rgba\\(.*,\\s*0\\)$|^transparent$/.test(c)) return c; } return getComputedStyle(document.body).backgroundColor; };
+  const jq = document.querySelector('.jqplot-target');
+  if(jq) {
+    const tick = jq.querySelector('.jqplot-xaxis-tick');
+    // jqPlot may scale a canvas's backing store for HiDPI and set its CSS size inline; otherwise its attribute size is its intended size.
+    out.jqplot = {canvases:[...jq.querySelectorAll('canvas')].map(c => ({cls:c.className, want:[parseFloat(c.style.width) || c.width, parseFloat(c.style.height) || c.height], got:[box(c).width, box(c).height], left:box(c).left - box(jq).left})), target:{height:box(jq).height, border:parseFloat(getComputedStyle(jq).borderTopWidth), shadow:getComputedStyle(jq).boxShadow}, tick:tick && {color:getComputedStyle(tick).color, behind:behind(tick)}};
+  }
+  const strip = document.querySelector('#ui-chartjs');
+  if(strip) { const wrap = strip.parentElement; const s = getComputedStyle(wrap); out.chartjs = {width:box(strip).width, room:wrap.clientWidth - parseFloat(s.paddingLeft) - parseFloat(s.paddingRight), wrapper:box(wrap).height, card:parseFloat(getComputedStyle(wrap.parentElement).borderTopWidth)}; }
   return out;
 }"""
 
@@ -133,20 +205,26 @@ def main():
     parser.add_argument("--core-web", type=Path, default=REPO / ".refs/ispconfig3/interface/web")
     parser.add_argument("--theme-ref", help="Read theme assets from this git revision instead of the working tree")
     parser.add_argument("--output", type=Path, help="Evidence directory outside the repository")
-    parser.add_argument("--only", choices=[f"{mode}-{name}-{size}" for mode in ("light", "dark") for name in ("dashboard", "dns", "limits") for size in ("desktop", "narrow", "mobile")], help="Run one named fixture for a focused reproduction")
+    parser.add_argument("--only", choices=[f"{mode}-{name}-{size}" for mode in ("light", "dark") for name in NAMES for size in ("desktop", "narrow", "mobile")], help="Run one named fixture for a focused reproduction")
+    parser.add_argument("--browser", choices=("firefox", "chromium"), default="firefox", help="Playwright browser engine")
+    parser.add_argument("--billing-web", type=Path, help="A licensed Billing Module's interface/web directory (the one holding billing/)")
     args = parser.parse_args()
     if not (args.core_web / "client/templates/client_edit_limits.htm").is_file():
         parser.error("Supply an ISPConfig source checkout with --core-web")
+    if args.billing_web and not (args.billing_web / "billing/templates/billing_dashboard.htm").is_file():
+        parser.error("--billing-web must be the module's interface/web directory")
+    if args.billing_web and args.billing_web.resolve().is_relative_to(REPO):
+        parser.error("--billing-web must be outside the repository")
     if args.output and args.output.resolve().is_relative_to(REPO):
         parser.error("--output must be outside the repository")
     try:
         from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
     except ImportError:
-        parser.error("Playwright and its Firefox browser are required; see CONTRIBUTING.md")
+        parser.error("Playwright and its Firefox (or Chromium) browser are required; see CONTRIBUTING.md")
     temporary = tempfile.TemporaryDirectory(prefix="clarity-ui-") if not args.output else None
     output = args.output.resolve() if args.output else Path(temporary.name)
     output.mkdir(parents=True, exist_ok=True)
-    fixture = Fixture(args.core_web, args.theme_ref)
+    fixture = Fixture(args.core_web, args.theme_ref, args.billing_web)
     checks, results = [], []
 
     def check(condition, message):
@@ -154,11 +232,11 @@ def main():
         print(("PASS " if condition else "FAIL ") + message)
 
     with sync_playwright() as p:
-        browser = p.firefox.launch()
+        browser = getattr(p, args.browser).launch()
         browser_version = browser.version
         for width, size in ((1920, "desktop"), (1024, "narrow"), (390, "mobile")):
             for mode in ("light", "dark"):
-                for name in ("dashboard", "dns", "limits"):
+                for name in NAMES:
                     label = f"{mode}-{name}-{size}"
                     if args.only and args.only != label:
                         continue
@@ -191,6 +269,12 @@ def main():
                             return route.fulfill(content_type="text/html", body=body)
                         if rel == "datalogstatus.php":
                             return route.fulfill(content_type="application/json", body='{"entries":[],"count":0}')
+                        if fixture.billing and rel.startswith("billing/lib/js/") and Path(rel).suffix.lower() in (".css", ".js"):
+                            try:
+                                return route.fulfill(content_type=mimetypes.guess_type(rel)[0], body=fixture.billing_source(rel))
+                            except FileNotFoundError:
+                                missing.append(rel)
+                                return route.fulfill(status=404, body="Missing billing asset")
                         if rel.startswith(("themes/clarity/assets/", "themes/default/assets/", "js/")) and Path(rel).suffix.lower() in (".css", ".js", ".woff", ".woff2", ".ttf", ".svg", ".png", ".ico", ".xml", ".webmanifest"):
                             try:
                                 data = fixture.source(rel, rel.startswith("themes/clarity/"))
@@ -210,7 +294,9 @@ def main():
                     page.goto(ORIGIN + "/fixture.html", wait_until="networkidle")
                     page.evaluate("document.fonts.ready")
                     metrics = page.evaluate(METRICS)
-                    check(not metrics["overflow"], label + ": no horizontal page overflow")
+                    # The Billing Module sizes its chart inline at 720px, wider than a phone under any theme; the theme leaves jqPlot geometry alone on purpose.
+                    if not (name == "billing" and width < 720):
+                        check(not metrics["overflow"], label + ": no horizontal page overflow")
                     if name == "dashboard":
                         notice = metrics["notice"]
                         outer, button = notice["outer"], notice["button"]
@@ -225,6 +311,19 @@ def main():
                         check(limits["helper"]["position"] == "static" and limits["helper"]["borderTop"] == 0, label + ": helper is not a footer")
                         check(limits["footer"]["position"] == "sticky", label + ": actual submit footer remains sticky")
                         check(limits["body"]["leftInset"] == 16, label + ": accordion inset is not doubled")
+                    tables = metrics["tables"]
+                    if name == "dashboard":
+                        check(tables["dashlet"] == {"shown": 10, "toggle": True}, label + ": long dashlet folds to 10 rows behind Show all")
+                        check(tables["nocap"] == {"shown": 15, "toggle": False}, label + ": data-nz-nocap dashlet keeps every row")
+                    if name == "billing":
+                        check(tables["items"] == {"shown": 15, "toggle": False}, label + ": module table off the dashboard keeps every row")
+                        jq = metrics["jqplot"]
+                        check(len(jq["canvases"]) >= 4 and all(abs(c["got"][0] - c["want"][0]) < 1 and abs(c["got"][1] - c["want"][1]) < 1 for c in jq["canvases"]), label + ": every jqPlot canvas keeps its own size")
+                        check(len({c["left"] for c in jq["canvases"] if c["want"][0] == jq["canvases"][0]["want"][0]}) == 1, label + ": full-size jqPlot layers stay aligned")
+                        check(abs(jq["target"]["height"] - 150) < 1 and jq["target"]["border"] == 0 and jq["target"]["shadow"] == "none", label + ": jqPlot target keeps its height and gets no card")
+                        check(jq["tick"] and contrast(jq["tick"]["color"], jq["tick"]["behind"]) >= 4.5, label + ": jqPlot tick labels reach 4.5:1")
+                        strip = metrics["chartjs"]
+                        check(abs(strip["width"] - strip["room"]) < 1 and abs(strip["wrapper"] - 110) < 1 and strip["card"] == 1, label + ": stock chart strip still fills a 110px wrapper on a card")
                     page.screenshot(path=str(output / f"{label}.png"))
                     if name == "limits":
                         page.evaluate("window.scrollTo(0, 500)")
@@ -293,7 +392,7 @@ def main():
                     (output / "results.json").write_text(json.dumps({"complete": False, "checks": checks, "cases": results}, indent=2) + "\n")
                     context.close()
         browser.close()
-    report = {"complete": True, "theme_ref": args.theme_ref or "working-tree", "browser": "Firefox " + browser_version, "core_web": str(args.core_web.resolve()), "checks": checks, "cases": results, "source_sha256": fixture.hashes}
+    report = {"complete": True, "theme_ref": args.theme_ref or "working-tree", "browser": args.browser.capitalize() + " " + browser_version, "billing": "module" if args.billing_web else "synthetic", "core_web": str(args.core_web.resolve()), "checks": checks, "cases": results, "source_sha256": fixture.hashes}
     (output / "results.json").write_text(json.dumps(report, indent=2) + "\n")
     failed = sum(not c["passed"] for c in checks)
     print(f"\n{len(checks) - failed} passed, {failed} failed; evidence: {output}")

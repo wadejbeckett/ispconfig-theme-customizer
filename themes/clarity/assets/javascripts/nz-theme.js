@@ -368,9 +368,15 @@
     }
 
     /* long dashboard dashlet tables (no sortable header = not a list view)
-       collapse to 10 rows behind a "show all" toggle */
+       collapse to 10 rows behind a "show all" toggle. Only on the dashboard,
+       which Clarity's own dashboard.htm marks with .nz-dash-head: elsewhere a
+       plain table.table is a module's working table (the Billing Module's
+       invoice line items, for one), and hiding rows there hides data. A
+       dashlet that must never fold can carry data-nz-nocap. */
+    var onDashboard = !!scope.querySelector('.nz-dash-head');
     scope.querySelectorAll('table.table').forEach(function (tbl) {
-      if (tbl.dataset.nzCapped || tbl.querySelector('th[data-column]')) return;
+      if (!onDashboard || tbl.dataset.nzCapped || tbl.hasAttribute('data-nz-nocap') ||
+          tbl.querySelector('th[data-column]')) return;
       var rows = tbl.tBodies[0] ? Array.prototype.slice.call(tbl.tBodies[0].rows) : [];
       if (rows.length <= 12) return;
       tbl.dataset.nzCapped = '1';

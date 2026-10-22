@@ -134,6 +134,16 @@ With a symlink install the panel reads the design from the clone, so a tag check
 
 No release listed below has a migration step, a schema change or a new column. Everything the Branding page stores lives in the same `sys_ini` row throughout.
 
+### v3.5.3
+
+Fixes three problems with the ISPConfig Billing Module, and any other module that uses the same patterns, under clarity:
+
+- **Charts drawn with jqPlot were stretched.** Clarity forced every chart canvas to the full width of its card. jqPlot draws one chart as several stacked canvases with exact pixel sizes, so the bars no longer lined up with the axis. Clarity's chart sizing now applies only to the stock Chart.js charts; jqPlot charts keep their own geometry.
+- **Long tables lost rows outside the dashboard.** Clarity folds a long dashlet table to 10 rows behind a "Show all" button, but it did so on every page, including the Billing Module's invoice line items. It now does so on the dashboard only, and a dashlet table marked `data-nz-nocap` is never folded.
+- **jqPlot labels were hard to read in dark mode.** Axis labels, legends and tooltips now use clarity's text and card colours.
+
+Upgrade using the procedure above and hard-refresh the browser. Nothing stored changes, and classic is unaffected.
+
 ### v3.5.2
 
 Fixes an HTTP 500 when opening **Branding** with a symlink installation. PHP can resolve the module's working directory into the external clone, causing its relative `../../lib/config.inc.php` include to miss the installed panel. The settings page, live preview, upload and delete endpoints now share installation-aware core loading. Existing admin permission and CSRF checks are unchanged. Copy installations continue to work.
