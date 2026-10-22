@@ -73,12 +73,14 @@
 
   /* The login-design note. Its colours are the design's own .alert-info, the
      same as any other notice in the panel; these rules only seat it in the
-     hero's gutter and keep the code and the two long paths inside it. */
+     hero's gutter and wrap the command's long paths inside it. */
   #nz-brandpage .nz-loginnote { margin: 12px 18px 0; }
   #nz-brandpage .nz-loginnote p { margin: 0 0 8px; }
-  #nz-brandpage .nz-loginnote pre { margin: 0 0 8px; white-space: pre-wrap; }
+  #nz-brandpage .nz-loginnote pre { margin: 0; white-space: pre-wrap; }
   #nz-brandpage .nz-loginnote code { overflow-wrap: anywhere; }
-  #nz-brandpage .nz-loginnote-files { margin: 0; padding-left: 18px; }
+  /* A design that boxes inline code (clarity does, on code AND pre) would
+     otherwise draw a second box behind every line of the command. */
+  #nz-brandpage .nz-loginnote pre code { padding: 0; border: 0; background: none; }
 
   /* The proof itself sits on the PAGE ground, not the card ground: it is a
      viewport cut into the card, and the ground change is what says so. */

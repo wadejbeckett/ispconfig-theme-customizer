@@ -99,7 +99,17 @@ sudo ./install.sh
 - `--no-assign` skips assigning the module to admin users; do it by hand in *System → CP Users → edit the admin user → Modules*.
 - `ISPCONFIG_ROOT` defaults to `/usr/local/ispconfig`.
 
-On a multiserver setup, install only on the server that serves the web interface. Then pick the design per user in *Tools → User Settings → Design*. To set the system-wide default and the login screen, add `$conf['theme'] = 'clarity';` to **both** `interface/lib/config.inc.php` and `server/lib/config.inc.php`; `install.sh` never edits ISPConfig configuration, and the server file is what makes the value persist across panel updates. Until the login screen is on a design, the Branding page shows a note above its preview with this line and both file paths.
+On a multiserver setup, install only on the server that serves the web interface. Then pick the design per user in *Tools → User Settings → Design*.
+
+**The login screen does not follow that choice.** Nobody is logged in yet, so ISPConfig renders it, and picks the default design for new clients, from `$conf['theme']` in its own config. Set it to the design in **both** config files; the interface file applies straight away, and the server file is the one ISPConfig updates carry forward. As root, this rewrites only that line in each file and keeps a `.bak` copy:
+
+```bash
+sed -i.bak "s/^\$conf\['theme'\] = '[^']*';/\$conf['theme'] = 'clarity';/" \
+  /usr/local/ispconfig/interface/lib/config.inc.php \
+  /usr/local/ispconfig/server/lib/config.inc.php
+```
+
+`install.sh` never makes this change itself, but it reads both files at the end of a run and prints the command when they are not on a design, and the Branding page shows it above its preview until the login screen is on one.
 
 ## After any ISPConfig upgrade
 

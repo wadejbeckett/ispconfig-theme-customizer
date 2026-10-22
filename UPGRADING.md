@@ -136,7 +136,13 @@ No release listed below has a migration step, a schema change or a new column. E
 
 ### v3.6.0
 
-The **Branding** page now says when the login screen will not look like its preview. ISPConfig renders the login page with the panel-wide `$conf['theme']`, not with the Design each user picks, so a panel where only users switched to clarity keeps the stock login with just the logo, panel name and login text. While that is the case, a note above the preview gives the line to add and the two files to add it to. Nothing stored changes.
+Makes it clear when the login screen is still on the stock design. ISPConfig renders the login page with the panel-wide `$conf['theme']`, not with the Design each user picks, so a panel where only users switched to clarity keeps the stock login with just the logo, panel name and login text.
+
+- The **Branding** page shows a note above its preview while that is the case, with a command that sets the line in both ISPConfig config files and keeps a `.bak` copy of each.
+- `install.sh` reads both config files at the end of a run, says what each holds, and prints the same command when they are not on a design. It still never edits them.
+- The README's install section gives the same command.
+
+Nothing stored changes.
 
 ### v3.5.3
 

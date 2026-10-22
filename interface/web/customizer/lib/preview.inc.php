@@ -1080,26 +1080,47 @@ function customizer_installed_designs($active) {
  * markup. str_replace(), never sprintf(), for the reason given at
  * customizer_brand_summary().
  *
- * Only interface/lib/config.inc.php is visible to the panel, so a value set
- * there but missing from server/lib/config.inc.php (which the ISPConfig updater
- * copies forward, overwriting the interface file) goes unreported until an
- * update reverts it. The note names both files for that reason.
+ * The remedy is given as the command customizer_theme_command() spells, which
+ * sets the line in both files: only interface/lib/config.inc.php is visible
+ * to the panel, so a value set there but missing from server/lib/config.inc.php
+ * (which the ISPConfig updater copies forward over the interface file) cannot
+ * be reported here until an update reverts it.
  */
 function customizer_login_notice_html($panel_theme, $designs, $text, $root) {
     if(is_string($panel_theme) && in_array($panel_theme, array('clarity', 'classic'), true)) return '';
     if(!is_array($designs) || !isset($designs[0]) || !is_string($designs[0])) return '';
     if(!is_string($text) || $text === '') return '';
+    $command = customizer_theme_command($designs[0], $root);
+    if($command === '') return '';
 
     $current = (is_string($panel_theme) && $panel_theme !== '') ? $panel_theme : 'default';
-    $root    = (is_string($root) && $root !== '') ? rtrim($root, '/') : '/usr/local/ispconfig';
     $e = function($s) { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); };
 
     return '<p>' . str_replace('%s', '<code>' . $e($current) . '</code>', $text) . '</p>'
-        . '<pre><code>' . $e("\$conf['theme'] = '" . $designs[0] . "';") . '</code></pre>'
-        . '<ul class="nz-loginnote-files">'
-        . '<li><code>' . $e($root . '/interface/lib/config.inc.php') . '</code></li>'
-        . '<li><code>' . $e($root . '/server/lib/config.inc.php') . '</code></li>'
-        . '</ul>';
+        . '<pre><code>' . $e($command) . '</code></pre>';
+}
+
+/**
+ * The shell one-liner that points both ISPConfig config files at a design.
+ *
+ * It rewrites only the live $conf['theme'] line, whatever it holds now, and
+ * keeps a .bak of each file. The operator runs it; nothing in this extension
+ * does (docs/OVERRIDE-SURFACES.md). install.sh prints the same command and
+ * README.md shows it, and tests/brand/probe_module.php holds the three to one
+ * spelling, so a fix to one cannot leave the others wrong.
+ *
+ * Both values end up in a root shell, so neither is passed through: a design
+ * name outside [a-z0-9_-] gets no command at all, and a root outside a plain
+ * absolute path falls back to ISPConfig's standard /usr/local/ispconfig.
+ */
+function customizer_theme_command($design, $root) {
+    if(!is_string($design) || preg_match('/^[a-z0-9_-]+$/D', $design) !== 1) return '';
+    $root = is_string($root) ? rtrim($root, '/') : '';
+    if(preg_match('#^/[A-Za-z0-9._/-]+$#D', $root) !== 1) $root = '/usr/local/ispconfig';
+
+    return 'sed -i.bak "s/^\\$conf\\[\'theme\'\\] = \'[^\']*\';/\\$conf[\'theme\'] = \'' . $design . '\';/" \\' . "\n"
+        . '  ' . $root . '/interface/lib/config.inc.php \\' . "\n"
+        . '  ' . $root . '/server/lib/config.inc.php';
 }
 
 /**

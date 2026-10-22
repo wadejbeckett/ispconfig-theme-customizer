@@ -218,6 +218,7 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 WEB_DIR="$ISPC_ROOT/interface/web"
 THEMES_DIR="$WEB_DIR/themes"
 CONF="$ISPC_ROOT/interface/lib/config.inc.php"
+SERVER_CONF="$ISPC_ROOT/server/lib/config.inc.php"
 
 say "ispconfig-theme-customizer installer"
 say "  source     : $ROOT"
@@ -234,6 +235,30 @@ if [ ! -d "$WEB_DIR" ]; then
 fi
 
 # --- helpers ----------------------------------------------------------------
+
+# The value of the live $conf['theme'] line in an ISPConfig config file, or
+# nothing when the file or the line is missing. Reads only. `|| true` because
+# set -e would otherwise end the install over a file it only wanted to look at.
+conf_theme() {
+  sed -n "s/^\$conf\['theme'\] = '\([^']*\)';.*/\1/p" "$1" 2>/dev/null | head -n 1 || true
+}
+
+# The one-liner that points both config files at a design. It rewrites only the
+# live $conf['theme'] line, whatever it holds now, and keeps a .bak of each
+# file. Printed for the operator to run, never run here. The same command is
+# in README.md and on the Branding page (customizer_login_notice_html());
+# tests/brand/probe_module.php holds the three to one spelling.
+theme_command() {
+  local cmd
+  cmd="$(cat <<'EOCMD'
+       sed -i.bak "s/^\$conf\['theme'\] = '[^']*';/\$conf['theme'] = '@DESIGN@';/" \
+         @ROOT@/interface/lib/config.inc.php \
+         @ROOT@/server/lib/config.inc.php
+EOCMD
+)"
+  cmd="${cmd//@DESIGN@/$1}"
+  printf '%s\n' "${cmd//@ROOT@/$ISPC_ROOT}"
+}
 
 # A symlinked directory is SERVED through the link, so editor/agent/vcs state
 # inside the source tree would be reachable over HTTP (e.g. /customizer/.omc/...).
@@ -735,17 +760,29 @@ INSTALL_COMPLETED=1
     say "                applies immediately. If the frame still looks stock,"
     say "                hard-refresh (Ctrl+Shift+R) to drop the cached CSS."
     STEP=$((STEP + 1))
-    say "  $STEP. System wide + login screen — set in BOTH config files:"
-    say
-    say "       \$conf['theme'] = '$PRIMARY_DESIGN';"
-    say
-    say "     interface/lib/config.inc.php   takes effect immediately (login page +"
-    say "                                    default for new users)"
-    say "     server/lib/config.inc.php      makes it survive ISPConfig updates — the"
-    say "                                    updater regenerates both configs and carries"
-    say "                                    the theme forward from the SERVER config"
-    say
-    say "     Then hard-refresh the browser (Ctrl+Shift+R) so the new CSS is picked up."
+    # The login page has no user yet, so ISPConfig renders it, and picks the
+    # default Design for new clients, from $conf['theme'] rather than from step
+    # 1. Say what both files hold now: an operator who stopped at step 1 sees
+    # the stock login and takes it for a bug (Issue #9), and one who set only
+    # the interface file loses it at the next ISPConfig update, which rewrites
+    # that file from the server one.
+    IF_THEME="$(conf_theme "$CONF")"
+    SV_THEME="$(conf_theme "$SERVER_CONF")"
+    if [ -n "$IF_THEME" ] && [ "$IF_THEME" = "$SV_THEME" ] \
+       && case " $ALL_DESIGNS " in *" $IF_THEME "*) true ;; *) false ;; esac; then
+      say "  $STEP. Login screen: already on '$IF_THEME' in both ISPConfig config files."
+    else
+      say "  $STEP. Login screen and the default Design for new users. ISPConfig takes"
+      say "     these from \$conf['theme'], not from step 1, and it currently reads:"
+      say "       interface/lib/config.inc.php   '${IF_THEME:-not found}'"
+      say "       server/lib/config.inc.php      '${SV_THEME:-not found}'"
+      say "     To set both to $PRIMARY_DESIGN, run this (it keeps a .bak copy of each file):"
+      say
+      say "$(theme_command "$PRIMARY_DESIGN")"
+      say
+      say "     The interface file applies straight away; the server file is the one"
+      say "     ISPConfig updates carry forward. Then log out to see the login screen."
+    fi
   fi
   if [ -n "$WANT_MODULE" ]; then
     STEP=$((STEP + 1))
