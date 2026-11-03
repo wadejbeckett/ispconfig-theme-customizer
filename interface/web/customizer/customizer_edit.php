@@ -474,6 +474,25 @@ class page_action extends tform_actions {
         ));
 
         $this->publish_brand_summary($designs, $resolved, $favicon);
+        $this->publish_login_notice($designs);
+    }
+
+    /**
+     * The note above the preview when visitors will not see the login screen
+     * it shows: core renders the login page with the panel-wide
+     * $conf['theme'], not the Design a user picks. The decision and the
+     * wording's shape are customizer_login_notice_html()'s; this supplies the
+     * panel's own values. ISPC_ROOT_PATH is core's interface directory, so its
+     * parent is the ISPConfig root both config files live under.
+     */
+    private function publish_login_notice($designs) {
+        global $app, $conf;
+        $app->tpl->setVar('login_design_notice', customizer_login_notice_html(
+            isset($conf['theme']) ? $conf['theme'] : '',
+            $designs,
+            $app->tform->lng('login_design_notice_txt'),
+            defined('ISPC_ROOT_PATH') ? dirname(ISPC_ROOT_PATH) : ''
+        ));
     }
 
     /**

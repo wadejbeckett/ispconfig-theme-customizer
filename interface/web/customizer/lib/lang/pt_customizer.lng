@@ -59,6 +59,7 @@ $wb['colour_hint_txt'] = 'Valor hexadecimal como #0065AB. Deixe em branco para m
 $wb['preview_head_txt'] = 'Pré-visualização';
 $wb['preview_hint_txt'] = 'As cores e o nome do painel são atualizados enquanto escreve. Que logótipo cada superfície usa é decidido pelo servidor, para corresponder ao que o painel vai mostrar.';
 $wb['preview_login_txt'] = 'Ecrã de início de sessão';
+$wb['login_design_notice_txt'] = 'O ecrã de início de sessão não corresponde a esta pré-visualização: o ISPConfig mostra-o com o design geral do painel, atualmente %s, e não com o que cada utilizador escolhe. Para que use este design, execute isto como root no servidor do painel. O comando altera os dois ficheiros de configuração do ISPConfig e guarda uma cópia .bak de cada um.';
 $wb['preview_tab_txt'] = 'Ícone do separador';
 $wb['preview_failed_txt'] = 'Não foi possível atualizar a pré-visualização. O que vê é a última versão confirmada pelo servidor.';
 $wb['preview_panel_txt'] = 'Painel';

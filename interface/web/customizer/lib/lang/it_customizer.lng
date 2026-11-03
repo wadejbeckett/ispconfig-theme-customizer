@@ -59,6 +59,7 @@ $wb['colour_hint_txt'] = 'Valore esadecimale come #0065AB. Lasci vuoto per mante
 $wb['preview_head_txt'] = 'Anteprima';
 $wb['preview_hint_txt'] = 'I colori e il nome del pannello si aggiornano mentre digita. Quale logo usa ogni superficie lo decide il server, così corrisponde a ciò che il pannello mostrerà davvero.';
 $wb['preview_login_txt'] = 'Schermata di accesso';
+$wb['login_design_notice_txt'] = 'La schermata di accesso non corrisponde a questa anteprima: ISPConfig la mostra con il design generale del pannello, attualmente %s, e non con quello scelto da ciascun utente. Per farle usare questo design, esegua questo comando come root sul server del pannello. Modifica entrambi i file di configurazione di ISPConfig e conserva una copia .bak di ciascuno.';
 $wb['preview_tab_txt'] = 'Icona della scheda';
 $wb['preview_failed_txt'] = 'Non è stato possibile aggiornare l’anteprima. Quella mostrata è l’ultima versione confermata dal server.';
 $wb['preview_panel_txt'] = 'Pannello';

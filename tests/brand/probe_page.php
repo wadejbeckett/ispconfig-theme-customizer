@@ -61,6 +61,17 @@ foreach ($classes as $cls) {
     t_ok("class $cls is in the markup", strpos($src, $cls) !== false);
 }
 
+//* The login-design note (Issue #9): present only when the page sets it, so
+//* logo_upload.php's render and a panel already on a design show nothing, and
+//* above the pulls, so it is read before the login pane it qualifies.
+$note_at  = strpos($src, 'id="nz-login-notice"');
+$proof_at = strpos($src, '<div class="nz-proof">');
+t_ok('the login-design note is wrapped in its own tmpl_if',
+    preg_match('/<tmpl_if name="login_design_notice">\s*<div[^>]*id="nz-login-notice"[^>]*>\{tmpl_var name=\'login_design_notice\'\}<\/div>\s*<\/tmpl_if>/', $src) === 1);
+t_ok('...and sits above the pulls', $note_at !== false && $proof_at !== false && $note_at < $proof_at);
+t_ok('...painted as the design paints any info notice',
+    strpos($src, 'class="alert alert-info nz-loginnote"') !== false);
+
 //* The named fields. tform posts by NAME, so a rename here is a field that
 //* silently stops being saved.
 foreach (array('company_name', 'logo_url', 'logo_url_on_dark', 'favicon_url',

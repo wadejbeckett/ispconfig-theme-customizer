@@ -61,6 +61,7 @@ $wb['colour_hint_txt'] = 'Hex-waarde zoals #0065AB. Laat leeg om de themastandaa
 $wb['preview_head_txt'] = 'Voorbeeld';
 $wb['preview_hint_txt'] = 'Kleuren en de paneelnaam worden bijgewerkt terwijl u typt. Welk logo elk oppervlak gebruikt, bepaalt de server, zodat het overeenkomt met wat het paneel echt toont.';
 $wb['preview_login_txt'] = 'Aanmeldscherm';
+$wb['login_design_notice_txt'] = 'Het aanmeldscherm komt niet overeen met dit voorbeeld: ISPConfig toont het met het paneelbrede ontwerp, momenteel %s, en niet met het ontwerp dat elke gebruiker kiest. Voer dit als root uit op de paneelserver om dit ontwerp daar te gebruiken. Het commando past beide ISPConfig-configuratiebestanden aan en bewaart van elk een .bak-kopie.';
 $wb['preview_tab_txt'] = 'Tabblad-icoon';
 $wb['preview_failed_txt'] = 'Het voorbeeld kon niet worden vernieuwd. U ziet de laatste versie die de server heeft bevestigd.';
 $wb['preview_panel_txt'] = 'Paneel';

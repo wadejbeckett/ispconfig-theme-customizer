@@ -1052,6 +1052,78 @@ function customizer_installed_designs($active) {
 }
 
 /**
+ * The note the Branding page shows when its login preview is not what visitors
+ * will see.
+ *
+ * The login page has no user yet, so core renders it with the panel-wide
+ * $conf['theme'] (app.inc.php seeds the session theme from it, and logout.php
+ * destroys the session), never with the Design each user picks under Tools >
+ * User Settings. A panel where only users switched to clarity therefore keeps
+ * the stock login, with just the three values core reads itself (the uploaded
+ * logo, the panel name and the login text), while this page previews a branded
+ * one. That gap was reported as a bug (Issue #9). The fix is one line in two
+ * ISPConfig files, which this extension deliberately never edits
+ * (docs/OVERRIDE-SURFACES.md), so the page says so instead.
+ *
+ * $panel_theme  $conf['theme'] as core loaded it from interface/lib/config.inc.php
+ * $designs      customizer_installed_designs(): the designs that can take the
+ *               login screen, the one being previewed first. Empty means a
+ *               module-only install, which stays on the stock login by choice,
+ *               so there is no design to suggest and nothing is said.
+ * $text         the localised sentence; %s becomes the current panel-wide theme
+ * $root         the ISPConfig root, normally /usr/local/ispconfig, for the two
+ *               file paths
+ *
+ * Returns the note's inner HTML, or '' when the login screen already uses one
+ * of this extension's designs. Every interpolated value is escaped here; $text
+ * is a wordbook value and, like every other one on this page, is trusted
+ * markup. str_replace(), never sprintf(), for the reason given at
+ * customizer_brand_summary().
+ *
+ * The remedy is given as the command customizer_theme_command() spells, which
+ * sets the line in both files: only interface/lib/config.inc.php is visible
+ * to the panel, so a value set there but missing from server/lib/config.inc.php
+ * (which the ISPConfig updater copies forward over the interface file) cannot
+ * be reported here until an update reverts it.
+ */
+function customizer_login_notice_html($panel_theme, $designs, $text, $root) {
+    if(is_string($panel_theme) && in_array($panel_theme, array('clarity', 'classic'), true)) return '';
+    if(!is_array($designs) || !isset($designs[0]) || !is_string($designs[0])) return '';
+    if(!is_string($text) || $text === '') return '';
+    $command = customizer_theme_command($designs[0], $root);
+    if($command === '') return '';
+
+    $current = (is_string($panel_theme) && $panel_theme !== '') ? $panel_theme : 'default';
+    $e = function($s) { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); };
+
+    return '<p>' . str_replace('%s', '<code>' . $e($current) . '</code>', $text) . '</p>'
+        . '<pre><code>' . $e($command) . '</code></pre>';
+}
+
+/**
+ * The shell one-liner that points both ISPConfig config files at a design.
+ *
+ * It rewrites only the live $conf['theme'] line, whatever it holds now, and
+ * keeps a .bak of each file. The operator runs it; nothing in this extension
+ * does (docs/OVERRIDE-SURFACES.md). install.sh prints the same command and
+ * README.md shows it, and tests/brand/probe_module.php holds the three to one
+ * spelling, so a fix to one cannot leave the others wrong.
+ *
+ * Both values end up in a root shell, so neither is passed through: a design
+ * name outside [a-z0-9_-] gets no command at all, and a root outside a plain
+ * absolute path falls back to ISPConfig's standard /usr/local/ispconfig.
+ */
+function customizer_theme_command($design, $root) {
+    if(!is_string($design) || preg_match('/^[a-z0-9_-]+$/D', $design) !== 1) return '';
+    $root = is_string($root) ? rtrim($root, '/') : '';
+    if(preg_match('#^/[A-Za-z0-9._/-]+$#D', $root) !== 1) $root = '/usr/local/ispconfig';
+
+    return 'sed -i.bak "s/^\\$conf\\[\'theme\'\\] = \'[^\']*\';/\\$conf[\'theme\'] = \'' . $design . '\';/" \\' . "\n"
+        . '  ' . $root . '/interface/lib/config.inc.php \\' . "\n"
+        . '  ' . $root . '/server/lib/config.inc.php';
+}
+
+/**
  * One preview row: this variant's mark, drawn on every surface that will use it.
  *
  * $resolved      one entry of customizer_logo_resolve()

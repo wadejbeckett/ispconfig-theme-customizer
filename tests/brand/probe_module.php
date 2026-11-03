@@ -317,6 +317,102 @@ if (function_exists('customizer_installed_designs')) {
     @rmdir($root);
 }
 
+/* ---- the login-design note (Issue #9) -------------------------------------
+ * Core renders the login page with the panel-wide $conf['theme'], not the
+ * Design a user picks, so a panel where only users switched keeps the stock
+ * login while the Branding page previews a branded one. The note says so and
+ * gives the command that changes it, which install.sh and README.md give too.
+ */
+$std = 'sed -i.bak "s/^\$conf\[\'theme\'\] = \'[^\']*\';/\$conf[\'theme\'] = \'clarity\';/" \\' . "\n"
+     . '  /usr/local/ispconfig/interface/lib/config.inc.php \\' . "\n"
+     . '  /usr/local/ispconfig/server/lib/config.inc.php';
+
+t_ok('customizer_theme_command() exists', function_exists('customizer_theme_command'));
+if (function_exists('customizer_theme_command')) {
+    t_eq('the command for clarity on a standard panel', customizer_theme_command('clarity', '/usr/local/ispconfig'), $std);
+    t_eq('a root with a trailing slash does not double it',
+        customizer_theme_command('clarity', '/usr/local/ispconfig/'), $std);
+    t_eq('an unusable root falls back to the standard one',
+        customizer_theme_command('clarity', "/srv/isp config';reboot"), $std);
+    t_eq('a missing root falls back to the standard one', customizer_theme_command('clarity', ''), $std);
+    t_eq('a design name that is not a plain token gets no command',
+        customizer_theme_command("clarity';reboot;'", '/usr/local/ispconfig'), '');
+
+    //* The command is for an operator's root shell, so prove it does what the
+    //* note says against real files rather than trusting its spelling: only the
+    //* live line changes, whatever it held, and each file keeps a .bak copy.
+    $tree = sys_get_temp_dir() . '/themecmd_' . getmypid();
+    $files = array('interface' => "\$conf['theme'] = 'default';\n", 'server' => "\$conf['theme'] = 'classic';\n");
+    foreach ($files as $part => $line) {
+        @mkdir("$tree/$part/lib", 0700, true);
+        file_put_contents("$tree/$part/lib/config.inc.php", "<?php\n// \$conf['theme'] = 'old';\n" . $line . "\$conf['language'] = 'en';\n");
+    }
+    $out = array();
+    $rc  = 1;
+    exec('bash -c ' . escapeshellarg(customizer_theme_command('clarity', $tree)) . ' 2>&1', $out, $rc);
+    $want = "<?php\n// \$conf['theme'] = 'old';\n\$conf['theme'] = 'clarity';\n\$conf['language'] = 'en';\n";
+    t_eq('the command runs cleanly', $rc, 0);
+    t_eq('...rewriting only the live line in the interface file', @file_get_contents("$tree/interface/lib/config.inc.php"), $want);
+    t_eq('...and in the server file, whatever value it held', @file_get_contents("$tree/server/lib/config.inc.php"), $want);
+    t_ok('...keeping a .bak copy of each',
+        @file_get_contents("$tree/interface/lib/config.inc.php.bak") === "<?php\n// \$conf['theme'] = 'old';\n" . $files['interface'] . "\$conf['language'] = 'en';\n"
+        && is_file("$tree/server/lib/config.inc.php.bak"));
+    foreach (array_keys($files) as $part) {
+        @unlink("$tree/$part/lib/config.inc.php");
+        @unlink("$tree/$part/lib/config.inc.php.bak");
+        @rmdir("$tree/$part/lib");
+        @rmdir("$tree/$part");
+    }
+    @rmdir($tree);
+
+    //* One command, three places an operator meets it. Compared line by line
+    //* with indentation dropped, since each place indents it for its own page.
+    $lines = function ($s) { return implode("\n", array_map('trim', explode("\n", trim($s)))); };
+    $readme = (string)@file_get_contents(__DIR__ . '/../../README.md');
+    t_ok('README.md shows the same command',
+        preg_match('/```bash\n(sed -i\.bak .*?)\n```/s', $readme, $m) === 1 && $lines($m[1]) === $lines($std));
+    $installer = (string)@file_get_contents(__DIR__ . '/../../install.sh');
+    t_ok('install.sh prints the same command',
+        preg_match("/<<'EOCMD'\n(.*?)\nEOCMD/s", $installer, $m) === 1
+        && $lines(str_replace(array('@DESIGN@', '@ROOT@'), array('clarity', '/usr/local/ispconfig'), $m[1])) === $lines($std));
+}
+
+t_ok('customizer_login_notice_html() exists', function_exists('customizer_login_notice_html'));
+if (function_exists('customizer_login_notice_html')) {
+    $both = array('clarity', 'classic');
+    $say  = 'Currently %s.';
+
+    t_eq('nothing to say when the login screen is on clarity',
+        customizer_login_notice_html('clarity', $both, $say, '/usr/local/ispconfig'), '');
+    t_eq('nothing to say when the login screen is on classic',
+        customizer_login_notice_html('classic', $both, $say, '/usr/local/ispconfig'), '');
+    t_eq('nothing to say on a module-only install, which stays stock by choice',
+        customizer_login_notice_html('default', array(), $say, '/usr/local/ispconfig'), '');
+    t_eq('nothing to say without a sentence to say it with',
+        customizer_login_notice_html('default', $both, '', '/usr/local/ispconfig'), '');
+    t_eq('nothing to say when there is no safe command to give',
+        customizer_login_notice_html('default', array('two words'), $say, '/usr/local/ispconfig'), '');
+
+    $note = customizer_login_notice_html('default', $both, $say, '/usr/local/ispconfig');
+    t_ok('the stock panel-wide theme gets the note', $note !== '');
+    t_ok('...naming the current theme in place of %s',
+        strpos($note, '<p>Currently <code>default</code>.</p>') !== false, $note);
+    t_ok('...with the command for the design being previewed, escaped',
+        strpos($note, '<pre><code>' . htmlspecialchars($std, ENT_QUOTES, 'UTF-8') . '</code></pre>') !== false, $note);
+    t_ok('the suggestion follows the design being previewed',
+        strpos(customizer_login_notice_html('default', array('classic', 'clarity'), $say, '/usr/local/ispconfig'),
+            '= &#039;classic&#039;;') !== false);
+    t_ok('a third-party panel-wide theme gets the note too',
+        strpos(customizer_login_notice_html('phosphor', $both, $say, '/usr/local/ispconfig'),
+            '<code>phosphor</code>') !== false);
+    t_ok('an unset theme is named as core falls back to it',
+        strpos(customizer_login_notice_html('', $both, $say, '/usr/local/ispconfig'), '<code>default</code>') !== false);
+    t_ok('a theme name is escaped, since it is interpolated into markup',
+        strpos(customizer_login_notice_html('<b>x</b>', $both, $say, '/usr/local/ispconfig'), '&lt;b&gt;x&lt;/b&gt;') !== false);
+    t_ok('a stray % in a translation cannot fatal, because nothing here is sprintf',
+        customizer_login_notice_html('default', $both, '100% %s', '/usr/local/ispconfig') !== '');
+}
+
 /* ---- characterisation: the two shipped designs' chrome -------------------
  * These are the values the preview has always drawn. They pin the refactor
  * above: whatever changes, what the operator sees for clarity and classic on a
@@ -864,6 +960,12 @@ if ($edit_src !== false) {
     //* shared list rather than reintroducing its own copy of it.
     t_ok('...iterating customizer_hint_label_keys(), not a second copy of the list',
         strpos($edit_src, 'customizer_hint_label_keys()') !== false);
+    t_ok('the page publishes the login-design note through the shared builder',
+        strpos($edit_src, "setVar('login_design_notice', customizer_login_notice_html(") !== false);
+    t_ok('...deciding on the panel-wide theme core renders the login page with',
+        strpos($edit_src, "\$conf['theme']") !== false);
+    t_ok('...in the operator\'s language',
+        strpos($edit_src, "lng('login_design_notice_txt')") !== false);
 }
 
 t_done();

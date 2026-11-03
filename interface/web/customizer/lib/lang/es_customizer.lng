@@ -59,6 +59,7 @@ $wb['colour_hint_txt'] = 'Valor hexadecimal como #0065AB. Déjelo en blanco para
 $wb['preview_head_txt'] = 'Vista previa';
 $wb['preview_hint_txt'] = 'Los colores y el nombre del panel se actualizan mientras escribe. Qué logotipo usa cada superficie lo resuelve el servidor, así que coincide con lo que el panel mostrará realmente.';
 $wb['preview_login_txt'] = 'Pantalla de inicio de sesión';
+$wb['login_design_notice_txt'] = 'La pantalla de inicio de sesión no coincide con esta vista previa: ISPConfig la muestra con el diseño general del panel, actualmente %s, y no con el que elige cada usuario. Para que use este diseño, ejecute esto como root en el servidor del panel. El comando modifica los dos archivos de configuración de ISPConfig y guarda una copia .bak de cada uno.';
 $wb['preview_tab_txt'] = 'Icono de pestaña';
 $wb['preview_failed_txt'] = 'No se pudo actualizar la vista previa. Lo que ve es la última versión confirmada por el servidor.';
 $wb['preview_panel_txt'] = 'Panel';
